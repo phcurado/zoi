@@ -25,6 +25,19 @@ defmodule ZoiTest do
       assert {:ok, nil} == Zoi.parse(Zoi.optional(Zoi.string()), nil)
     end
 
+    test "default" do
+      schema = Zoi.default(Zoi.string(), "default_value")
+
+      assert {:ok, "default_value"} == Zoi.parse(schema, nil)
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+
+    test "default with incorrect type" do
+      assert_raise Zoi.Error, "default error: invalid integer type", fn ->
+        Zoi.default(Zoi.integer(), "10")
+      end
+    end
+
     test "map with correct value" do
       schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
 

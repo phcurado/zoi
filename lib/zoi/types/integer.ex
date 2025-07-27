@@ -1,9 +1,5 @@
 defmodule Zoi.Types.Integer do
-  defstruct validations: []
-
-  def new(opts \\ []) do
-    struct!(__MODULE__, opts)
-  end
+  use Zoi.Types.Base
 end
 
 defimpl Zoi.Type, for: Zoi.Types.Integer do

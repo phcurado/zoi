@@ -1,5 +1,5 @@
 defmodule Zoi.Types.Optional do
-  defstruct inner: nil
+  use Zoi.Types.Base, fields: [:inner]
 
   def new(inner) do
     struct!(__MODULE__, inner: inner)

@@ -1,5 +1,5 @@
 defmodule Zoi.Types.Map do
-  defstruct [:fields]
+  use Zoi.Types.Base, fields: [:fields]
 
   def new(fields, opts \\ []) do
     opts = Keyword.merge(opts, fields: fields)
