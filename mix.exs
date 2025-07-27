@@ -1,9 +1,9 @@
-defmodule Xoi.MixProject do
+defmodule Zoi.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :xoi,
+      app: :zoi,
       version: "0.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
