@@ -8,8 +8,9 @@ defmodule Zoi.Validations do
 
   @spec append_validations(Zoi.Type.t(), validation()) :: [validation()]
   def append_validations(schema, validation) do
-    validations = [validation | schema.validations]
-    %{schema | validations: validations}
+    validations = [validation | schema.meta.validations]
+    meta = %{schema.meta | validations: validations}
+    %{schema | meta: meta}
   end
 
   @doc """
@@ -17,7 +18,7 @@ defmodule Zoi.Validations do
   """
   @spec run_validations(schema :: Zoi.Type.t(), input :: any()) :: validation_result()
   def run_validations(schema, input) do
-    schema.validations
+    schema.meta.validations
     |> Enum.reverse()
     |> Enum.reduce_while({:ok, input}, fn {mod, func, args}, {:ok, _input} ->
       case apply(mod, func, [schema, input] ++ args) do

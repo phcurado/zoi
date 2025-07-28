@@ -3,7 +3,9 @@ defmodule Zoi.Types.Default do
   A type that represents a default value for a schema field.
   It is used to provide a default value when the field is not present in the input data.
   """
-  use Zoi.Types.Base, fields: [:inner, :value]
+
+  @type t :: %__MODULE__{inner: Zoi.Type.t(), value: Zoi.input()}
+  defstruct [:inner, :value]
 
   def new(inner, value, opts \\ []) do
     case Zoi.Type.parse(inner, value, opts) do
@@ -15,11 +17,11 @@ defmodule Zoi.Types.Default do
           message: "default error: #{inspect(reason)}"
     end
   end
-end
 
-defimpl Zoi.Type, for: Zoi.Types.Default do
-  def parse(%Zoi.Types.Default{value: value}, nil, _opts), do: {:ok, value}
+  defimpl Zoi.Type do
+    def parse(%Zoi.Types.Default{value: value}, nil, _opts), do: {:ok, value}
 
-  def parse(%Zoi.Types.Default{inner: schema}, value, opts),
-    do: Zoi.Type.parse(schema, value, opts)
+    def parse(%Zoi.Types.Default{inner: schema}, value, opts),
+      do: Zoi.Type.parse(schema, value, opts)
+  end
 end

@@ -1,30 +1,87 @@
 defmodule Zoi.Types.String do
-  use Zoi.Types.Base
-end
+  @type t :: %__MODULE__{meta: Zoi.Types.Base.t()}
 
-defimpl Zoi.Type, for: Zoi.Types.String do
-  alias Zoi.Validations
+  defstruct [:meta]
 
-  def parse(schema, input, opts) do
-    do_parse(input, opts)
-    |> then(fn
-      {:ok, value} ->
-        Validations.run_validations(schema, value)
-
-      {:error, _reason} = error ->
-        error
-    end)
+  @spec new(opts :: keyword()) :: t()
+  def new(opts \\ []) do
+    {meta, opts} = Zoi.Types.Meta.create_meta(opts)
+    struct!(__MODULE__, [{:meta, meta} | opts])
   end
 
-  defp do_parse(input, _opts) do
-    cond do
-      is_binary(input) ->
-        {:ok, input}
+  defimpl Zoi.Type do
+    alias Zoi.Validations
 
-      # TODO: coerce option
+    def parse(schema, input, opts) do
+      do_parse(input, opts)
+      |> then(fn
+        {:ok, value} ->
+          Validations.run_validations(schema, value)
 
-      true ->
-        {:error, %Zoi.Error{message: "invalid string type"}}
+        {:error, _reason} = error ->
+          error
+      end)
+    end
+
+    defp do_parse(input, _opts) do
+      cond do
+        is_binary(input) ->
+          {:ok, input}
+
+        # TODO: coerce option
+
+        true ->
+          {:error, %Zoi.Error{message: "invalid string type"}}
+      end
+    end
+  end
+
+  # Validations
+
+  defimpl Zoi.Validations.Email do
+    alias Zoi.Validations
+
+    @email_regex ~r/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i
+
+    def new(schema, opts) do
+      Validations.append_validations(schema, {Zoi.Validations.Email, :validate, [opts]})
+    end
+
+    def validate(%Zoi.Types.String{} = schema, input, opts) do
+      pattern = Keyword.get(opts, :pattern)
+      Zoi.Validations.Regex.validate(schema, input, pattern || @email_regex)
+    end
+  end
+
+  defimpl Zoi.Validations.Min do
+    alias Zoi.Validations
+
+    def new(schema, min) do
+      Validations.append_validations(schema, {Zoi.Validations.Min, :validate, [min]})
+    end
+
+    def validate(%Zoi.Types.String{}, input, min) do
+      if byte_size(input) >= min do
+        :ok
+      else
+        {:error, %Zoi.Error{message: "minimum length is #{min}"}}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.Max do
+    alias Zoi.Validations
+
+    def new(schema, max) do
+      Validations.append_validations(schema, {Zoi.Validations.Max, :validate, [max]})
+    end
+
+    def validate(%Zoi.Types.String{}, input, max) do
+      if byte_size(input) <= max do
+        :ok
+      else
+        {:error, %Zoi.Error{message: "maximum length is #{max}"}}
+      end
     end
   end
 end

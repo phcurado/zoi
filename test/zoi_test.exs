@@ -48,4 +48,13 @@ defmodule ZoiTest do
                })
     end
   end
+
+  describe "min/2" do
+    test "min for string" do
+      schema = Zoi.string() |> Zoi.min(5)
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hi")
+      assert Exception.message(error) == "minimum length is 5"
+    end
+  end
 end
