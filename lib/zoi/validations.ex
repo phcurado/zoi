@@ -6,9 +6,10 @@ defmodule Zoi.Validations do
   @type validation :: mfa()
   @type validation_result :: {:ok, any()} | {:error, map()}
 
-  @spec append_validations([validation()], validation()) :: [validation()]
-  def append_validations(validations, validation) do
-    [validation | validations]
+  @spec append_validations(Zoi.Type.t(), validation()) :: [validation()]
+  def append_validations(schema, validation) do
+    validations = [validation | schema.validations]
+    %{schema | validations: validations}
   end
 
   @doc """

@@ -46,4 +46,7 @@ defmodule Zoi do
 
   # Validations
   defdelegate min(schema, min), to: Zoi.Validations.Min, as: :new
+  defdelegate max(schema, max), to: Zoi.Validations.Max, as: :new
+  defdelegate regex(schema, regex), to: Zoi.Validations.Regex, as: :new
+  defdelegate email(schema, email), to: Zoi.Validations.Email, as: :new
 end

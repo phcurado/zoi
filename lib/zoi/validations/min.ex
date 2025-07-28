@@ -3,13 +3,15 @@ defprotocol Zoi.Validations.Min do
   Protocol for defining validation in Zoi.
   """
 
-  @spec new(schema :: any(), min :: integer()) :: any()
+  @type input_type :: integer()
+
+  @spec new(schema :: Zoi.Type.t(), min :: input_type()) :: Zoi.Type.t()
   def new(schema, min)
 
   @doc """
   Applies validation on input
   """
-  @spec validate(schema :: any(), input :: any(), min :: integer()) ::
+  @spec validate(schema :: Zoi.Type.t(), input :: Zoi.input(), min :: input_type()) ::
           :ok | {:error, String.t()}
   def validate(schema, input, min)
 end
@@ -17,11 +19,8 @@ end
 defimpl Zoi.Validations.Min, for: Zoi.Types.String do
   alias Zoi.Validations
 
-  def new(%Zoi.Types.String{validations: validations} = schema, min) do
-    validations =
-      Validations.append_validations(validations, {Zoi.Validations.Min, :validate, [min]})
-
-    %Zoi.Types.String{schema | validations: validations}
+  def new(schema, min) do
+    Validations.append_validations(schema, {Zoi.Validations.Min, :validate, [min]})
   end
 
   def validate(%Zoi.Types.String{}, input, min) do
@@ -29,6 +28,22 @@ defimpl Zoi.Validations.Min, for: Zoi.Types.String do
       :ok
     else
       {:error, %Zoi.Error{message: "string is too short, minimum length is #{min}"}}
+    end
+  end
+end
+
+defimpl Zoi.Validations.Min, for: Zoi.Types.Integer do
+  alias Zoi.Validations
+
+  def new(schema, min) do
+    Validations.append_validations(schema, {Zoi.Validations.Min, :validate, [min]})
+  end
+
+  def validate(%Zoi.Types.Integer{}, input, min) do
+    if input >= min do
+      :ok
+    else
+      {:error, %Zoi.Error{message: "minimum value is #{min}"}}
     end
   end
 end
