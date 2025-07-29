@@ -25,7 +25,7 @@ defmodule Zoi.Types.Map do
             end
 
           {:ok, value} ->
-            case Zoi.Type.parse(type, value, opts) do
+            case Zoi.parse(type, value, opts) do
               {:ok, val} ->
                 {Map.put(parsed, key, val), errors}
 

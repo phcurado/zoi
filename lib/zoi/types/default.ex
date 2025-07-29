@@ -4,13 +4,16 @@ defmodule Zoi.Types.Default do
   It is used to provide a default value when the field is not present in the input data.
   """
 
-  @type t :: %__MODULE__{inner: Zoi.Type.t(), value: Zoi.input()}
-  defstruct [:inner, :value]
+  @type t :: %__MODULE__{inner: Zoi.Type.t(), value: Zoi.input(), meta: Zoi.Types.Base.t()}
+  defstruct [:inner, :value, :meta]
 
   def new(inner, value, opts \\ []) do
-    case Zoi.Type.parse(inner, value, opts) do
+    {meta, opts} = Zoi.Types.Meta.create_meta(opts)
+
+    case Zoi.parse(inner, value, opts) do
       {:ok, _} ->
-        struct!(__MODULE__, inner: inner, value: value)
+        opts = Keyword.merge(opts, inner: inner, value: value, meta: meta)
+        struct!(__MODULE__, opts)
 
       {:error, reason} ->
         raise Zoi.Error,
@@ -22,6 +25,6 @@ defmodule Zoi.Types.Default do
     def parse(%Zoi.Types.Default{value: value}, nil, _opts), do: {:ok, value}
 
     def parse(%Zoi.Types.Default{inner: schema}, value, opts),
-      do: Zoi.Type.parse(schema, value, opts)
+      do: Zoi.parse(schema, value, opts)
   end
 end

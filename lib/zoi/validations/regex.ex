@@ -15,19 +15,3 @@ defprotocol Zoi.Validations.Regex do
           :ok | {:error, Zoi.Error.t()}
   def validate(schema, input, regex)
 end
-
-defimpl Zoi.Validations.Regex, for: Zoi.Types.String do
-  alias Zoi.Validations
-
-  def new(schema, regex) do
-    Validations.append_validations(schema, {Zoi.Validations.Regex, :validate, [regex]})
-  end
-
-  def validate(%Zoi.Types.String{}, input, regex) do
-    if String.match?(input, regex) do
-      :ok
-    else
-      {:error, %Zoi.Error{message: "regex does not match"}}
-    end
-  end
-end

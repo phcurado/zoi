@@ -5,19 +5,19 @@ defmodule Zoi.Options do
   """
 
   @type t :: %__MODULE__{
-          strict: boolean(),
-          required: boolean()
+          coerce: boolean()
         }
 
-  defstruct strict: false, required: false
+  defstruct [:coerce]
 
   @spec new(opts :: Keyword.t()) :: t()
   def new(opts \\ []) do
+    opts = Keyword.validate!(opts, [:coerce])
     struct!(__MODULE__, opts)
   end
 
   @spec merge(opts_1 :: Keyword.t(), opts_2 :: Keyword.t()) :: t()
-  def merge(opts_1, opts_2) do
+  def merge(opts_1, opts_2) when is_list(opts_1) and is_list(opts_2) do
     # Merging the global options with type-specific options
     # The type-specific options can override the global ones
 

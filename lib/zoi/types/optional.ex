@@ -1,18 +1,16 @@
 defmodule Zoi.Types.Optional do
-  @type t :: %__MODULE__{inner: Zoi.Type.t()}
-  defstruct [:inner]
+  @type t :: %__MODULE__{inner: Zoi.Type.t(), meta: Zoi.Types.Base.t()}
+  defstruct [:inner, :meta]
 
-  @spec new(inner :: Zoi.Type.t()) :: t()
-  def new(inner) do
-    struct!(__MODULE__, inner: inner)
-  end
-
-  def new(inner) do
-    struct!(__MODULE__, inner: inner)
+  @spec new(inner :: Zoi.Type.t(), opts :: Zoi.options()) :: t()
+  def new(inner, opts \\ []) do
+    {meta, opts} = Zoi.Types.Meta.create_meta(opts)
+    opts = Keyword.merge(opts, inner: inner, meta: meta)
+    struct!(__MODULE__, opts)
   end
 
   defimpl Zoi.Type do
     def parse(%{inner: _schema}, nil, _opts), do: {:ok, nil}
-    def parse(%{inner: schema}, value, opts), do: Zoi.Type.parse(schema, value, opts)
+    def parse(%{inner: schema}, value, opts), do: Zoi.parse(schema, value, opts)
   end
 end

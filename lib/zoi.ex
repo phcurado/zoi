@@ -3,6 +3,10 @@ defmodule Zoi do
   Documentation for `Zoi`.
   """
 
+  @type input :: any()
+  @type result :: {:ok, any()} | {:error, map()}
+  @type options :: keyword()
+
   defmodule Error do
     defexception [:message, :key, :path, :value]
 
@@ -25,19 +29,16 @@ defmodule Zoi do
     end
   end
 
-  @type input :: any()
-  @type result :: {:ok, any()} | {:error, map()}
-
   @doc """
   Parse input data against a schema.
   Accepts optional `strict: true` option to disable coercion.
   """
-  @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: Keyword.t()) :: result()
+  @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: result()
   def parse(schema, input, opts \\ []) do
     Zoi.Type.parse(schema, input, opts)
   end
 
-  # Implemented types
+  # Types
   defdelegate string(opts \\ []), to: Zoi.Types.String, as: :new
   defdelegate integer(opts \\ []), to: Zoi.Types.Integer, as: :new
   defdelegate optional(opts \\ []), to: Zoi.Types.Optional, as: :new
