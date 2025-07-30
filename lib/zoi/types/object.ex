@@ -1,4 +1,4 @@
-defmodule Zoi.Types.Map do
+defmodule Zoi.Types.Object do
   @type map_field :: %{binary() => Zoi.Type.t()}
   @type fields :: [map_field]
   @type t :: %__MODULE__{fields: fields, meta: Zoi.Types.Base.t()}
@@ -13,7 +13,7 @@ defmodule Zoi.Types.Map do
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Map{fields: fields}, input, opts) when is_map(input) do
+    def parse(%Zoi.Types.Object{fields: fields}, input, opts) when is_map(input) do
       Enum.reduce(fields, {%{}, %{}}, fn {key, type}, {parsed, errors} ->
         case map_fetch(input, key) do
           :error ->
@@ -21,7 +21,7 @@ defmodule Zoi.Types.Map do
               # If the field is optional, we skip it and do not add it to parsed
               {parsed, errors}
             else
-              {parsed, Map.put(errors, key, %Zoi.Error{message: "is required", key: key})}
+              {parsed, Map.put(errors, key, Zoi.Error.add_error("is required"))}
             end
 
           {:ok, value} ->
@@ -38,13 +38,13 @@ defmodule Zoi.Types.Map do
         if errors == %{} do
           {:ok, parsed}
         else
-          {:error, errors}
+          {:error, %Zoi.Error{issues: errors}}
         end
       end)
     end
 
     def parse(_, _, _) do
-      {:error, %Zoi.Error{message: "invalid map type"}}
+      {:error, Zoi.Error.add_error("invalid object type")}
     end
 
     defp map_fetch(map, key) do

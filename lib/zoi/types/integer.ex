@@ -31,7 +31,7 @@ defmodule Zoi.Types.Integer do
         # TODO: coerce option
 
         true ->
-          {:error, %Zoi.Error{message: "invalid integer type"}}
+          {:error, Zoi.Error.add_error("invalid integer type")}
       end
     end
   end
@@ -49,7 +49,7 @@ defmodule Zoi.Types.Integer do
       if input >= min do
         :ok
       else
-        {:error, %Zoi.Error{message: "minimum value is #{min}"}}
+        {:error, Zoi.Error.add_error("minimum value is #{min}")}
       end
     end
   end
@@ -65,7 +65,7 @@ defmodule Zoi.Types.Integer do
       if input <= max do
         :ok
       else
-        {:error, %Zoi.Error{message: "maximum value is #{max}"}}
+        {:error, Zoi.Error.add_error("maximum value is #{max}")}
       end
     end
   end

@@ -8,23 +8,26 @@ defmodule Zoi do
   @type options :: keyword()
 
   defmodule Error do
-    defexception [:message, :key, :path, :value]
+    defexception [:message, issues: [], path: []]
 
     @impl true
     def exception(opts) when is_list(opts) do
       struct!(__MODULE__, opts)
     end
 
-    @impl true
-    def message(%__MODULE__{key: key, message: msg}) when not is_nil(key) do
-      "#{key} #{msg}"
+    def add_error(issue) when is_binary(issue) do
+      %__MODULE__{issues: [issue]}
     end
 
-    def message(%__MODULE__{message: msg}), do: msg
+    def add_error(%__MODULE__{issues: issues} = error, issue) do
+      %{error | issues: [issue | issues]}
+    end
+
+    def message(%__MODULE__{issues: issues}), do: Enum.join(issues, ", ")
 
     defimpl Inspect do
       def inspect(error, _opts) do
-        error.message
+        to_string(error.issues)
       end
     end
   end
@@ -43,7 +46,7 @@ defmodule Zoi do
   defdelegate integer(opts \\ []), to: Zoi.Types.Integer, as: :new
   defdelegate optional(opts \\ []), to: Zoi.Types.Optional, as: :new
   defdelegate default(inner, value, opts \\ []), to: Zoi.Types.Default, as: :new
-  defdelegate map(fields, opts \\ []), to: Zoi.Types.Map, as: :new
+  defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
 
   # Validations
   defdelegate min(schema, min), to: Zoi.Validations.Min, as: :new

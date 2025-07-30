@@ -6,9 +6,9 @@ defmodule Zoi.Types.Meta do
   of how to use this base module.
   """
 
-  @type t :: %__MODULE__{validations: [mfa()], coerce: boolean()}
+  @type t :: %__MODULE__{validations: [mfa()]}
 
-  @struct_fields [validations: [], coerce: false]
+  @struct_fields [validations: []]
   @struct_keys Keyword.keys(@struct_fields)
 
   defstruct @struct_fields

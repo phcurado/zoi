@@ -7,8 +7,19 @@ defmodule ZoiTest do
     end
 
     test "string with incorrect value" do
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.string(), 12)
-      assert error.message == "invalid string type"
+      wrong_values = [12, nil, 12.34, :atom]
+
+      for value <- wrong_values do
+        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.string(), value)
+        assert Exception.message(error) == "invalid string type"
+        assert error.issues == ["invalid string type"]
+      end
+    end
+
+    test "string with coercion" do
+      assert {:ok, "123"} == Zoi.parse(Zoi.string(coerce: false), 123, coerce: true)
+      assert {:ok, "true"} == Zoi.parse(Zoi.string(), true, coerce: true)
+      assert {:ok, "12.34"} == Zoi.parse(Zoi.string(), 12.34, coerce: true)
     end
 
     test "integer with correct value" do
@@ -16,8 +27,13 @@ defmodule ZoiTest do
     end
 
     test "integer with incorrect value" do
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.integer(), "12")
-      assert error.message == "invalid integer type"
+      wrong_values = ["12", nil, 12.34, :atom, "not an integer"]
+
+      for value <- wrong_values do
+        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.integer(), value)
+        assert Exception.message(error) == "invalid integer type"
+        assert error.issues == ["invalid integer type"]
+      end
     end
 
     test "optional" do
@@ -38,14 +54,37 @@ defmodule ZoiTest do
       end
     end
 
-    test "map with correct value" do
-      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
+    test "object with correct value" do
+      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
 
       assert {:ok, %{name: "John", age: 30}} ==
                Zoi.parse(schema, %{
                  "name" => "John",
                  "age" => 30
                })
+    end
+
+    test "object with missing required field" do
+      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+
+      assert {:error, %Zoi.Error{} = error} =
+               Zoi.parse(schema, %{
+                 "name" => "John"
+               })
+
+      assert error.issues == %{age: %Zoi.Error{issues: ["is required"]}}
+    end
+
+    test "object with incorrect values" do
+      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+
+      assert {:error, %Zoi.Error{} = error} =
+               Zoi.parse(schema, %{
+                 "name" => "John",
+                 "age" => "not an integer"
+               })
+
+      assert error.issues == %{age: %Zoi.Error{issues: ["invalid integer type"]}}
     end
   end
 

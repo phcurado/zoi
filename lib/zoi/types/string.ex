@@ -1,7 +1,7 @@
 defmodule Zoi.Types.String do
-  @type t :: %__MODULE__{meta: Zoi.Types.Base.t()}
+  @type t :: %__MODULE__{coerce: boolean(), meta: Zoi.Types.Base.t()}
 
-  defstruct [:meta]
+  defstruct [:meta, coerce: false]
 
   @spec new(opts :: keyword()) :: t()
   def new(opts \\ []) do
@@ -13,7 +13,9 @@ defmodule Zoi.Types.String do
     alias Zoi.Validations
 
     def parse(schema, input, opts) do
-      do_parse(input, opts)
+      coerce = Keyword.get(opts, :coerce, schema.coerce)
+
+      do_parse(input, coerce)
       |> then(fn
         {:ok, value} ->
           Validations.run_validations(schema, value)
@@ -23,15 +25,16 @@ defmodule Zoi.Types.String do
       end)
     end
 
-    defp do_parse(input, _opts) do
+    defp do_parse(input, coerce) do
       cond do
         is_binary(input) ->
           {:ok, input}
 
-        # TODO: coerce option
+        coerce ->
+          {:ok, to_string(input)}
 
         true ->
-          {:error, %Zoi.Error{message: "invalid string type"}}
+          {:error, Zoi.Error.add_error("invalid string type")}
       end
     end
   end
@@ -49,7 +52,7 @@ defmodule Zoi.Types.String do
       if String.match?(input, regex) do
         :ok
       else
-        {:error, %Zoi.Error{message: "regex does not match"}}
+        {:error, Zoi.Error.add_error("regex does not match")}
       end
     end
   end
@@ -80,7 +83,7 @@ defmodule Zoi.Types.String do
       if byte_size(input) >= min do
         :ok
       else
-        {:error, %Zoi.Error{message: "minimum length is #{min}"}}
+        {:error, Zoi.Error.add_error("minimum length is #{min}")}
       end
     end
   end
@@ -96,7 +99,7 @@ defmodule Zoi.Types.String do
       if byte_size(input) <= max do
         :ok
       else
-        {:error, %Zoi.Error{message: "maximum length is #{max}"}}
+        {:error, Zoi.Error.add_error("maximum length is #{max}")}
       end
     end
   end
