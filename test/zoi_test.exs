@@ -36,6 +36,12 @@ defmodule ZoiTest do
       end
     end
 
+    test "integer with coercion" do
+      assert {:ok, 123} == Zoi.parse(Zoi.integer(coerce: false), "123", coerce: true)
+      assert {:ok, 0} == Zoi.parse(Zoi.integer(), "0", coerce: true)
+      assert {:ok, -1} == Zoi.parse(Zoi.integer(), "-1", coerce: true)
+    end
+
     test "optional" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.optional(Zoi.string()), "hello")
       assert {:ok, nil} == Zoi.parse(Zoi.optional(Zoi.string()), nil)

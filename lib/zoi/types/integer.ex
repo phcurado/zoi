@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Integer do
-  @type t :: %__MODULE__{meta: Zoi.Types.Base.t()}
+  @type t :: %__MODULE__{coerce: boolean(), meta: Zoi.Types.Base.t()}
 
-  defstruct [:meta]
+  defstruct [:meta, coerce: false]
 
   @spec new(opts :: keyword()) :: t()
   def new(opts \\ []) do
@@ -13,7 +13,9 @@ defmodule Zoi.Types.Integer do
     alias Zoi.Validations
 
     def parse(schema, input, opts) do
-      do_parse(input, opts)
+      coerce = Keyword.get(opts, :coerce, schema.coerce)
+
+      do_parse(input, coerce)
       |> then(fn
         {:ok, value} ->
           Validations.run_validations(schema, value)
@@ -23,16 +25,28 @@ defmodule Zoi.Types.Integer do
       end)
     end
 
-    defp do_parse(input, _opts) do
+    defp do_parse(input, coerce) do
       cond do
         is_integer(input) ->
           {:ok, input}
 
-        # TODO: coerce option
+        coerce and is_binary(input) ->
+          coerce_integer(input)
 
         true ->
-          {:error, Zoi.Error.add_error("invalid integer type")}
+          error()
       end
+    end
+
+    defp coerce_integer(input) do
+      case Integer.parse(input) do
+        {integer, ""} -> {:ok, integer}
+        _error -> error()
+      end
+    end
+
+    defp error() do
+      {:error, Zoi.Error.add_error("invalid integer type")}
     end
   end
 
