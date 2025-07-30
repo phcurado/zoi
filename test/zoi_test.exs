@@ -2,6 +2,7 @@ defmodule ZoiTest do
   use ExUnit.Case
 
   describe "parse/3" do
+
     test "string with correct value" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.string(), "hello")
     end
@@ -40,6 +41,43 @@ defmodule ZoiTest do
       assert {:ok, 123} == Zoi.parse(Zoi.integer(coerce: false), "123", coerce: true)
       assert {:ok, 0} == Zoi.parse(Zoi.integer(), "0", coerce: true)
       assert {:ok, -1} == Zoi.parse(Zoi.integer(), "-1", coerce: true)
+    end
+
+    test "boolean with correct values" do
+      assert {:ok, true} == Zoi.parse(Zoi.boolean(), true)
+      assert {:ok, false} == Zoi.parse(Zoi.boolean(), false)
+    end
+
+    test "boolean with incorrect value" do
+      wrong_values = ["12", nil, 12.34, :atom, "true"]
+
+      for value <- wrong_values do
+        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.boolean(), value)
+        assert Exception.message(error) == "invalid boolean type"
+        assert error.issues == ["invalid boolean type"]
+      end
+    end
+
+    test "boolean with coercion" do
+      thruth_values = ["true", "1", "yes", "on", "y", "enabled"]
+      for value <- thruth_values do
+        assert {:ok, true} == Zoi.parse(Zoi.boolean(), value, coerce: true)
+      end
+      false_values = ["false", "0", "no", "off", "n", "disabled"]
+
+      for value <- false_values do
+        assert {:ok, false} == Zoi.parse(Zoi.boolean(), value, coerce: true)
+      end
+    end
+
+    test "invalid boolean with coercion" do
+      wrong_values = ["True", "False", 1, 0]
+
+      for value <- wrong_values do
+        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.boolean(), value, coerce: true)
+        assert Exception.message(error) == "invalid boolean type"
+        assert error.issues == ["invalid boolean type"]
+      end
     end
 
     test "optional" do

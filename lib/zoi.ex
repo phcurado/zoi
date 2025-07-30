@@ -44,6 +44,7 @@ defmodule Zoi do
   # Types
   defdelegate string(opts \\ []), to: Zoi.Types.String, as: :new
   defdelegate integer(opts \\ []), to: Zoi.Types.Integer, as: :new
+  defdelegate boolean(opts \\ []), to: Zoi.Types.Boolean, as: :new
   defdelegate optional(opts \\ []), to: Zoi.Types.Optional, as: :new
   defdelegate default(inner, value, opts \\ []), to: Zoi.Types.Default, as: :new
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
