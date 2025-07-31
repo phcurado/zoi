@@ -1,5 +1,7 @@
 defmodule Zoi.Types.Boolean do
-  @type t :: %__MODULE__{coerce: boolean(), meta: Zoi.Types.Base.t()}
+  @moduledoc false
+
+  @type t :: %__MODULE__{coerce: boolean(), meta: Zoi.Types.Meta.t()}
 
   defstruct [:meta, coerce: false]
 
@@ -41,11 +43,11 @@ defmodule Zoi.Types.Boolean do
     defp coerce_boolean(input) do
       cond do
         input in ["true", "1", "yes", "on", "y", "enabled"] ->
-        {:ok, true}
+          {:ok, true}
 
         input in ["false", "0", "no", "off", "n", "disabled"] ->
-          
-        {:ok, false}
+          {:ok, false}
+
         true ->
           error()
       end

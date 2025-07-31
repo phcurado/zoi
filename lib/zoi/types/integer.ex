@@ -1,5 +1,7 @@
 defmodule Zoi.Types.Integer do
-  @type t :: %__MODULE__{coerce: boolean(), meta: Zoi.Types.Base.t()}
+  @moduledoc false
+
+  @type t :: %__MODULE__{coerce: boolean(), meta: Zoi.Types.Meta.t()}
 
   defstruct [:meta, coerce: false]
 

@@ -11,7 +11,7 @@ defprotocol Zoi.Validations.Regex do
   @doc """
   Applies validation on input
   """
-  @spec validate(schema :: Zoi.Type.t(), input :: Zod.input(), regex :: input_type()) ::
+  @spec validate(schema :: Zoi.Type.t(), input :: Zoi.input(), regex :: input_type()) ::
           :ok | {:error, Zoi.Error.t()}
   def validate(schema, input, regex)
 end

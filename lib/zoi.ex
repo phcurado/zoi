@@ -8,6 +8,10 @@ defmodule Zoi do
   @type options :: keyword()
 
   defmodule Error do
+    @type t :: %__MODULE__{
+            message: binary(),
+            issues: [binary()],
+    }
     defexception [:message, issues: [], path: []]
 
     @impl true

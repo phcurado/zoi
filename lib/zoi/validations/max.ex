@@ -11,7 +11,7 @@ defprotocol Zoi.Validations.Max do
   @doc """
   Applies validation on input
   """
-  @spec validate(schema :: Zod.Type.t(), input :: Zoi.input(), max :: input_type()) ::
+  @spec validate(schema :: Zoi.Type.t(), input :: Zoi.input(), max :: input_type()) ::
           :ok | {:error, String.t()}
   def validate(schema, input, max)
 end

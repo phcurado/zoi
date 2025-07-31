@@ -2,7 +2,6 @@ defmodule ZoiTest do
   use ExUnit.Case
 
   describe "parse/3" do
-
     test "string with correct value" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.string(), "hello")
     end
@@ -60,9 +59,11 @@ defmodule ZoiTest do
 
     test "boolean with coercion" do
       thruth_values = ["true", "1", "yes", "on", "y", "enabled"]
+
       for value <- thruth_values do
         assert {:ok, true} == Zoi.parse(Zoi.boolean(), value, coerce: true)
       end
+
       false_values = ["false", "0", "no", "off", "n", "disabled"]
 
       for value <- false_values do

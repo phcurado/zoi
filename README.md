@@ -1,9 +1,10 @@
 # Zoi
 
+Zoi is a schema validation library for Elixir, inspired by [Zod](https://zod.dev/).
+
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `zoi` to your list of dependencies in `mix.exs`:
+`zoi` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -13,9 +14,20 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/zoi>.
+## Usage
+
+You can define schemas and validate data against them. Schemas can be used to validate maps, lists or primitive types such as strings, integers, etc.
+
+```elixir
+# Define a schema with primitive type
+iex> schema = Zoi.string() |> Zoi.min(3)
+...> Zoi.parse(schema, "hello")
+{:ok, "hello"}
+# Validate a map with a schema
+iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
+...> Zoi.parse(schema, %{name: "John", age: 30})
+{:ok, %{name: "John", age: 30}}
+```
 
 ## Roadmap
 
@@ -26,3 +38,7 @@ be found at <https://hexdocs.pm/zoi>.
 - [ ] Add guides on how to create custom types and validations
 - [ ] Add transform and extend operations for types
 - [ ] Interface this library with changesets
+
+```
+
+```

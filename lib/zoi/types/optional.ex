@@ -1,5 +1,7 @@
 defmodule Zoi.Types.Optional do
-  @type t :: %__MODULE__{inner: Zoi.Type.t(), meta: Zoi.Types.Base.t()}
+  @moduledoc false
+
+  @type t :: %__MODULE__{inner: Zoi.Type.t(), meta: Zoi.Types.Meta.t()}
   defstruct [:inner, :meta]
 
   @spec new(inner :: Zoi.Type.t(), opts :: Zoi.options()) :: t()

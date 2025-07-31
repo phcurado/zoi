@@ -1,7 +1,9 @@
 defmodule Zoi.Types.Object do
+  @moduledoc false
+
   @type map_field :: %{binary() => Zoi.Type.t()}
   @type fields :: [map_field]
-  @type t :: %__MODULE__{fields: fields, meta: Zoi.Types.Base.t()}
+  @type t :: %__MODULE__{fields: fields, meta: Zoi.Types.Meta.t()}
 
   defstruct [:fields, :meta]
 

@@ -3,10 +3,10 @@ defmodule Zoi.Validations do
   Module for defining and running validations.
   """
 
-  @type validation :: mfa()
+  @type validation :: {module(), atom(), [any()]}
   @type validation_result :: {:ok, any()} | {:error, map()}
 
-  @spec append_validations(Zoi.Type.t(), validation()) :: [validation()]
+  @spec append_validations(schema :: Zoi.Type.t(), validation :: validation()) :: Zoi.Type.t()
   def append_validations(schema, validation) do
     validations = [validation | schema.meta.validations]
     meta = %{schema.meta | validations: validations}

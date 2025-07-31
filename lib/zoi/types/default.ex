@@ -4,7 +4,7 @@ defmodule Zoi.Types.Default do
   It is used to provide a default value when the field is not present in the input data.
   """
 
-  @type t :: %__MODULE__{inner: Zoi.Type.t(), value: Zoi.input(), meta: Zoi.Types.Base.t()}
+  @type t :: %__MODULE__{inner: Zoi.Type.t(), value: Zoi.input(), meta: Zoi.Types.Meta.t()}
   defstruct [:inner, :value, :meta]
 
   def new(inner, value, opts \\ []) do
