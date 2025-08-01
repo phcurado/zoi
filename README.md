@@ -20,13 +20,12 @@ You can define schemas and validate data against them. Schemas can be used to va
 
 ```elixir
 # Define a schema with primitive type
-iex> schema = Zoi.string() |> Zoi.min(3)
-...> Zoi.parse(schema, "hello")
-{:ok, "hello"}
+schema = Zoi.string() |> Zoi.min(3)
+Zoi.parse(schema, "hello") # {:ok, "hello"}
+
 # Validate a map with a schema
-iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
-...> Zoi.parse(schema, %{name: "John", age: 30})
-{:ok, %{name: "John", age: 30}}
+schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
+Zoi.parse(schema, %{name: "John", age: 30}) # {:ok, %{name: "John", age: 30}}
 ```
 
 ## Roadmap

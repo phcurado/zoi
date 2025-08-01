@@ -1,6 +1,21 @@
 defmodule Zoi do
   @moduledoc """
-  Documentation for `Zoi`.
+  `Zoi` is a schema validation library for Elixir, designed to provide a simple and flexible way to define and validate data.
+
+  It allows you to create schemas for various data types, including strings, integers, booleans, and complex objects, with built-in support for validations like minimum and maximum values, regex patterns, and email formats.
+
+      user = Zoi.object(%{
+        name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
+        age: Zoi.integer() |> Zoi.min(18) |> Zoi.max(120),
+        email: Zoi.string() |> Zoi.email()
+      })
+
+      Zoi.parse(user, %{
+        name: "Alice",
+        age: 30,
+        email: "alice@email.com"
+      })
+      # {:ok, %{name: "Alice", age: 30, email: "alice@email.com"}}
   """
 
   @type input :: any()
@@ -10,8 +25,8 @@ defmodule Zoi do
   defmodule Error do
     @type t :: %__MODULE__{
             message: binary(),
-            issues: [binary()],
-    }
+            issues: [binary()]
+          }
     defexception [:message, issues: [], path: []]
 
     @impl true
