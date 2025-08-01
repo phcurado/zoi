@@ -1,5 +1,7 @@
 defmodule Zoi.Types.Integer do
-  @moduledoc false
+  @moduledoc """
+  Represents an integer type in Zoi schema.
+  """
 
   @type t :: %__MODULE__{coerce: boolean(), meta: Zoi.Types.Meta.t()}
 

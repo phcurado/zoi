@@ -37,7 +37,3 @@ Zoi.parse(schema, %{name: "John", age: 30}) # {:ok, %{name: "John", age: 30}}
 - [ ] Add guides on how to create custom types and validations
 - [ ] Add transform and extend operations for types
 - [ ] Interface this library with changesets
-
-```
-
-```

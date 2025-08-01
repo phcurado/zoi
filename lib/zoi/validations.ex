@@ -1,7 +1,5 @@
 defmodule Zoi.Validations do
-  @moduledoc """
-  Module for defining and running validations.
-  """
+  @moduledoc false
 
   @type validation :: {module(), atom(), [any()]}
   @type validation_result :: {:ok, any()} | {:error, map()}
