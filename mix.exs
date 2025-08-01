@@ -70,6 +70,12 @@ defmodule Zoi.MixProject do
           # Zoi.Type.Decimal,
           # Zoi.Type.Float,
           # Zoi.Type.Map,
+        ],
+        Validations: [
+          Zoi.Validations.Min,
+          Zoi.Validations.Max,
+          Zoi.Validations.Regex,
+          Zoi.Validations.Email
         ]
       ]
     ]
