@@ -77,6 +77,9 @@ defmodule Zoi.Types.Meta do
 
         {:error, err} ->
           {:halt, {:error, err}}
+
+        result ->
+          {:cont, {:ok, result}}
       end
     end)
   end

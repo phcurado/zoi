@@ -39,37 +39,6 @@ defprotocol Zoi.Type do
       {:ok, true}
       iex> Zoi.Type.parse(schema, 123)
       {:error, %Zoi.Error{message: "invalid string or boolean type"}}
-
-  ## Custom validation
-  You can also implement custom validation logic from the built-in validations. 
-  For example, if you want to validate a string against a regex pattern, you can do so by implementing the `Zoi.Validations.Regex` protocol:
-
-      defimpl Zoi.Validations.Regex, for: StringBoolean do
-        def validate(schema, input, regex) do
-          if String.match?(input, regex) do
-            :ok
-          else
-            {:error, "regex does not match"}
-          end
-        end
-      end
-  """
-
-  @doc """
-  Parses the `value` according to the `schema`. Responsible for coercion and missing values.
-
-  Accepts an optional `opts` keyword list for additional options like `coercion: true` to enable input coercion.
-  If `coercion` is set to `false`, it will not attempt to coerce the input and will only validate the type.
-
-  ## Examples
-  To parse a string input:
-
-      iex> schema = Zoi.string()
-      iex> Zoi.Type.parse(schema, "hello world")
-      {:ok, "hello world"}
-
-  Since `Zoi.string/1` creates the an internal struct and implements the `Zoi.Type` protocol,
-  it can handle the parsing logic defined in their internal module.
   """
 
   defmacro __using__(opts) do

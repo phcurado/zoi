@@ -201,4 +201,17 @@ defmodule ZoiTest do
       assert error.issues == ["must start with 'prefix_'"]
     end
   end
+
+  describe "trim/2" do
+    test "trim whitespace" do
+      schema = Zoi.string() |> Zoi.trim()
+      assert {:ok, "hello"} == Zoi.parse(schema, "  hello  ")
+      assert {:ok, "world"} == Zoi.parse(schema, "  world")
+    end
+
+    test "trim with no whitespace" do
+      schema = Zoi.string() |> Zoi.trim()
+      assert {:ok, "test"} == Zoi.parse(schema, "test")
+    end
+  end
 end

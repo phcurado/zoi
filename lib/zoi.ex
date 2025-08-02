@@ -48,7 +48,7 @@ defmodule Zoi do
       {:ok, "123"}
   """
 
-  alias Zoi.Types.Meta.Validations
+  alias Zoi.Types.Meta
 
   @type input :: any()
   @type result :: {:ok, any()} | {:error, map()}
@@ -85,35 +85,18 @@ defmodule Zoi do
 
   @doc """
   Parse input data against a schema.
-  Accepts optional `strict: true` option to disable coercion.
+  Accepts optional `coerce: true` option to enable coercion.
   """
   @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: result()
   def parse(schema, input, opts \\ []) do
-    schema
-    |> Zoi.Type.parse(input, opts)
-    |> case do
-      {:ok, result} ->
-        run_validations(schema, result)
-
-      {:error, error} ->
-        {:error, handle_error_result(error)}
+    with {:ok, result} <- Zoi.Type.parse(schema, input, opts),
+         {:ok, _validated_result} <- Meta.run_validations(schema, result),
+         {:ok, result} <- Meta.run_transforms(schema, result) do
+      {:ok, result}
+    else
+      {:error, %Zoi.Error{} = error} -> {:error, error}
+      {:error, reason} when is_binary(reason) -> {:error, Zoi.Error.add_error(reason)}
     end
-  end
-
-  defp run_validations(schema, result) do
-    case Validations.run_validations(schema, result) do
-      {:ok, _validated_result} ->
-        {:ok, result}
-
-      {:error, error} ->
-        {:error, handle_error_result(error)}
-    end
-  end
-
-  defp handle_error_result(%Zoi.Error{} = error), do: error
-
-  defp handle_error_result(reason) when is_binary(reason) do
-    Zoi.Error.add_error(reason)
   end
 
   # Types
@@ -212,7 +195,17 @@ defmodule Zoi do
 
   # Validations
 
-  @doc false
+  @doc """
+  Validates that the string has a specific length.
+  ## Example
+
+      iex> schema = Zoi.string() |> Zoi.length(5)
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, "hi")
+      {:error, %Zoi.Error{issues: ["length must be 5"]}}
+  """
+  @spec length(schema :: Zoi.Type.t(), length :: non_neg_integer()) :: Zoi.Type.t()
   def length(%Zoi.Types.String{} = schema, length) do
     schema
     |> refine(fn input, _opts ->
@@ -284,7 +277,16 @@ defmodule Zoi do
     end)
   end
 
-  @doc false
+  @doc """
+  Validates that the string is a valid email format.
+  ## Example
+      iex> schema = Zoi.string() |> Zoi.email()
+      iex> Zoi.parse(schema, "test@test.com")
+      {:ok, "test@test.com"}
+      iex> Zoi.parse(schema, "invalid-email")
+      {:error, %Zoi.Error{issues: ["invalid email format"]}}
+  """
+  @spec email(schema :: Zoi.Type.t()) :: Zoi.Type.t()
   def email(%Zoi.Types.String{} = schema) do
     schema
     |> regex(
@@ -303,6 +305,45 @@ defmodule Zoi do
         {:error, "must start with '#{prefix}'"}
       end
     end)
+  end
+
+  # Transforms
+
+  @doc """
+  Trims whitespace from the beginning and end of a string.
+  ## Example
+
+      iex> schema = Zoi.string() |> Zoi.trim()
+      iex> Zoi.parse(schema, "  hello world  ")
+      {:ok, "hello world"}
+  """
+  @spec trim(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  def trim(%Zoi.Types.String{} = schema) do
+    transform(schema, &String.trim/1)
+  end
+
+  @doc """
+  Converts a string to lowercase.
+  ## Example
+      iex> schema = Zoi.string() |> Zoi.downcase()
+      iex> Zoi.parse(schema, "Hello World")
+      {:ok, "hello world"}
+  """
+  @spec downcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  def downcase(%Zoi.Types.String{} = schema) do
+    transform(schema, &String.downcase/1)
+  end
+
+  @doc """
+  Converts a string to uppercase.
+  ## Example
+      iex> schema = Zoi.string() |> Zoi.uppercase()
+      iex> Zoi.parse(schema, "Hello World")
+      {:ok, "HELLO WORLD"}
+  """
+  @spec uppercase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  def uppercase(%Zoi.Types.String{} = schema) do
+    transform(schema, &String.upcase/1)
   end
 
   @doc """
@@ -324,9 +365,21 @@ defmodule Zoi do
   """
   @spec refine(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
   def refine(schema, fun, opts \\ []) do
-    Validations.append_validations(schema, {:refine, fun, opts})
+    update_in(schema.meta.validations, fn transforms ->
+      transforms ++ [{:refine, fun, opts}]
+    end)
   end
 
+  @doc """
+  Adds a transformation function to the schema.
+
+  This function will be applied to the input data after parsing but before validations.
+
+  ## Example
+      iex> schema = Zoi.string() |> Zoi.transform(&String.trim/1)
+      iex> Zoi.parse(schema, "  hello world  ")
+      {:ok, "hello world"}
+  """
   @spec transform(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
   def transform(schema, fun) do
     update_in(schema.meta.transforms, fn transforms ->
