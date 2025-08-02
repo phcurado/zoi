@@ -1,14 +1,10 @@
 defmodule Zoi.Types.Boolean do
   @moduledoc false
 
-  @type t :: %__MODULE__{coerce: boolean(), meta: Zoi.Types.Meta.t()}
+  use Zoi.Type, fields: [coerce: false]
 
-  defstruct [:meta, coerce: false]
-
-  @spec new(opts :: keyword()) :: t()
   def new(opts \\ []) do
-    {meta, opts} = Zoi.Types.Meta.create_meta(opts)
-    struct!(__MODULE__, [{:meta, meta} | opts])
+    apply_type(opts)
   end
 
   defimpl Zoi.Type do

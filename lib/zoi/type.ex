@@ -8,15 +8,11 @@ defprotocol Zoi.Type do
   ## Example
   To create a custom type, you can define a module and implement the `Zoi.Type` protocol:
       defmodule StringBoolean do
-        @type t :: %__MODULE__{meta: Zoi.Types.Meta.t()}
+        use Zoi.Type
 
-        defstruct [:meta]
-
-        # You can define any function that will instance your custom type
+        # `apply_type/1` is a helper function that will create the struct with the given options.
         def string_bool(opts \\ []) do
-          # Create a new instance of the type with optional metadata and coercion settings
-          {meta, opts} = Zoi.Types.Meta.create_meta(opts)
-          struct!(__MODULE__, [{:meta, meta} | opts])
+          apply_type(opts)
         end
 
         defimpl Zoi.Type do
@@ -46,6 +42,17 @@ defprotocol Zoi.Type do
 
   ## Custom validation
   You can also implement custom validation logic from the built-in validations. 
+  For example, if you want to validate a string against a regex pattern, you can do so by implementing the `Zoi.Validations.Regex` protocol:
+
+      defimpl Zoi.Validations.Regex, for: StringBoolean do
+        def validate(schema, input, regex) do
+          if String.match?(input, regex) do
+            :ok
+          else
+            {:error, "regex does not match"}
+          end
+        end
+      end
   """
 
   @doc """
@@ -64,5 +71,20 @@ defprotocol Zoi.Type do
   Since `Zoi.string/1` creates the an internal struct and implements the `Zoi.Type` protocol,
   it can handle the parsing logic defined in their internal module.
   """
+
+  defmacro __using__(opts) do
+    fields = Keyword.get(opts, :fields, [])
+
+    quote do
+      defstruct unquote(fields) ++ [meta: nil]
+
+      def apply_type(opts \\ []) do
+        {meta, opts} = Zoi.Types.Meta.create_meta(opts)
+        opts = Keyword.merge(opts, meta: meta)
+        struct!(__MODULE__, opts)
+      end
+    end
+  end
+
   def parse(schema, input, opts)
 end

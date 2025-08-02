@@ -46,10 +46,9 @@ defmodule Zoi do
 
       iex> Zoi.string(coerce: true) |> Zoi.parse(123)
       {:ok, "123"}
-
-
-
   """
+
+  alias Zoi.Types.Meta.Validations
 
   @type input :: any()
   @type result :: {:ok, any()} | {:error, map()}
@@ -102,7 +101,7 @@ defmodule Zoi do
   end
 
   defp run_validations(schema, result) do
-    case Zoi.Validations.run_validations(schema, result) do
+    case Validations.run_validations(schema, result) do
       {:ok, _validated_result} ->
         {:ok, result}
 
@@ -212,15 +211,126 @@ defmodule Zoi do
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
 
   # Validations
-  @doc false
-  defdelegate min(schema, min), to: Zoi.Validations.Min, as: :new
 
   @doc false
-  defdelegate max(schema, max), to: Zoi.Validations.Max, as: :new
+  def length(%Zoi.Types.String{} = schema, length) do
+    schema
+    |> refine(fn input, _opts ->
+      if String.length(input) == length do
+        :ok
+      else
+        {:error, "length must be #{length}"}
+      end
+    end)
+  end
 
   @doc false
-  defdelegate regex(schema, regex), to: Zoi.Validations.Regex, as: :new
+  def min(%Zoi.Types.String{} = schema, min) do
+    schema
+    |> refine(fn input, _opts ->
+      if String.length(input) >= min do
+        :ok
+      else
+        {:error, "minimum length is #{min}"}
+      end
+    end)
+  end
+
+  def min(%Zoi.Types.Integer{} = schema, min) do
+    schema
+    |> refine(fn input, _opts ->
+      if input >= min do
+        :ok
+      else
+        {:error, "minimum value is #{min}"}
+      end
+    end)
+  end
 
   @doc false
-  defdelegate email(schema, email), to: Zoi.Validations.Email, as: :new
+  def max(%Zoi.Types.String{} = schema, max) do
+    schema
+    |> refine(fn input, _opts ->
+      if String.length(input) <= max do
+        :ok
+      else
+        {:error, "maximum length is #{max}"}
+      end
+    end)
+  end
+
+  def max(%Zoi.Types.Integer{} = schema, max) do
+    schema
+    |> refine(fn input, _opts ->
+      if input <= max do
+        :ok
+      else
+        {:error, "maximum value is #{max}"}
+      end
+    end)
+  end
+
+  @doc false
+  def regex(%Zoi.Types.String{} = schema, regex, opts \\ []) do
+    message = Keyword.get(opts, :message, "regex does not match")
+
+    schema
+    |> refine(fn input, _opts ->
+      if String.match?(input, regex) do
+        :ok
+      else
+        {:error, message}
+      end
+    end)
+  end
+
+  @doc false
+  def email(%Zoi.Types.String{} = schema) do
+    schema
+    |> regex(
+      ~r/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i,
+      message: "invalid email format"
+    )
+  end
+
+  @doc false
+  def starts_with(schema, prefix) do
+    schema
+    |> refine(fn input, _opts ->
+      if String.starts_with?(input, prefix) do
+        :ok
+      else
+        {:error, "must start with '#{prefix}'"}
+      end
+    end)
+  end
+
+  @doc """
+  Adds a custom validation function to the schema.
+  This function will be called with the input data and options, and should return `:ok` for valid data or `{:error, reason}` for invalid data.
+  ## Example
+
+      iex> schema = Zoi.string() |> Zoi.refine(fn input, _opts ->
+      ...>   if String.length(input) > 5 do
+      ...>     :ok
+      ...>   else
+      ...>     {:error, "must be longer than 5 characters"}
+      ...>   end
+      ...> end)
+      iex> Zoi.parse(schema, "hello world")
+      {:ok, "hello world"}
+      iex> Zoi.parse(schema, "hi")
+      {:error, %Zoi.Error{issues: ["must be longer than 5 characters"]}}
+  """
+  @spec refine(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
+  def refine(schema, fun, opts \\ []) do
+    Validations.append_validations(schema, {:refine, fun, opts})
+  end
+
+  @spec transform(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
+  def transform(schema, fun) do
+    update_in(schema.meta.transforms, fn transforms ->
+      transforms ++ [fun]
+    end)
+  end
 end

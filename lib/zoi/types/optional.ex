@@ -1,14 +1,10 @@
 defmodule Zoi.Types.Optional do
   @moduledoc false
 
-  @type t :: %__MODULE__{inner: Zoi.Type.t(), meta: Zoi.Types.Meta.t()}
-  defstruct [:inner, :meta]
+  use Zoi.Type, fields: [:inner]
 
-  @spec new(inner :: Zoi.Type.t(), opts :: Zoi.options()) :: t()
   def new(inner, opts \\ []) do
-    {meta, opts} = Zoi.Types.Meta.create_meta(opts)
-    opts = Keyword.merge(opts, inner: inner, meta: meta)
-    struct!(__MODULE__, opts)
+    apply_type(opts ++ [inner: inner])
   end
 
   defimpl Zoi.Type do

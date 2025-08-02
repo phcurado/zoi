@@ -1,17 +1,10 @@
 defmodule Zoi.Types.Object do
   @moduledoc false
 
-  @type map_field :: %{binary() => Zoi.Type.t()}
-  @type fields :: [map_field]
-  @type t :: %__MODULE__{fields: fields, meta: Zoi.Types.Meta.t()}
+  use Zoi.Type, fields: [:fields]
 
-  defstruct [:fields, :meta]
-
-  @spec new(fields :: fields, opts :: keyword()) :: t()
   def new(fields, opts \\ []) do
-    {meta, opts} = Zoi.Types.Meta.create_meta(opts)
-    opts = Keyword.merge(opts, fields: fields, meta: meta)
-    struct!(__MODULE__, opts)
+    apply_type(opts ++ [fields: fields])
   end
 
   defimpl Zoi.Type do

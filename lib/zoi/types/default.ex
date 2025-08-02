@@ -1,7 +1,6 @@
 defmodule Zoi.Types.Default do
   @moduledoc false
-  @type t :: %__MODULE__{inner: Zoi.Type.t(), value: Zoi.input(), meta: Zoi.Types.Meta.t()}
-  defstruct [:inner, :value, :meta]
+  use Zoi.Type, fields: [:inner, :value]
 
   def new(inner, value, opts \\ []) do
     {meta, opts} = Zoi.Types.Meta.create_meta(opts)

@@ -140,5 +140,65 @@ defmodule ZoiTest do
       assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hi")
       assert Exception.message(error) == "minimum length is 5"
     end
+
+    test "min for integer" do
+      schema = Zoi.integer() |> Zoi.min(10)
+      assert {:ok, 15} == Zoi.parse(schema, 15)
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 5)
+      assert Exception.message(error) == "minimum value is 10"
+    end
+  end
+
+  describe "max/2" do
+    test "max for string" do
+      schema = Zoi.string() |> Zoi.max(5)
+      assert {:ok, "hi"} == Zoi.parse(schema, "hi")
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hello world")
+      assert Exception.message(error) == "maximum length is 5"
+    end
+
+    test "max for integer" do
+      schema = Zoi.integer() |> Zoi.max(10)
+      assert {:ok, 5} == Zoi.parse(schema, 5)
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 15)
+      assert Exception.message(error) == "maximum value is 10"
+    end
+  end
+
+  describe "length/2" do
+    test "length for string" do
+      schema = Zoi.string() |> Zoi.length(5)
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hi")
+      assert Exception.message(error) == "length must be 5"
+    end
+  end
+
+  describe "email/1" do
+    test "valid email" do
+      schema = Zoi.string() |> Zoi.email()
+      assert {:ok, "test@test.com"} == Zoi.parse(schema, "test@test.com")
+    end
+
+    test "invalid email" do
+      schema = Zoi.string() |> Zoi.email()
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "invalid-email")
+      assert Exception.message(error) == "invalid email format"
+      assert error.issues == ["invalid email format"]
+    end
+  end
+
+  describe "starts_with/2" do
+    test "valid prefix" do
+      schema = Zoi.string() |> Zoi.starts_with("prefix_")
+      assert {:ok, "prefix_value"} == Zoi.parse(schema, "prefix_value")
+    end
+
+    test "invalid prefix" do
+      schema = Zoi.string() |> Zoi.starts_with("prefix_")
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "value")
+      assert Exception.message(error) == "must start with 'prefix_'"
+      assert error.issues == ["must start with 'prefix_'"]
+    end
   end
 end
