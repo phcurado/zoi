@@ -12,22 +12,9 @@ defmodule Zoi.Types.Boolean do
   end
 
   defimpl Zoi.Type do
-    alias Zoi.Validations
-
     def parse(schema, input, opts) do
       coerce = Keyword.get(opts, :coerce, schema.coerce)
 
-      do_parse(input, coerce)
-      |> then(fn
-        {:ok, value} ->
-          Validations.run_validations(schema, value)
-
-        {:error, _reason} = error ->
-          error
-      end)
-    end
-
-    defp do_parse(input, coerce) do
       cond do
         is_boolean(input) ->
           {:ok, input}
@@ -54,7 +41,7 @@ defmodule Zoi.Types.Boolean do
     end
 
     defp error() do
-      {:error, Zoi.Error.add_error("invalid boolean type")}
+      {:error, "invalid boolean type"}
     end
   end
 end

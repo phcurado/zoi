@@ -1,9 +1,5 @@
 defmodule Zoi.Types.Default do
-  @moduledoc """
-  A type that represents a default value for a schema field.
-  It is used to provide a default value when the field is not present in the input data.
-  """
-
+  @moduledoc false
   @type t :: %__MODULE__{inner: Zoi.Type.t(), value: Zoi.input(), meta: Zoi.Types.Meta.t()}
   defstruct [:inner, :value, :meta]
 

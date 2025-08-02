@@ -1,7 +1,5 @@
 defmodule Zoi.Types.Integer do
-  @moduledoc """
-  Represents an integer type in Zoi schema.
-  """
+  @moduledoc false
 
   @type t :: %__MODULE__{coerce: boolean(), meta: Zoi.Types.Meta.t()}
 
@@ -19,17 +17,6 @@ defmodule Zoi.Types.Integer do
     def parse(schema, input, opts) do
       coerce = Keyword.get(opts, :coerce, schema.coerce)
 
-      do_parse(input, coerce)
-      |> then(fn
-        {:ok, value} ->
-          Validations.run_validations(schema, value)
-
-        {:error, _reason} = error ->
-          error
-      end)
-    end
-
-    defp do_parse(input, coerce) do
       cond do
         is_integer(input) ->
           {:ok, input}
@@ -50,7 +37,7 @@ defmodule Zoi.Types.Integer do
     end
 
     defp error() do
-      {:error, Zoi.Error.add_error("invalid integer type")}
+      {:error, "invalid integer type"}
     end
   end
 
@@ -67,7 +54,7 @@ defmodule Zoi.Types.Integer do
       if input >= min do
         :ok
       else
-        {:error, Zoi.Error.add_error("minimum value is #{min}")}
+        {:error, "minimum value is #{min}"}
       end
     end
   end
@@ -83,7 +70,7 @@ defmodule Zoi.Types.Integer do
       if input <= max do
         :ok
       else
-        {:error, Zoi.Error.add_error("maximum value is #{max}")}
+        {:error, "maximum value is #{max}"}
       end
     end
   end

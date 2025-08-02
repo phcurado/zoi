@@ -56,28 +56,7 @@ defmodule Zoi.MixProject do
       main: "Zoi",
       source_ref: "v#{@version}",
       source_url: @source_url,
-      extras: ["README.md"],
-      groups_for_modules: [
-        Types: [
-          # Zoi.Type.Array,
-          Zoi.Types.String,
-          Zoi.Types.Integer,
-          Zoi.Types.Boolean,
-          Zoi.Types.Object,
-          Zoi.Types.Optional,
-          Zoi.Types.Default
-          # Zoi.Type.DateTime,
-          # Zoi.Type.Decimal,
-          # Zoi.Type.Float,
-          # Zoi.Type.Map,
-        ],
-        Validations: [
-          Zoi.Validations.Min,
-          Zoi.Validations.Max,
-          Zoi.Validations.Regex,
-          Zoi.Validations.Email
-        ]
-      ]
+      extras: ["README.md"]
     ]
   end
 end

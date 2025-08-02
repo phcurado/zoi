@@ -29,21 +29,23 @@ defprotocol Zoi.Type do
             {:ok, input}
           end
 
-          def parse(schema, input, opts) do
-            {:error, Zoi.Error.add_error("invalid string or boolean type")}
+          def parse(_schema, _input, _opts) do
+            {:error, "invalid string or boolean type"}
           end
         end
       end
 
   You can then use this type in your schema definitions and it will handle parsing and validation as defined.
       iex> schema = StringBoolean.string_bool()
-      iex> Zoi.Type.parse(schema, "hello world")
+      iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
       iex> Zoi.Type.parse(schema, true)
       {:ok, true}
       iex> Zoi.Type.parse(schema, 123)
       {:error, %Zoi.Error{message: "invalid string or boolean type"}}
 
+  ## Custom validation
+  You can also implement custom validation logic from the built-in validations. 
   """
 
   @doc """
@@ -59,8 +61,8 @@ defprotocol Zoi.Type do
       iex> Zoi.Type.parse(schema, "hello world")
       {:ok, "hello world"}
 
-  Since `Zoi.string/2` creates the `Zoi.Types.String` struct and implements the `Zoi.Type` protocol,
-  it will handle the parsing logic defined in the `Zoi.Types.String` module.
+  Since `Zoi.string/1` creates the an internal struct and implements the `Zoi.Type` protocol,
+  it can handle the parsing logic defined in their internal module.
   """
   def parse(schema, input, opts)
 end
