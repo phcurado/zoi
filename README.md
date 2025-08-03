@@ -1,7 +1,7 @@
 # Zoi
 
 [![CI](https://github.com/phcurado/zoi/actions/workflows/ci.yml/badge.svg)](https://github.com/phcurado/zoi/actions/workflows/ci.yml)
-[![Coverage Status](https://coveralls.io/repos/github/phcurado/zozoibadge.svg?branch=main)](https://coveralls.io/github/phcurado/zoi?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/phcurado/zoi/badge.svg?branch=main)](https://coveralls.io/github/phcurado/zoi?branch=main)
 [![Hex.pm](https://img.shields.io/hexpm/v/zoi)](https://hex.pm/packages/zoi)
 [![HexDocs.pm](https://img.shields.io/badge/Docs-HexDocs-blue)](https://hexdocs.pm/zoi)
 [![License](https://img.shields.io/hexpm/l/zoi.svg)](https://hex.pm/packages/zoi)
@@ -29,8 +29,8 @@ You can define schemas and validate data against them. Schemas can be used to va
 schema = Zoi.string() |> Zoi.min(3)
 Zoi.parse(schema, "hello") # {:ok, "hello"}
 
-# Validate a map with a schema
-schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
+# Validate a structured data in a map
+schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
 Zoi.parse(schema, %{name: "John", age: 30}) # {:ok, %{name: "John", age: 30}}
 ```
 
