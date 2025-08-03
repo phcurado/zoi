@@ -1,6 +1,20 @@
 defmodule ZoiTest do
   use ExUnit.Case
 
+  describe "Zoi.Error" do
+    test "exception/1" do
+      assert %Zoi.Error{issues: [], message: "An error occurred"} =
+               Zoi.Error.exception(message: "An error occurred")
+    end
+
+    test "add_error/2" do
+      error = %Zoi.Error{issues: ["invalid type"]}
+      updated_error = Zoi.Error.add_error(error, "additional issue")
+
+      assert updated_error.issues == ["additional issue", "invalid type"]
+    end
+  end
+
   describe "parse/3" do
     test "string with correct value" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.string(), "hello")
@@ -48,6 +62,34 @@ defmodule ZoiTest do
 
       assert Exception.message(error) == "invalid integer type"
       assert error.issues == ["invalid integer type"]
+    end
+
+    test "float with correct value" do
+      assert {:ok, 12.34} == Zoi.parse(Zoi.float(), 12.34)
+    end
+
+    test "float with incorrect value" do
+      wrong_values = ["12", nil, 12, :atom, "not a float"]
+
+      for value <- wrong_values do
+        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.float(), value)
+        assert Exception.message(error) == "invalid float type"
+        assert error.issues == ["invalid float type"]
+      end
+    end
+
+    test "float with coercion" do
+      assert {:ok, 12.34} == Zoi.parse(Zoi.float(coerce: false), "12.34", coerce: true)
+      assert {:ok, 0.0} == Zoi.parse(Zoi.float(), "0", coerce: true)
+      assert {:ok, -1.0} == Zoi.parse(Zoi.float(), "-1", coerce: true)
+    end
+
+    test "float with coercion but incorrect value" do
+      assert {:error, %Zoi.Error{} = error} =
+               Zoi.parse(Zoi.float(), "not_float", coerce: true)
+
+      assert Exception.message(error) == "invalid float type"
+      assert error.issues == ["invalid float type"]
     end
 
     test "boolean with correct values" do
@@ -102,9 +144,11 @@ defmodule ZoiTest do
     end
 
     test "default with incorrect type" do
-      assert_raise Zoi.Error, "default error: invalid integer type", fn ->
-        Zoi.default(Zoi.integer(), "10")
-      end
+      assert_raise ArgumentError,
+                   "Invalid default value: \"10\". Reason: invalid integer type",
+                   fn ->
+                     Zoi.default(Zoi.integer(), "10")
+                   end
     end
 
     test "object with correct value" do
@@ -173,6 +217,70 @@ defmodule ZoiTest do
       assert Exception.message(error) == "invalid object type"
       assert error.issues == ["invalid object type"]
     end
+
+    test "enum with atom key" do
+      schema = Zoi.enum([:apple, :banana, :cherry])
+
+      assert {:ok, :apple} == Zoi.parse(schema, :apple)
+      assert {:ok, :banana} == Zoi.parse(schema, :banana)
+      assert {:ok, :cherry} == Zoi.parse(schema, :cherry)
+    end
+
+    test "enum with string key" do
+      schema = Zoi.enum(["apple", "banana", "cherry"])
+
+      assert {:ok, "apple"} == Zoi.parse(schema, "apple")
+      assert {:ok, "banana"} == Zoi.parse(schema, "banana")
+      assert {:ok, "cherry"} == Zoi.parse(schema, "cherry")
+    end
+
+    test "enum with integer key" do
+      schema = Zoi.enum([1, 2, 3])
+
+      assert {:ok, 1} == Zoi.parse(schema, 1)
+      assert {:ok, 2} == Zoi.parse(schema, 2)
+      assert {:ok, 3} == Zoi.parse(schema, 3)
+    end
+
+    test "enum with key-value string" do
+      schema = Zoi.enum(apple: "Apple", banana: "Banana", cherry: "Cherry")
+      assert {:ok, :apple} == Zoi.parse(schema, "Apple")
+      assert {:ok, :banana} == Zoi.parse(schema, "Banana")
+      assert {:ok, :cherry} == Zoi.parse(schema, "Cherry")
+    end
+
+    test "enum with key-value integer" do
+      schema = Zoi.enum(apple: 1, banana: 2, cherry: 3)
+      assert {:ok, :apple} == Zoi.parse(schema, 1)
+      assert {:ok, :banana} == Zoi.parse(schema, 2)
+      assert {:ok, :cherry} == Zoi.parse(schema, 3)
+    end
+
+    test "enum with incorrect value" do
+      schema = Zoi.enum([:apple, :banana, :cherry])
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, :orange)
+      assert Exception.message(error) == "invalid enum value"
+      assert error.issues == ["invalid enum value"]
+    end
+
+    test "enum parse with incorrect type" do
+      schema = Zoi.enum([:apple, :banana, :cherry])
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "banana")
+      assert Exception.message(error) == "invalid enum value"
+      assert error.issues == ["invalid enum value"]
+    end
+
+    test "enum with incorrect type" do
+      assert_raise ArgumentError, "Invalid enum values", fn ->
+        Zoi.enum(apple: :apple, banana: :banana, cherry: :cherry)
+      end
+    end
+
+    test "enum with empty list" do
+      assert_raise ArgumentError, "Invalid enum values", fn ->
+        Zoi.enum([])
+      end
+    end
   end
 
   describe "min/2" do
@@ -189,6 +297,13 @@ defmodule ZoiTest do
       assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 5)
       assert Exception.message(error) == "minimum value is 10"
     end
+
+    test "min for float" do
+      schema = Zoi.float() |> Zoi.min(10.5)
+      assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 9.99)
+      assert Exception.message(error) == "minimum value is 10.5"
+    end
   end
 
   describe "max/2" do
@@ -204,6 +319,13 @@ defmodule ZoiTest do
       assert {:ok, 5} == Zoi.parse(schema, 5)
       assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 15)
       assert Exception.message(error) == "maximum value is 10"
+    end
+
+    test "max for float" do
+      schema = Zoi.float() |> Zoi.max(10.5)
+      assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 12.34)
+      assert Exception.message(error) == "maximum value is 10.5"
     end
   end
 

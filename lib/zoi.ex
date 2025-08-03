@@ -24,8 +24,9 @@ defmodule Zoi do
 
       Zoi.string()
       Zoi.integer()
-      Zoi.boolean()
+      Zoi.float()
       Zoi.number()
+      Zoi.boolean()
 
   Encapsulated types:
 
@@ -34,6 +35,7 @@ defmodule Zoi do
 
   Complex types:
       Zoi.object(fields)
+      Zoi.enum(values)
       Zoi.array(element_type)
       Zoi.tuple(element_type)
 
@@ -141,6 +143,24 @@ defmodule Zoi do
   defdelegate integer(opts \\ []), to: Zoi.Types.Integer, as: :new
 
   @doc """
+  Defines a float type schema.
+  Use `Zoi.float()` to define float types:
+
+      iex> schema = Zoi.float()
+      iex> Zoi.parse(schema, 3.14)
+      {:ok, 3.14}
+
+  Built-in validations for floats include:
+      Zoi.min(0.0)
+      Zoi.max(100.0)
+
+  For coercion, you can pass the `:coerce` option:
+      iex> Zoi.float(coerce: true) |> Zoi.parse("3.14")
+      {:ok, 3.14}
+  """
+  defdelegate float(opts \\ []), to: Zoi.Types.Float, as: :new
+
+  @doc """
   Defines a boolean type schema.
 
   Use `Zoi.boolean()` to define boolean types:
@@ -193,6 +213,46 @@ defmodule Zoi do
   """
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
 
+  @doc """
+  Defines an enum type schema.
+  Use `Zoi.enum(values)` to define a schema that accepts only specific values:
+
+      iex> schema = Zoi.enum([:red, :green, :blue])
+      iex> Zoi.parse(schema, :red)
+      {:ok, :red}
+      iex> Zoi.parse(schema, :yellow)
+      {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
+
+  You can also specify enum as strings:
+      iex> schema = Zoi.enum(["red", "green", "blue"])
+      iex> Zoi.parse(schema, "red")
+      {:ok, "red"}
+      iex> Zoi.parse(schema, "yellow")
+      {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
+
+  or with key-value pairs:
+      iex> schema = Zoi.enum([red: "Red", green: "Green", blue: "Blue"])
+      iex> Zoi.parse(schema, "Red")
+      {:ok, :red}
+      iex> Zoi.parse(schema, "Yellow")
+      {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
+
+  Integer values can also be used:
+      iex> schema = Zoi.enum([1, 2, 3])
+      iex> Zoi.parse(schema, 1)
+      {:ok, 1}
+      iex> Zoi.parse(schema, 4)
+      {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
+
+  And Integers with key-value pairs also is allowed:
+      iex> schema = Zoi.enum([one: 1, two: 2, three: 3])
+      iex> Zoi.parse(schema, 1)
+      {:ok, :one}
+      iex> Zoi.parse(schema, 4)
+      {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
+  """
+  defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
+
   # Validations
 
   @doc """
@@ -232,12 +292,23 @@ defmodule Zoi do
   def min(%Zoi.Types.Integer{} = schema, min) do
     schema
     |> refine(fn input, _opts ->
-      if input >= min do
-        :ok
-      else
-        {:error, "minimum value is #{min}"}
-      end
+      validate_min_for_number(input, min)
     end)
+  end
+
+  def min(%Zoi.Types.Float{} = schema, min) do
+    schema
+    |> refine(fn input, _opts ->
+      validate_min_for_number(input, min)
+    end)
+  end
+
+  defp validate_min_for_number(input, min) do
+    if input >= min do
+      :ok
+    else
+      {:error, "minimum value is #{min}"}
+    end
   end
 
   @doc false
@@ -255,12 +326,23 @@ defmodule Zoi do
   def max(%Zoi.Types.Integer{} = schema, max) do
     schema
     |> refine(fn input, _opts ->
-      if input <= max do
-        :ok
-      else
-        {:error, "maximum value is #{max}"}
-      end
+      validate_max_for_number(input, max)
     end)
+  end
+
+  def max(%Zoi.Types.Float{} = schema, max) do
+    schema
+    |> refine(fn input, _opts ->
+      validate_max_for_number(input, max)
+    end)
+  end
+
+  defp validate_max_for_number(input, max) do
+    if input <= max do
+      :ok
+    else
+      {:error, "maximum value is #{max}"}
+    end
   end
 
   @doc false

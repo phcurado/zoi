@@ -11,7 +11,8 @@ defmodule Zoi.Types.Default do
         struct!(__MODULE__, opts)
 
       {:error, reason} ->
-        raise Zoi.Error.add_error("default error: #{inspect(reason)}")
+        raise ArgumentError,
+              "Invalid default value: #{inspect(value)}. Reason: #{inspect(reason)}"
     end
   end
 
