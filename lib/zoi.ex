@@ -30,8 +30,9 @@ defmodule Zoi do
 
   Encapsulated types:
 
-      Zoi.optional()
+      Zoi.optional(inner_type)
       Zoi.default(inner_type, default_value)
+      Zoi.union(fields)
 
   Complex types:
       Zoi.object(fields)
@@ -50,6 +51,8 @@ defmodule Zoi do
       {:ok, "123"}
   """
 
+  alias Zoi.Refinements
+  alias Zoi.Transforms
   alias Zoi.Types.Meta
 
   @type input :: any()
@@ -100,6 +103,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 123, coerce: true)
       {:ok, "123"}
   """
+  @doc group: "Parsing"
   @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: result()
   def parse(schema, input, opts \\ []) do
     with {:ok, result} <- Zoi.Type.parse(schema, input, opts),
@@ -115,6 +119,8 @@ defmodule Zoi do
   # Types
   @doc """
   Defines a string type schema.
+
+  ## Example
 
   Zoi provides built-in validations for strings, such as:
 
@@ -135,12 +141,13 @@ defmodule Zoi do
       # pattern ~r/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i
 
   """
+  @doc group: "Basic Types"
   defdelegate string(opts \\ []), to: Zoi.Types.String, as: :new
 
   @doc """
   Defines a number type schema.
 
-  Use `Zoi.integer()` to define integer types:
+  ## Example
 
       iex> shema = Zoi.integer()
       iex> Zoi.parse(shema, 42)
@@ -151,11 +158,13 @@ defmodule Zoi do
       Zoi.min(0)
       Zoi.max(100)
   """
+  @doc group: "Basic Types"
   defdelegate integer(opts \\ []), to: Zoi.Types.Integer, as: :new
 
   @doc """
   Defines a float type schema.
-  Use `Zoi.float()` to define float types:
+
+  ## Example
 
       iex> schema = Zoi.float()
       iex> Zoi.parse(schema, 3.14)
@@ -169,12 +178,29 @@ defmodule Zoi do
       iex> Zoi.float(coerce: true) |> Zoi.parse("3.14")
       {:ok, 3.14}
   """
+  @doc group: "Basic Types"
   defdelegate float(opts \\ []), to: Zoi.Types.Float, as: :new
+
+  @doc """
+  Defines the numeric type schema.
+
+  This type is a union of `Zoi.integer()` and `Zoi.float()`, allowing you to validate both integers and floats.
+  ## Example
+
+      iex> schema = Zoi.number()
+      iex> Zoi.parse(schema, 42)
+      {:ok, 42}
+      iex> Zoi.parse(schema, 3.14)
+      {:ok, 3.14}
+  """
+  @doc group: "Basic Types"
+  defdelegate number(opts \\ []), to: Zoi.Types.Number, as: :new
 
   @doc """
   Defines a boolean type schema.
 
-  Use `Zoi.boolean()` to define boolean types:
+  ## Example
+
       iex> schema = Zoi.boolean()
       iex> Zoi.parse(schema, true)
       {:ok, true}
@@ -183,6 +209,7 @@ defmodule Zoi do
       iex> Zoi.boolean(coerce: true) |> Zoi.parse("true")
       {:ok, true}
   """
+  @doc group: "Basic Types"
   defdelegate boolean(opts \\ []), to: Zoi.Types.Boolean, as: :new
 
   @doc """
@@ -194,10 +221,12 @@ defmodule Zoi do
       iex> Zoi.parse(schema, %{})
       {:ok, %{}}
   """
+  @doc group: "Encapsulated Types"
   defdelegate optional(opts \\ []), to: Zoi.Types.Optional, as: :new
 
   @doc """
   Creates a default value for the schema.
+
   This allows you to specify a default value that will be used if the input is `nil` or not provided.
 
   ## Example
@@ -206,7 +235,46 @@ defmodule Zoi do
       {:ok, "default value"}
 
   """
+  @doc group: "Encapsulated Types"
   defdelegate default(inner, value, opts \\ []), to: Zoi.Types.Default, as: :new
+
+  @doc """
+  Defines a union type schema.
+
+  ## Example
+
+      iex> schema = Zoi.union([Zoi.string(), Zoi.integer()])
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, 42)
+      {:ok, 42}
+      iex> Zoi.parse(schema, true)
+      {:error, %Zoi.Error{issues: ["invalid type for union"]}}
+
+  This type also allows to define validations for each type in the union:
+
+      iex> schema = Zoi.union([
+      ...>   Zoi.string() |> Zoi.min(2),
+      ...>   Zoi.integer() |> Zoi.min(0)
+      ...> ])
+      iex> Zoi.parse(schema, "hi")
+      {:error, %Zoi.Error{issues: ["minimum length is 2"]}}
+      iex> Zoi.parse(schema, -1)
+      {:error, %Zoi.Error{issues: ["minimum value is 0"]}}
+
+  If you define the validation on the union itself, it will apply to all types in the union:
+
+      iex> schema = Zoi.union([
+      ...>   Zoi.string(),
+      ...>   Zoi.integer()
+      ...> ]) |> Zoi.min(3)
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, 2)
+      {:error, %Zoi.Error{issues: ["minimum value is 3"]}}
+  """
+  @doc group: "Encapsulated Types"
+  defdelegate union(fields, opts \\ []), to: Zoi.Types.Union, as: :new
 
   @doc """
   Defines a object type schema.
@@ -222,6 +290,7 @@ defmodule Zoi do
       iex> Zoi.parse(user_schema, %{name: "Alice", age: 30, email: "alice@email.com"})
       {:ok, %{name: "Alice", age: 30, email: "alice@email.com"}}
   """
+  @doc group: "Complex Types"
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
 
   @doc """
@@ -262,9 +331,10 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 4)
       {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
   """
+  @doc group: "Complex Types"
   defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
 
-  # Validations
+  # Refinements
 
   @doc """
   Validates that the string has a specific length.
@@ -276,97 +346,65 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hi")
       {:error, %Zoi.Error{issues: ["length must be 5"]}}
   """
+
+  @doc group: "Refinements"
   @spec length(schema :: Zoi.Type.t(), length :: non_neg_integer()) :: Zoi.Type.t()
   def length(%Zoi.Types.String{} = schema, length) do
     schema
-    |> refine(fn input, _opts ->
-      if String.length(input) == length do
-        :ok
-      else
-        {:error, "length must be #{length}"}
-      end
+    |> refine(fn schema, input, _opts ->
+      Refinements.validate(:length, schema, input, length: length)
     end)
   end
 
-  @doc false
-  def min(%Zoi.Types.String{} = schema, min) do
+  @doc """
+  Validates that the input is greater than or equal to a minimum value.
+  This can be used for strings, integers, floats and numbers.
+  ## Example
+      iex> schema = Zoi.string() |> Zoi.min(2)
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, "hi")
+      {:error, %Zoi.Error{issues: ["minimum length is 2"]}}
+  """
+  @doc group: "Refinements"
+  @spec min(schema :: Zoi.Type.t(), min :: non_neg_integer()) :: Zoi.Type.t()
+  def min(schema, min) do
     schema
-    |> refine(fn input, _opts ->
-      if String.length(input) >= min do
-        :ok
-      else
-        {:error, "minimum length is #{min}"}
-      end
+    |> refine(fn schema, input, _opts ->
+      Refinements.validate(:min, schema, input, min: min)
     end)
   end
 
-  def min(%Zoi.Types.Integer{} = schema, min) do
+  @doc """
+  Validates that the input is less than or equal to a maximum value.
+  This can be used for strings, integers, floats and numbers.
+  ## Example
+      iex> schema = Zoi.string() |> Zoi.max(5)
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, "hello world")
+      {:error, %Zoi.Error{issues: ["maximum length is 5"]}}
+  """
+  @doc group: "Refinements"
+  def max(schema, max) do
     schema
-    |> refine(fn input, _opts ->
-      validate_min_for_number(input, min)
+    |> refine(fn schema, input, _opts ->
+      Refinements.validate(:max, schema, input, max: max)
     end)
   end
 
-  def min(%Zoi.Types.Float{} = schema, min) do
+  @doc """
+  Validates that the input matches a given regex pattern.
+  ## Example
+      iex> schema = Zoi.string() |> Zoi.regex(~r/^\d+$/)
+      iex> Zoi.parse(schema, "12345")
+      {:ok, "12345"}
+  """
+  @doc group: "Refinements"
+  def regex(schema, regex, opts \\ []) do
     schema
-    |> refine(fn input, _opts ->
-      validate_min_for_number(input, min)
-    end)
-  end
-
-  defp validate_min_for_number(input, min) do
-    if input >= min do
-      :ok
-    else
-      {:error, "minimum value is #{min}"}
-    end
-  end
-
-  @doc false
-  def max(%Zoi.Types.String{} = schema, max) do
-    schema
-    |> refine(fn input, _opts ->
-      if String.length(input) <= max do
-        :ok
-      else
-        {:error, "maximum length is #{max}"}
-      end
-    end)
-  end
-
-  def max(%Zoi.Types.Integer{} = schema, max) do
-    schema
-    |> refine(fn input, _opts ->
-      validate_max_for_number(input, max)
-    end)
-  end
-
-  def max(%Zoi.Types.Float{} = schema, max) do
-    schema
-    |> refine(fn input, _opts ->
-      validate_max_for_number(input, max)
-    end)
-  end
-
-  defp validate_max_for_number(input, max) do
-    if input <= max do
-      :ok
-    else
-      {:error, "maximum value is #{max}"}
-    end
-  end
-
-  @doc false
-  def regex(%Zoi.Types.String{} = schema, regex, opts \\ []) do
-    message = Keyword.get(opts, :message, "regex does not match")
-
-    schema
-    |> refine(fn input, _opts ->
-      if String.match?(input, regex) do
-        :ok
-      else
-        {:error, message}
-      end
+    |> refine(fn schema, input, _opts ->
+      Refinements.validate(:regex, schema, input, Keyword.merge(opts, regex: regex))
     end)
   end
 
@@ -379,6 +417,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "invalid-email")
       {:error, %Zoi.Error{issues: ["invalid email format"]}}
   """
+  @doc group: "Refinements"
   @spec email(schema :: Zoi.Type.t()) :: Zoi.Type.t()
   def email(%Zoi.Types.String{} = schema) do
     schema
@@ -397,17 +436,32 @@ defmodule Zoi do
       {:ok, "hello world"}
       iex> Zoi.parse(schema, "world hello")
       {:error, %Zoi.Error{issues: ["must start with 'hello'"]}}
-
   """
+  @doc group: "Refinements"
   @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary()) :: Zoi.Type.t()
   def starts_with(schema, prefix) do
     schema
-    |> refine(fn input, _opts ->
-      if String.starts_with?(input, prefix) do
-        :ok
-      else
-        {:error, "must start with '#{prefix}'"}
-      end
+    |> refine(fn schema, input, _opts ->
+      Refinements.validate(:starts_with, schema, input, prefix: prefix)
+    end)
+  end
+
+  @doc """
+  Validates that a string ends with a specific suffix.
+  ## Example
+
+      iex> schema = Zoi.string() |> Zoi.ends_with("world")
+      iex> Zoi.parse(schema, "hello world")
+      {:ok, "hello world"}
+      iex> Zoi.parse(schema, "hello")
+      {:error, %Zoi.Error{issues: ["must end with 'world'"]}}
+  """
+  @doc group: "Refinements"
+  @spec ends_with(schema :: Zoi.Type.t(), suffix :: binary()) :: Zoi.Type.t()
+  def ends_with(schema, suffix) do
+    schema
+    |> refine(fn schema, input, _opts ->
+      Refinements.validate(:ends_with, schema, input, suffix: suffix)
     end)
   end
 
@@ -421,9 +475,13 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "  hello world  ")
       {:ok, "hello world"}
   """
+  @doc group: "Transforms"
   @spec trim(schema :: Zoi.Type.t()) :: Zoi.Type.t()
-  def trim(%Zoi.Types.String{} = schema) do
-    transform(schema, &String.trim/1)
+  def trim(schema) do
+    schema
+    |> transform(fn schema, input ->
+      Transforms.transform(:trim, schema, input)
+    end)
   end
 
   @doc """
@@ -433,9 +491,12 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "Hello World")
       {:ok, "hello world"}
   """
-  @spec to_downcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
-  def to_downcase(%Zoi.Types.String{} = schema) do
-    transform(schema, &String.downcase/1)
+  @doc group: "Transforms"
+  def to_downcase(schema) do
+    schema
+    |> transform(fn schema, input ->
+      Transforms.transform(:to_downcase, schema, input)
+    end)
   end
 
   @doc """
@@ -445,9 +506,13 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "Hello World")
       {:ok, "HELLO WORLD"}
   """
+  @doc group: "Transforms"
   @spec to_upcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
-  def to_upcase(%Zoi.Types.String{} = schema) do
-    transform(schema, &String.upcase/1)
+  def to_upcase(schema) do
+    schema
+    |> transform(fn schema, input ->
+      Transforms.transform(:to_upcase, schema, input)
+    end)
   end
 
   @doc """
@@ -467,8 +532,20 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hi")
       {:error, %Zoi.Error{issues: ["must be longer than 5 characters"]}}
   """
+  @doc group: "Extensions"
   @spec refine(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
-  def refine(schema, fun, opts \\ []) do
+  def refine(schema, fun, opts \\ [])
+
+  def refine(%Zoi.Types.Union{schemas: schemas} = schema, fun, opts) do
+    schemas =
+      Enum.map(schemas, fn sub_schema ->
+        refine(sub_schema, fun, opts)
+      end)
+
+    %Zoi.Types.Union{schema | schemas: schemas}
+  end
+
+  def refine(schema, fun, opts) do
     update_in(schema.meta.validations, fn transforms ->
       transforms ++ [{:refine, fun, opts}]
     end)
@@ -484,6 +561,17 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "  hello world  ")
       {:ok, "hello world"}
   """
+  @doc group: "Extensions"
+  @spec transform(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
+  def transform(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
+    schemas =
+      Enum.map(schemas, fn sub_schema ->
+        transform(sub_schema, fun)
+      end)
+
+    %Zoi.Types.Union{schema | schemas: schemas}
+  end
+
   @spec transform(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
   def transform(schema, fun) do
     update_in(schema.meta.transforms, fn transforms ->

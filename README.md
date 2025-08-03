@@ -15,7 +15,7 @@ Zoi is a schema validation library for Elixir, inspired by [Zod](https://zod.dev
 ```elixir
 def deps do
   [
-    {:zoi, "~> 0.1.0"}
+    {:zoi, "~> 0.1"}
   ]
 end
 ```

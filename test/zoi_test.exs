@@ -92,6 +92,23 @@ defmodule ZoiTest do
       assert error.issues == ["invalid float type"]
     end
 
+    test "number with correct value" do
+      assert {:ok, 12.34} == Zoi.parse(Zoi.number(), 12.34)
+      assert {:ok, 42} == Zoi.parse(Zoi.number(), 42)
+    end
+
+    test "number with incorrect value" do
+      wrong_values = ["12", nil, :atom, "not a number"]
+
+      for value <- wrong_values do
+        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.number(), value)
+        # For now, returns float error since it's the last element of the union type.
+        # Future to add custom error messages per type.
+        assert Exception.message(error) == "invalid float type"
+        assert error.issues == ["invalid float type"]
+      end
+    end
+
     test "boolean with correct values" do
       assert {:ok, true} == Zoi.parse(Zoi.boolean(), true)
       assert {:ok, false} == Zoi.parse(Zoi.boolean(), false)
@@ -149,6 +166,80 @@ defmodule ZoiTest do
                    fn ->
                      Zoi.default(Zoi.integer(), "10")
                    end
+    end
+
+    test "union with correct values" do
+      schema = Zoi.union([Zoi.string(), Zoi.integer()])
+
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+      assert {:ok, 42} == Zoi.parse(schema, 42)
+    end
+
+    test "union with incorrect value" do
+      schema = Zoi.union([Zoi.string(), Zoi.integer()])
+
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 12.34)
+      assert Exception.message(error) == "invalid integer type"
+      assert error.issues == ["invalid integer type"]
+    end
+
+    test "union with coerced values" do
+      schema = Zoi.union([Zoi.boolean(), Zoi.integer()])
+
+      assert {:ok, true} == Zoi.parse(schema, "true", coerce: true)
+      assert {:ok, 456} == Zoi.parse(schema, "456", coerce: true)
+    end
+
+    test "union with multiple schemas" do
+      schema = Zoi.union([Zoi.string(), Zoi.integer(), Zoi.boolean()])
+
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+      assert {:ok, 42} == Zoi.parse(schema, 42)
+      assert {:ok, true} == Zoi.parse(schema, true)
+    end
+
+    test "union with empty schemas or 1 element" do
+      assert_raise ArgumentError, "Union type must be receive a list of minimum 2 schemas", fn ->
+        Zoi.union([])
+      end
+
+      assert_raise ArgumentError, "Union type must be receive a list of minimum 2 schemas", fn ->
+        Zoi.union([Zoi.string()])
+      end
+    end
+
+    test "union with incorrect type" do
+      assert_raise ArgumentError, "Union type must be receive a list of minimum 2 schemas", fn ->
+        Zoi.union(Zoi.string())
+      end
+    end
+
+    test "union type with refinements" do
+      schema =
+        Zoi.union([Zoi.string() |> Zoi.starts_with("prefix_"), Zoi.integer()]) |> Zoi.min(5)
+
+      assert {:ok, "prefix_value"} == Zoi.parse(schema, "prefix_value")
+      assert {:ok, 10} == Zoi.parse(schema, 10)
+
+      # Fails on `starts_with` refinement, fallback to integer validation
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "value")
+      assert Exception.message(error) == "invalid integer type"
+
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 3)
+      assert Exception.message(error) == "minimum value is 5"
+      assert error.issues == ["minimum value is 5"]
+    end
+
+    test "union with transforms" do
+      schema =
+        Zoi.union([Zoi.string() |> Zoi.to_downcase(), Zoi.integer()]) |> Zoi.trim()
+
+      assert {:ok, "hello"} == Zoi.parse(schema, "  HELLO  ")
+      # assert {:ok, 42} == Zoi.parse(schema, 42)
+      #
+      # # Fails on `to_downcase` refinement, fallback to integer validation
+      # assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "WORLD")
+      # assert Exception.message(error) == "invalid integer type"
     end
 
     test "object with correct value" do
@@ -377,6 +468,20 @@ defmodule ZoiTest do
       assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "value")
       assert Exception.message(error) == "must start with 'prefix_'"
       assert error.issues == ["must start with 'prefix_'"]
+    end
+  end
+
+  describe "ends_with/2" do
+    test "valid suffix" do
+      schema = Zoi.string() |> Zoi.ends_with("_suffix")
+      assert {:ok, "value_suffix"} == Zoi.parse(schema, "value_suffix")
+    end
+
+    test "invalid suffix" do
+      schema = Zoi.string() |> Zoi.ends_with("_suffix")
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "value")
+      assert Exception.message(error) == "must end with '_suffix'"
+      assert error.issues == ["must end with '_suffix'"]
     end
   end
 

@@ -32,23 +32,13 @@ defmodule Zoi.MetaTest do
     end
   end
 
-  describe "append_validations/2" do
-    test "appends a validation to the schema's meta" do
-      schema = %Zoi.Types.String{meta: %Meta{validations: []}}
-      validation = {:refine, &is_binary/1}
-      updated_schema = Meta.append_validations(schema, validation)
-
-      assert updated_schema.meta.validations == [validation]
-    end
-  end
-
   describe "run_validations/2" do
     test "runs validations and returns ok for valid input" do
       schema = %Zoi.Types.Integer{
         meta: %Meta{
           validations: [
             {:refine,
-             fn val, _opts ->
+             fn _schema, val, _opts ->
                if is_integer(val) do
                  :ok
                else
@@ -67,7 +57,7 @@ defmodule Zoi.MetaTest do
         meta: %Meta{
           validations: [
             {:refine,
-             fn val, _opts ->
+             fn _schema, val, _opts ->
                if is_integer(val) do
                  :ok
                else
@@ -93,21 +83,14 @@ defmodule Zoi.MetaTest do
     end
   end
 
-  describe "append_transforms/2" do
-    test "appends a transform to the schema's meta" do
-      schema = %Zoi.Types.String{meta: %Meta{transforms: []}}
-      transform = &String.upcase/1
-      updated_schema = Meta.append_transforms(schema, transform)
-
-      assert updated_schema.meta.transforms == [transform]
-    end
-  end
-
   describe "run_transforms/2" do
     test "runs transforms and returns the transformed value" do
       schema = %Zoi.Types.String{
         meta: %Meta{
-          transforms: [&String.trim/1, &String.upcase/1]
+          transforms: [
+            fn _schema, input -> String.trim(input) end,
+            fn _schema, input -> String.upcase(input) end
+          ]
         }
       }
 
@@ -117,7 +100,7 @@ defmodule Zoi.MetaTest do
     test "runs transforms and returns the tuple for valid input" do
       schema = %Zoi.Types.String{
         meta: %Meta{
-          transforms: [fn _val -> {:ok, "random return"} end]
+          transforms: [fn _schema, _val -> {:ok, "random return"} end]
         }
       }
 
@@ -127,7 +110,7 @@ defmodule Zoi.MetaTest do
     test "returns error for invalid transform" do
       schema = %Zoi.Types.String{
         meta: %Meta{
-          transforms: [fn _val -> {:error, "Transform failed"} end]
+          transforms: [fn _schema, _val -> {:error, "Transform failed"} end]
         }
       }
 
