@@ -1,5 +1,11 @@
 # Zoi
 
+[![CI](https://github.com/phcurado/zoi/actions/workflows/ci.yml/badge.svg)](https://github.com/phcurado/zoi/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/phcurado/zozoibadge.svg?branch=main)](https://coveralls.io/github/phcurado/zoi?branch=main)
+[![Hex.pm](https://img.shields.io/hexpm/v/zoi)](https://hex.pm/packages/zoi)
+[![HexDocs.pm](https://img.shields.io/badge/Docs-HexDocs-blue)](https://hexdocs.pm/zoi)
+[![License](https://img.shields.io/hexpm/l/zoi.svg)](https://hex.pm/packages/zoi)
+
 Zoi is a schema validation library for Elixir, inspired by [Zod](https://zod.dev/).
 
 ## Installation
