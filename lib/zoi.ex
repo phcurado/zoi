@@ -295,7 +295,18 @@ defmodule Zoi do
     )
   end
 
-  @doc false
+  @doc """
+  Validates that a string starts with a specific prefix.
+  ## Example
+
+      iex> schema = Zoi.string() |> Zoi.starts_with("hello")
+      iex> Zoi.parse(schema, "hello world")
+      {:ok, "hello world"}
+      iex> Zoi.parse(schema, "world hello")
+      {:error, %Zoi.Error{issues: ["must start with 'hello'"]}}
+
+  """
+  @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary()) :: Zoi.Type.t()
   def starts_with(schema, prefix) do
     schema
     |> refine(fn input, _opts ->
@@ -325,24 +336,24 @@ defmodule Zoi do
   @doc """
   Converts a string to lowercase.
   ## Example
-      iex> schema = Zoi.string() |> Zoi.downcase()
+      iex> schema = Zoi.string() |> Zoi.to_downcase()
       iex> Zoi.parse(schema, "Hello World")
       {:ok, "hello world"}
   """
-  @spec downcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
-  def downcase(%Zoi.Types.String{} = schema) do
+  @spec to_downcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  def to_downcase(%Zoi.Types.String{} = schema) do
     transform(schema, &String.downcase/1)
   end
 
   @doc """
   Converts a string to uppercase.
   ## Example
-      iex> schema = Zoi.string() |> Zoi.uppercase()
+      iex> schema = Zoi.string() |> Zoi.to_upcase()
       iex> Zoi.parse(schema, "Hello World")
       {:ok, "HELLO WORLD"}
   """
-  @spec uppercase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
-  def uppercase(%Zoi.Types.String{} = schema) do
+  @spec to_upcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  def to_upcase(%Zoi.Types.String{} = schema) do
     transform(schema, &String.upcase/1)
   end
 

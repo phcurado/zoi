@@ -174,6 +174,20 @@ defmodule ZoiTest do
     end
   end
 
+  describe "regex/2" do
+    test "valid regex match" do
+      schema = Zoi.string() |> Zoi.regex(~r/^\d+$/)
+      assert {:ok, "12345"} == Zoi.parse(schema, "12345")
+    end
+
+    test "invalid regex match" do
+      schema = Zoi.string() |> Zoi.regex(~r/^\d+$/)
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "abc")
+      assert Exception.message(error) == "regex does not match"
+      assert error.issues == ["regex does not match"]
+    end
+  end
+
   describe "email/1" do
     test "valid email" do
       schema = Zoi.string() |> Zoi.email()
@@ -212,6 +226,32 @@ defmodule ZoiTest do
     test "trim with no whitespace" do
       schema = Zoi.string() |> Zoi.trim()
       assert {:ok, "test"} == Zoi.parse(schema, "test")
+    end
+  end
+
+  describe "to_downcase/1" do
+    test "downcase string" do
+      schema = Zoi.string() |> Zoi.to_downcase()
+      assert {:ok, "hello"} == Zoi.parse(schema, "HELLO")
+      assert {:ok, "world"} == Zoi.parse(schema, "WORLD")
+    end
+
+    test "downcase already lowercase" do
+      schema = Zoi.string() |> Zoi.to_downcase()
+      assert {:ok, "test"} == Zoi.parse(schema, "test")
+    end
+  end
+
+  describe "to_upcase/1" do
+    test "upcase string" do
+      schema = Zoi.string() |> Zoi.to_upcase()
+      assert {:ok, "HELLO"} == Zoi.parse(schema, "hello")
+      assert {:ok, "WORLD"} == Zoi.parse(schema, "world")
+    end
+
+    test "upcase already uppercase" do
+      schema = Zoi.string() |> Zoi.to_upcase()
+      assert {:ok, "TEST"} == Zoi.parse(schema, "TEST")
     end
   end
 end
