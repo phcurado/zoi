@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Integer do
   @moduledoc false
 
-  use Zoi.Type, fields: [coerce: false]
+  use Zoi.Type.Def, fields: [coerce: false]
 
   def new(opts \\ []) do
     apply_type(opts)

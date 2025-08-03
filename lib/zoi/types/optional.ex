@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Optional do
   @moduledoc false
 
-  use Zoi.Type, fields: [:inner]
+  use Zoi.Type.Def, fields: [:inner]
 
   def new(inner, opts \\ []) do
     apply_type(opts ++ [inner: inner])

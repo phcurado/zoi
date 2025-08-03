@@ -1,0 +1,102 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  ci:
+    env:
+      MIX_ENV: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - pair:
+              elixir: 1.14.5
+              otp: 24.3.4
+          - pair:
+              elixir: 1.15.7
+              otp: 24.3.4
+          - pair:
+              elixir: 1.16.1
+              otp: 24.3.4
+          - pair:
+              elixir: 1.14.5
+              otp: 25.3.2
+          - pair:
+              elixir: 1.15.7
+              otp: 25.3.2
+          - pair:
+              elixir: 1.16.1
+              otp: 25.3.2
+          - pair:
+              elixir: 1.14.5
+              otp: 26.2.5
+          - pair:
+              elixir: 1.15.7
+              otp: 26.2.5
+          - pair:
+              elixir: 1.16.2
+              otp: 26.2.5
+          - pair:
+              elixir: 1.17.2
+              otp: 26.2.5
+          - pair:
+              elixir: 1.17.2
+              otp: 27.0.1
+          - pair:
+              elixir: 1.18.3
+              otp: 27.2.2
+            lint: lint
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.pair.otp}}
+          elixir-version: ${{matrix.pair.elixir}}
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{matrix.pair.elixir}}-${{matrix.pair.otp}}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-${{matrix.pair.elixir}}-${{matrix.pair.otp}}-
+
+      - name: Run mix deps.get
+        run: mix deps.get --only test
+
+      - name: Run mix format
+        run: mix format --check-formatted
+        if: ${{ matrix.lint }}
+
+      - name: Run mix deps.compile
+        run: mix deps.compile
+
+      - name: Run mix compile
+        run: mix compile --warnings-as-errors
+        if: ${{ matrix.lint }}
+
+      - name: Run credo
+        run: mix credo --strict
+        if: ${{ matrix.lint }}
+
+      - name: Run mix test
+        run: mix test
+
+      - name: Run dialyzer
+        run: mix dialyzer --format github
+        if: ${{ matrix.lint }}
+
+      - name: Run Coveralls
+        run: mix coveralls.github
+        if: ${{ matrix.lint }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
