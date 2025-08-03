@@ -12,7 +12,7 @@ defmodule Zoi.Types.Default do
 
       {:error, reason} ->
         raise ArgumentError,
-              "Invalid default value: #{inspect(value)}. Reason: #{inspect(reason)}"
+              "Invalid default value: #{inspect(value)}. Reason: #{reason.issues}"
     end
   end
 

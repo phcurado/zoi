@@ -80,12 +80,6 @@ defmodule Zoi do
     end
 
     def message(%__MODULE__{issues: issues}), do: Enum.join(issues, ", ")
-
-    defimpl Inspect do
-      def inspect(error, _opts) do
-        to_string(error.issues)
-      end
-    end
   end
 
   @doc """

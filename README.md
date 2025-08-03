@@ -6,7 +6,7 @@
 [![HexDocs.pm](https://img.shields.io/badge/Docs-HexDocs-blue)](https://hexdocs.pm/zoi)
 [![License](https://img.shields.io/hexpm/l/zoi.svg)](https://hex.pm/packages/zoi)
 
-Zoi is a schema validation library for Elixir, inspired by [Zod](https://zod.dev/).
+`Zoi` is a schema validation library for Elixir, designed to provide a simple and flexible way to define and validate data.
 
 ## Installation
 
@@ -29,17 +29,26 @@ You can define schemas and validate data against them. Schemas can be used to va
 schema = Zoi.string() |> Zoi.min(3)
 Zoi.parse(schema, "hello") # {:ok, "hello"}
 
+schema = Zoi.string() |> Zoi.trim()
+Zoi.parse(schema, "    world    ") # {:ok, "world"}
+
 # Validate a structured data in a map
-schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
-Zoi.parse(schema, %{name: "John", age: 30}) # {:ok, %{name: "John", age: 30}}
+schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.string() |> Zoi.email()})
+Zoi.parse(schema, %{name: "John", age: 30, email: "john@email.com"})
+# {:ok, %{name: "John", age: 30, email: "john@email.com"}}
+
+Zoi.parse(schema, %{email: "invalid-email"})
+#{:error, %Zoi.Error{issues: %{
+#   name: %Zoi.Error{issues: ["is required"]},
+#   age: %Zoi.Error{issues: ["is required"]},
+#    email: %Zoi.Error{issues: ["invalid email format"]}
+#  },
+#}}
+
 ```
 
-## Roadmap
+And many more possibilities, including nested schemas, custom validations and data transformations. Check the official [docs](https://hexdocs.pm/zoi) for more details.
 
-- [ ] Coerce option for parsing types
-- [ ] Allow replacing local declared meta options to parsing options
-- [ ] Improve validations, so they don't need to be manually run on every type and manually appended on every validation
-- [ ] Implement more types and validations
-- [ ] Add guides on how to create custom types and validations
-- [ ] Add transform and extend operations for types
-- [ ] Interface this library with changesets
+## Acknowledgements
+
+`Zoi` is inspired by [Zod](https://zod.dev/) and [Joi](https://joi.dev/), providing a similar experience for Elixir.
