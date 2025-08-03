@@ -88,6 +88,17 @@ defmodule Zoi do
   @doc """
   Parse input data against a schema.
   Accepts optional `coerce: true` option to enable coercion.
+  ## Examples
+
+      iex> schema = Zoi.string() |> Zoi.min(2) |> Zoi.max(100)
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+
+      iex> Zoi.parse(schema, "hi")
+      {:error, %Zoi.Error{issues: ["minimum length is 2"]}}
+
+      iex> Zoi.parse(schema, 123, coerce: true)
+      {:ok, "123"}
   """
   @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: result()
   def parse(schema, input, opts \\ []) do
@@ -179,7 +190,7 @@ defmodule Zoi do
 
   ## Example
 
-      iex> schema = Zoi.object(%{name: Zoi.string()}) |> Zoi.optional()
+      iex> schema = Zoi.object(%{name: Zoi.string() |> Zoi.optional()})
       iex> Zoi.parse(schema, %{})
       {:ok, %{}}
   """
