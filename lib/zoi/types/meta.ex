@@ -70,7 +70,7 @@ defmodule Zoi.Types.Meta do
           {:ok, Zoi.input()} | {:error, binary()}
   def run_transforms(schema, input) do
     schema.meta.transforms
-    |> Enum.reduce_while({:ok, input}, fn transform, {:ok, _input} ->
+    |> Enum.reduce_while({:ok, input}, fn transform, {:ok, input} ->
       case transform.(input) do
         {:ok, result} ->
           {:cont, {:ok, result}}

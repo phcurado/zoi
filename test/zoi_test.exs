@@ -42,6 +42,14 @@ defmodule ZoiTest do
       assert {:ok, -1} == Zoi.parse(Zoi.integer(), "-1", coerce: true)
     end
 
+    test "integer with coercion but incorrect value" do
+      assert {:error, %Zoi.Error{} = error} =
+               Zoi.parse(Zoi.integer(), "not_integer", coerce: true)
+
+      assert Exception.message(error) == "invalid integer type"
+      assert error.issues == ["invalid integer type"]
+    end
+
     test "boolean with correct values" do
       assert {:ok, true} == Zoi.parse(Zoi.boolean(), true)
       assert {:ok, false} == Zoi.parse(Zoi.boolean(), false)
@@ -130,6 +138,40 @@ defmodule ZoiTest do
                })
 
       assert error.issues == %{age: %Zoi.Error{issues: ["invalid integer type"]}}
+    end
+
+    test "object with string key" do
+      schema = Zoi.object(%{"name" => Zoi.string(), "age" => Zoi.integer()})
+
+      assert {:ok, %{"name" => "John", "age" => 30}} ==
+               Zoi.parse(schema, %{
+                 "name" => "John",
+                 "age" => 30
+               })
+    end
+
+    test "object with optional field" do
+      schema =
+        Zoi.object(%{name: Zoi.string(), age: Zoi.optional(Zoi.integer())})
+
+      assert {:ok, %{name: "John", age: nil}} ==
+               Zoi.parse(schema, %{
+                 "name" => "John",
+                 "age" => nil
+               })
+
+      assert {:ok, %{name: "John"}} ==
+               Zoi.parse(schema, %{
+                 "name" => "John"
+               })
+    end
+
+    test "object with non-map input" do
+      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "not a map")
+      assert Exception.message(error) == "invalid object type"
+      assert error.issues == ["invalid object type"]
     end
   end
 
