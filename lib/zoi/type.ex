@@ -8,7 +8,7 @@ defprotocol Zoi.Type do
   ## Example
   To create a custom type, you can define a module and implement the `Zoi.Type` protocol:
       defmodule StringBoolean do
-        use Zoi.Type
+        use Zoi.Type.Def
 
         # `apply_type/1` is a helper function that will create the struct with the given options.
         def string_bool(opts \\ []) do
@@ -40,20 +40,6 @@ defprotocol Zoi.Type do
       iex> Zoi.Type.parse(schema, 123)
       {:error, %Zoi.Error{message: "invalid string or boolean type"}}
   """
-
-  defmacro __using__(opts) do
-    fields = Keyword.get(opts, :fields, [])
-
-    quote do
-      defstruct unquote(fields) ++ [meta: nil]
-
-      def apply_type(opts \\ []) do
-        {meta, opts} = Zoi.Types.Meta.create_meta(opts)
-        opts = Keyword.merge(opts, meta: meta)
-        struct!(__MODULE__, opts)
-      end
-    end
-  end
 
   def parse(schema, input, opts)
 end

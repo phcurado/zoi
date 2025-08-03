@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Object do
   @moduledoc false
 
-  use Zoi.Type, fields: [:fields]
+  use Zoi.Type.Def, fields: [:fields]
 
   def new(fields, opts \\ []) do
     apply_type(opts ++ [fields: fields])

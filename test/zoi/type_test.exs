@@ -2,7 +2,7 @@ defmodule Zoi.TypeTest do
   use ExUnit.Case, async: true
 
   defmodule CustomType do
-    use Zoi.Type
+    use Zoi.Type.Def
 
     def new(opts \\ []) do
       apply_type(opts)
