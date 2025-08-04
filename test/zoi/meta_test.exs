@@ -6,6 +6,12 @@ defmodule Zoi.MetaTest do
   defmodule Validation do
     def integer?(_schema, value) when is_integer(value), do: :ok
     def integer?(_schema, _value), do: {:error, "Value is not an integer"}
+
+    def upcase(_schema, value) when is_binary(value) do
+      {:ok, String.upcase(value)}
+    end
+
+    def upcase(_schema, _value), do: {:error, "Value is not a string"}
   end
 
   describe "create_meta/1" do
@@ -89,7 +95,7 @@ defmodule Zoi.MetaTest do
         meta: %Meta{
           transforms: [
             fn _schema, input -> String.trim(input) end,
-            fn _schema, input -> String.upcase(input) end
+            {Validation, :upcase, []}
           ]
         }
       }
@@ -115,6 +121,16 @@ defmodule Zoi.MetaTest do
       }
 
       assert {:error, "Transform failed"} == Meta.run_transforms(schema, "not a number")
+    end
+
+    test "returns error for invalid transform using mfa" do
+      schema = %Zoi.Types.String{
+        meta: %Meta{
+          transforms: [{Validation, :upcase, []}]
+        }
+      }
+
+      assert {:error, "Value is not a string"} == Meta.run_transforms(schema, 12)
     end
   end
 end

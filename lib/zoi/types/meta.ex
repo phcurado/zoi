@@ -56,17 +56,25 @@ defmodule Zoi.Types.Meta do
           {:ok, Zoi.input()} | {:error, binary()}
   def run_transforms(schema, input) do
     schema.meta.transforms
-    |> Enum.reduce_while({:ok, input}, fn transform, {:ok, input} ->
-      case transform.(schema, input) do
-        {:ok, result} ->
-          {:cont, {:ok, result}}
+    |> Enum.reduce_while({:ok, input}, fn
+      {mod, func, args}, {:ok, input} ->
+        case apply(mod, func, [schema, input] ++ args) do
+          {:ok, input} -> {:cont, {:ok, input}}
+          {:error, err} -> {:halt, {:error, err}}
+          value -> {:cont, {:ok, value}}
+        end
 
-        {:error, err} ->
-          {:halt, {:error, err}}
+      transform, {:ok, input} ->
+        case transform.(schema, input) do
+          {:ok, result} ->
+            {:cont, {:ok, result}}
 
-        result ->
-          {:cont, {:ok, result}}
-      end
+          {:error, err} ->
+            {:halt, {:error, err}}
+
+          result ->
+            {:cont, {:ok, result}}
+        end
     end)
   end
 end

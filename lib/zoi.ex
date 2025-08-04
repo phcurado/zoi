@@ -51,8 +51,6 @@ defmodule Zoi do
       {:ok, "123"}
   """
 
-  alias Zoi.Refinements
-  alias Zoi.Transforms
   alias Zoi.Types.Meta
 
   @type input :: any()
@@ -345,9 +343,7 @@ defmodule Zoi do
   @spec length(schema :: Zoi.Type.t(), length :: non_neg_integer()) :: Zoi.Type.t()
   def length(%Zoi.Types.String{} = schema, length) do
     schema
-    |> refine(fn schema, input, _opts ->
-      Refinements.validate(:length, schema, input, length: length)
-    end)
+    |> refine({Zoi.Refinements, :validate, [[length: length], []]})
   end
 
   @doc """
@@ -364,9 +360,7 @@ defmodule Zoi do
   @spec min(schema :: Zoi.Type.t(), min :: non_neg_integer()) :: Zoi.Type.t()
   def min(schema, min) do
     schema
-    |> refine(fn schema, input, _opts ->
-      Refinements.validate(:min, schema, input, min: min)
-    end)
+    |> refine({Zoi.Refinements, :validate, [[min: min], []]})
   end
 
   @doc """
@@ -382,9 +376,7 @@ defmodule Zoi do
   @doc group: "Refinements"
   def max(schema, max) do
     schema
-    |> refine(fn schema, input, _opts ->
-      Refinements.validate(:max, schema, input, max: max)
-    end)
+    |> refine({Zoi.Refinements, :validate, [[max: max], []]})
   end
 
   @doc """
@@ -397,9 +389,7 @@ defmodule Zoi do
   @doc group: "Refinements"
   def regex(schema, regex, opts \\ []) do
     schema
-    |> refine(fn schema, input, _opts ->
-      Refinements.validate(:regex, schema, input, Keyword.merge(opts, regex: regex))
-    end)
+    |> refine({Zoi.Refinements, :validate, [[regex: regex], opts]})
   end
 
   @doc """
@@ -435,9 +425,7 @@ defmodule Zoi do
   @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary()) :: Zoi.Type.t()
   def starts_with(schema, prefix) do
     schema
-    |> refine(fn schema, input, _opts ->
-      Refinements.validate(:starts_with, schema, input, prefix: prefix)
-    end)
+    |> refine({Zoi.Refinements, :validate, [[starts_with: prefix], []]})
   end
 
   @doc """
@@ -454,9 +442,7 @@ defmodule Zoi do
   @spec ends_with(schema :: Zoi.Type.t(), suffix :: binary()) :: Zoi.Type.t()
   def ends_with(schema, suffix) do
     schema
-    |> refine(fn schema, input, _opts ->
-      Refinements.validate(:ends_with, schema, input, suffix: suffix)
-    end)
+    |> refine({Zoi.Refinements, :validate, [[ends_with: suffix], []]})
   end
 
   # Transforms
@@ -473,9 +459,7 @@ defmodule Zoi do
   @spec trim(schema :: Zoi.Type.t()) :: Zoi.Type.t()
   def trim(schema) do
     schema
-    |> transform(fn schema, input ->
-      Transforms.transform(:trim, schema, input)
-    end)
+    |> transform({Zoi.Transforms, :transform, [[:trim]]})
   end
 
   @doc """
@@ -488,9 +472,7 @@ defmodule Zoi do
   @doc group: "Transforms"
   def to_downcase(schema) do
     schema
-    |> transform(fn schema, input ->
-      Transforms.transform(:to_downcase, schema, input)
-    end)
+    |> transform({Zoi.Transforms, :transform, [[:to_downcase]]})
   end
 
   @doc """
@@ -504,9 +486,7 @@ defmodule Zoi do
   @spec to_upcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
   def to_upcase(schema) do
     schema
-    |> transform(fn schema, input ->
-      Transforms.transform(:to_upcase, schema, input)
-    end)
+    |> transform({Zoi.Transforms, :transform, [[:to_upcase]]})
   end
 
   @doc """
@@ -528,20 +508,18 @@ defmodule Zoi do
   """
   @doc group: "Extensions"
   @spec refine(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
-  def refine(schema, fun, opts \\ [])
-
-  def refine(%Zoi.Types.Union{schemas: schemas} = schema, fun, opts) do
+  def refine(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
-        refine(sub_schema, fun, opts)
+        refine(sub_schema, fun)
       end)
 
     %Zoi.Types.Union{schema | schemas: schemas}
   end
 
-  def refine(schema, fun, opts) do
+  def refine(schema, fun) do
     update_in(schema.meta.validations, fn transforms ->
-      transforms ++ [{:refine, fun, opts}]
+      transforms ++ [fun]
     end)
   end
 

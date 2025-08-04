@@ -1,7 +1,7 @@
 defmodule Zoi.Refinements do
   @moduledoc false
 
-  def validate(:min, %Zoi.Types.String{}, input, min: min) do
+  def validate(%Zoi.Types.String{}, input, [min: min], _opts) do
     if String.length(input) >= min do
       :ok
     else
@@ -9,7 +9,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def validate(:min, %Zoi.Types.Integer{}, input, min: min) do
+  def validate(%Zoi.Types.Integer{}, input, [min: min], _opts) do
     if input >= min do
       :ok
     else
@@ -17,7 +17,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def validate(:min, %Zoi.Types.Float{}, input, min: min) do
+  def validate(%Zoi.Types.Float{}, input, [min: min], _opts) do
     if input >= min do
       :ok
     else
@@ -25,7 +25,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def validate(:max, %Zoi.Types.String{}, input, max: max) do
+  def validate(%Zoi.Types.String{}, input, [max: max], _opts) do
     if String.length(input) <= max do
       :ok
     else
@@ -33,7 +33,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def validate(:max, %Zoi.Types.Integer{}, input, max: max) do
+  def validate(%Zoi.Types.Integer{}, input, [max: max], _opts) do
     if input <= max do
       :ok
     else
@@ -41,7 +41,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def validate(:max, %Zoi.Types.Float{}, input, max: max) do
+  def validate(%Zoi.Types.Float{}, input, [max: max], _opts) do
     if input <= max do
       :ok
     else
@@ -49,7 +49,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def validate(:length, %Zoi.Types.String{}, input, length: length) do
+  def validate(%Zoi.Types.String{}, input, [length: length], _opts) do
     if String.length(input) == length do
       :ok
     else
@@ -57,8 +57,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def validate(:regex, %Zoi.Types.String{}, input, opts) do
-    regex = Keyword.fetch!(opts, :regex)
+  def validate(%Zoi.Types.String{}, input, [regex: regex], opts) do
     message = Keyword.get(opts, :message, "regex does not match")
 
     if String.match?(input, regex) do
@@ -68,7 +67,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def validate(:starts_with, %Zoi.Types.String{}, input, prefix: prefix) do
+  def validate(%Zoi.Types.String{}, input, [starts_with: prefix], _opts) do
     if String.starts_with?(input, prefix) do
       :ok
     else
@@ -76,7 +75,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def validate(:ends_with, %Zoi.Types.String{}, input, suffix: suffix) do
+  def validate(%Zoi.Types.String{}, input, [ends_with: suffix], _opts) do
     if String.ends_with?(input, suffix) do
       :ok
     else
