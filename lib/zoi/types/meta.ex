@@ -72,8 +72,8 @@ defmodule Zoi.Types.Meta do
         {:cont, transform_func.(schema, value)}
     end)
     |> then(fn
-      {:error, %Zoi.Error{} = error} -> {:error, [error]}
-      {:error, error} -> {:error, [%Zoi.Error{message: error}]}
+      {:error, %Zoi.Error{} = error} -> {:error, [{:error, error}]}
+      {:error, error} -> {:error, [{:error, %Zoi.Error{message: error}}]}
       value -> {:ok, value}
     end)
   end
