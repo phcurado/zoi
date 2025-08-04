@@ -54,7 +54,7 @@ defmodule Zoi do
   alias Zoi.Types.Meta
 
   @type input :: any()
-  @type result :: {:ok, any()} | {:error, [Zoi.Error.t(), ...]}
+  @type result :: {:ok, any()} | {:error, [{:error, Zoi.Error.t()}, ...]}
   @type options :: keyword()
 
   defmodule Error do
