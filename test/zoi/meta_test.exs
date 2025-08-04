@@ -72,7 +72,8 @@ defmodule Zoi.MetaTest do
         }
       }
 
-      assert {:error, _} = Meta.run_refinements(schema, "not an integer")
+      assert {:error, %Zoi.Error{} = errors} = Meta.run_refinements(schema, "not an integer")
+      assert errors.issues == ["Value is not an integer"]
     end
 
     test "refinement with mfa" do
@@ -83,7 +84,22 @@ defmodule Zoi.MetaTest do
       }
 
       assert {:ok, 42} == Meta.run_refinements(schema, 42)
-      assert {:error, _} = Meta.run_refinements(schema, "not an integer")
+      assert {:error, %Zoi.Error{} = errors} = Meta.run_refinements(schema, "not an integer")
+      assert errors.issues == ["Value is not an integer"]
+    end
+
+    test "accumulates errors from refinements" do
+      schema = %Zoi.Types.String{
+        meta: %Meta{
+          refinements: [
+            fn _schema, _val -> {:error, "refinement error 1"} end,
+            fn _schema, _val -> {:error, "refinement error 2"} end
+          ]
+        }
+      }
+
+      assert {:error, %Zoi.Error{} = errors} = Meta.run_refinements(schema, "test")
+      assert errors.issues == ["refinement error 1", "refinement error 2"]
     end
   end
 
@@ -118,7 +134,8 @@ defmodule Zoi.MetaTest do
         }
       }
 
-      assert {:error, "Transform failed"} == Meta.run_transforms(schema, "not a number")
+      assert {:error, %Zoi.Error{} = error} = Meta.run_transforms(schema, "not a number")
+      assert error.issues == ["Transform failed"]
     end
 
     test "returns error for invalid transform using mfa" do
@@ -128,7 +145,30 @@ defmodule Zoi.MetaTest do
         }
       }
 
-      assert {:error, "Value is not a string"} == Meta.run_transforms(schema, 12)
+      assert {:error, %Zoi.Error{} = error} = Meta.run_transforms(schema, 12)
+      assert error.issues == ["Value is not a string"]
+    end
+
+    test "accumulates errors from transforms" do
+      schema = %Zoi.Types.String{
+        meta: %Meta{
+          transforms: [
+            fn _schema, _val ->
+              {:error, "transform error 1"}
+            end,
+            fn _schema, _val ->
+              {:error, "transform error 2"}
+            end
+          ]
+        }
+      }
+
+      assert {:error, %Zoi.Error{} = errors} = Meta.run_transforms(schema, "test")
+
+      assert errors.issues == [
+               "transform error 1",
+               "transform error 2"
+             ]
     end
   end
 end

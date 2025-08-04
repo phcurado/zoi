@@ -74,7 +74,7 @@ defmodule Zoi do
     end
 
     def add_error(%__MODULE__{issues: issues} = error, issue) do
-      %{error | issues: [issue | issues]}
+      %{error | issues: issues ++ [issue]}
     end
 
     def message(%__MODULE__{issues: issues}), do: Enum.join(issues, ", ")

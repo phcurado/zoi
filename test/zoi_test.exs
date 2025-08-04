@@ -11,7 +11,7 @@ defmodule ZoiTest do
       error = %Zoi.Error{issues: ["invalid type"]}
       updated_error = Zoi.Error.add_error(error, "additional issue")
 
-      assert updated_error.issues == ["additional issue", "invalid type"]
+      assert updated_error.issues == ["invalid type", "additional issue"]
     end
   end
 
