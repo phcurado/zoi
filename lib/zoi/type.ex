@@ -1,5 +1,5 @@
 defprotocol Zoi.Type do
-  @moduledoc """
+  @moduledoc ~S"""
   Protocol for defining types in Zoi.
 
   Types are used to validate and parse data according to a defined schema.
