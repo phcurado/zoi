@@ -11,7 +11,7 @@ defprotocol Zoi.Type do
         use Zoi.Type.Def
 
         # `apply_type/1` is a helper function that will create the struct with the given options.
-        def string_bool(opts \\ []) do
+        def string_bool(opts \\\\ []) do
           apply_type(opts)
         end
 
