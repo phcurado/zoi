@@ -40,31 +40,17 @@ defmodule Zoi.Types.Meta do
 
   def run_refinements(schema, input) do
     schema.meta.refinements
-    |> Enum.reduce({{:ok, input}, %Zoi.Error{}}, fn
-      {mod, func, args}, {{:ok, input}, error} ->
-        case apply(mod, func, [schema, input] ++ args) do
-          :ok ->
-            {{:ok, input}, error}
+    |> Enum.map(fn
+      {mod, func, args} ->
+        apply(mod, func, [schema, input] ++ args)
 
-          {:error, err} ->
-            {{:ok, input}, Zoi.Error.add_error(error, err)}
-        end
-
-      refine_func, {{:ok, input}, error} ->
-        case refine_func.(schema, input) do
-          :ok ->
-            {{:ok, input}, error}
-
-          {:error, err} ->
-            {{:ok, input}, Zoi.Error.add_error(error, err)}
-        end
+      refine_func ->
+        refine_func.(schema, input)
     end)
-    |> then(fn {{:ok, value}, error} ->
-      if Enum.empty?(error.issues) do
-        {:ok, value}
-      else
-        {:error, error}
-      end
+    |> Enum.filter(fn elem -> elem != :ok end)
+    |> then(fn
+      [] -> {:ok, input}
+      errors -> {:error, errors}
     end)
   end
 
@@ -72,37 +58,23 @@ defmodule Zoi.Types.Meta do
           {:ok, Zoi.input()} | {:error, binary()}
   def run_transforms(schema, input) do
     schema.meta.transforms
-    |> Enum.reduce({{:ok, input}, %Zoi.Error{}}, fn
-      {mod, func, args}, {{:ok, input}, error} ->
-        case apply(mod, func, [schema, input] ++ args) do
-          {:ok, value} ->
-            {{:ok, value}, error}
+    |> Enum.reduce_while(input, fn
+      {_mod, _func, _args}, {:error, error} ->
+        {:halt, {:error, %Zoi.Error{message: error}}}
 
-          {:error, err} ->
-            {{:ok, input}, Zoi.Error.add_error(error, err)}
+      {mod, func, args}, value ->
+        {:cont, apply(mod, func, [schema, value] ++ args)}
 
-          value ->
-            {{:ok, value}, error}
-        end
+      _transform_func, {:error, error} ->
+        {:halt, {:error, %Zoi.Error{message: error}}}
 
-      transform_func, {{:ok, input}, error} ->
-        case transform_func.(schema, input) do
-          {:ok, value} ->
-            {{:ok, value}, error}
-
-          {:error, err} ->
-            {{:ok, input}, Zoi.Error.add_error(error, err)}
-
-          value ->
-            {{:ok, value}, error}
-        end
+      transform_func, value ->
+        {:cont, transform_func.(schema, value)}
     end)
-    |> then(fn {{:ok, value}, error} ->
-      if Enum.empty?(error.issues) do
-        {:ok, value}
-      else
-        {:error, error}
-      end
+    |> then(fn
+      {:error, %Zoi.Error{} = error} -> {:error, [error]}
+      {:error, error} -> {:error, [%Zoi.Error{message: error}]}
+      value -> {:ok, value}
     end)
   end
 end

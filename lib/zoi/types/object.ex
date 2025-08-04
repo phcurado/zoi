@@ -16,7 +16,7 @@ defmodule Zoi.Types.Object do
               # If the field is optional, we skip it and do not add it to parsed
               {parsed, errors}
             else
-              {parsed, Map.put(errors, key, Zoi.Error.add_error("is required"))}
+              {parsed, errors ++ [%Zoi.Error{message: "#{key} is required "}]}
             end
 
           {:ok, value} ->
@@ -25,7 +25,7 @@ defmodule Zoi.Types.Object do
                 {Map.put(parsed, key, val), errors}
 
               {:error, err} ->
-                {parsed, Map.put(errors, key, err)}
+                {parsed, errors ++ [%Zoi.Error{message: "Error on #{key}: #{err.message} "}]}
             end
         end
       end)
@@ -33,13 +33,13 @@ defmodule Zoi.Types.Object do
         if errors == %{} do
           {:ok, parsed}
         else
-          {:error, %Zoi.Error{issues: errors}}
+          {:error, errors}
         end
       end)
     end
 
     def parse(_, _, _) do
-      {:error, Zoi.Error.add_error("invalid object type")}
+      {:error, [%Zoi.Error{message: "invalid object type"}]}
     end
 
     defp map_fetch(map, key) do

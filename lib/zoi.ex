@@ -54,30 +54,21 @@ defmodule Zoi do
   alias Zoi.Types.Meta
 
   @type input :: any()
-  @type result :: {:ok, any()} | {:error, map()}
+  @type result :: {:ok, any()} | {:error, [Zoi.Error.t(), ...]}
   @type options :: keyword()
 
   defmodule Error do
     @type t :: %__MODULE__{
-            message: binary(),
-            issues: [binary()]
+            message: binary()
           }
-    defexception [:message, issues: [], path: []]
+    defexception [:message, path: []]
 
     @impl true
     def exception(opts) when is_list(opts) do
       struct!(__MODULE__, opts)
     end
 
-    def add_error(issue) when is_binary(issue) do
-      %__MODULE__{issues: [issue]}
-    end
-
-    def add_error(%__MODULE__{issues: issues} = error, issue) do
-      %{error | issues: issues ++ [issue]}
-    end
-
-    def message(%__MODULE__{issues: issues}), do: Enum.join(issues, ", ")
+    def message(%__MODULE__{message: message}), do: message
   end
 
   @doc """
@@ -103,8 +94,7 @@ defmodule Zoi do
          {:ok, result} <- Meta.run_transforms(schema, result) do
       {:ok, result}
     else
-      {:error, %Zoi.Error{} = error} -> {:error, error}
-      {:error, reason} when is_binary(reason) -> {:error, Zoi.Error.add_error(reason)}
+      {:error, errors} -> {:error, errors}
     end
   end
 
