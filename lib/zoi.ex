@@ -99,7 +99,7 @@ defmodule Zoi do
   @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: result()
   def parse(schema, input, opts \\ []) do
     with {:ok, result} <- Zoi.Type.parse(schema, input, opts),
-         {:ok, _validated_result} <- Meta.run_validations(schema, result),
+         {:ok, _refined_result} <- Meta.run_refinements(schema, result),
          {:ok, result} <- Meta.run_transforms(schema, result) do
       {:ok, result}
     else
@@ -343,7 +343,7 @@ defmodule Zoi do
   @spec length(schema :: Zoi.Type.t(), length :: non_neg_integer()) :: Zoi.Type.t()
   def length(%Zoi.Types.String{} = schema, length) do
     schema
-    |> refine({Zoi.Refinements, :validate, [[length: length], []]})
+    |> refine({Zoi.Refinements, :refine, [[length: length], []]})
   end
 
   @doc """
@@ -360,7 +360,7 @@ defmodule Zoi do
   @spec min(schema :: Zoi.Type.t(), min :: non_neg_integer()) :: Zoi.Type.t()
   def min(schema, min) do
     schema
-    |> refine({Zoi.Refinements, :validate, [[min: min], []]})
+    |> refine({Zoi.Refinements, :refine, [[min: min], []]})
   end
 
   @doc """
@@ -376,7 +376,7 @@ defmodule Zoi do
   @doc group: "Refinements"
   def max(schema, max) do
     schema
-    |> refine({Zoi.Refinements, :validate, [[max: max], []]})
+    |> refine({Zoi.Refinements, :refine, [[max: max], []]})
   end
 
   @doc """
@@ -389,7 +389,7 @@ defmodule Zoi do
   @doc group: "Refinements"
   def regex(schema, regex, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :validate, [[regex: regex], opts]})
+    |> refine({Zoi.Refinements, :refine, [[regex: regex], opts]})
   end
 
   @doc """
@@ -425,7 +425,7 @@ defmodule Zoi do
   @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary()) :: Zoi.Type.t()
   def starts_with(schema, prefix) do
     schema
-    |> refine({Zoi.Refinements, :validate, [[starts_with: prefix], []]})
+    |> refine({Zoi.Refinements, :refine, [[starts_with: prefix], []]})
   end
 
   @doc """
@@ -442,7 +442,7 @@ defmodule Zoi do
   @spec ends_with(schema :: Zoi.Type.t(), suffix :: binary()) :: Zoi.Type.t()
   def ends_with(schema, suffix) do
     schema
-    |> refine({Zoi.Refinements, :validate, [[ends_with: suffix], []]})
+    |> refine({Zoi.Refinements, :refine, [[ends_with: suffix], []]})
   end
 
   # Transforms
@@ -507,7 +507,8 @@ defmodule Zoi do
       {:error, %Zoi.Error{issues: ["must be longer than 5 characters"]}}
   """
   @doc group: "Extensions"
-  @spec refine(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
+
+  @spec refine(schema :: Zoi.Type.t(), fun :: Meta.refinement()) :: Zoi.Type.t()
   def refine(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
@@ -518,7 +519,7 @@ defmodule Zoi do
   end
 
   def refine(schema, fun) do
-    update_in(schema.meta.validations, fn transforms ->
+    update_in(schema.meta.refinements, fn transforms ->
       transforms ++ [fun]
     end)
   end
@@ -534,7 +535,7 @@ defmodule Zoi do
       {:ok, "hello world"}
   """
   @doc group: "Extensions"
-  @spec transform(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
+  @spec transform(schema :: Zoi.Type.t(), fun :: Meta.transform()) :: Zoi.Type.t()
   def transform(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->

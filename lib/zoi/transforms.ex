@@ -14,4 +14,9 @@ defmodule Zoi.Transforms do
   def transform(%Zoi.Types.String{}, input, [:to_upcase], _opts) do
     String.upcase(input)
   end
+
+  def transform(_schema, input, _args, _opts) do
+    # Default to the input if there is no type pattern match
+    {:ok, input}
+  end
 end

@@ -23,8 +23,11 @@ defmodule Zoi.Types.Union do
     def parse(%Zoi.Types.Union{schemas: schemas}, value, opts) do
       Enum.reduce_while(schemas, nil, fn schema, _acc ->
         case Zoi.parse(schema, value, opts) do
-          {:ok, result} -> {:halt, {:ok, result}}
-          {:error, reason} -> {:cont, {:error, reason}}
+          {:ok, result} ->
+            {:halt, {:ok, result}}
+
+          {:error, reason} ->
+            {:cont, {:error, reason}}
         end
       end)
     end

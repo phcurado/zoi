@@ -230,16 +230,25 @@ defmodule ZoiTest do
       assert error.issues == ["minimum value is 5"]
     end
 
-    test "union with transforms" do
+    test "union type with transforms" do
       schema =
         Zoi.union([Zoi.string() |> Zoi.to_downcase(), Zoi.integer()]) |> Zoi.trim()
 
       assert {:ok, "hello"} == Zoi.parse(schema, "  HELLO  ")
-      # assert {:ok, 42} == Zoi.parse(schema, 42)
-      #
-      # # Fails on `to_downcase` refinement, fallback to integer validation
-      # assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "WORLD")
-      # assert Exception.message(error) == "invalid integer type"
+      assert {:ok, 42} == Zoi.parse(schema, 42)
+    end
+
+    test "union type with invalid transform" do
+      schema =
+        Zoi.union([
+          Zoi.string() |> Zoi.transform(fn _, _ -> {:error, "error"} end),
+          Zoi.integer()
+        ])
+        |> Zoi.to_upcase()
+
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hello")
+      assert Exception.message(error) == "invalid integer type"
+      assert error.issues == ["invalid integer type"]
     end
 
     test "object with correct value" do
@@ -521,6 +530,68 @@ defmodule ZoiTest do
     test "upcase already uppercase" do
       schema = Zoi.string() |> Zoi.to_upcase()
       assert {:ok, "TEST"} == Zoi.parse(schema, "TEST")
+    end
+  end
+
+  describe "refine/2" do
+    test "valid refinement" do
+      schema =
+        Zoi.string()
+        |> Zoi.refine(fn _schema, value ->
+          if String.length(value) > 3 do
+            :ok
+          else
+            {:error, "must be longer than 3 characters"}
+          end
+        end)
+
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+
+    test "invalid refinement" do
+      schema =
+        Zoi.string()
+        |> Zoi.refine(fn _schema, value ->
+          if String.length(value) > 3 do
+            :ok
+          else
+            {:error, "must be longer than 3 characters"}
+          end
+        end)
+
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hi")
+      assert Exception.message(error) == "must be longer than 3 characters"
+      assert error.issues == ["must be longer than 3 characters"]
+    end
+
+    test "refinement validation when no pattern match" do
+      schema = Zoi.string() |> Zoi.refine({Zoi.Refinements, :refine, [[], []]})
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+  end
+
+  describe "transform/2" do
+    test "valid transform" do
+      schema =
+        Zoi.string()
+        |> Zoi.transform(fn _schema, value -> {:ok, String.upcase(value)} end)
+
+      assert {:ok, "HELLO"} == Zoi.parse(schema, "hello")
+    end
+
+    test "invalid transform" do
+      schema =
+        Zoi.string()
+        |> Zoi.transform(fn _schema, _value -> {:error, "transform error"} end)
+
+      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hello")
+      assert Exception.message(error) == "transform error"
+      assert error.issues == ["transform error"]
+    end
+
+    test "transform with no pattern match" do
+      schema = Zoi.string() |> Zoi.transform({Zoi.Transforms, :transform, [[], []]})
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
     end
   end
 end

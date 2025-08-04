@@ -15,17 +15,17 @@ defmodule Zoi.MetaTest do
   end
 
   describe "create_meta/1" do
-    test "creates a meta struct with validations and transforms" do
+    test "creates a meta struct with refinements and transforms" do
       opts = [
-        validations: [{:refine, &is_integer/1}],
+        refinements: [{:refine, &is_integer/1}],
         transforms: [&String.upcase/1],
         extra_param: "value"
       ]
 
-      assert {%Meta{validations: validations, transforms: transforms}, rest} =
+      assert {%Meta{refinements: refinements, transforms: transforms}, rest} =
                Meta.create_meta(opts)
 
-      assert validations == [{:refine, &is_integer/1}]
+      assert refinements == [{:refine, &is_integer/1}]
       assert transforms == [&String.upcase/1]
       assert rest == [extra_param: "value"]
     end
@@ -33,59 +33,57 @@ defmodule Zoi.MetaTest do
     test "returns an empty meta struct when no options are provided" do
       {meta, rest} = Meta.create_meta([])
 
-      assert %Meta{validations: [], transforms: []} = meta
+      assert %Meta{refinements: [], transforms: []} = meta
       assert rest == []
     end
   end
 
-  describe "run_validations/2" do
-    test "runs validations and returns ok for valid input" do
+  describe "run_refinements/2" do
+    test "runs refinements and returns ok for valid input" do
       schema = %Zoi.Types.Integer{
         meta: %Meta{
-          validations: [
-            {:refine,
-             fn _schema, val, _opts ->
-               if is_integer(val) do
-                 :ok
-               else
-                 {:error, "Value is not an integer"}
-               end
-             end, []}
+          refinements: [
+            fn _schema, val ->
+              if is_integer(val) do
+                :ok
+              else
+                {:error, "Value is not an integer"}
+              end
+            end
           ]
         }
       }
 
-      assert {:ok, 42} == Meta.run_validations(schema, 42)
+      assert {:ok, 42} == Meta.run_refinements(schema, 42)
     end
 
     test "returns error for invalid input" do
       schema = %Zoi.Types.Integer{
         meta: %Meta{
-          validations: [
-            {:refine,
-             fn _schema, val, _opts ->
-               if is_integer(val) do
-                 :ok
-               else
-                 {:error, "Value is not an integer"}
-               end
-             end, []}
+          refinements: [
+            fn _schema, val ->
+              if is_integer(val) do
+                :ok
+              else
+                {:error, "Value is not an integer"}
+              end
+            end
           ]
         }
       }
 
-      assert {:error, _} = Meta.run_validations(schema, "not an integer")
+      assert {:error, _} = Meta.run_refinements(schema, "not an integer")
     end
 
-    test "validation with mfa" do
+    test "refinement with mfa" do
       schema = %Zoi.Types.Integer{
         meta: %Meta{
-          validations: [{Validation, :integer?, []}]
+          refinements: [{Validation, :integer?, []}]
         }
       }
 
-      assert {:ok, 42} == Meta.run_validations(schema, 42)
-      assert {:error, _} = Meta.run_validations(schema, "not an integer")
+      assert {:ok, 42} == Meta.run_refinements(schema, 42)
+      assert {:error, _} = Meta.run_refinements(schema, "not an integer")
     end
   end
 

@@ -1,8 +1,20 @@
 defmodule Zoi.Types.Meta do
   @moduledoc false
 
-  @type t :: %__MODULE__{validations: [mfa()]}
-  @struct_fields [validations: [], transforms: []]
+  @type refinement ::
+          {module(), atom(), [any()]} | (Zoi.Type.t(), Zoi.input() -> :ok | {:error, binary()})
+
+  @type transform ::
+          {module(), atom(), [any()]}
+          | (Zoi.Type.t(), Zoi.input() -> {:ok, Zoi.input()} | {:error, binary()} | Zoi.input())
+
+  @type t :: %__MODULE__{
+          refinements: [refinement()],
+          transforms: [transform()],
+          error: nil | binary()
+        }
+
+  @struct_fields [refinements: [], transforms: [], error: nil]
   @struct_keys Keyword.keys(@struct_fields)
 
   defstruct @struct_fields
@@ -23,35 +35,29 @@ defmodule Zoi.Types.Meta do
     end)
   end
 
-  @doc """
-  Runs a list of validations against the input.
-  """
-  @spec run_validations(schema :: Zoi.Type.t(), input :: Zoi.input()) ::
+  @spec run_refinements(schema :: Zoi.Type.t(), input :: Zoi.input()) ::
           {:ok, Zoi.input()} | {:error, binary()}
 
-  def run_validations(schema, input) do
-    schema.meta.validations
+  def run_refinements(schema, input) do
+    schema.meta.refinements
     |> Enum.reduce_while({:ok, input}, fn
-      {:refine, fun, opts}, {:ok, _input} ->
-        case fun.(schema, input, opts) do
+      {mod, func, args}, {:ok, _input} ->
+        case apply(mod, func, [schema, input] ++ args) do
+          :ok -> {:cont, {:ok, input}}
+          {:error, err} -> {:halt, {:error, err}}
+        end
+
+      refine_func, {:ok, _input} ->
+        case refine_func.(schema, input) do
           :ok ->
             {:cont, {:ok, input}}
 
           {:error, error} ->
             {:halt, {:error, error}}
         end
-
-      {mod, func, args}, {:ok, _input} ->
-        case apply(mod, func, [schema, input] ++ args) do
-          :ok -> {:cont, {:ok, input}}
-          {:error, err} -> {:halt, {:error, err}}
-        end
     end)
   end
 
-  @doc """
-  Runs a list of transforms against the input.
-  """
   @spec run_transforms(schema :: Zoi.Type.t(), input :: Zoi.input()) ::
           {:ok, Zoi.input()} | {:error, binary()}
   def run_transforms(schema, input) do
@@ -64,8 +70,8 @@ defmodule Zoi.Types.Meta do
           value -> {:cont, {:ok, value}}
         end
 
-      transform, {:ok, input} ->
-        case transform.(schema, input) do
+      transform_func, {:ok, input} ->
+        case transform_func.(schema, input) do
           {:ok, result} ->
             {:cont, {:ok, result}}
 
