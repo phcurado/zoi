@@ -354,6 +354,36 @@ defmodule ZoiTest do
       assert Exception.message(error) == "is required"
       assert error.path == [:user, :age]
     end
+
+    test "object with strict keys" do
+      schema =
+        Zoi.object(
+          %{
+            name: Zoi.string(),
+            address: Zoi.optional(Zoi.object(%{street: Zoi.optional(Zoi.string())})),
+            phone: Zoi.optional(Zoi.object(%{number: Zoi.optional(Zoi.string())}, strict: true))
+          },
+          strict: true
+        )
+
+      assert {:ok, %{name: "John"}} == Zoi.parse(schema, %{"name" => "John"})
+
+      assert {:error, errors} =
+               Zoi.parse(
+                 schema,
+                 %{
+                   "name" => "John",
+                   "age" => 30,
+                   "address" => %{"wrong key" => "value"},
+                   "phone" => %{"wrong key" => "value"}
+                 }
+               )
+
+      assert ^errors = [
+               %Zoi.Error{message: "unrecognized key: 'wrong key'", path: [:phone]},
+               %Zoi.Error{message: "unrecognized key: 'age'", path: []}
+             ]
+    end
   end
 
   describe "array/2" do

@@ -1,14 +1,22 @@
 defmodule Zoi.Types.Object do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:fields]
+  use Zoi.Type.Def, fields: [:fields, :strict]
 
   def new(fields, opts \\ []) do
     apply_type(opts ++ [fields: fields])
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Object{fields: fields}, input, opts) when is_map(input) do
+    def parse(%Zoi.Types.Object{fields: fields, strict: strict}, input, _opts)
+        when is_map(input) do
+      unknwon_fields_errors =
+        if strict do
+          unknown_fields(fields, input)
+        else
+          []
+        end
+
       Enum.reduce(fields, {%{}, []}, fn {key, type}, {parsed, errors} ->
         case map_fetch(input, key) do
           :error ->
@@ -24,7 +32,7 @@ defmodule Zoi.Types.Object do
             end
 
           {:ok, value} ->
-            case Zoi.parse(type, value, opts) do
+            case Zoi.parse(type, value) do
               {:ok, val} ->
                 {Map.put(parsed, key, val), errors}
 
@@ -35,10 +43,10 @@ defmodule Zoi.Types.Object do
         end
       end)
       |> then(fn {parsed, errors} ->
-        if errors == [] do
+        if errors == [] and unknwon_fields_errors == [] do
           {:ok, parsed}
         else
-          {:error, errors}
+          {:error, Zoi.Errors.merge(errors, unknwon_fields_errors)}
         end
       end)
     end
@@ -59,5 +67,20 @@ defmodule Zoi.Types.Object do
 
     defp optional?(%Zoi.Types.Optional{}), do: true
     defp optional?(_), do: false
+
+    def unknown_fields(fields, input) do
+      schema_keys =
+        fields
+        |> Map.keys()
+        |> Enum.map(&to_string/1)
+
+      input
+      |> Map.keys()
+      |> Enum.map(&to_string/1)
+      |> Enum.reject(&(&1 in schema_keys))
+      |> Enum.map(fn key ->
+        Zoi.Error.exception(message: "unrecognized key: '#{key}'")
+      end)
+    end
   end
 end

@@ -261,6 +261,24 @@ defmodule Zoi do
 
       iex> Zoi.parse(user_schema, %{name: "Alice", age: 30, email: "alice@email.com"})
       {:ok, %{name: "Alice", age: 30, email: "alice@email.com"}}
+
+  By default all fields are required, but you can make them optional by using `Zoi.optional/1`:
+
+      user_schema = Zoi.object(%{
+        name: Zoi.string() |> Zoi.optional(),
+        age: Zoi.integer() |> Zoi.optional(),
+        email: Zoi.string() |> Zoi.email() |> Zoi.optional()
+      })
+
+      iex> Zoi.parse(user_schema, %{name: "Alice"})
+      {:ok, %{name: "Alice"}}
+
+  By default, unrecognized keys will be removed from the parsed data. If you want to not allow unrecognized keys, use the `:strict` option:
+
+      iex> schema = Zoi.object(%{name: Zoi.string()}, strict: true)
+      iex> Zoi.parse(schema, %{name: "Alice", age: 30})
+      {:error, [%Zoi.Error{message: "unrecognized keys: [:age]"}]}
+
   """
   @doc group: "Complex Types"
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
