@@ -25,6 +25,14 @@ defmodule Zoi.Refinements do
     end
   end
 
+  def refine(%Zoi.Types.Array{}, input, [min: min], _opts) do
+    if length(input) >= min do
+      :ok
+    else
+      {:error, "minimum array length is #{min}"}
+    end
+  end
+
   def refine(%Zoi.Types.String{}, input, [max: max], _opts) do
     if String.length(input) <= max do
       :ok
@@ -49,8 +57,24 @@ defmodule Zoi.Refinements do
     end
   end
 
+  def refine(%Zoi.Types.Array{}, input, [max: max], _opts) do
+    if length(input) <= max do
+      :ok
+    else
+      {:error, "maximum length is #{max}"}
+    end
+  end
+
   def refine(%Zoi.Types.String{}, input, [length: length], _opts) do
     if String.length(input) == length do
+      :ok
+    else
+      {:error, "length must be #{length}"}
+    end
+  end
+
+  def refine(%Zoi.Types.Array{}, input, [length: length], _opts) do
+    if length(input) == length do
       :ok
     else
       {:error, "length must be #{length}"}

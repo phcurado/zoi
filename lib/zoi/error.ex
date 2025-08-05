@@ -11,6 +11,10 @@ defmodule Zoi.Error do
     struct!(__MODULE__, opts)
   end
 
+  def append_path(%__MODULE__{} = error, path) when is_list(path) do
+    %{error | path: error.path ++ path}
+  end
+
   def add_path(%__MODULE__{} = error, path) when is_list(path) do
     %{error | path: path ++ error.path}
   end

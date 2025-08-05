@@ -37,8 +37,8 @@ defmodule Zoi do
   Complex types:
       Zoi.object(fields)
       Zoi.enum(values)
-      Zoi.array(element_type)
-      Zoi.tuple(element_type)
+      Zoi.array(inner_type)
+      Zoi.tuple(inner_types)
 
   ## Coercion
   By default, `Zoi` will not attempt to infer input data to match the expected type. For example, if you define a schema that expects a string, passing an integer will result in an error.
@@ -266,6 +266,26 @@ defmodule Zoi do
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
 
   @doc """
+  Defines a array type schema.
+
+  Use `Zoi.array(elements)` to define an array of a specific type:
+
+      iex> schema = Zoi.array(Zoi.string())
+      iex> Zoi.parse(schema, ["hello", "world"])
+      {:ok, ["hello", "world"]}
+      iex> Zoi.parse(schema, ["hello", 123])
+      {:error, [%Zoi.Error{message: "invalid string type", path: [1]}]}
+
+  Built-in validations for integers include:
+
+      Zoi.min(3)
+      Zoi.max(10)
+      Zoi.length(5)
+  """
+  @doc group: "Complex Types"
+  defdelegate array(elements, opts \\ []), to: Zoi.Types.Array, as: :new
+
+  @doc """
   Defines an enum type schema.
   Use `Zoi.enum(values)` to define a schema that accepts only specific values:
 
@@ -321,7 +341,7 @@ defmodule Zoi do
 
   @doc group: "Refinements"
   @spec length(schema :: Zoi.Type.t(), length :: non_neg_integer()) :: Zoi.Type.t()
-  def length(%Zoi.Types.String{} = schema, length) do
+  def length(schema, length) do
     schema
     |> refine({Zoi.Refinements, :refine, [[length: length], []]})
   end
@@ -530,5 +550,43 @@ defmodule Zoi do
     update_in(schema.meta.transforms, fn transforms ->
       transforms ++ [fun]
     end)
+  end
+
+  @doc """
+  Converts a list of errors into a tree structure, where each error is placed at its corresponding path.
+
+  This is useful for displaying validation errors in a structured way, such as in a form.
+  ## Example
+
+      iex> errors = [
+      ...>   %Zoi.Error{path: ["name"], message: "is required"},
+      ...>   %Zoi.Error{path: ["age"], message: "must be a number"},
+      ...>   %Zoi.Error{path: ["address", "city"], message: "is required"}
+      ...> ]
+      iex> Zoi.treefy_errors(errors)
+      %{
+        "name" => [%Zoi.Error{message: "is required"}],
+        "age" => [%Zoi.Error{message: "must be a number"}],
+        "address" => %{
+          "city" => [%Zoi.Error{message: "is required"}]
+        }
+      }
+  """
+  @spec treefy_errors([Zoi.Error.t()]) :: map()
+  def treefy_errors(errors) when is_list(errors) do
+    Enum.reduce(errors, %{}, fn %Zoi.Error{path: path} = error, acc ->
+      insert_error(acc, path, error)
+    end)
+  end
+
+  defp insert_error(acc, [], _error), do: acc
+
+  defp insert_error(acc, [key], error) do
+    Map.update(acc, key, [error], fn existing -> existing ++ [error] end)
+  end
+
+  defp insert_error(acc, [key | rest], error) do
+    nested = Map.get(acc, key, %{})
+    Map.put(acc, key, insert_error(nested, rest, error))
   end
 end

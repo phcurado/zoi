@@ -29,11 +29,7 @@ defmodule Zoi.Types.Object do
                 {Map.put(parsed, key, val), errors}
 
               {:error, err} ->
-                error =
-                  Enum.map(err, fn error ->
-                    Zoi.Error.add_path(error, [key])
-                  end)
-
+                error = Enum.map(err, &Zoi.Error.add_path(&1, [key]))
                 {parsed, Zoi.Errors.merge(errors, error)}
             end
         end
@@ -48,7 +44,7 @@ defmodule Zoi.Types.Object do
     end
 
     def parse(_, _, _) do
-      {:error, Zoi.Errors.add_error("invalid object type")}
+      {:error, "invalid object type"}
     end
 
     defp map_fetch(map, key) do
