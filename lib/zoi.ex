@@ -43,7 +43,7 @@ defmodule Zoi do
   ## Coercion
   By default, `Zoi` will not attempt to infer input data to match the expected type. For example, if you define a schema that expects a string, passing an integer will result in an error.
       iex> Zoi.string() |> Zoi.parse(123)
-      {:error, %Zoi.Error{message: "invalid string type"}}
+      {:error, [%Zoi.Error{message: "invalid string type"}]}
 
   If you need coercion, you can enable it by passing the `:coerce` option:
 
@@ -54,31 +54,8 @@ defmodule Zoi do
   alias Zoi.Types.Meta
 
   @type input :: any()
-  @type result :: {:ok, any()} | {:error, map()}
+  @type result :: {:ok, any()} | {:error, [Zoi.Error.t() | binary()]}
   @type options :: keyword()
-
-  defmodule Error do
-    @type t :: %__MODULE__{
-            message: binary(),
-            issues: [binary()]
-          }
-    defexception [:message, issues: [], path: []]
-
-    @impl true
-    def exception(opts) when is_list(opts) do
-      struct!(__MODULE__, opts)
-    end
-
-    def add_error(issue) when is_binary(issue) do
-      %__MODULE__{issues: [issue]}
-    end
-
-    def add_error(%__MODULE__{issues: issues} = error, issue) do
-      %{error | issues: issues ++ [issue]}
-    end
-
-    def message(%__MODULE__{issues: issues}), do: Enum.join(issues, ", ")
-  end
 
   @doc """
   Parse input data against a schema.
@@ -90,7 +67,7 @@ defmodule Zoi do
       {:ok, "hello"}
 
       iex> Zoi.parse(schema, "hi")
-      {:error, %Zoi.Error{issues: ["minimum length is 2"]}}
+      {:error, [%Zoi.Error{message: "minimum length is 2"}]}
 
       iex> Zoi.parse(schema, 123, coerce: true)
       {:ok, "123"}
@@ -103,8 +80,11 @@ defmodule Zoi do
          {:ok, result} <- Meta.run_transforms(schema, result) do
       {:ok, result}
     else
-      {:error, %Zoi.Error{} = error} -> {:error, error}
-      {:error, reason} when is_binary(reason) -> {:error, Zoi.Error.add_error(reason)}
+      {:error, reason} when is_binary(reason) ->
+        {:error, Zoi.Errors.add_error(reason)}
+
+      {:error, error} ->
+        {:error, error}
     end
   end
 
@@ -241,7 +221,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 42)
       {:ok, 42}
       iex> Zoi.parse(schema, true)
-      {:error, %Zoi.Error{issues: ["invalid type for union"]}}
+      {:error, [%Zoi.Error{message: "invalid type for union"}]}
 
   This type also allows to define validations for each type in the union:
 
@@ -250,9 +230,9 @@ defmodule Zoi do
       ...>   Zoi.integer() |> Zoi.min(0)
       ...> ])
       iex> Zoi.parse(schema, "hi")
-      {:error, %Zoi.Error{issues: ["minimum length is 2"]}}
+      {:error, [%Zoi.Error{message: "minimum length is 2"}]}
       iex> Zoi.parse(schema, -1)
-      {:error, %Zoi.Error{issues: ["minimum value is 0"]}}
+      {:error, [%Zoi.Error{message: "minimum value is 0"}]}
 
   If you define the validation on the union itself, it will apply to all types in the union:
 
@@ -263,7 +243,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, 2)
-      {:error, %Zoi.Error{issues: ["minimum value is 3"]}}
+      {:error, [%Zoi.Error{message: "minimum value is 3"}]}
   """
   @doc group: "Encapsulated Types"
   defdelegate union(fields, opts \\ []), to: Zoi.Types.Union, as: :new
@@ -293,35 +273,35 @@ defmodule Zoi do
       iex> Zoi.parse(schema, :red)
       {:ok, :red}
       iex> Zoi.parse(schema, :yellow)
-      {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
+      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
 
   You can also specify enum as strings:
       iex> schema = Zoi.enum(["red", "green", "blue"])
       iex> Zoi.parse(schema, "red")
       {:ok, "red"}
       iex> Zoi.parse(schema, "yellow")
-      {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
+      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
 
   or with key-value pairs:
       iex> schema = Zoi.enum([red: "Red", green: "Green", blue: "Blue"])
       iex> Zoi.parse(schema, "Red")
       {:ok, :red}
       iex> Zoi.parse(schema, "Yellow")
-      {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
+      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
 
   Integer values can also be used:
       iex> schema = Zoi.enum([1, 2, 3])
       iex> Zoi.parse(schema, 1)
       {:ok, 1}
       iex> Zoi.parse(schema, 4)
-      {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
+      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
 
   And Integers with key-value pairs also is allowed:
       iex> schema = Zoi.enum([one: 1, two: 2, three: 3])
       iex> Zoi.parse(schema, 1)
       {:ok, :one}
       iex> Zoi.parse(schema, 4)
-      {:error, %Zoi.Error{issues: ["invalid value for enum"]}}
+      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
   """
   @doc group: "Complex Types"
   defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
@@ -336,7 +316,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hi")
-      {:error, %Zoi.Error{issues: ["length must be 5"]}}
+      {:error, [%Zoi.Error{message: "length must be 5"}]}
   """
 
   @doc group: "Refinements"
@@ -354,7 +334,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hi")
-      {:error, %Zoi.Error{issues: ["minimum length is 2"]}}
+      {:error, [%Zoi.Error{message: "minimum length is 2"}]}
   """
   @doc group: "Refinements"
   @spec min(schema :: Zoi.Type.t(), min :: non_neg_integer()) :: Zoi.Type.t()
@@ -371,7 +351,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hello world")
-      {:error, %Zoi.Error{issues: ["maximum length is 5"]}}
+      {:error, [%Zoi.Error{message: "maximum length is 5"}]}
   """
   @doc group: "Refinements"
   def max(schema, max) do
@@ -399,7 +379,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "test@test.com")
       {:ok, "test@test.com"}
       iex> Zoi.parse(schema, "invalid-email")
-      {:error, %Zoi.Error{issues: ["invalid email format"]}}
+      {:error, [%Zoi.Error{message: "invalid email format"}]}
   """
   @doc group: "Refinements"
   @spec email(schema :: Zoi.Type.t()) :: Zoi.Type.t()
@@ -419,7 +399,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
       iex> Zoi.parse(schema, "world hello")
-      {:error, %Zoi.Error{issues: ["must start with 'hello'"]}}
+      {:error, [%Zoi.Error{message: "must start with 'hello'"}]}
   """
   @doc group: "Refinements"
   @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary()) :: Zoi.Type.t()
@@ -436,7 +416,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
       iex> Zoi.parse(schema, "hello")
-      {:error, %Zoi.Error{issues: ["must end with 'world'"]}}
+      {:error, [%Zoi.Error{message: "must end with 'world'"}]}
   """
   @doc group: "Refinements"
   @spec ends_with(schema :: Zoi.Type.t(), suffix :: binary()) :: Zoi.Type.t()
@@ -504,7 +484,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
       iex> Zoi.parse(schema, "hi")
-      {:error, %Zoi.Error{issues: ["must be longer than 5 characters"]}}
+      {:error, [%Zoi.Error{message: "must be longer than 5 characters"}]}
   """
   @doc group: "Extensions"
 

@@ -40,14 +40,14 @@ defmodule Zoi.Types.Meta do
 
   def run_refinements(schema, input) do
     schema.meta.refinements
-    |> Enum.reduce({{:ok, input}, %Zoi.Error{}}, fn
-      {mod, func, args}, {{:ok, input}, error} ->
+    |> Enum.reduce({{:ok, input}, []}, fn
+      {mod, func, args}, {{:ok, input}, errors} ->
         case apply(mod, func, [schema, input] ++ args) do
           :ok ->
-            {{:ok, input}, error}
+            {{:ok, input}, errors}
 
           {:error, err} ->
-            {{:ok, input}, Zoi.Error.add_error(error, err)}
+            {{:ok, input}, Zoi.Errors.add_error(errors, err)}
         end
 
       refine_func, {{:ok, input}, error} ->
@@ -56,14 +56,14 @@ defmodule Zoi.Types.Meta do
             {{:ok, input}, error}
 
           {:error, err} ->
-            {{:ok, input}, Zoi.Error.add_error(error, err)}
+            {{:ok, input}, Zoi.Errors.add_error(error, err)}
         end
     end)
-    |> then(fn {{:ok, value}, error} ->
-      if Enum.empty?(error.issues) do
+    |> then(fn {{:ok, value}, errors} ->
+      if Enum.empty?(errors) do
         {:ok, value}
       else
-        {:error, error}
+        {:error, errors}
       end
     end)
   end
@@ -72,14 +72,14 @@ defmodule Zoi.Types.Meta do
           {:ok, Zoi.input()} | {:error, binary()}
   def run_transforms(schema, input) do
     schema.meta.transforms
-    |> Enum.reduce({{:ok, input}, %Zoi.Error{}}, fn
+    |> Enum.reduce({{:ok, input}, []}, fn
       {mod, func, args}, {{:ok, input}, error} ->
         case apply(mod, func, [schema, input] ++ args) do
           {:ok, value} ->
             {{:ok, value}, error}
 
           {:error, err} ->
-            {{:ok, input}, Zoi.Error.add_error(error, err)}
+            {{:ok, input}, Zoi.Errors.add_error(error, err)}
 
           value ->
             {{:ok, value}, error}
@@ -91,17 +91,17 @@ defmodule Zoi.Types.Meta do
             {{:ok, value}, error}
 
           {:error, err} ->
-            {{:ok, input}, Zoi.Error.add_error(error, err)}
+            {{:ok, input}, Zoi.Errors.add_error(error, err)}
 
           value ->
             {{:ok, value}, error}
         end
     end)
-    |> then(fn {{:ok, value}, error} ->
-      if Enum.empty?(error.issues) do
+    |> then(fn {{:ok, value}, errors} ->
+      if Enum.empty?(errors) do
         {:ok, value}
       else
-        {:error, error}
+        {:error, errors}
       end
     end)
   end

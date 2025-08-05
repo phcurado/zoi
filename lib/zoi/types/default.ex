@@ -10,9 +10,9 @@ defmodule Zoi.Types.Default do
         opts = Keyword.merge(opts, inner: inner, value: value, meta: meta)
         struct!(__MODULE__, opts)
 
-      {:error, reason} ->
+      {:error, error} ->
         raise ArgumentError,
-              "Invalid default value: #{inspect(value)}. Reason: #{reason.issues}"
+              "Invalid default value: #{inspect(value)}. Reason: #{Zoi.Errors.message(error)}"
     end
   end
 

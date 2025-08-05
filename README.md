@@ -38,12 +38,12 @@ Zoi.parse(schema, %{name: "John", age: 30, email: "john@email.com"})
 # {:ok, %{name: "John", age: 30, email: "john@email.com"}}
 
 Zoi.parse(schema, %{email: "invalid-email"})
-#{:error, %Zoi.Error{issues: %{
-#   name: %Zoi.Error{issues: ["is required"]},
-#   age: %Zoi.Error{issues: ["is required"]},
-#    email: %Zoi.Error{issues: ["invalid email format"]}
-#  },
-#}}
+#{:error, [
+#          %Zoi.Error{path: [:name], message: "is required"},
+#          %Zoi.Error{path: [:age], message: "is required"},
+#          %Zoi.Error{path: [:email], message: "invalid email format"}
+#         ]
+#}
 
 ```
 

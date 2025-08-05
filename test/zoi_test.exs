@@ -1,20 +1,6 @@
 defmodule ZoiTest do
   use ExUnit.Case
 
-  describe "Zoi.Error" do
-    test "exception/1" do
-      assert %Zoi.Error{issues: [], message: "An error occurred"} =
-               Zoi.Error.exception(message: "An error occurred")
-    end
-
-    test "add_error/2" do
-      error = %Zoi.Error{issues: ["invalid type"]}
-      updated_error = Zoi.Error.add_error(error, "additional issue")
-
-      assert updated_error.issues == ["invalid type", "additional issue"]
-    end
-  end
-
   describe "parse/3" do
     test "string with correct value" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.string(), "hello")
@@ -24,9 +10,8 @@ defmodule ZoiTest do
       wrong_values = [12, nil, 12.34, :atom]
 
       for value <- wrong_values do
-        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.string(), value)
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.string(), value)
         assert Exception.message(error) == "invalid string type"
-        assert error.issues == ["invalid string type"]
       end
     end
 
@@ -44,9 +29,8 @@ defmodule ZoiTest do
       wrong_values = ["12", nil, 12.34, :atom, "not an integer"]
 
       for value <- wrong_values do
-        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.integer(), value)
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.integer(), value)
         assert Exception.message(error) == "invalid integer type"
-        assert error.issues == ["invalid integer type"]
       end
     end
 
@@ -57,11 +41,10 @@ defmodule ZoiTest do
     end
 
     test "integer with coercion but incorrect value" do
-      assert {:error, %Zoi.Error{} = error} =
+      assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.integer(), "not_integer", coerce: true)
 
       assert Exception.message(error) == "invalid integer type"
-      assert error.issues == ["invalid integer type"]
     end
 
     test "float with correct value" do
@@ -72,9 +55,8 @@ defmodule ZoiTest do
       wrong_values = ["12", nil, 12, :atom, "not a float"]
 
       for value <- wrong_values do
-        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.float(), value)
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.float(), value)
         assert Exception.message(error) == "invalid float type"
-        assert error.issues == ["invalid float type"]
       end
     end
 
@@ -85,11 +67,10 @@ defmodule ZoiTest do
     end
 
     test "float with coercion but incorrect value" do
-      assert {:error, %Zoi.Error{} = error} =
+      assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.float(), "not_float", coerce: true)
 
       assert Exception.message(error) == "invalid float type"
-      assert error.issues == ["invalid float type"]
     end
 
     test "number with correct value" do
@@ -101,11 +82,10 @@ defmodule ZoiTest do
       wrong_values = ["12", nil, :atom, "not a number"]
 
       for value <- wrong_values do
-        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.number(), value)
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.number(), value)
         # For now, returns float error since it's the last element of the union type.
         # Future to add custom error messages per type.
         assert Exception.message(error) == "invalid float type"
-        assert error.issues == ["invalid float type"]
       end
     end
 
@@ -118,9 +98,8 @@ defmodule ZoiTest do
       wrong_values = ["12", nil, 12.34, :atom, "true"]
 
       for value <- wrong_values do
-        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.boolean(), value)
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.boolean(), value)
         assert Exception.message(error) == "invalid boolean type"
-        assert error.issues == ["invalid boolean type"]
       end
     end
 
@@ -142,9 +121,8 @@ defmodule ZoiTest do
       wrong_values = ["True", "False", 1, 0]
 
       for value <- wrong_values do
-        assert {:error, %Zoi.Error{} = error} = Zoi.parse(Zoi.boolean(), value, coerce: true)
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.boolean(), value, coerce: true)
         assert Exception.message(error) == "invalid boolean type"
-        assert error.issues == ["invalid boolean type"]
       end
     end
 
@@ -178,9 +156,8 @@ defmodule ZoiTest do
     test "union with incorrect value" do
       schema = Zoi.union([Zoi.string(), Zoi.integer()])
 
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 12.34)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
       assert Exception.message(error) == "invalid integer type"
-      assert error.issues == ["invalid integer type"]
     end
 
     test "union with coerced values" do
@@ -222,12 +199,11 @@ defmodule ZoiTest do
       assert {:ok, 10} == Zoi.parse(schema, 10)
 
       # Fails on `starts_with` refinement, fallback to integer validation
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "value")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value")
       assert Exception.message(error) == "invalid integer type"
 
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 3)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 3)
       assert Exception.message(error) == "minimum value is 5"
-      assert error.issues == ["minimum value is 5"]
     end
 
     test "union type with transforms" do
@@ -246,9 +222,8 @@ defmodule ZoiTest do
         ])
         |> Zoi.to_upcase()
 
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hello")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
       assert Exception.message(error) == "invalid integer type"
-      assert error.issues == ["invalid integer type"]
     end
 
     test "object with correct value" do
@@ -264,24 +239,26 @@ defmodule ZoiTest do
     test "object with missing required field" do
       schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
 
-      assert {:error, %Zoi.Error{} = error} =
+      assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{
                  "name" => "John"
                })
 
-      assert error.issues == %{age: %Zoi.Error{issues: ["is required"]}}
+      assert Exception.message(error) == "is required"
+      assert error.path == [:age]
     end
 
     test "object with incorrect values" do
       schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
 
-      assert {:error, %Zoi.Error{} = error} =
+      assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{
                  "name" => "John",
                  "age" => "not an integer"
                })
 
-      assert error.issues == %{age: %Zoi.Error{issues: ["invalid integer type"]}}
+      assert Exception.message(error) == "invalid integer type"
+      assert error.path == [:age]
     end
 
     test "object with string key" do
@@ -313,9 +290,39 @@ defmodule ZoiTest do
     test "object with non-map input" do
       schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
 
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "not a map")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
       assert Exception.message(error) == "invalid object type"
-      assert error.issues == ["invalid object type"]
+    end
+
+    test "object with nested object" do
+      schema =
+        Zoi.object(%{
+          user: Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}),
+          active: Zoi.boolean()
+        })
+
+      assert {:ok, %{user: %{name: "Alice", age: 25}, active: true}} ==
+               Zoi.parse(schema, %{
+                 "user" => %{"name" => "Alice", "age" => 25},
+                 "active" => true
+               })
+    end
+
+    test "object with nested object and errors" do
+      schema =
+        Zoi.object(%{
+          user: Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}),
+          active: Zoi.boolean()
+        })
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{
+                 "user" => %{"name" => "Alice"},
+                 "active" => true
+               })
+
+      assert Exception.message(error) == "is required"
+      assert error.path == [:user, :age]
     end
 
     test "enum with atom key" do
@@ -358,16 +365,14 @@ defmodule ZoiTest do
 
     test "enum with incorrect value" do
       schema = Zoi.enum([:apple, :banana, :cherry])
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, :orange)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, :orange)
       assert Exception.message(error) == "invalid enum value"
-      assert error.issues == ["invalid enum value"]
     end
 
     test "enum parse with incorrect type" do
       schema = Zoi.enum([:apple, :banana, :cherry])
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "banana")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "banana")
       assert Exception.message(error) == "invalid enum value"
-      assert error.issues == ["invalid enum value"]
     end
 
     test "enum with incorrect type" do
@@ -387,21 +392,21 @@ defmodule ZoiTest do
     test "min for string" do
       schema = Zoi.string() |> Zoi.min(5)
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hi")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
       assert Exception.message(error) == "minimum length is 5"
     end
 
     test "min for integer" do
       schema = Zoi.integer() |> Zoi.min(10)
       assert {:ok, 15} == Zoi.parse(schema, 15)
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 5)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 5)
       assert Exception.message(error) == "minimum value is 10"
     end
 
     test "min for float" do
       schema = Zoi.float() |> Zoi.min(10.5)
       assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 9.99)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 9.99)
       assert Exception.message(error) == "minimum value is 10.5"
     end
   end
@@ -410,21 +415,21 @@ defmodule ZoiTest do
     test "max for string" do
       schema = Zoi.string() |> Zoi.max(5)
       assert {:ok, "hi"} == Zoi.parse(schema, "hi")
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hello world")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello world")
       assert Exception.message(error) == "maximum length is 5"
     end
 
     test "max for integer" do
       schema = Zoi.integer() |> Zoi.max(10)
       assert {:ok, 5} == Zoi.parse(schema, 5)
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 15)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 15)
       assert Exception.message(error) == "maximum value is 10"
     end
 
     test "max for float" do
       schema = Zoi.float() |> Zoi.max(10.5)
       assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, 12.34)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
       assert Exception.message(error) == "maximum value is 10.5"
     end
   end
@@ -433,7 +438,7 @@ defmodule ZoiTest do
     test "length for string" do
       schema = Zoi.string() |> Zoi.length(5)
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hi")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
       assert Exception.message(error) == "length must be 5"
     end
   end
@@ -446,9 +451,8 @@ defmodule ZoiTest do
 
     test "invalid regex match" do
       schema = Zoi.string() |> Zoi.regex(~r/^\d+$/)
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "abc")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "abc")
       assert Exception.message(error) == "regex does not match"
-      assert error.issues == ["regex does not match"]
     end
   end
 
@@ -460,9 +464,8 @@ defmodule ZoiTest do
 
     test "invalid email" do
       schema = Zoi.string() |> Zoi.email()
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "invalid-email")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-email")
       assert Exception.message(error) == "invalid email format"
-      assert error.issues == ["invalid email format"]
     end
   end
 
@@ -474,9 +477,8 @@ defmodule ZoiTest do
 
     test "invalid prefix" do
       schema = Zoi.string() |> Zoi.starts_with("prefix_")
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "value")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value")
       assert Exception.message(error) == "must start with 'prefix_'"
-      assert error.issues == ["must start with 'prefix_'"]
     end
   end
 
@@ -488,9 +490,8 @@ defmodule ZoiTest do
 
     test "invalid suffix" do
       schema = Zoi.string() |> Zoi.ends_with("_suffix")
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "value")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value")
       assert Exception.message(error) == "must end with '_suffix'"
-      assert error.issues == ["must end with '_suffix'"]
     end
   end
 
@@ -559,9 +560,8 @@ defmodule ZoiTest do
           end
         end)
 
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hi")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
       assert Exception.message(error) == "must be longer than 3 characters"
-      assert error.issues == ["must be longer than 3 characters"]
     end
 
     test "refinement validation when no pattern match" do
@@ -584,9 +584,8 @@ defmodule ZoiTest do
         Zoi.string()
         |> Zoi.transform(fn _schema, _value -> {:error, "transform error"} end)
 
-      assert {:error, %Zoi.Error{} = error} = Zoi.parse(schema, "hello")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
       assert Exception.message(error) == "transform error"
-      assert error.issues == ["transform error"]
     end
 
     test "transform with no pattern match" do
