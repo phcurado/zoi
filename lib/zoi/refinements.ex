@@ -69,7 +69,7 @@ defmodule Zoi.Refinements do
     if String.length(input) == length do
       :ok
     else
-      {:error, "Invalid length: must have #{length} characters"}
+      {:error, "invalid length: must have #{length} characters"}
     end
   end
 
@@ -77,13 +77,13 @@ defmodule Zoi.Refinements do
     if length(input) == length do
       :ok
     else
-      {:error, "Invalid length: must have #{length} items"}
+      {:error, "invalid length: must have #{length} items"}
     end
   end
 
   def refine(%Zoi.Types.String{}, input, [regex: regex], opts) do
     message =
-      Keyword.get(opts, :message, "Invalid string: must match a patterh #{inspect(regex)}")
+      Keyword.get(opts, :message, "invalid string: must match a patterh #{inspect(regex)}")
 
     if String.match?(input, regex) do
       :ok
@@ -96,7 +96,7 @@ defmodule Zoi.Refinements do
     if String.starts_with?(input, prefix) do
       :ok
     else
-      {:error, "Invalid string: must start with '#{prefix}'"}
+      {:error, "invalid string: must start with '#{prefix}'"}
     end
   end
 
@@ -104,7 +104,7 @@ defmodule Zoi.Refinements do
     if String.ends_with?(input, suffix) do
       :ok
     else
-      {:error, "Invalid string: must end with '#{suffix}'"}
+      {:error, "invalid string: must end with '#{suffix}'"}
     end
   end
 

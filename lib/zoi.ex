@@ -33,6 +33,7 @@ defmodule Zoi do
       Zoi.optional(inner_type)
       Zoi.default(inner_type, default_value)
       Zoi.union(fields)
+      Zoi.intersection(fields)
 
   Complex types:
       Zoi.object(fields)
@@ -85,8 +86,8 @@ defmodule Zoi do
   @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: result()
   def parse(schema, input, opts \\ []) do
     with {:ok, result} <- Zoi.Type.parse(schema, input, opts),
-         {:ok, _refined_result} <- Meta.run_refinements(schema, result),
-         {:ok, result} <- Meta.run_transforms(schema, result) do
+         {:ok, result} <- Meta.run_transforms(schema, result),
+         {:ok, _refined_result} <- Meta.run_refinements(schema, result) do
       {:ok, result}
     else
       {:error, reason} when is_binary(reason) ->
@@ -287,6 +288,25 @@ defmodule Zoi do
   """
   @doc group: "Encapsulated Types"
   defdelegate union(fields, opts \\ []), to: Zoi.Types.Union, as: :new
+
+  @doc """
+  Defines an intersection type schema.
+
+  An intersection type allows you to combine multiple schemas into one, requiring that the input data satisfies all of them.
+
+  ## Example
+
+      iex> schema = Zoi.intersection([
+      ...>   Zoi.string() |> Zoi.min(2),
+      ...>   Zoi.string() |> Zoi.max(5)
+      ...> ])
+      iex> Zoi.parse(schema, "hello")
+      {:error, [%Zoi.Error{message: "maximum length is 5"}]}
+      iex> Zoi.parse(schema, "hi")
+      {:ok, "hi"}
+  """
+  @doc group: "Encapsulated Types"
+  defdelegate intersection(fields, opts \\ []), to: Zoi.Types.Intersection, as: :new
 
   @doc """
   Defines a object type schema.
@@ -604,6 +624,15 @@ defmodule Zoi do
     %Zoi.Types.Union{schema | schemas: schemas}
   end
 
+  def refine(%Zoi.Types.Intersection{schemas: schemas} = schema, fun) do
+    schemas =
+      Enum.map(schemas, fn sub_schema ->
+        refine(sub_schema, fun)
+      end)
+
+    %Zoi.Types.Intersection{schema | schemas: schemas}
+  end
+
   def refine(schema, fun) do
     update_in(schema.meta.refinements, fn transforms ->
       transforms ++ [fun]
@@ -629,6 +658,15 @@ defmodule Zoi do
       end)
 
     %Zoi.Types.Union{schema | schemas: schemas}
+  end
+
+  def transform(%Zoi.Types.Intersection{schemas: schemas} = schema, fun) do
+    schemas =
+      Enum.map(schemas, fn sub_schema ->
+        transform(sub_schema, fun)
+      end)
+
+    %Zoi.Types.Intersection{schema | schemas: schemas}
   end
 
   @spec transform(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
