@@ -8,45 +8,14 @@ defmodule Zoi.Types.Object do
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Object{fields: fields, strict: strict}, input, _opts)
+    def parse(%Zoi.Types.Object{} = type, input, opts)
         when is_map(input) do
-      unknwon_fields_errors =
-        if strict do
-          unknown_fields(fields, input)
-        else
-          []
-        end
-
-      Enum.reduce(fields, {%{}, []}, fn {key, type}, {parsed, errors} ->
-        case map_fetch(input, key) do
-          :error ->
-            if optional?(type) do
-              # If the field is optional, we skip it and do not add it to parsed
-              {parsed, errors}
-            else
-              {parsed,
-               Zoi.Errors.add_error(
-                 errors,
-                 Zoi.Error.exception(message: "is required", path: [key])
-               )}
-            end
-
-          {:ok, value} ->
-            case Zoi.parse(type, value) do
-              {:ok, val} ->
-                {Map.put(parsed, key, val), errors}
-
-              {:error, err} ->
-                error = Enum.map(err, &Zoi.Error.add_path(&1, [key]))
-                {parsed, Zoi.Errors.merge(errors, error)}
-            end
-        end
-      end)
-      |> then(fn {parsed, errors} ->
-        if errors == [] and unknwon_fields_errors == [] do
+      do_parse(type, input, opts, [], [])
+      |> then(fn {parsed, errors, _path} ->
+        if errors == [] do
           {:ok, parsed}
         else
-          {:error, Zoi.Errors.merge(errors, unknwon_fields_errors)}
+          {:error, errors}
         end
       end)
     end
@@ -64,6 +33,51 @@ defmodule Zoi.Types.Object do
           result
       end
     end
+
+    defp do_parse(%Zoi.Types.Object{fields: fields, strict: strict}, input, opts, path, errs) do
+      unknown_fields_errors =
+        if strict do
+          unknown_fields(fields, input)
+        else
+          []
+        end
+        |> Enum.map(&Zoi.Error.add_path(&1, path))
+
+      Enum.reduce(fields, {%{}, errs, path}, fn {key, type}, {parsed, errors, path} ->
+        case map_fetch(input, key) do
+          :error ->
+            if optional?(type) do
+              # If the field is optional, we skip it and do not add it to parsed
+              {parsed, errors, path}
+            else
+              {parsed,
+               Zoi.Errors.add_error(
+                 errors,
+                 Zoi.Error.exception(message: "is required", path: path ++ [key])
+               ), path}
+            end
+
+          {:ok, value} ->
+            case do_parse(type, value, opts, path ++ [key], errors) do
+              {:ok, val} ->
+                {Map.put(parsed, key, val), errors, path}
+
+              {:error, err} ->
+                error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
+                {parsed, Zoi.Errors.merge(errors, error), path}
+
+              {obj_parsed, obj_errors, path} ->
+                {Map.put(parsed, key, obj_parsed), obj_errors, path}
+            end
+        end
+      end)
+      |> then(fn {parsed, errors, path} ->
+        {parsed, Zoi.Errors.merge(errors, unknown_fields_errors), path}
+      end)
+    end
+
+    ## Simple type parsing
+    defp do_parse(type, value, _opts, _path, _errors), do: Zoi.parse(type, value)
 
     defp optional?(%Zoi.Types.Optional{}), do: true
     defp optional?(_), do: false
