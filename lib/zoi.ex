@@ -355,6 +355,15 @@ defmodule Zoi do
   """
   @doc group: "Complex Types"
   defdelegate map(key, type, opts \\ []), to: Zoi.Types.Map, as: :new
+
+  @doc """
+  Defines a map type schema with `Zoi.any()` type.
+
+  This type is the same as creating the following map the following map:
+      Zoi.map(Zoi.any(), Zoi.any())
+
+  """
+  @doc group: "Complex Types"
   defdelegate map(opts \\ []), to: Zoi.Types.Map, as: :new
 
   @doc """
@@ -393,6 +402,7 @@ defmodule Zoi do
 
   @doc """
   Defines an enum type schema.
+
   Use `Zoi.enum(values)` to define a schema that accepts only specific values:
 
       iex> schema = Zoi.enum([:red, :green, :blue])
