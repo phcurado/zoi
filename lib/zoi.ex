@@ -454,7 +454,9 @@ defmodule Zoi do
 
   @doc """
   Validates that the input is greater than or equal to a minimum value.
+
   This can be used for strings, integers, floats and numbers.
+
   ## Example
       iex> schema = Zoi.string() |> Zoi.min(2)
       iex> Zoi.parse(schema, "hello")
@@ -467,6 +469,33 @@ defmodule Zoi do
   def min(schema, min) do
     schema
     |> refine({Zoi.Refinements, :refine, [[min: min], []]})
+  end
+
+  @doc """
+  alias for `Zoi.min/2`
+  """
+  @doc group: "Refinements"
+  @spec gte(schema :: Zoi.Type.t(), min :: non_neg_integer()) :: Zoi.Type.t()
+  def gte(schema, min) do
+    __MODULE__.min(schema, min)
+  end
+
+  @doc """
+  Validates that the input is greater than a specific value.
+
+  This can be used for strings, integers, floats and numbers.
+
+  ## Example
+      iex> schema = Zoi.integer() |> Zoi.gt(2)
+      iex> Zoi.parse(schema, 3)
+      {:ok, 3}
+      iex> Zoi.parse(schema, 2)
+      {:error, [%Zoi.Error{message: "must be greater than 2"}]}
+  """
+  @doc group: "Refinements"
+  def gt(schema, gt) do
+    schema
+    |> refine({Zoi.Refinements, :refine, [[gt: gt], []]})
   end
 
   @doc """
@@ -483,6 +512,32 @@ defmodule Zoi do
   def max(schema, max) do
     schema
     |> refine({Zoi.Refinements, :refine, [[max: max], []]})
+  end
+
+  @doc """
+  alias for `Zoi.max/2`
+  """
+  @doc group: "Refinements"
+  def lte(schema, lt) do
+    __MODULE__.max(schema, lt)
+  end
+
+  @doc """
+  Validates that the input is less than a specific value.
+
+  This can be used for strings, integers, floats and numbers.
+
+  ## Example
+      iex> schema = Zoi.integer() |> Zoi.lt(10)
+      iex> Zoi.parse(schema, 5)
+      {:ok, 5}
+      iex> Zoi.parse(schema, 10)
+      {:error, [%Zoi.Error{message: "must be less than 10"}]}
+  """
+  @doc group: "Refinements"
+  def lt(schema, lt) do
+    schema
+    |> refine({Zoi.Refinements, :refine, [[lt: lt], []]})
   end
 
   @doc """
