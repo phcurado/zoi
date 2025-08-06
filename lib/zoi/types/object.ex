@@ -8,7 +8,7 @@ defmodule Zoi.Types.Object do
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Object{fields: fields, strict: strict} = type, input, opts)
+    def parse(type, input, opts)
         when is_map(input) do
       do_parse(type, input, opts, [], [])
       |> then(fn {parsed, errors, _path} ->
@@ -34,8 +34,8 @@ defmodule Zoi.Types.Object do
       end
     end
 
-    defp do_parse(%Zoi.Types.Object{fields: fields, strict: strict}, input, opts, path, errors) do
-      Enum.reduce(fields, {%{}, errors, path}, fn {key, type}, {parsed, errors, path} ->
+    defp do_parse(%Zoi.Types.Object{fields: fields, strict: strict}, input, opts, path, errs) do
+      Enum.reduce(fields, {%{}, errs, path}, fn {key, type}, {parsed, errors, path} ->
         case map_fetch(input, key) do
           :error ->
             if optional?(type) do
@@ -52,10 +52,10 @@ defmodule Zoi.Types.Object do
           {:ok, value} ->
             case do_parse(type, value, opts, path ++ [key], errors) do
               {:ok, val} ->
-                {Map.put(parsed, key, val), errors, path}
+                {Map.put(parsed, path ++ [key], val), errors, path}
 
               {:error, err} ->
-                error = Enum.map(err, &Zoi.Error.add_path(&1, [key]))
+                error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
                 {parsed, Zoi.Errors.merge(errors, error), path}
 
               {obj_parsed, obj_errors, path} ->
