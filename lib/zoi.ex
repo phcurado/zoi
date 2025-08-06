@@ -332,7 +332,6 @@ defmodule Zoi do
       {:ok, %{"a" => 1, "b" => 2}}
       iex> Zoi.parse(schema, %{"a" => "1", "b" => 2})
       {:error, [%Zoi.Error{message: "invalid type: must be an integer", path: ["a"]}]}
-
   """
   @doc group: "Complex Types"
   defdelegate map(key, type, opts \\ []), to: Zoi.Types.Map, as: :new
