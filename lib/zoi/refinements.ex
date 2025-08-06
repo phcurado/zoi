@@ -33,6 +33,38 @@ defmodule Zoi.Refinements do
     end
   end
 
+  def refine(%Zoi.Types.String{}, input, [gt: gt], _opts) do
+    if String.length(input) > gt do
+      :ok
+    else
+      {:error, "too small: must have more than #{gt} characters"}
+    end
+  end
+
+  def refine(%Zoi.Types.Integer{}, input, [gt: gt], _opts) do
+    if input > gt do
+      :ok
+    else
+      {:error, "too small: must be greater than #{gt}"}
+    end
+  end
+
+  def refine(%Zoi.Types.Float{}, input, [gt: gt], _opts) do
+    if input > gt do
+      :ok
+    else
+      {:error, "too small: must be greater than #{gt}"}
+    end
+  end
+
+  def refine(%Zoi.Types.Array{}, input, [gt: gt], _opts) do
+    if length(input) > gt do
+      :ok
+    else
+      {:error, "too small: must have more than #{gt} items"}
+    end
+  end
+
   def refine(%Zoi.Types.String{}, input, [max: max], _opts) do
     if String.length(input) <= max do
       :ok
@@ -62,6 +94,38 @@ defmodule Zoi.Refinements do
       :ok
     else
       {:error, "too big: must have at most #{max} items"}
+    end
+  end
+
+  def refine(%Zoi.Types.String{}, input, [lt: lt], _opts) do
+    if String.length(input) < lt do
+      :ok
+    else
+      {:error, "too big: must have less than #{lt} characters"}
+    end
+  end
+
+  def refine(%Zoi.Types.Integer{}, input, [lt: lt], _opts) do
+    if input < lt do
+      :ok
+    else
+      {:error, "too big: must be less than #{lt}"}
+    end
+  end
+
+  def refine(%Zoi.Types.Float{}, input, [lt: lt], _opts) do
+    if input < lt do
+      :ok
+    else
+      {:error, "too big: must be less than #{lt}"}
+    end
+  end
+
+  def refine(%Zoi.Types.Array{}, input, [lt: lt], _opts) do
+    if length(input) < lt do
+      :ok
+    else
+      {:error, "too big: must have less than #{lt} items"}
     end
   end
 

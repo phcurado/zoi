@@ -772,6 +772,68 @@ defmodule ZoiTest do
     end
   end
 
+  describe "gte/2" do
+    test "gte for string" do
+      schema = Zoi.string() |> Zoi.gte(5)
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
+      assert Exception.message(error) == "too small: must have at least 5 characters"
+    end
+
+    test "gte for integer" do
+      schema = Zoi.integer() |> Zoi.gte(10)
+      assert {:ok, 15} == Zoi.parse(schema, 15)
+      assert {:ok, 10} == Zoi.parse(schema, 10)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 5)
+      assert Exception.message(error) == "too small: must be at least 10"
+    end
+
+    test "gte for float" do
+      schema = Zoi.float() |> Zoi.gte(10.5)
+      assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
+      assert {:ok, 10.5} == Zoi.parse(schema, 10.5)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 9.99)
+      assert Exception.message(error) == "too small: must be at least 10.5"
+    end
+
+    test "gte for array" do
+      schema = Zoi.array(Zoi.integer()) |> Zoi.gte(3)
+      assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1])
+      assert Exception.message(error) == "too small: must have at least 3 items"
+    end
+  end
+
+  describe "gt/2" do
+    test "gt for string" do
+      schema = Zoi.string() |> Zoi.gt(5)
+      assert {:ok, "hello world"} == Zoi.parse(schema, "hello world")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
+      assert Exception.message(error) == "too small: must have more than 5 characters"
+    end
+
+    test "gt for integer" do
+      schema = Zoi.integer() |> Zoi.gt(10)
+      assert {:ok, 15} == Zoi.parse(schema, 15)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10)
+      assert Exception.message(error) == "too small: must be greater than 10"
+    end
+
+    test "gt for float" do
+      schema = Zoi.float() |> Zoi.gt(10.5)
+      assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10.5)
+      assert Exception.message(error) == "too small: must be greater than 10.5"
+    end
+
+    test "gt for array" do
+      schema = Zoi.array(Zoi.integer()) |> Zoi.gt(3)
+      assert {:ok, [1, 2, 3, 4]} == Zoi.parse(schema, [1, 2, 3, 4])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2])
+      assert Exception.message(error) == "too small: must have more than 3 items"
+    end
+  end
+
   describe "max/2" do
     test "max for string" do
       schema = Zoi.string() |> Zoi.max(5)
@@ -799,6 +861,70 @@ defmodule ZoiTest do
       assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3, 4])
       assert Exception.message(error) == "too big: must have at most 3 items"
+    end
+  end
+
+  describe "lte/2" do
+    test "lte for string" do
+      schema = Zoi.string() |> Zoi.lte(5)
+      assert {:ok, "hi"} == Zoi.parse(schema, "hi")
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello world")
+      assert Exception.message(error) == "too big: must have at most 5 characters"
+    end
+
+    test "lte for integer" do
+      schema = Zoi.integer() |> Zoi.lte(10)
+      assert {:ok, 5} == Zoi.parse(schema, 5)
+      assert {:ok, 10} == Zoi.parse(schema, 10)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 15)
+      assert Exception.message(error) == "too big: must be at most 10"
+    end
+
+    test "lte for float" do
+      schema = Zoi.float() |> Zoi.lte(10.5)
+      assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
+      assert {:ok, 10.5} == Zoi.parse(schema, 10.5)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
+      assert Exception.message(error) == "too big: must be at most 10.5"
+    end
+
+    test "lte for array" do
+      schema = Zoi.array(Zoi.integer()) |> Zoi.lte(3)
+      assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
+      assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3, 4])
+      assert Exception.message(error) == "too big: must have at most 3 items"
+    end
+  end
+
+  describe "lt/2" do
+    test "lt for string" do
+      schema = Zoi.string() |> Zoi.lt(5)
+      assert {:ok, "hi"} == Zoi.parse(schema, "hi")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello world")
+      assert Exception.message(error) == "too big: must have less than 5 characters"
+    end
+
+    test "lt for integer" do
+      schema = Zoi.integer() |> Zoi.lt(10)
+      assert {:ok, 5} == Zoi.parse(schema, 5)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10)
+      assert Exception.message(error) == "too big: must be less than 10"
+    end
+
+    test "lt for float" do
+      schema = Zoi.float() |> Zoi.lt(10.5)
+      assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10.5)
+      assert Exception.message(error) == "too big: must be less than 10.5"
+    end
+
+    test "lt for array" do
+      schema = Zoi.array(Zoi.integer()) |> Zoi.lt(3)
+      assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3])
+      assert Exception.message(error) == "too big: must have less than 3 items"
     end
   end
 

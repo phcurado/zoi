@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - `Zoi.map/3` type
 - `Zoi.intersection/2` type
+- `Zoi.gt/2` refinement
+- `Zoi.gte/2` refinement
+- `Zoi.lt/2` refinement
+- `Zoi.lte/2` refinement
 
 ## 0.2.2 - 2025-08-06
 
