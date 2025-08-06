@@ -433,6 +433,49 @@ defmodule ZoiTest do
     end
   end
 
+  describe "map/3" do
+    test "map with correct values" do
+      schema = Zoi.map(Zoi.string(), Zoi.integer())
+
+      assert {:ok, %{"key1" => 1, "key2" => 2}} ==
+               Zoi.parse(schema, %{"key1" => 1, "key2" => 2})
+    end
+
+    test "map with incorrect key type" do
+      schema = Zoi.map(Zoi.string(), Zoi.integer())
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{:key_1 => 1, "key2" => 2})
+
+      assert Exception.message(error) == "invalid type: must be a string"
+      assert error.path == [:key_1]
+    end
+
+    test "map with incorrect value type" do
+      schema = Zoi.map(Zoi.string(), Zoi.integer())
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{"key1" => "not an integer", "key2" => 2})
+
+      assert Exception.message(error) == "invalid type: must be an integer"
+      assert error.path == ["key1"]
+    end
+
+    test "free map" do
+      schema = Zoi.map()
+
+      assert {:ok, %{"key1" => "value1", "key2" => 2}} ==
+               Zoi.parse(schema, %{"key1" => "value1", "key2" => 2})
+    end
+
+    test "map with non-map input" do
+      schema = Zoi.map(Zoi.string(), Zoi.integer())
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
+      assert Exception.message(error) == "invalid type: must be a map"
+    end
+  end
+
   describe "tuple/2" do
     test "tuple with correct value" do
       schema = Zoi.tuple({Zoi.string(), Zoi.integer()})
