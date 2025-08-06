@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- `Zoi.map/3` type
+
 ## 0.2.2 - 2025-08-06
 
 ### Added
