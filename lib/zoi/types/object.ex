@@ -67,7 +67,7 @@ defmodule Zoi.Types.Object do
                 {parsed, Zoi.Errors.merge(errors, error), path}
 
               {obj_parsed, obj_errors, path} ->
-                {Map.put(parsed, key, obj_parsed), Zoi.Errors.merge(errors, obj_errors), path}
+                {Map.put(parsed, key, obj_parsed), obj_errors, path}
             end
         end
       end)
