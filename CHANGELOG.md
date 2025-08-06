@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `Zoi.map/3` type
+- `Zoi.intersection/2` type
 
 ## 0.2.2 - 2025-08-06
 

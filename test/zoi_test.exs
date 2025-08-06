@@ -310,6 +310,90 @@ defmodule ZoiTest do
     end
   end
 
+  describe "intersection/2" do
+    test "intersection with correct values" do
+      schema =
+        Zoi.intersection([
+          Zoi.string() |> Zoi.starts_with("prefix_"),
+          Zoi.string() |> Zoi.ends_with("_suffix")
+        ])
+
+      assert {:ok, "prefix_value_suffix"} == Zoi.parse(schema, "prefix_value_suffix")
+    end
+
+    test "intersection with incorrect value" do
+      schema =
+        Zoi.intersection([
+          Zoi.string() |> Zoi.starts_with("prefix_"),
+          Zoi.string() |> Zoi.ends_with("_suffix")
+        ])
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value_without_suffix")
+      assert Exception.message(error) == "invalid string: must start with 'prefix_'"
+    end
+
+    test "intersection with multiple schemas" do
+      schema = Zoi.intersection([Zoi.string(), Zoi.integer(coerce: true)])
+
+      assert {:ok, 12} == Zoi.parse(schema, "12")
+    end
+
+    test "intersection with empty schemas or 1 element" do
+      assert_raise ArgumentError,
+                   "Intersection type must be receive a list of minimum 2 schemas",
+                   fn ->
+                     Zoi.intersection([])
+                   end
+
+      assert_raise ArgumentError,
+                   "Intersection type must be receive a list of minimum 2 schemas",
+                   fn ->
+                     Zoi.intersection([Zoi.string()])
+                   end
+    end
+
+    test "intersection with incorrect type" do
+      assert_raise ArgumentError,
+                   "Intersection type must be receive a list of minimum 2 schemas",
+                   fn ->
+                     Zoi.intersection(Zoi.string())
+                   end
+    end
+
+    test "intersection type with transforms" do
+      schema =
+        Zoi.intersection([
+          Zoi.string() |> Zoi.starts_with("prefix_"),
+          Zoi.string() |> Zoi.ends_with("_suffix")
+        ])
+        |> Zoi.trim()
+
+      assert {:ok, "prefix_value_suffix"} == Zoi.parse(schema, "  prefix_value_suffix  ")
+
+      # Fails on `starts_with` refinement, fallback to string validation
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value_without_suffix")
+      assert Exception.message(error) == "invalid string: must start with 'prefix_'"
+    end
+
+    test "intersection type with refinements" do
+      schema =
+        Zoi.intersection([
+          Zoi.string() |> Zoi.starts_with("prefix_"),
+          Zoi.string() |> Zoi.ends_with("_suffix")
+        ])
+        |> Zoi.min(14)
+
+      assert {:ok, "prefix_value_suffix"} == Zoi.parse(schema, "prefix_value_suffix")
+
+      # Fails on `starts_with` refinement, fallback to string validation
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "another_value_suffix")
+      assert Exception.message(error) == "invalid string: must start with 'prefix_'"
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "prefix_suffix")
+      assert Exception.message(error) == "too small: must have at least 14 characters"
+    end
+  end
+
   describe "object/2" do
     test "object with correct value" do
       schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
@@ -723,14 +807,14 @@ defmodule ZoiTest do
       schema = Zoi.string() |> Zoi.length(5)
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
-      assert Exception.message(error) == "Invalid length: must have 5 characters"
+      assert Exception.message(error) == "invalid length: must have 5 characters"
     end
 
     test "length for array" do
       schema = Zoi.array(Zoi.integer()) |> Zoi.length(3)
       assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2])
-      assert Exception.message(error) == "Invalid length: must have 3 items"
+      assert Exception.message(error) == "invalid length: must have 3 items"
     end
   end
 
@@ -743,7 +827,7 @@ defmodule ZoiTest do
     test "invalid regex match" do
       schema = Zoi.string() |> Zoi.regex(~r/^\d+$/)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "abc")
-      assert Exception.message(error) == "Invalid string: must match a patterh ~r/^\\d+$/"
+      assert Exception.message(error) == "invalid string: must match a patterh ~r/^\\d+$/"
     end
   end
 
@@ -769,7 +853,7 @@ defmodule ZoiTest do
     test "invalid prefix" do
       schema = Zoi.string() |> Zoi.starts_with("prefix_")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value")
-      assert Exception.message(error) == "Invalid string: must start with 'prefix_'"
+      assert Exception.message(error) == "invalid string: must start with 'prefix_'"
     end
   end
 
@@ -782,7 +866,7 @@ defmodule ZoiTest do
     test "invalid suffix" do
       schema = Zoi.string() |> Zoi.ends_with("_suffix")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value")
-      assert Exception.message(error) == "Invalid string: must end with '_suffix'"
+      assert Exception.message(error) == "invalid string: must end with '_suffix'"
     end
   end
 
