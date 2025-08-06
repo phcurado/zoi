@@ -16,22 +16,22 @@ defmodule Zoi.Types.Float do
           {:ok, input}
 
         coerce and is_binary(input) ->
-          coerce_integer(input)
+          coerce_integer(schema, input)
 
         true ->
-          error()
+          error(schema)
       end
     end
 
-    defp coerce_integer(input) do
+    defp coerce_integer(schema, input) do
       case Float.parse(input) do
         {float, ""} -> {:ok, float}
-        _error -> error()
+        _error -> error(schema)
       end
     end
 
-    defp error() do
-      {:error, "invalid float type"}
+    defp error(schema) do
+      {:error, schema.meta.error || "invalid float type"}
     end
   end
 end

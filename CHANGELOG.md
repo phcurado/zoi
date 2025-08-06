@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.1 - 2025-08-05
+
+### Added
+
+- Custom error messages for primitive types
+
+### Changed
+
+- `number/2` now returns proper error message
+
 ## 0.2.0 - 2025-08-05
 
 ### Added
@@ -13,4 +23,4 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- errors are now returned as a list
+- errors are now returned as a list of `%Zoi.Error{}` structs

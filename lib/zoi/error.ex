@@ -1,10 +1,9 @@
 defmodule Zoi.Error do
   @type t :: %__MODULE__{
           message: binary(),
-          path: [atom()],
-          context: [any()]
+          path: [atom()]
         }
-  defexception [:message, path: [], context: []]
+  defexception [:message, path: []]
 
   @impl true
   def exception(opts) when is_list(opts) do

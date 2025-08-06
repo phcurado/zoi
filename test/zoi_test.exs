@@ -2,16 +2,20 @@ defmodule ZoiTest do
   use ExUnit.Case
 
   describe "parse/3" do
-    test "string with correct value" do
-      assert {:ok, "hello"} == Zoi.parse(Zoi.string(), "hello")
-    end
+    test "parse types with custom errors" do
+      custom_error = "custom error"
 
-    test "string with incorrect value" do
-      wrong_values = [12, nil, 12.34, :atom]
+      types = [
+        Zoi.string(error: custom_error),
+        Zoi.integer(error: custom_error),
+        Zoi.float(error: custom_error),
+        Zoi.number(error: custom_error),
+        Zoi.boolean(error: custom_error)
+      ]
 
-      for value <- wrong_values do
-        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.string(), value)
-        assert Exception.message(error) == "invalid string type"
+      for type <- types do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(type, :asdf)
+        assert Exception.message(error) == custom_error
       end
     end
   end
@@ -103,9 +107,7 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.number(), value)
-        # For now, returns float error since it's the last element of the union type.
-        # Future to add custom error messages per type.
-        assert Exception.message(error) == "invalid float type"
+        assert Exception.message(error) == "invalid number type"
       end
     end
   end
@@ -773,18 +775,21 @@ defmodule ZoiTest do
 
     test "object with deeply nested object" do
       schema =
-        Zoi.object(%{
-          user:
-            Zoi.object(%{
-              profile:
-                Zoi.object(%{
-                  email: Zoi.string() |> Zoi.min(4) |> Zoi.email(),
-                  age: Zoi.integer(),
-                  numbers: Zoi.array(Zoi.integer())
-                }),
-              active: Zoi.boolean()
-            })
-        })
+        Zoi.object(
+          %{
+            user:
+              Zoi.object(%{
+                profile:
+                  Zoi.object(%{
+                    email: Zoi.string() |> Zoi.min(4) |> Zoi.email(),
+                    age: Zoi.integer(),
+                    numbers: Zoi.array(Zoi.integer())
+                  }),
+                active: Zoi.boolean()
+              })
+          },
+          strict: true
+        )
 
       assert {:error, errors} =
                Zoi.parse(schema, %{

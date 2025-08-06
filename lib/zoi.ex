@@ -49,6 +49,14 @@ defmodule Zoi do
 
       iex> Zoi.string(coerce: true) |> Zoi.parse(123)
       {:ok, "123"}
+
+  ## Custom errors
+
+  You can customize parsing error messages the primitive types by passing the `error` option:
+
+      iex> schema = Zoi.integer(error: "must be a number")
+      iex> Zoi.parse(schema, "a")
+      {:error, [%Zoi.Error{message: "must be a number"}]}
   """
 
   alias Zoi.Types.Meta
@@ -277,7 +285,7 @@ defmodule Zoi do
 
       iex> schema = Zoi.object(%{name: Zoi.string()}, strict: true)
       iex> Zoi.parse(schema, %{name: "Alice", age: 30})
-      {:error, [%Zoi.Error{message: "unrecognized keys: [:age]"}]}
+      {:error, [%Zoi.Error{message: "unrecognized key: 'age'"}]}
 
   """
   @doc group: "Complex Types"

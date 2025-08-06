@@ -16,14 +16,14 @@ defmodule Zoi.Types.Boolean do
           {:ok, input}
 
         coerce ->
-          coerce_boolean(input)
+          coerce_boolean(schema, input)
 
         true ->
-          error()
+          error(schema)
       end
     end
 
-    defp coerce_boolean(input) do
+    defp coerce_boolean(schema, input) do
       cond do
         input in ["true", "1", "yes", "on", "y", "enabled"] ->
           {:ok, true}
@@ -32,12 +32,12 @@ defmodule Zoi.Types.Boolean do
           {:ok, false}
 
         true ->
-          error()
+          error(schema)
       end
     end
 
-    defp error() do
-      {:error, "invalid boolean type"}
+    defp error(schema) do
+      {:error, schema.meta.error || "invalid boolean type"}
     end
   end
 end

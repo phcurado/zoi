@@ -18,7 +18,7 @@ defmodule Zoi.Types.String do
           {:ok, to_string(input)}
 
         true ->
-          {:error, "invalid string type"}
+          {:error, schema.meta.error || "invalid string type"}
       end
     end
   end

@@ -16,22 +16,22 @@ defmodule Zoi.Types.Integer do
           {:ok, input}
 
         coerce and is_binary(input) ->
-          coerce_integer(input)
+          coerce_integer(schema, input)
 
         true ->
-          error()
+          error(schema)
       end
     end
 
-    defp coerce_integer(input) do
+    defp coerce_integer(schema, input) do
       case Integer.parse(input) do
         {integer, ""} -> {:ok, integer}
-        _error -> error()
+        _error -> error(schema)
       end
     end
 
-    defp error() do
-      {:error, "invalid integer type"}
+    defp error(schema) do
+      {:error, schema.meta.error || "invalid integer type"}
     end
   end
 end
