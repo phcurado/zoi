@@ -3,7 +3,7 @@ defmodule Zoi.Types.Integer do
 
   use Zoi.Type.Def, fields: [coerce: false]
 
-  def new(opts \\ []) do
+  def new(opts) do
     apply_type(opts)
   end
 

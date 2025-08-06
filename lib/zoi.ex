@@ -36,6 +36,7 @@ defmodule Zoi do
 
   Complex types:
       Zoi.object(fields)
+      Zoi.map(fields)
       Zoi.enum(values)
       Zoi.array(inner_type)
       Zoi.tuple(inner_types)
@@ -321,6 +322,21 @@ defmodule Zoi do
   """
   @doc group: "Complex Types"
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
+
+  @doc """
+  Defines a map type schema.
+
+  ## Example
+      iex> schema = Zoi.map(key: Zoi.string(), type: Zoi.integer())
+      iex> Zoi.parse(schema, %{"a" => 1, "b" => 2})
+      {:ok, %{"a" => 1, "b" => 2}}
+      iex> Zoi.parse(schema, %{"a" => "1", "b" => 2})
+      {:error, [%Zoi.Error{message: "invalid type: must be an integer", path: ["a"]}]}
+
+  """
+  @doc group: "Complex Types"
+  defdelegate map(key, type, opts \\ []), to: Zoi.Types.Map, as: :new
+  defdelegate map(opts \\ []), to: Zoi.Types.Map, as: :new
 
   @doc """
   Defines a tuple type schema.

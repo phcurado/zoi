@@ -85,10 +85,7 @@ defmodule Zoi.Types.Enum do
     end
 
     defp stringify_enum(values) do
-      Enum.map_join(values, ", ", fn
-        {_key, value} ->
-          value
-      end)
+      Enum.map_join(values, ", ", fn {_key, value} -> value end)
     end
   end
 end
