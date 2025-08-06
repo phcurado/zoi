@@ -88,9 +88,6 @@ defmodule Zoi.Types.Enum do
       Enum.map_join(values, ", ", fn
         {_key, value} ->
           value
-
-        value ->
-          value
       end)
     end
   end
