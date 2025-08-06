@@ -222,6 +222,16 @@ defmodule Zoi do
   @doc group: "Encapsulated Types"
   defdelegate optional(opts \\ []), to: Zoi.Types.Optional, as: :new
 
+  @doc """
+  Defines a schema that allows `nil` values.
+
+  ## Examples
+      iex> schema = Zoi.string() |> Zoi.nullable()
+      iex> Zoi.parse(schema, nil)
+      {:ok, nil}
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+  """
   @doc group: "Encapsulated Types"
   defdelegate nullable(opts \\ []), to: Zoi.Types.Nullable, as: :new
 
