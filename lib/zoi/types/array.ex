@@ -30,8 +30,8 @@ defmodule Zoi.Types.Array do
       end)
     end
 
-    def parse(_, _, _) do
-      {:error, "invalid array type"}
+    def parse(schema, _, _) do
+      {:error, schema.meta.error || "invalid type: must be an array"}
     end
   end
 end

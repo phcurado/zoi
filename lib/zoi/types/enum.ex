@@ -42,37 +42,56 @@ defmodule Zoi.Types.Enum do
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Enum{values: values, enum_type: enum_type}, input, _opts) do
-      case parse_enum(input, values, enum_type) do
+    def parse(%Zoi.Types.Enum{} = schema, input, _opts) do
+      case parse_enum(schema, input) do
         {:error, _reason} = error ->
           error
 
         nil ->
-          {:error, "invalid enum value"}
+          error(schema)
 
         {key, _value} ->
           {:ok, key}
       end
     end
 
-    defp parse_enum(input, values, type) do
+    defp parse_enum(schema, input) do
       cond do
-        type in [:atom_binary, :binary] and is_binary(input) ->
-          compare_input(values, input)
+        schema.enum_type in [:atom_binary, :binary] and is_binary(input) ->
+          compare_input(schema.values, input)
 
-        type in [:atom_integer, :integer] and is_integer(input) ->
-          compare_input(values, input)
+        schema.enum_type in [:atom_integer, :integer] and is_integer(input) ->
+          compare_input(schema.values, input)
 
-        type == :atom and is_atom(input) ->
-          compare_input(values, input)
+        schema.enum_type == :atom and is_atom(input) ->
+          compare_input(schema.values, input)
 
         true ->
-          {:error, "invalid enum value"}
+          error(schema)
       end
     end
 
     defp compare_input(values, input) do
       Enum.find(values, fn {_key, value} -> input == value end)
+    end
+
+    defp error(schema) do
+      options = stringify_enum(schema.values)
+
+      error =
+        schema.meta.error || "invalid option, must be one of: #{options}"
+
+      {:error, error}
+    end
+
+    defp stringify_enum(values) do
+      Enum.map_join(values, ", ", fn
+        {_key, value} ->
+          value
+
+        value ->
+          value
+      end)
     end
   end
 end

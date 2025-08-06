@@ -37,7 +37,7 @@ defmodule Zoi.Types.Boolean do
     end
 
     defp error(schema) do
-      {:error, schema.meta.error || "invalid boolean type"}
+      {:error, schema.meta.error || "invalid type: must be a boolean"}
     end
   end
 end

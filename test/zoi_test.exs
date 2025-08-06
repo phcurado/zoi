@@ -10,7 +10,8 @@ defmodule ZoiTest do
         Zoi.integer(error: custom_error),
         Zoi.float(error: custom_error),
         Zoi.number(error: custom_error),
-        Zoi.boolean(error: custom_error)
+        Zoi.boolean(error: custom_error),
+        Zoi.array(Zoi.string(), error: custom_error)
       ]
 
       for type <- types do
@@ -31,7 +32,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.string(), :not_a_string)
 
-      assert Exception.message(error) == "invalid string type"
+      assert Exception.message(error) == "invalid type: must be a string"
     end
   end
 
@@ -45,7 +46,7 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.integer(), value)
-        assert Exception.message(error) == "invalid integer type"
+        assert Exception.message(error) == "invalid type: must be an integer"
       end
     end
 
@@ -59,7 +60,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.integer(), "not_integer", coerce: true)
 
-      assert Exception.message(error) == "invalid integer type"
+      assert Exception.message(error) == "invalid type: must be an integer"
     end
   end
 
@@ -76,7 +77,7 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.float(), value)
-        assert Exception.message(error) == "invalid float type"
+        assert Exception.message(error) == "invalid type: must be a float"
       end
     end
 
@@ -90,7 +91,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.float(), "not_float", coerce: true)
 
-      assert Exception.message(error) == "invalid float type"
+      assert Exception.message(error) == "invalid type: must be a float"
     end
   end
 
@@ -107,7 +108,7 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.number(), value)
-        assert Exception.message(error) == "invalid number type"
+        assert Exception.message(error) == "invalid type: must be a number"
       end
     end
   end
@@ -123,7 +124,7 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.boolean(), value)
-        assert Exception.message(error) == "invalid boolean type"
+        assert Exception.message(error) == "invalid type: must be a boolean"
       end
     end
 
@@ -146,8 +147,18 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.boolean(), value, coerce: true)
-        assert Exception.message(error) == "invalid boolean type"
+        assert Exception.message(error) == "invalid type: must be a boolean"
       end
+    end
+  end
+
+  describe "any/2" do
+    test "any with correct value" do
+      assert {:ok, "hello"} == Zoi.parse(Zoi.any(), "hello")
+      assert {:ok, 123} == Zoi.parse(Zoi.any(), 123)
+      assert {:ok, true} == Zoi.parse(Zoi.any(), true)
+      assert {:ok, nil} == Zoi.parse(Zoi.any(), nil)
+      assert {:ok, :atom} == Zoi.parse(Zoi.any(), :atom)
     end
   end
 
@@ -156,13 +167,47 @@ defmodule ZoiTest do
       assert {:ok, "hello"} == Zoi.parse(Zoi.optional(Zoi.string()), "hello")
     end
 
-    test "optional with nil value" do
-      assert {:ok, nil} == Zoi.parse(Zoi.optional(Zoi.string()), nil)
+    test "optional should fail if send `nil` value" do
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.optional(Zoi.string()), nil)
+      assert Exception.message(error) == "invalid type: must be a string"
     end
 
     test "optional with incorrect type" do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.optional(Zoi.string()), 123)
-      assert Exception.message(error) == "invalid string type"
+      assert Exception.message(error) == "invalid type: must be a string"
+    end
+
+    test "optional with nullable" do
+      schema = Zoi.optional(Zoi.nullable(Zoi.string()))
+      assert {:ok, nil} == Zoi.parse(schema, nil)
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+
+    test "optional with default value" do
+      schema = Zoi.object(%{name: Zoi.optional(Zoi.default(Zoi.string(), "no name"))})
+      assert {:ok, %{}} == Zoi.parse(schema, %{})
+
+      assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{name: nil})
+    end
+
+    test "default with optional value" do
+      schema = Zoi.object(%{name: Zoi.default(Zoi.optional(Zoi.string()), "no name")})
+
+      assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{})
+    end
+  end
+
+  describe "nullable/2" do
+    test "nullable with nil value" do
+      schema = Zoi.nullable(Zoi.string())
+      assert {:ok, nil} == Zoi.parse(schema, nil)
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+
+    test "nullable with incorrect type" do
+      schema = Zoi.nullable(Zoi.string())
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 123)
+      assert Exception.message(error) == "invalid type: must be a string"
     end
   end
 
@@ -176,7 +221,7 @@ defmodule ZoiTest do
 
     test "default with incorrect type" do
       assert_raise ArgumentError,
-                   "Invalid default value: \"10\". Reason: invalid integer type",
+                   "Invalid default value: \"10\". Reason: invalid type: must be an integer",
                    fn ->
                      Zoi.default(Zoi.integer(), "10")
                    end
@@ -195,7 +240,7 @@ defmodule ZoiTest do
       schema = Zoi.union([Zoi.string(), Zoi.integer()])
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
-      assert Exception.message(error) == "invalid integer type"
+      assert Exception.message(error) == "invalid type: must be an integer"
     end
 
     test "union with coerced values" do
@@ -238,10 +283,10 @@ defmodule ZoiTest do
 
       # Fails on `starts_with` refinement, fallback to integer validation
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value")
-      assert Exception.message(error) == "invalid integer type"
+      assert Exception.message(error) == "invalid type: must be an integer"
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 3)
-      assert Exception.message(error) == "minimum value is 5"
+      assert Exception.message(error) == "too small: must be at least 5"
     end
 
     test "union type with transforms" do
@@ -261,7 +306,7 @@ defmodule ZoiTest do
         |> Zoi.to_upcase()
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
-      assert Exception.message(error) == "invalid integer type"
+      assert Exception.message(error) == "invalid type: must be an integer"
     end
   end
 
@@ -274,6 +319,12 @@ defmodule ZoiTest do
                  "name" => "John",
                  "age" => 30
                })
+    end
+
+    test "object not a map" do
+      assert_raise ArgumentError, "object must receive a map", fn ->
+        Zoi.object("not a map")
+      end
     end
 
     test "object with missing required field" do
@@ -297,7 +348,7 @@ defmodule ZoiTest do
                  "age" => "not an integer"
                })
 
-      assert Exception.message(error) == "invalid integer type"
+      assert Exception.message(error) == "invalid type: must be an integer"
       assert error.path == [:age]
     end
 
@@ -315,12 +366,6 @@ defmodule ZoiTest do
       schema =
         Zoi.object(%{name: Zoi.string(), age: Zoi.optional(Zoi.integer())})
 
-      assert {:ok, %{name: "John", age: nil}} ==
-               Zoi.parse(schema, %{
-                 "name" => "John",
-                 "age" => nil
-               })
-
       assert {:ok, %{name: "John"}} ==
                Zoi.parse(schema, %{
                  "name" => "John"
@@ -331,7 +376,7 @@ defmodule ZoiTest do
       schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
-      assert Exception.message(error) == "invalid object type"
+      assert Exception.message(error) == "invalid type: must be a map"
     end
 
     test "object with nested object" do
@@ -388,6 +433,63 @@ defmodule ZoiTest do
     end
   end
 
+  describe "tuple/2" do
+    test "tuple with correct value" do
+      schema = Zoi.tuple({Zoi.string(), Zoi.integer()})
+
+      assert {:ok, {"John", 30}} == Zoi.parse(schema, {"John", 30})
+    end
+
+    test "not a tuple" do
+      assert_raise ArgumentError, "must be a tuple", fn ->
+        Zoi.tuple("not a tuple")
+      end
+    end
+
+    test "tuple with incorrect value" do
+      schema = Zoi.tuple({Zoi.string(), Zoi.integer()})
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, {"John", "not an integer"})
+
+      assert Exception.message(error) == "invalid type: must be an integer"
+      assert error.path == [1]
+    end
+
+    test "wrong input data for tuple" do
+      schema = Zoi.tuple({Zoi.string(), Zoi.integer()})
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a tuple")
+      assert Exception.message(error) == "invalid type: must be a tuple with 2 elements"
+    end
+
+    test "typle length difference" do
+      schema = Zoi.tuple({Zoi.string(), Zoi.integer()})
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, {"hello", "world", 10})
+      assert Exception.message(error) == "invalid type: must be a tuple with 2 elements"
+    end
+
+    test "tuple with nested tuples" do
+      schema =
+        Zoi.tuple(
+          {Zoi.tuple({Zoi.string(), Zoi.integer()}),
+           Zoi.tuple({Zoi.boolean(), Zoi.tuple({Zoi.integer(), Zoi.integer(), Zoi.integer()})})}
+        )
+
+      assert {:ok, {{"Alice", 25}, {true, {12, 10, 10}}}} ==
+               Zoi.parse(schema, {{"Alice", 25}, {true, {12, 10, 10}}})
+
+      assert {:error, errors} =
+               Zoi.parse(schema, {{"Alice", "not an integer"}, {"not a boolean", {12, 12, "12"}}})
+
+      assert ^errors = [
+               %Zoi.Error{message: "invalid type: must be an integer", path: [0, 1]},
+               %Zoi.Error{message: "invalid type: must be a boolean", path: [1, 0]},
+               %Zoi.Error{message: "invalid type: must be an integer", path: [1, 1, 2]}
+             ]
+    end
+  end
+
   describe "array/2" do
     test "array with correct values" do
       schema = Zoi.array(Zoi.integer())
@@ -399,7 +501,7 @@ defmodule ZoiTest do
       schema = Zoi.array(Zoi.integer())
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, "not an integer", 3])
-      assert Exception.message(error) == "invalid integer type"
+      assert Exception.message(error) == "invalid type: must be an integer"
       assert error.path == [1]
     end
 
@@ -413,7 +515,7 @@ defmodule ZoiTest do
       schema = Zoi.array(Zoi.string())
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not an array")
-      assert Exception.message(error) == "invalid array type"
+      assert Exception.message(error) == "invalid type: must be an array"
     end
 
     test "array with nested arrays" do
@@ -428,18 +530,8 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, [[1, 2], ["not an integer", 4]])
 
-      assert Exception.message(error) == "invalid integer type"
+      assert Exception.message(error) == "invalid type: must be an integer"
       assert error.path == [0, 1]
-    end
-
-    test "array with optional elements" do
-      schema = Zoi.array(Zoi.optional(Zoi.string()))
-
-      assert {:ok, ["hello", nil, "world"]} ==
-               Zoi.parse(schema, ["hello", nil, "world"])
-
-      assert {:ok, [nil]} == Zoi.parse(schema, [nil])
-      assert {:ok, []} == Zoi.parse(schema, [])
     end
 
     test "array with deeply nested arrays" do
@@ -451,10 +543,10 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error_1, %Zoi.Error{} = error_2]} =
                Zoi.parse(schema, [[[1], ["not an integer"]], [[3], [4, "not an integer"]]])
 
-      assert Exception.message(error_1) == "invalid integer type"
+      assert Exception.message(error_1) == "invalid type: must be an integer"
       assert error_1.path == [0, 1, 0]
 
-      assert Exception.message(error_2) == "invalid integer type"
+      assert Exception.message(error_2) == "invalid type: must be an integer"
       assert error_2.path == [1, 1, 1]
     end
   end
@@ -501,13 +593,13 @@ defmodule ZoiTest do
     test "enum with incorrect value" do
       schema = Zoi.enum([:apple, :banana, :cherry])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, :orange)
-      assert Exception.message(error) == "invalid enum value"
+      assert Exception.message(error) == "invalid option, must be one of: apple, banana, cherry"
     end
 
     test "enum parse with incorrect type" do
       schema = Zoi.enum([:apple, :banana, :cherry])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "banana")
-      assert Exception.message(error) == "invalid enum value"
+      assert Exception.message(error) == "invalid option, must be one of: apple, banana, cherry"
     end
 
     test "enum with incorrect type" do
@@ -528,28 +620,28 @@ defmodule ZoiTest do
       schema = Zoi.string() |> Zoi.min(5)
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
-      assert Exception.message(error) == "minimum length is 5"
+      assert Exception.message(error) == "too small: must have at least 5 characters"
     end
 
     test "min for integer" do
       schema = Zoi.integer() |> Zoi.min(10)
       assert {:ok, 15} == Zoi.parse(schema, 15)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 5)
-      assert Exception.message(error) == "minimum value is 10"
+      assert Exception.message(error) == "too small: must be at least 10"
     end
 
     test "min for float" do
       schema = Zoi.float() |> Zoi.min(10.5)
       assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 9.99)
-      assert Exception.message(error) == "minimum value is 10.5"
+      assert Exception.message(error) == "too small: must be at least 10.5"
     end
 
     test "min for array" do
       schema = Zoi.array(Zoi.integer()) |> Zoi.min(3)
       assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2])
-      assert Exception.message(error) == "minimum array length is 3"
+      assert Exception.message(error) == "too small: must have at least 3 items"
     end
   end
 
@@ -558,28 +650,28 @@ defmodule ZoiTest do
       schema = Zoi.string() |> Zoi.max(5)
       assert {:ok, "hi"} == Zoi.parse(schema, "hi")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello world")
-      assert Exception.message(error) == "maximum length is 5"
+      assert Exception.message(error) == "too big: must have at most 5 characters"
     end
 
     test "max for integer" do
       schema = Zoi.integer() |> Zoi.max(10)
       assert {:ok, 5} == Zoi.parse(schema, 5)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 15)
-      assert Exception.message(error) == "maximum value is 10"
+      assert Exception.message(error) == "too big: must be at most 10"
     end
 
     test "max for float" do
       schema = Zoi.float() |> Zoi.max(10.5)
       assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
-      assert Exception.message(error) == "maximum value is 10.5"
+      assert Exception.message(error) == "too big: must be at most 10.5"
     end
 
     test "max for array" do
       schema = Zoi.array(Zoi.integer()) |> Zoi.max(3)
       assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3, 4])
-      assert Exception.message(error) == "maximum length is 3"
+      assert Exception.message(error) == "too big: must have at most 3 items"
     end
   end
 
@@ -588,14 +680,14 @@ defmodule ZoiTest do
       schema = Zoi.string() |> Zoi.length(5)
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
-      assert Exception.message(error) == "length must be 5"
+      assert Exception.message(error) == "Invalid length: must have 5 characters"
     end
 
     test "length for array" do
       schema = Zoi.array(Zoi.integer()) |> Zoi.length(3)
       assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2])
-      assert Exception.message(error) == "length must be 3"
+      assert Exception.message(error) == "Invalid length: must have 3 items"
     end
   end
 
@@ -608,7 +700,7 @@ defmodule ZoiTest do
     test "invalid regex match" do
       schema = Zoi.string() |> Zoi.regex(~r/^\d+$/)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "abc")
-      assert Exception.message(error) == "regex does not match"
+      assert Exception.message(error) == "Invalid string: must match a patterh ~r/^\\d+$/"
     end
   end
 
@@ -634,7 +726,7 @@ defmodule ZoiTest do
     test "invalid prefix" do
       schema = Zoi.string() |> Zoi.starts_with("prefix_")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value")
-      assert Exception.message(error) == "must start with 'prefix_'"
+      assert Exception.message(error) == "Invalid string: must start with 'prefix_'"
     end
   end
 
@@ -647,7 +739,7 @@ defmodule ZoiTest do
     test "invalid suffix" do
       schema = Zoi.string() |> Zoi.ends_with("_suffix")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value")
-      assert Exception.message(error) == "must end with '_suffix'"
+      assert Exception.message(error) == "Invalid string: must end with '_suffix'"
     end
   end
 
@@ -753,14 +845,15 @@ defmodule ZoiTest do
   describe "treefy_error/1" do
     test "treefy single error" do
       error = %Zoi.Error{path: [:name], message: "is required"}
-      assert %{name: [error]} == Zoi.treefy_errors([error])
+      assert %{name: [error.message]} == Zoi.treefy_errors([error])
     end
 
     test "treefy nested errors" do
       error_1 = %Zoi.Error{path: [:user, :name], message: "is required"}
       error_2 = %Zoi.Error{path: [:user, :age], message: "is required"}
 
-      assert %{user: %{name: [error_1], age: [error_2]}} == Zoi.treefy_errors([error_1, error_2])
+      assert %{user: %{name: [error_1.message], age: [error_2.message]}} ==
+               Zoi.treefy_errors([error_1, error_2])
     end
 
     test "treefy errors without path" do
@@ -801,30 +894,18 @@ defmodule ZoiTest do
 
       assert Zoi.treefy_errors(errors) == %{
                user: %{
-                 active: [%Zoi.Error{message: "is required", path: [:user, :active]}],
+                 active: ["is required"],
                  profile: %{
                    age: [
-                     %Zoi.Error{
-                       message: "is required",
-                       path: [:user, :profile, :age]
-                     }
+                     "is required"
                    ],
                    email: [
-                     %Zoi.Error{
-                       message: "minimum length is 4",
-                       path: [:user, :profile, :email]
-                     },
-                     %Zoi.Error{
-                       message: "invalid email format",
-                       path: [:user, :profile, :email]
-                     }
+                     "too small: must have at least 4 characters",
+                     "invalid email format"
                    ],
                    numbers: %{
                      2 => [
-                       %Zoi.Error{
-                         message: "invalid integer type",
-                         path: [:user, :profile, :numbers, 2]
-                       }
+                       "invalid type: must be an integer"
                      ]
                    }
                  }

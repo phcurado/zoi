@@ -3,13 +3,16 @@ defmodule Zoi.Types.Object do
 
   use Zoi.Type.Def, fields: [:fields, :strict]
 
-  def new(fields, opts \\ []) do
+  def new(fields, opts) when is_map(fields) do
     apply_type(opts ++ [fields: fields])
   end
 
+  def new(_fields, _opts) do
+    raise ArgumentError, "object must receive a map"
+  end
+
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Object{} = type, input, opts)
-        when is_map(input) do
+    def parse(%Zoi.Types.Object{} = type, input, opts) when is_map(input) do
       do_parse(type, input, opts, [], [])
       |> then(fn {parsed, errors, _path} ->
         if errors == [] do
@@ -20,8 +23,8 @@ defmodule Zoi.Types.Object do
       end)
     end
 
-    def parse(_, _, _) do
-      {:error, "invalid object type"}
+    def parse(schema, _, _) do
+      {:error, schema.meta.error || "invalid type: must be a map"}
     end
 
     defp map_fetch(map, key) do
@@ -46,15 +49,21 @@ defmodule Zoi.Types.Object do
       Enum.reduce(fields, {%{}, errs, path}, fn {key, type}, {parsed, errors, path} ->
         case map_fetch(input, key) do
           :error ->
-            if optional?(type) do
-              # If the field is optional, we skip it and do not add it to parsed
-              {parsed, errors, path}
-            else
-              {parsed,
-               Zoi.Errors.add_error(
-                 errors,
-                 Zoi.Error.exception(message: "is required", path: path ++ [key])
-               ), path}
+            cond do
+              optional?(type) ->
+                # If the field is optional, we skip it and do not add it to parsed
+                {parsed, errors, path}
+
+              default?(type) ->
+                # If the field has a default value, we add it to parsed
+                {Map.put(parsed, key, type.value), errors, path}
+
+              true ->
+                {parsed,
+                 Zoi.Errors.add_error(
+                   errors,
+                   Zoi.Error.exception(message: "is required", path: path ++ [key])
+                 ), path}
             end
 
           {:ok, value} ->
@@ -81,6 +90,9 @@ defmodule Zoi.Types.Object do
 
     defp optional?(%Zoi.Types.Optional{}), do: true
     defp optional?(_), do: false
+
+    defp default?(%Zoi.Types.Default{}), do: true
+    defp default?(_), do: false
 
     def unknown_fields(fields, input) do
       schema_keys =

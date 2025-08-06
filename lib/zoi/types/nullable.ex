@@ -1,4 +1,4 @@
-defmodule Zoi.Types.Optional do
+defmodule Zoi.Types.Nullable do
   @moduledoc false
 
   use Zoi.Type.Def, fields: [:inner]
@@ -8,6 +8,7 @@ defmodule Zoi.Types.Optional do
   end
 
   defimpl Zoi.Type do
+    def parse(%{inner: _schema}, nil, _opts), do: {:ok, nil}
     def parse(%{inner: schema}, value, opts), do: Zoi.parse(schema, value, opts)
   end
 end

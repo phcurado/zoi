@@ -5,7 +5,7 @@ defmodule Zoi.Refinements do
     if String.length(input) >= min do
       :ok
     else
-      {:error, "minimum length is #{min}"}
+      {:error, "too small: must have at least #{min} characters"}
     end
   end
 
@@ -13,7 +13,7 @@ defmodule Zoi.Refinements do
     if input >= min do
       :ok
     else
-      {:error, "minimum value is #{min}"}
+      {:error, "too small: must be at least #{min}"}
     end
   end
 
@@ -21,7 +21,7 @@ defmodule Zoi.Refinements do
     if input >= min do
       :ok
     else
-      {:error, "minimum value is #{min}"}
+      {:error, "too small: must be at least #{min}"}
     end
   end
 
@@ -29,7 +29,7 @@ defmodule Zoi.Refinements do
     if length(input) >= min do
       :ok
     else
-      {:error, "minimum array length is #{min}"}
+      {:error, "too small: must have at least #{min} items"}
     end
   end
 
@@ -37,7 +37,7 @@ defmodule Zoi.Refinements do
     if String.length(input) <= max do
       :ok
     else
-      {:error, "maximum length is #{max}"}
+      {:error, "too big: must have at most #{max} characters"}
     end
   end
 
@@ -45,7 +45,7 @@ defmodule Zoi.Refinements do
     if input <= max do
       :ok
     else
-      {:error, "maximum value is #{max}"}
+      {:error, "too big: must be at most #{max}"}
     end
   end
 
@@ -53,7 +53,7 @@ defmodule Zoi.Refinements do
     if input <= max do
       :ok
     else
-      {:error, "maximum value is #{max}"}
+      {:error, "too big: must be at most #{max}"}
     end
   end
 
@@ -61,7 +61,7 @@ defmodule Zoi.Refinements do
     if length(input) <= max do
       :ok
     else
-      {:error, "maximum length is #{max}"}
+      {:error, "too big: must have at most #{max} items"}
     end
   end
 
@@ -69,7 +69,7 @@ defmodule Zoi.Refinements do
     if String.length(input) == length do
       :ok
     else
-      {:error, "length must be #{length}"}
+      {:error, "Invalid length: must have #{length} characters"}
     end
   end
 
@@ -77,12 +77,13 @@ defmodule Zoi.Refinements do
     if length(input) == length do
       :ok
     else
-      {:error, "length must be #{length}"}
+      {:error, "Invalid length: must have #{length} items"}
     end
   end
 
   def refine(%Zoi.Types.String{}, input, [regex: regex], opts) do
-    message = Keyword.get(opts, :message, "regex does not match")
+    message =
+      Keyword.get(opts, :message, "Invalid string: must match a patterh #{inspect(regex)}")
 
     if String.match?(input, regex) do
       :ok
@@ -95,7 +96,7 @@ defmodule Zoi.Refinements do
     if String.starts_with?(input, prefix) do
       :ok
     else
-      {:error, "must start with '#{prefix}'"}
+      {:error, "Invalid string: must start with '#{prefix}'"}
     end
   end
 
@@ -103,7 +104,7 @@ defmodule Zoi.Refinements do
     if String.ends_with?(input, suffix) do
       :ok
     else
-      {:error, "must end with '#{suffix}'"}
+      {:error, "Invalid string: must end with '#{suffix}'"}
     end
   end
 

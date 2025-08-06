@@ -43,7 +43,7 @@ defmodule Zoi do
   ## Coercion
   By default, `Zoi` will not attempt to infer input data to match the expected type. For example, if you define a schema that expects a string, passing an integer will result in an error.
       iex> Zoi.string() |> Zoi.parse(123)
-      {:error, [%Zoi.Error{message: "invalid string type"}]}
+      {:error, [%Zoi.Error{message: "invalid type: must be a string"}]}
 
   If you need coercion, you can enable it by passing the `:coerce` option:
 
@@ -193,6 +193,24 @@ defmodule Zoi do
   defdelegate boolean(opts \\ []), to: Zoi.Types.Boolean, as: :new
 
   @doc """
+  Defines a schema that accepts any type of input.
+
+  This is useful when you want to allow any data type without validation.
+
+  ## Example
+
+      iex> schema = Zoi.any()
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, 42)
+      {:ok, 42}
+      iex> Zoi.parse(schema, %{key: "value"})
+      {:ok, %{key: "value"}}
+  """
+  @doc group: "Basic Types"
+  defdelegate any(opts \\ []), to: Zoi.Types.Any, as: :new
+
+  @doc """
   Makes the schema optional for the `Zoi.object/2` type.
 
   ## Example
@@ -203,6 +221,9 @@ defmodule Zoi do
   """
   @doc group: "Encapsulated Types"
   defdelegate optional(opts \\ []), to: Zoi.Types.Optional, as: :new
+
+  @doc group: "Encapsulated Types"
+  defdelegate nullable(opts \\ []), to: Zoi.Types.Nullable, as: :new
 
   @doc """
   Creates a default value for the schema.
@@ -290,6 +311,20 @@ defmodule Zoi do
   """
   @doc group: "Complex Types"
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
+
+  @doc """
+  Defines a tuple type schema.
+
+  Use `Zoi.tuple(fields)` to define a tuple with specific types for each element:
+
+      iex> schema = Zoi.tuple({Zoi.string(), Zoi.integer()})
+      iex> Zoi.parse(schema, {"hello", 42})
+      {:ok, {"hello", 42}}
+      iex> Zoi.parse(schema, {"hello", "world"})
+      {:error, [%Zoi.Error{message: "invalid type: must be an integer", path: [1]}]}
+  """
+  @doc group: "Complex Types"
+  defdelegate tuple(fields, opts \\ []), to: Zoi.Types.Tuple, as: :new
 
   @doc """
   Defines a array type schema.
@@ -601,7 +636,7 @@ defmodule Zoi do
   @spec treefy_errors([Zoi.Error.t()]) :: map()
   def treefy_errors(errors) when is_list(errors) do
     Enum.reduce(errors, %{}, fn %Zoi.Error{path: path} = error, acc ->
-      insert_error(acc, path, error)
+      insert_error(acc, path, error.message)
     end)
   end
 

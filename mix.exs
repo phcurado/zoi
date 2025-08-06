@@ -50,13 +50,10 @@ defmodule Zoi.MixProject do
       maintainers: ["Paulo Curado"],
       links: %{
         "GitHub" => @source_url,
-        "Changelog" => "https://hexdocs.pm/ecto/changelog.html"
+        "Changelog" => "https://hexdocs.pm/zoi/changelog.html"
       },
       licenses: ["Apache-2.0"],
-      links: %{
-        "GitHub" => @source_url
-      },
-      files: ~w(.formatter.exs lib mix.exs README.md)
+      files: ~w(.formatter.exs lib mix.exs README.md CHANGELOG.md)
     ]
   end
 
@@ -65,7 +62,18 @@ defmodule Zoi.MixProject do
       main: "Zoi",
       source_ref: "v#{@version}",
       source_url: @source_url,
-      extras: ["README.md"]
+      extra_section: "GUIDES",
+      source_url: @source_url,
+      skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
+      extras: extras()
+    ]
+  end
+
+  defp extras do
+    [
+      "README.md",
+      "CHANGELOG.md",
+      "guides/Validating controller parameters.md"
     ]
   end
 end
