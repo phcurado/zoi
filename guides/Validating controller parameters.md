@@ -42,7 +42,7 @@ defmodule MyAppWeb.UserController do
 
   @user_params Zoi.object(%{
     name: Zoi.string(),
-    email: Zoi.string() |> Zoi.min(4) |> Zoi.max(100) |> Zoi.email(),
+    email: Zoi.email() |> Zoi.min(4) |> Zoi.max(100),
     age: Zoi.integer(coerce: true) |> Zoi.min(18) |> Zoi.max(100)
   })
 

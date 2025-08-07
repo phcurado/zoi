@@ -742,6 +742,20 @@ defmodule ZoiTest do
     end
   end
 
+  describe "url/0" do
+    test "valid URL" do
+      schema = Zoi.url()
+      assert {:ok, "https://example.com"} == Zoi.parse(schema, "https://example.com")
+      assert {:ok, "http://localhost"} == Zoi.parse(schema, "http://localhost")
+    end
+
+    test "invalid URL" do
+      schema = Zoi.url()
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a url")
+      assert Exception.message(error) == "invalid URL"
+    end
+  end
+
   describe "min/2" do
     test "min for string" do
       schema = Zoi.string() |> Zoi.min(5)
@@ -953,19 +967,23 @@ defmodule ZoiTest do
     test "invalid regex match" do
       schema = Zoi.string() |> Zoi.regex(~r/^\d+$/)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "abc")
-      assert Exception.message(error) == "invalid string: must match a patterh ~r/^\\d+$/"
+      assert Exception.message(error) == "invalid string: must match a pattern ~r/^\\d+$/"
+    end
+
+    test "custom message" do
+      schema = Zoi.string() |> Zoi.regex(~r/^\d+$/, message: "must be a number")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "abc")
+      assert Exception.message(error) == "must be a number"
     end
   end
 
   describe "email/1" do
     test "valid email" do
-      schema = Zoi.string() |> Zoi.email()
-      assert {:ok, "test@test.com"} == Zoi.parse(schema, "test@test.com")
+      assert {:ok, "test@test.com"} == Zoi.parse(Zoi.email(), "test@test.com")
     end
 
     test "invalid email" do
-      schema = Zoi.string() |> Zoi.email()
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-email")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.email(), "invalid-email")
       assert Exception.message(error) == "invalid email format"
     end
   end
@@ -1127,7 +1145,7 @@ defmodule ZoiTest do
               Zoi.object(%{
                 profile:
                   Zoi.object(%{
-                    email: Zoi.string() |> Zoi.min(4) |> Zoi.email(),
+                    email: Zoi.email() |> Zoi.min(4),
                     age: Zoi.integer(),
                     numbers: Zoi.array(Zoi.integer())
                   }),
@@ -1153,8 +1171,8 @@ defmodule ZoiTest do
                      "is required"
                    ],
                    email: [
-                     "too small: must have at least 4 characters",
-                     "invalid email format"
+                     "invalid email format",
+                     "too small: must have at least 4 characters"
                    ],
                    numbers: %{
                      2 => [
