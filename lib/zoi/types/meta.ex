@@ -1,16 +1,9 @@
 defmodule Zoi.Types.Meta do
   @moduledoc false
 
-  @type refinement ::
-          {module(), atom(), [any()]} | (Zoi.Type.t(), Zoi.input() -> :ok | {:error, binary()})
-
-  @type transform ::
-          {module(), atom(), [any()]}
-          | (Zoi.Type.t(), Zoi.input() -> {:ok, Zoi.input()} | {:error, binary()} | Zoi.input())
-
   @type t :: %__MODULE__{
-          refinements: [refinement()],
-          transforms: [transform()],
+          refinements: [Zoi.refinement()],
+          transforms: [Zoi.transform()],
           error: nil | binary()
         }
 

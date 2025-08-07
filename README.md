@@ -33,7 +33,7 @@ schema = Zoi.string() |> Zoi.trim()
 Zoi.parse(schema, "    world    ") # {:ok, "world"}
 
 # Validate a structured data in a map
-schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.string() |> Zoi.email()})
+schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
 Zoi.parse(schema, %{name: "John", age: 30, email: "john@email.com"})
 # {:ok, %{name: "John", age: 30, email: "john@email.com"}}
 

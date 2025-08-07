@@ -979,13 +979,11 @@ defmodule ZoiTest do
 
   describe "email/1" do
     test "valid email" do
-      schema = Zoi.string() |> Zoi.email()
-      assert {:ok, "test@test.com"} == Zoi.parse(schema, "test@test.com")
+      assert {:ok, "test@test.com"} == Zoi.parse(Zoi.email(), "test@test.com")
     end
 
     test "invalid email" do
-      schema = Zoi.string() |> Zoi.email()
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-email")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.email(), "invalid-email")
       assert Exception.message(error) == "invalid email format"
     end
   end
@@ -1147,7 +1145,7 @@ defmodule ZoiTest do
               Zoi.object(%{
                 profile:
                   Zoi.object(%{
-                    email: Zoi.string() |> Zoi.min(4) |> Zoi.email(),
+                    email: Zoi.email() |> Zoi.min(4),
                     age: Zoi.integer(),
                     numbers: Zoi.array(Zoi.integer())
                   }),
@@ -1173,8 +1171,8 @@ defmodule ZoiTest do
                      "is required"
                    ],
                    email: [
-                     "too small: must have at least 4 characters",
-                     "invalid email format"
+                     "invalid email format",
+                     "too small: must have at least 4 characters"
                    ],
                    numbers: %{
                      2 => [

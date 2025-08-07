@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.0 - 2025-08-07
+
+### Added
+
+- `Zoi.email/0` format
+- `Zoi.url/0` format
+
+### Changed
+
+- Removed `Zoi.email/1`
+
 ## 0.2.3 - 2025-08-06
 
 ### Added

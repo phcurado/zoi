@@ -7,7 +7,7 @@ defmodule Zoi do
       user = Zoi.object(%{
         name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
         age: Zoi.integer() |> Zoi.min(18) |> Zoi.max(120),
-        email: Zoi.string() |> Zoi.email()
+        email: Zoi.email()
       })
 
       Zoi.parse(user, %{
@@ -61,11 +61,17 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "must be a number"}]}
   """
 
+  alias Zoi.Regexes
   alias Zoi.Types.Meta
 
   @type input :: any()
   @type result :: {:ok, any()} | {:error, [Zoi.Error.t() | binary()]}
   @type options :: keyword()
+  @type refinement ::
+          {module(), atom(), [any()]} | (Zoi.Type.t(), Zoi.input() -> :ok | {:error, binary()})
+  @type transform ::
+          {module(), atom(), [any()]}
+          | (Zoi.Type.t(), Zoi.input() -> {:ok, Zoi.input()} | {:error, binary()} | Zoi.input())
 
   @doc """
   Parse input data against a schema.
@@ -116,12 +122,6 @@ defmodule Zoi do
       |> Zoi.trim()
       |> Zoi.downcase()
       |> Zoi.uppercase()
-
-  Zoi also supports validating formats:
-
-      Zoi.email()
-      # pattern ~r/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i
-
   """
   @doc group: "Basic Types"
   defdelegate string(opts \\ []), to: Zoi.Types.String, as: :new
@@ -316,7 +316,7 @@ defmodule Zoi do
       user_schema = Zoi.object(%{
         name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
         age: Zoi.integer() |> Zoi.min(18) |> Zoi.max(120),
-        email: Zoi.string() |> Zoi.email()
+        email: Zoi.email()
       })
 
       iex> Zoi.parse(user_schema, %{name: "Alice", age: 30, email: "alice@email.com"})
@@ -327,7 +327,7 @@ defmodule Zoi do
       user_schema = Zoi.object(%{
         name: Zoi.string() |> Zoi.optional(),
         age: Zoi.integer() |> Zoi.optional(),
-        email: Zoi.string() |> Zoi.email() |> Zoi.optional()
+        email: Zoi.email() |> Zoi.optional()
       })
 
       iex> Zoi.parse(user_schema, %{name: "Alice"})
@@ -442,10 +442,41 @@ defmodule Zoi do
   @doc group: "Complex Types"
   defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
 
+  @doc """
+  Validates that the string is a valid email format.
+
+  ## Example
+      iex> schema = Zoi.email()
+      iex> Zoi.parse(schema, "test@test.com")
+      {:ok, "test@test.com"}
+      iex> Zoi.parse(schema, "invalid-email")
+      {:error, [%Zoi.Error{message: "invalid email format"}]}
+  """
+  @doc group: "Formats"
+  @spec email() :: Zoi.Type.t()
+  def email() do
+    Zoi.string()
+    |> regex(Regexes.email(),
+      message: "invalid email format"
+    )
+  end
+
+  @doc """
+  Defines a URL format validation.
+
+  ## Example
+
+      iex> schema = Zoi.url()
+      iex> Zoi.parse(schema, "https://example.com")
+      {:ok, "https://example.com"}
+      iex> Zoi.parse(schema, "invalid-url")
+      {:error, [%Zoi.Error{message: "invalid URL"}]}
+
+  """
   @doc group: "Formats"
   def url() do
     Zoi.string()
-    |> regex(~r/^(https?|ftp):([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/,
+    |> regex(Regexes.url(),
       message: "invalid URL"
     )
   end
@@ -574,25 +605,6 @@ defmodule Zoi do
   end
 
   @doc """
-  Validates that the string is a valid email format.
-  ## Example
-      iex> schema = Zoi.string() |> Zoi.email()
-      iex> Zoi.parse(schema, "test@test.com")
-      {:ok, "test@test.com"}
-      iex> Zoi.parse(schema, "invalid-email")
-      {:error, [%Zoi.Error{message: "invalid email format"}]}
-  """
-  @doc group: "Refinements"
-  @spec email(schema :: Zoi.Type.t()) :: Zoi.Type.t()
-  def email(%Zoi.Types.String{} = schema) do
-    schema
-    |> regex(
-      ~r/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i,
-      message: "invalid email format"
-    )
-  end
-
-  @doc """
   Validates that a string starts with a specific prefix.
   ## Example
 
@@ -689,7 +701,7 @@ defmodule Zoi do
   """
   @doc group: "Extensions"
 
-  @spec refine(schema :: Zoi.Type.t(), fun :: Meta.refinement()) :: Zoi.Type.t()
+  @spec refine(schema :: Zoi.Type.t(), fun :: refinement()) :: Zoi.Type.t()
   def refine(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
@@ -725,7 +737,7 @@ defmodule Zoi do
       {:ok, "hello world"}
   """
   @doc group: "Extensions"
-  @spec transform(schema :: Zoi.Type.t(), fun :: Meta.transform()) :: Zoi.Type.t()
+  @spec transform(schema :: Zoi.Type.t(), fun :: transform()) :: Zoi.Type.t()
   def transform(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
