@@ -742,6 +742,60 @@ defmodule ZoiTest do
     end
   end
 
+  describe "email/0" do
+    test "valid email" do
+      assert {:ok, "test@test.com"} == Zoi.parse(Zoi.email(), "test@test.com")
+    end
+
+    test "invalid email" do
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.email(), "invalid-email")
+      assert Exception.message(error) == "invalid email format"
+    end
+  end
+
+  describe "uuid/1" do
+    test "valid uuid" do
+      schema = Zoi.uuid()
+
+      assert {:ok, "1177af37-9075-43b5-a64e-66079aabee90"} ==
+               Zoi.parse(schema, "1177af37-9075-43b5-a64e-66079aabee90")
+    end
+
+    test "invalid uuid" do
+      schema = Zoi.uuid()
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not-a-uuid")
+      assert Exception.message(error) == "invalid UUID format"
+    end
+
+    test "invalid uuid version" do
+      assert_raise ArgumentError, "Invalid UUID version: v12", fn ->
+        Zoi.uuid(version: "v12")
+      end
+    end
+
+    @invalid_uuid "1177af37-9075-03b5-a64e-66079aabee90"
+    @uuids %{
+      "v1" => "3b7ee760-73b6-11f0-b5a4-d52f6e787ae9",
+      "v2" => "000003e8-73b6-21f0-9d00-325096b39f47",
+      "v3" => "c6437ef1-5b86-3a4e-a071-c2d4ad414e65",
+      "v4" => "92785397-8638-4aff-9579-96021395e4c5",
+      "v5" => "9b8edca0-90f2-5031-8e5d-3f708834696c",
+      "v6" => "1f073b88-2de9-6f90-852d-40ef5c7b4727",
+      "v7" => "019885b3-05cc-7c15-96d5-4a6e0e7d9cbe",
+      "v8" => "6d084cef-a067-8e9e-be6d-7c5aefdfd9b4"
+    }
+    for {version, uuid} <- @uuids do
+      @version version
+      @uuid uuid
+      test "uuid #{@version}" do
+        schema = Zoi.uuid(version: @version)
+        assert {:ok, _uuid} = Zoi.parse(schema, @uuid)
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, @invalid_uuid)
+        assert Exception.message(error) == "invalid UUID format"
+      end
+    end
+  end
+
   describe "url/0" do
     test "valid URL" do
       schema = Zoi.url()
@@ -974,17 +1028,6 @@ defmodule ZoiTest do
       schema = Zoi.string() |> Zoi.regex(~r/^\d+$/, message: "must be a number")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "abc")
       assert Exception.message(error) == "must be a number"
-    end
-  end
-
-  describe "email/1" do
-    test "valid email" do
-      assert {:ok, "test@test.com"} == Zoi.parse(Zoi.email(), "test@test.com")
-    end
-
-    test "invalid email" do
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.email(), "invalid-email")
-      assert Exception.message(error) == "invalid email format"
     end
   end
 

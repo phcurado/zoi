@@ -8,10 +8,12 @@ All notable changes to this project will be documented in this file.
 
 - `Zoi.email/0` format
 - `Zoi.url/0` format
+- `Zoi.uuid/1` format
 
 ### Changed
 
-- Removed `Zoi.email/1`
+- Removed `Zoi.email/1`, now use `Zoi.email/0` that will automatically use the `Zoi.string/1` type
+- All refinements now accept a `:message` option to customize the error message
 
 ## 0.2.3 - 2025-08-06
 

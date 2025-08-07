@@ -462,6 +462,30 @@ defmodule Zoi do
   end
 
   @doc """
+  Validates that the string is a valid UUID format.
+
+  You can specify the UUID version using the `:version` option, which can be one of "v1", "v2", "v3", "v4", "v5", "v6", "v7", or "v8". If no version is specified, it defaults to any valid UUID format.
+
+  ## Example
+      iex> schema = Zoi.uuid()
+      iex> Zoi.parse(schema, "550e8400-e29b-41d4-a716-446655440000")
+      {:ok, "550e8400-e29b-41d4-a716-446655440000"}
+      iex> Zoi.parse(schema, "invalid-uuid")
+      {:error, [%Zoi.Error{message: "invalid UUID format"}]}
+      iex> uuid_v8 = Zoi.uuid(version: "v8")
+      iex> Zoi.parse(schema_v8, "6d084cef-a067-8e9e-be6d-7c5aefdfd9b4")
+      {:ok, "6d084cef-a067-8e9e-be6d-7c5aefdfd9b4"}
+  """
+  @doc group: "Formats"
+  @spec uuid(opts :: keyword()) :: Zoi.Type.t()
+  def uuid(opts \\ []) do
+    Zoi.string()
+    |> regex(Regexes.uuid(opts),
+      message: "invalid UUID format"
+    )
+  end
+
+  @doc """
   Defines a URL format validation.
 
   ## Example
