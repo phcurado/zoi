@@ -1,11 +1,11 @@
 defmodule Zoi.Refinements do
   @moduledoc false
 
-  def refine(%Zoi.Types.String{}, input, [min: min], _opts) do
+  def refine(%Zoi.Types.String{}, input, [min: min], opts) do
     if String.length(input) >= min do
       :ok
     else
-      {:error, "too small: must have at least #{min} characters"}
+      {:error, message(opts, "too small: must have at least #{min} characters")}
     end
   end
 
@@ -146,13 +146,10 @@ defmodule Zoi.Refinements do
   end
 
   def refine(%Zoi.Types.String{}, input, [regex: regex], opts) do
-    message =
-      Keyword.get(opts, :message, "invalid string: must match a patterh #{inspect(regex)}")
-
     if String.match?(input, regex) do
       :ok
     else
-      {:error, message}
+      {:error, message(opts, "invalid string: must match a pattern #{inspect(regex)}")}
     end
   end
 
@@ -175,5 +172,9 @@ defmodule Zoi.Refinements do
   def refine(_schema, _input, _args, _opts) do
     # Default to :ok if there is no type pattern match
     :ok
+  end
+
+  defp message(opts, default_message) do
+    Keyword.get(opts, :message, default_message)
   end
 end

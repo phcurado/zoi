@@ -742,6 +742,20 @@ defmodule ZoiTest do
     end
   end
 
+  describe "url/0" do
+    test "valid URL" do
+      schema = Zoi.url()
+      assert {:ok, "https://example.com"} == Zoi.parse(schema, "https://example.com")
+      assert {:ok, "http://localhost"} == Zoi.parse(schema, "http://localhost")
+    end
+
+    test "invalid URL" do
+      schema = Zoi.url()
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a url")
+      assert Exception.message(error) == "invalid URL"
+    end
+  end
+
   describe "min/2" do
     test "min for string" do
       schema = Zoi.string() |> Zoi.min(5)
@@ -953,7 +967,13 @@ defmodule ZoiTest do
     test "invalid regex match" do
       schema = Zoi.string() |> Zoi.regex(~r/^\d+$/)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "abc")
-      assert Exception.message(error) == "invalid string: must match a patterh ~r/^\\d+$/"
+      assert Exception.message(error) == "invalid string: must match a pattern ~r/^\\d+$/"
+    end
+
+    test "custom message" do
+      schema = Zoi.string() |> Zoi.regex(~r/^\d+$/, message: "must be a number")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "abc")
+      assert Exception.message(error) == "must be a number"
     end
   end
 

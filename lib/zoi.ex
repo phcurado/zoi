@@ -442,6 +442,14 @@ defmodule Zoi do
   @doc group: "Complex Types"
   defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
 
+  @doc group: "Formats"
+  def url() do
+    Zoi.string()
+    |> regex(~r/^(https?|ftp):([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/,
+      message: "invalid URL"
+    )
+  end
+
   # Refinements
 
   @doc """
@@ -510,7 +518,9 @@ defmodule Zoi do
 
   @doc """
   Validates that the input is less than or equal to a maximum value.
+
   This can be used for strings, integers, floats and numbers.
+
   ## Example
       iex> schema = Zoi.string() |> Zoi.max(5)
       iex> Zoi.parse(schema, "hello")
@@ -745,19 +755,20 @@ defmodule Zoi do
   Converts a list of errors into a tree structure, where each error is placed at its corresponding path.
 
   This is useful for displaying validation errors in a structured way, such as in a form.
+
   ## Example
 
       iex> errors = [
       ...>   %Zoi.Error{path: ["name"], message: "is required"},
-      ...>   %Zoi.Error{path: ["age"], message: "must be a number"},
+      ...>   %Zoi.Error{path: ["age"], message: "invalid type: must be an integer"},
       ...>   %Zoi.Error{path: ["address", "city"], message: "is required"}
       ...> ]
       iex> Zoi.treefy_errors(errors)
       %{
-        "name" => [%Zoi.Error{message: "is required"}],
-        "age" => [%Zoi.Error{message: "must be a number"}],
+        "name" => ["is required"],
+        "age" => ["invalid type: must be an integer"}],
         "address" => %{
-          "city" => [%Zoi.Error{message: "is required"}]
+          "city" => ["is required"]
         }
       }
   """
