@@ -25,26 +25,29 @@ end
 You can define schemas and validate data against them. Schemas can be used to validate maps, lists or primitive types such as strings, integers, etc.
 
 ```elixir
-# Define a schema with primitive type
-schema = Zoi.string() |> Zoi.min(3)
-Zoi.parse(schema, "hello") # {:ok, "hello"}
+# Define a schema with a string type
+iex> schema = Zoi.string() |> Zoi.min(3)
+iex> Zoi.parse(schema, "hello")
+{:ok, "hello"}
+iex> Zoi.parse(schema, "hi")
+{:error, [%Zoi.Error{message: "too small: must have at least 3 characters"}]}
 
-schema = Zoi.string() |> Zoi.trim()
-Zoi.parse(schema, "    world    ") # {:ok, "world"}
+
+# Add transforms to a schema
+iex> schema = Zoi.string() |> Zoi.trim()
+iex> Zoi.parse(schema, "    world    ")
+{:ok, "world"}
 
 # Validate a structured data in a map
-schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
-Zoi.parse(schema, %{name: "John", age: 30, email: "john@email.com"})
-# {:ok, %{name: "John", age: 30, email: "john@email.com"}}
-
-Zoi.parse(schema, %{email: "invalid-email"})
-#{:error, [
-#          %Zoi.Error{path: [:name], message: "is required"},
-#          %Zoi.Error{path: [:age], message: "is required"},
-#          %Zoi.Error{path: [:email], message: "invalid email format"}
-#         ]
-#}
-
+iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
+iex> Zoi.parse(schema, %{name: "John", age: 30, email: "john@email.com"})
+{:ok, %{name: "John", age: 30, email: "john@email.com"}}
+iex> Zoi.parse(schema, %{email: "invalid-email"})
+{:error, [
+    %Zoi.Error{path: [:name], message: "is required"},
+    %Zoi.Error{path: [:age], message: "is required"},
+    %Zoi.Error{path: [:email], message: "invalid email format"}
+]}
 ```
 
 And many more possibilities, including nested schemas, custom validations and data transformations. Check the official [docs](https://hexdocs.pm/zoi) for more details.
