@@ -1,9 +1,9 @@
 defmodule Zoi.Types.Datetime do
   @moduledoc false
-  use Zoi.Type.Def, fields: [:format]
+  use Zoi.Type.Def
 
-  def new(format, opts \\ []) do
-    apply_type(opts ++ [format: format])
+  def new(opts \\ []) do
+    apply_type(opts)
   end
 
   # TO_DO: think what if we should add extra opts

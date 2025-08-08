@@ -200,26 +200,18 @@ defmodule Zoi do
   ## Example
 
       iex> schema = Zoi.datetime()
-      iex(20)> Zoi.parse(schema, DateTime.utc_now())
-      {:ok, ~U[2025-08-08 11:41:32.859847Z]}
-
-      iex> schema = Zoi.datetime(Zoi.string())
       iex> Zoi.parse(schema, "2025-08-07T10:04:22+03:00")
       {:ok, "2025-08-07T10:04:22+03:00"}
 
-      iex> schema = Zoi.datetime(Zoi.integer())
-      iex> Zoi.parse(Zoi.datetime(Zoi.integer()), 1754646043)
-      {:ok, 1754646043}
-
-      iex> schema = Zoi.datetime(Zoi.string())
+      iex> schema = Zoi.datetime()
       iex> Zoi.parse(Zoi.datetime(schema, 1754646043)
-      {:error, [%Zoi.Error{message: "invalid iso string datetime type", path: []}]}
+      {:error, [%Zoi.Error{message: "invalid datetime type", path: []}]}
 
   Built-in transformations for include:
       `Zoi.to_datetime/2`
   """
   @doc group: "Basic Types"
-  defdelegate datetime(format \\ nil, opts \\ []), to: Zoi.Types.Datetime, as: :new
+  defdelegate datetime(opts \\ []), to: Zoi.Types.Datetime, as: :new
 
   @doc """
   Defines a schema that accepts any type of input.
@@ -676,7 +668,7 @@ defmodule Zoi do
   @doc """
   Converts a given `Zoi.datetime()` to `DateTime` elixir struct.
   ## Example
-      iex> schema = Zoi.datetime(Zoi.string()) |> Zoi.to_datetime()
+      iex> schema = Zoi.datetime() |> Zoi.to_datetime()
       iex> Zoi.parse(schema, "2025-08-07T10:04:22+03:00")
       {:ok, ~U[2025-08-07 07:04:22.525569Z]}
   """
