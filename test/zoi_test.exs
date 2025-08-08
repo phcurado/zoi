@@ -1169,19 +1169,12 @@ defmodule ZoiTest do
 
   describe "datetime/2" do
     test "number with correct value" do
-      now = DateTime.utc_now()
-
       assert {:ok, "2025-08-07T10:04:22+03:00"} ==
-               Zoi.parse(Zoi.datetime(Zoi.string()), "2025-08-07T10:04:22+03:00")
-
-      assert {:ok, 1_754_550_918} ==
-               Zoi.parse(Zoi.datetime(Zoi.integer()), 1_754_550_918)
-
-      assert {:ok, now} == Zoi.parse(Zoi.datetime(), now)
+               Zoi.parse(Zoi.datetime(), "2025-08-07T10:04:22+03:00")
     end
 
     test "datetime with incorrect value" do
-      wrong_values = ["12", nil, :atom, "not a number"]
+      wrong_values = [12, nil, :atom]
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.datetime(), value)
@@ -1193,19 +1186,10 @@ defmodule ZoiTest do
   describe "to_datetime/2" do
     test "transforms to DateTime with correct values" do
       iso_date = "2025-08-07T10:04:22+03:00"
-      unix_epoch = 1_754_550_918
-      now = DateTime.utc_now()
-
       {:ok, iso_datetime, _offset} = DateTime.from_iso8601(iso_date)
 
       assert {:ok, iso_datetime} ==
-               Zoi.parse(Zoi.datetime(Zoi.string()) |> Zoi.to_datetime(), iso_date)
-
-      assert {:ok, DateTime.from_unix!(unix_epoch)} ==
-               Zoi.parse(Zoi.datetime(Zoi.integer()) |> Zoi.to_datetime(), unix_epoch)
-
-      assert {:ok, now} ==
-               Zoi.parse(Zoi.datetime() |> Zoi.to_datetime(), now)
+               Zoi.parse(Zoi.datetime() |> Zoi.to_datetime(), iso_date)
     end
   end
 end
