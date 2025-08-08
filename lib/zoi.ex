@@ -221,25 +221,19 @@ defmodule Zoi do
 
   ## Example
 
-      iex> schema = Zoi.object(%{name: Zoi.string() |> Zoi.optional()})
+      iex> schema = Zoi.object(%{Zoi.optional(:name) => Zoi.string()})
       iex> Zoi.parse(schema, %{})
       {:ok, %{}}
-  """
-  @doc group: "Encapsulated Types"
-  defdelegate optional(opts \\ []), to: Zoi.Types.Optional, as: :new
 
-  @doc """
-  Defines a schema that allows `nil` values.
-
-  ## Examples
-      iex> schema = Zoi.string() |> Zoi.nullable()
+      iex> schema = Zoi.string() |> Zoi.optional()
       iex> Zoi.parse(schema, nil)
       {:ok, nil}
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
+      
   """
   @doc group: "Encapsulated Types"
-  defdelegate nullable(opts \\ []), to: Zoi.Types.Nullable, as: :new
+  defdelegate optional(opts \\ []), to: Zoi.Types.Optional, as: :new
 
   @doc """
   Creates a default value for the schema.
@@ -339,9 +333,9 @@ defmodule Zoi do
   By default all fields are required, but you can make them optional by using `Zoi.optional/1`:
 
       iex> user_schema = Zoi.object(%{
-      ...> name: Zoi.string() |> Zoi.optional(),
-      ...> age: Zoi.integer() |> Zoi.optional(),
-      ...> email: Zoi.email() |> Zoi.optional()
+      ...> Zoi.optional(:name) => Zoi.string(),
+      ...> Zoi.optional(:age) => Zoi.integer(),
+      ...> Zoi.optional(:email) => Zoi.email()
       ...> })
       iex> Zoi.parse(user_schema, %{name: "Alice"})
       {:ok, %{name: "Alice"}}
@@ -353,12 +347,11 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "unrecognized key: 'age'"}]}
 
 
-  ## Nullable vs Optional fields
+  ## Optional fields and Optional values
 
-  The `Zoi.optional/1` function makes a field optional, meaning it can be omitted from the input data. If the field is not present, it will not be included in the parsed result.
-  The `Zoi.nullable/1` function allows a field to be `nil`, meaning it can be explicitly set to `nil` in the input data. If the field is set to `nil`, it will be included in the parsed result as `nil`.
+  The `Zoi.optional/1` function makes a field optional, meaning it can be omitted from the input data. If the field is not present, it will not be included in the parsed result. `Zoi.optional/1` if it is in the value it will mean that the value is optional but the field might be required.
 
-      iex> schema = Zoi.object(%{name: Zoi.string() |> Zoi.optional(), age: Zoi.integer() |> Zoi.nullable()})
+      iex> schema = Zoi.object(%{Zoi.optional(:name) => Zoi.string() |> Zoi.optional(), age: Zoi.integer() |> Zoi.optional()})
       iex> Zoi.parse(schema, %{name: "Alice", age: nil})
       {:ok, %{name: "Alice", age: nil}}
       iex> Zoi.parse(schema, %{name: "Alice"})
@@ -380,7 +373,7 @@ defmodule Zoi do
 
   The second option is implemented by encapsulating the type as `Zoi.optional(Zoi.default(type, default_value))`:
 
-      iex> schema = Zoi.object(%{name: Zoi.optional(Zoi.default(Zoi.string(), "default value"))})
+      iex> schema = Zoi.object(%{Zoi.optional(:name) => Zoi.default(Zoi.string(), "default value")})
       iex> Zoi.parse(schema, %{})
       {:ok, %{}}
       iex> Zoi.parse(schema, %{name: nil})

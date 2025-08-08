@@ -47,10 +47,12 @@ defmodule Zoi.Types.Object do
         |> Enum.map(&Zoi.Error.add_path(&1, path))
 
       Enum.reduce(fields, {%{}, errs, path}, fn {key, type}, {parsed, errors, path} ->
+        optional_key? = optional?(key)
+        key = if optional_key?, do: key.inner, else: key
         case map_fetch(input, key) do
           :error ->
             cond do
-              optional?(type) ->
+              optional_key? ->
                 # If the field is optional, we skip it and do not add it to parsed
                 {parsed, errors, path}
 
@@ -75,7 +77,7 @@ defmodule Zoi.Types.Object do
                 error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
                 {parsed, Zoi.Errors.merge(errors, error), path}
 
-              {obj_parsed, obj_errors, path} ->
+              {obj_parsed, obj_errors, _path} ->
                 {Map.put(parsed, key, obj_parsed), obj_errors, path}
             end
         end
@@ -98,7 +100,10 @@ defmodule Zoi.Types.Object do
       schema_keys =
         fields
         |> Map.keys()
-        |> Enum.map(&to_string/1)
+        |> Enum.map(fn
+          %Zoi.Types.Optional{} = key -> to_string(key.inner)
+          key -> to_string(key)
+        end)
 
       input
       |> Map.keys()
