@@ -81,10 +81,8 @@ defmodule Zoi do
       iex> schema = Zoi.string() |> Zoi.min(2) |> Zoi.max(100)
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
-
-      iex> Zoi.parse(schema, "hi")
-      {:error, [%Zoi.Error{message: "minimum length is 2"}]}
-
+      iex> Zoi.parse(schema, "h")
+      {:error, [%Zoi.Error{message: "too small: must have at least 2 characters"}]}
       iex> Zoi.parse(schema, 123, coerce: true)
       {:ok, "123"}
   """
@@ -112,16 +110,22 @@ defmodule Zoi do
 
   Zoi provides built-in validations for strings, such as:
 
-      Zoi.min(2)
-      Zoi.max(100)
+      Zoi.gt(100)
+      Zoi.gte(100)
+      Zoi.lt(2)
+      Zoi.lte(2)
+      Zoi.min(2) # alias for `Zoi.gte(2)`
+      Zoi.max(100) # alias for `Zoi.lte(100)`
+      Zoi.starts_with("hello")
+      Zoi.ends_with("world")
       Zoi.length(5)
       Zoi.regex(~r/^[a-zA-Z]+$/)
 
   Additionally it can perform data transformation:
       Zoi.string()
       |> Zoi.trim()
-      |> Zoi.downcase()
-      |> Zoi.uppercase()
+      |> Zoi.to_downcase()
+      |> Zoi.to_uppercase()
   """
   @doc group: "Basic Types"
   defdelegate string(opts \\ []), to: Zoi.Types.String, as: :new
@@ -204,7 +208,7 @@ defmodule Zoi do
       {:ok, "2025-08-07T10:04:22+03:00"}
 
       iex> schema = Zoi.datetime()
-      iex> Zoi.parse(Zoi.datetime(schema, 1754646043)
+      iex> Zoi.parse(schema, 1754646043)
       {:error, [%Zoi.Error{message: "invalid datetime type", path: []}]}
 
   Built-in transformations for include:
@@ -281,7 +285,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 42)
       {:ok, 42}
       iex> Zoi.parse(schema, true)
-      {:error, [%Zoi.Error{message: "invalid type for union"}]}
+      {:error, [%Zoi.Error{message: "invalid type: must be an integer"}]}
 
   This type also allows to define validations for each type in the union:
 
@@ -289,10 +293,10 @@ defmodule Zoi do
       ...>   Zoi.string() |> Zoi.min(2),
       ...>   Zoi.integer() |> Zoi.min(0)
       ...> ])
-      iex> Zoi.parse(schema, "hi")
-      {:error, [%Zoi.Error{message: "minimum length is 2"}]}
+      iex> Zoi.parse(schema, "h") # fails on string and try to parse as integer
+      {:error, [%Zoi.Error{message: "invalid type: must be an integer"}]}
       iex> Zoi.parse(schema, -1)
-      {:error, [%Zoi.Error{message: "minimum value is 0"}]}
+      {:error, [%Zoi.Error{message: "too small: must be at least 0"}]}
 
   If you define the validation on the union itself, it will apply to all types in the union:
 
@@ -303,7 +307,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, 2)
-      {:error, [%Zoi.Error{message: "minimum value is 3"}]}
+      {:error, [%Zoi.Error{message: "too small: must be at least 3"}]}
   """
   @doc group: "Encapsulated Types"
   defdelegate union(fields, opts \\ []), to: Zoi.Types.Union, as: :new
@@ -319,10 +323,21 @@ defmodule Zoi do
       ...>   Zoi.string() |> Zoi.min(2),
       ...>   Zoi.string() |> Zoi.max(5)
       ...> ])
-      iex> Zoi.parse(schema, "hello")
-      {:error, [%Zoi.Error{message: "maximum length is 5"}]}
+      iex> Zoi.parse(schema, "helloworld")
+      {:error, [%Zoi.Error{message: "too big: must have at most 5 characters"}]}
       iex> Zoi.parse(schema, "hi")
       {:ok, "hi"}
+
+  If you define the validation on the intersection itself, it will apply to all types in the intersection:
+
+      iex> schema = Zoi.intersection([
+      ...>   Zoi.string(),
+      ...>   Zoi.integer(coerce: true)
+      ...> ]) |> Zoi.min(3)
+      iex> Zoi.parse(schema, "115")
+      {:ok, 115}
+      iex> Zoi.parse(schema, "2")
+      {:error, [%Zoi.Error{message: "too small: must have at least 3 characters"}]}
   """
   @doc group: "Encapsulated Types"
   defdelegate intersection(fields, opts \\ []), to: Zoi.Types.Intersection, as: :new
@@ -332,23 +347,21 @@ defmodule Zoi do
 
   Use `Zoi.object(fields)` to define complex objects with nested schemas:
 
-      user_schema = Zoi.object(%{
-        name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
-        age: Zoi.integer() |> Zoi.min(18) |> Zoi.max(120),
-        email: Zoi.email()
-      })
-
+      iex> user_schema = Zoi.object(%{
+      ...> name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
+      ...> age: Zoi.integer() |> Zoi.min(18) |> Zoi.max(120),
+      ...> email: Zoi.email()
+      ...> })
       iex> Zoi.parse(user_schema, %{name: "Alice", age: 30, email: "alice@email.com"})
       {:ok, %{name: "Alice", age: 30, email: "alice@email.com"}}
 
   By default all fields are required, but you can make them optional by using `Zoi.optional/1`:
 
-      user_schema = Zoi.object(%{
-        name: Zoi.string() |> Zoi.optional(),
-        age: Zoi.integer() |> Zoi.optional(),
-        email: Zoi.email() |> Zoi.optional()
-      })
-
+      iex> user_schema = Zoi.object(%{
+      ...> name: Zoi.string() |> Zoi.optional(),
+      ...> age: Zoi.integer() |> Zoi.optional(),
+      ...> email: Zoi.email() |> Zoi.optional()
+      ...> })
       iex> Zoi.parse(user_schema, %{name: "Alice"})
       {:ok, %{name: "Alice"}}
 
@@ -358,6 +371,39 @@ defmodule Zoi do
       iex> Zoi.parse(schema, %{name: "Alice", age: 30})
       {:error, [%Zoi.Error{message: "unrecognized key: 'age'"}]}
 
+
+  ## Nullable vs Optional fields
+
+  The `Zoi.optional/1` function makes a field optional, meaning it can be omitted from the input data. If the field is not present, it will not be included in the parsed result.
+  The `Zoi.nullable/1` function allows a field to be `nil`, meaning it can be explicitly set to `nil` in the input data. If the field is set to `nil`, it will be included in the parsed result as `nil`.
+
+      iex> schema = Zoi.object(%{name: Zoi.string() |> Zoi.optional(), age: Zoi.integer() |> Zoi.nullable()})
+      iex> Zoi.parse(schema, %{name: "Alice", age: nil})
+      {:ok, %{name: "Alice", age: nil}}
+      iex> Zoi.parse(schema, %{name: "Alice"})
+      {:error, [%Zoi.Error{message: "is required", path: [:age]}]}
+
+  ## Optional vs Default fields
+
+  There are two options to define the behaviour of a field being optional and with a default value:
+  1. If the field is not present in the input data OR `nil`, it will be included in the parsed result with the default value.
+  2. If the field not present in the input data, it will not be included on the parsed result. If the value is `nil`, it will be included in the parsed result with the default value.
+
+  The order you encapsulate the type matters, to implement the first option, the encapsulation should be `Zoi.default(Zoi.optional(type, default_value))`:
+
+      iex> schema = Zoi.object(%{name: Zoi.default(Zoi.optional(Zoi.string()), "default value")})
+      iex> Zoi.parse(schema, %{})
+      {:ok, %{name: "default value"}}
+      iex> Zoi.parse(schema, %{name: nil})
+      {:ok, %{name: "default value"}}
+
+  The second option is implemented by encapsulating the type as `Zoi.optional(Zoi.default(type, default_value))`:
+
+      iex> schema = Zoi.object(%{name: Zoi.optional(Zoi.default(Zoi.string(), "default value"))})
+      iex> Zoi.parse(schema, %{})
+      {:ok, %{}}
+      iex> Zoi.parse(schema, %{name: nil})
+      {:ok, %{name: "default value"}}
   """
   @doc group: "Complex Types"
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
@@ -366,7 +412,7 @@ defmodule Zoi do
   Defines a map type schema.
 
   ## Example
-      iex> schema = Zoi.map(key: Zoi.string(), type: Zoi.integer())
+      iex> schema = Zoi.map(Zoi.string(), Zoi.integer())
       iex> Zoi.parse(schema, %{"a" => 1, "b" => 2})
       {:ok, %{"a" => 1, "b" => 2}}
       iex> Zoi.parse(schema, %{"a" => "1", "b" => 2})
@@ -378,9 +424,8 @@ defmodule Zoi do
   @doc """
   Defines a map type schema with `Zoi.any()` type.
 
-  This type is the same as creating the following map the following map:
+  This type is the same as creating the following map:
       Zoi.map(Zoi.any(), Zoi.any())
-
   """
   @doc group: "Complex Types"
   defdelegate map(opts \\ []), to: Zoi.Types.Map, as: :new
@@ -408,12 +453,16 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ["hello", "world"])
       {:ok, ["hello", "world"]}
       iex> Zoi.parse(schema, ["hello", 123])
-      {:error, [%Zoi.Error{message: "invalid string type", path: [1]}]}
+      {:error, [%Zoi.Error{message: "invalid type: must be a string", path: [1]}]}
 
   Built-in validations for integers include:
 
-      Zoi.min(3)
-      Zoi.max(10)
+      Zoi.gt(5)
+      Zoi.gte(5)
+      Zoi.lt(2)
+      Zoi.lte(2)
+      Zoi.min(2) # alias for `Zoi.gte/1`
+      Zoi.max(5) # alias for `Zoi.lte/1`
       Zoi.length(5)
   """
   @doc group: "Complex Types"
@@ -428,28 +477,28 @@ defmodule Zoi do
       iex> Zoi.parse(schema, :red)
       {:ok, :red}
       iex> Zoi.parse(schema, :yellow)
-      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
+      {:error, [%Zoi.Error{message: "invalid option, must be one of: red, green, blue"}]}
 
   You can also specify enum as strings:
       iex> schema = Zoi.enum(["red", "green", "blue"])
       iex> Zoi.parse(schema, "red")
       {:ok, "red"}
       iex> Zoi.parse(schema, "yellow")
-      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
+      {:error, [%Zoi.Error{message: "invalid option, must be one of: red, green, blue"}]}
 
   or with key-value pairs:
       iex> schema = Zoi.enum([red: "Red", green: "Green", blue: "Blue"])
       iex> Zoi.parse(schema, "Red")
       {:ok, :red}
       iex> Zoi.parse(schema, "Yellow")
-      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
+      {:error, [%Zoi.Error{message: "invalid option, must be one of: Red, Green, Blue"}]}
 
   Integer values can also be used:
       iex> schema = Zoi.enum([1, 2, 3])
       iex> Zoi.parse(schema, 1)
       {:ok, 1}
       iex> Zoi.parse(schema, 4)
-      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
+      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
 
   And Integers with key-value pairs also is allowed:
       iex> schema = Zoi.enum([one: 1, two: 2, three: 3])
@@ -457,6 +506,7 @@ defmodule Zoi do
       {:ok, :one}
       iex> Zoi.parse(schema, 4)
       {:error, [%Zoi.Error{message: "invalid value for enum"}]}
+      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
   """
   @doc group: "Complex Types"
   defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
@@ -491,7 +541,7 @@ defmodule Zoi do
       {:ok, "550e8400-e29b-41d4-a716-446655440000"}
       iex> Zoi.parse(schema, "invalid-uuid")
       {:error, [%Zoi.Error{message: "invalid UUID format"}]}
-      iex> uuid_v8 = Zoi.uuid(version: "v8")
+      iex> schema_v8 = Zoi.uuid(version: "v8")
       iex> Zoi.parse(schema_v8, "6d084cef-a067-8e9e-be6d-7c5aefdfd9b4")
       {:ok, "6d084cef-a067-8e9e-be6d-7c5aefdfd9b4"}
   """
@@ -524,6 +574,41 @@ defmodule Zoi do
     )
   end
 
+  @doc """
+  Validates that the string is a valid IPv4 address.
+
+  ## Example
+
+      iex> schema = Zoi.ipv4()
+      iex> Zoi.parse(schema, "127.0.0.1")
+      {:ok, "127.0.0.1"}
+  """
+  @doc group: "Formats"
+  def ipv4() do
+    Zoi.string()
+    |> regex(Regexes.ipv4(),
+      message: "invalid IPv4 address"
+    )
+  end
+
+  @doc """
+  Validates that the string is a valid IPv6 address.
+  ## Example
+
+      iex> schema = Zoi.ipv6()
+      iex> Zoi.parse(schema, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+      {:ok, "2001:0db8:85a3:0000:0000:8a2e:0370:7334"}
+      iex> Zoi.parse(schema, "invalid-ipv6")
+      {:error, [%Zoi.Error{message: "invalid IPv6 address"}]}
+  """
+  @doc group: "Formats"
+  def ipv6() do
+    Zoi.string()
+    |> regex(Regexes.ipv6(),
+      message: "invalid IPv6 address"
+    )
+  end
+
   # Refinements
 
   @doc """
@@ -534,7 +619,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hi")
-      {:error, [%Zoi.Error{message: "length must be 5"}]}
+      {:error, [%Zoi.Error{message: "invalid length: must have 5 characters"}]}
   """
 
   @doc group: "Refinements"
@@ -545,31 +630,31 @@ defmodule Zoi do
   end
 
   @doc """
-  Validates that the input is greater than or equal to a minimum value.
-
-  This can be used for strings, integers, floats and numbers.
-
-  ## Example
-      iex> schema = Zoi.string() |> Zoi.min(2)
-      iex> Zoi.parse(schema, "hello")
-      {:ok, "hello"}
-      iex> Zoi.parse(schema, "hi")
-      {:error, [%Zoi.Error{message: "minimum length is 2"}]}
+  alias for `Zoi.gte/2`
   """
   @doc group: "Refinements"
   @spec min(schema :: Zoi.Type.t(), min :: non_neg_integer()) :: Zoi.Type.t()
   def min(schema, min) do
-    schema
-    |> refine({Zoi.Refinements, :refine, [[min: min], []]})
+    __MODULE__.gte(schema, min)
   end
 
   @doc """
-  alias for `Zoi.min/2`
+  Validates that the input is greater than or equal to a value.
+
+  This can be used for strings, integers, floats and numbers.
+
+  ## Example
+      iex> schema = Zoi.string() |> Zoi.gte(3)
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, "hi")
+      {:error, [%Zoi.Error{message: "too small: must have at least 3 characters"}]}
   """
   @doc group: "Refinements"
   @spec gte(schema :: Zoi.Type.t(), min :: non_neg_integer()) :: Zoi.Type.t()
-  def gte(schema, min) do
-    __MODULE__.min(schema, min)
+  def gte(schema, gte) do
+    schema
+    |> refine({Zoi.Refinements, :refine, [[gte: gte], []]})
   end
 
   @doc """
@@ -582,7 +667,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 3)
       {:ok, 3}
       iex> Zoi.parse(schema, 2)
-      {:error, [%Zoi.Error{message: "must be greater than 2"}]}
+      {:error, [%Zoi.Error{message: "too small: must be greater than 2"}]}
   """
   @doc group: "Refinements"
   def gt(schema, gt) do
@@ -591,29 +676,29 @@ defmodule Zoi do
   end
 
   @doc """
-  Validates that the input is less than or equal to a maximum value.
+  alias for `Zoi.lte/2`
+  """
+  @doc group: "Refinements"
+  def max(schema, max) do
+    lte(schema, max)
+  end
+
+  @doc """
+  Validates that the input is less than or equal to a value.
 
   This can be used for strings, integers, floats and numbers.
 
   ## Example
-      iex> schema = Zoi.string() |> Zoi.max(5)
+      iex> schema = Zoi.string() |> Zoi.lte(5)
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hello world")
-      {:error, [%Zoi.Error{message: "maximum length is 5"}]}
+      {:error, [%Zoi.Error{message: "too big: must have at most 5 characters"}]}
   """
   @doc group: "Refinements"
-  def max(schema, max) do
+  def lte(schema, lte) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[max: max], []]})
-  end
-
-  @doc """
-  alias for `Zoi.max/2`
-  """
-  @doc group: "Refinements"
-  def lte(schema, lt) do
-    __MODULE__.max(schema, lt)
+    |> refine({Zoi.Refinements, :refine, [[lte: lte], []]})
   end
 
   @doc """
@@ -626,7 +711,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 5)
       {:ok, 5}
       iex> Zoi.parse(schema, 10)
-      {:error, [%Zoi.Error{message: "must be less than 10"}]}
+      {:error, [%Zoi.Error{message: "too big: must be less than 10"}]}
   """
   @doc group: "Refinements"
   def lt(schema, lt) do
@@ -636,8 +721,9 @@ defmodule Zoi do
 
   @doc """
   Validates that the input matches a given regex pattern.
+
   ## Example
-      iex> schema = Zoi.string() |> Zoi.regex(~r/^\d+$/)
+      iex> schema = Zoi.string() |> Zoi.regex(~r/^\\d+$/)
       iex> Zoi.parse(schema, "12345")
       {:ok, "12345"}
   """
@@ -649,13 +735,14 @@ defmodule Zoi do
 
   @doc """
   Validates that a string starts with a specific prefix.
+
   ## Example
 
       iex> schema = Zoi.string() |> Zoi.starts_with("hello")
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
       iex> Zoi.parse(schema, "world hello")
-      {:error, [%Zoi.Error{message: "must start with 'hello'"}]}
+      {:error, [%Zoi.Error{message: "invalid string: must start with 'hello'"}]}
   """
   @doc group: "Refinements"
   @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary()) :: Zoi.Type.t()
@@ -672,7 +759,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
       iex> Zoi.parse(schema, "hello")
-      {:error, [%Zoi.Error{message: "must end with 'world'"}]}
+      {:error, [%Zoi.Error{message: "invalid string: must end with 'world'"}]}
   """
   @doc group: "Refinements"
   @spec ends_with(schema :: Zoi.Type.t(), suffix :: binary()) :: Zoi.Type.t()
@@ -685,6 +772,7 @@ defmodule Zoi do
 
   @doc """
   Trims whitespace from the beginning and end of a string.
+
   ## Example
 
       iex> schema = Zoi.string() |> Zoi.trim()
@@ -700,6 +788,7 @@ defmodule Zoi do
 
   @doc """
   Converts a string to lowercase.
+
   ## Example
       iex> schema = Zoi.string() |> Zoi.to_downcase()
       iex> Zoi.parse(schema, "Hello World")
@@ -716,7 +805,7 @@ defmodule Zoi do
   ## Example
       iex> schema = Zoi.datetime() |> Zoi.to_datetime()
       iex> Zoi.parse(schema, "2025-08-07T10:04:22+03:00")
-      {:ok, ~U[2025-08-07 07:04:22.525569Z]}
+      {:ok, ~U[2025-08-07 07:04:22Z]}
   """
 
   def to_datetime(schema) do
@@ -726,6 +815,7 @@ defmodule Zoi do
 
   @doc """
   Converts a string to uppercase.
+
   ## Example
       iex> schema = Zoi.string() |> Zoi.to_upcase()
       iex> Zoi.parse(schema, "Hello World")
@@ -740,23 +830,20 @@ defmodule Zoi do
 
   @doc """
   Adds a custom validation function to the schema.
+
   This function will be called with the input data and options, and should return `:ok` for valid data or `{:error, reason}` for invalid data.
+
   ## Example
 
-      iex> schema = Zoi.string() |> Zoi.refine(fn input, _opts ->
-      ...>   if String.length(input) > 5 do
-      ...>     :ok
-      ...>   else
-      ...>     {:error, "must be longer than 5 characters"}
-      ...>   end
+      iex> schema = Zoi.string() |> Zoi.refine(fn _schema, value -> 
+      ...>   if String.length(value) > 5, do: :ok, else: {:error, "must be longer than 5 characters"}
       ...> end)
+      iex> Zoi.parse(schema, "hello")
+      {:error, [%Zoi.Error{message: "must be longer than 5 characters"}]}
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
-      iex> Zoi.parse(schema, "hi")
-      {:error, [%Zoi.Error{message: "must be longer than 5 characters"}]}
   """
   @doc group: "Extensions"
-
   @spec refine(schema :: Zoi.Type.t(), fun :: refinement()) :: Zoi.Type.t()
   def refine(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
     schemas =
@@ -788,7 +875,10 @@ defmodule Zoi do
   This function will be applied to the input data after parsing but before validations.
 
   ## Example
-      iex> schema = Zoi.string() |> Zoi.transform(&String.trim/1)
+
+      iex> schema = Zoi.string() |> Zoi.transform(fn _schema, value ->
+      ...>   {:ok, String.trim(value)}
+      ...> end)
       iex> Zoi.parse(schema, "  hello world  ")
       {:ok, "hello world"}
   """
@@ -834,11 +924,20 @@ defmodule Zoi do
       iex> Zoi.treefy_errors(errors)
       %{
         "name" => ["is required"],
-        "age" => ["invalid type: must be an integer"}],
+        "age" => ["invalid type: must be an integer"],
         "address" => %{
           "city" => ["is required"]
         }
       }
+
+  If you use this function on types without path (like `Zoi.string()`), it will create a top-level `:__errors__` key:
+
+      iex> errors = [%Zoi.Error{message: "invalid type: must be a string"}]
+      iex> Zoi.treefy_errors(errors)
+      %{__errors__: ["invalid type: must be a string"]}
+
+  Errors without a path are considered top-level errors and are grouped under `:__errors__`.
+  This is how `Zoi` also handles errors when `Zoi.object/2` is used with `:strict` option, where unrecognized keys are added to the `:__errors__` key.
   """
   @spec treefy_errors([Zoi.Error.t()]) :: map()
   def treefy_errors(errors) when is_list(errors) do
@@ -847,7 +946,9 @@ defmodule Zoi do
     end)
   end
 
-  defp insert_error(acc, [], _error), do: acc
+  defp insert_error(acc, [], error) do
+    Map.update(acc, :__errors__, [error], fn existing -> existing ++ [error] end)
+  end
 
   defp insert_error(acc, [key], error) do
     Map.update(acc, key, [error], fn existing -> existing ++ [error] end)
@@ -856,5 +957,39 @@ defmodule Zoi do
   defp insert_error(acc, [key | rest], error) do
     nested = Map.get(acc, key, %{})
     Map.put(acc, key, insert_error(nested, rest, error))
+  end
+
+  @spec prettify_errors([Zoi.Error.t() | binary()]) :: binary()
+  def prettify_errors(errors) when is_list(errors) do
+    Enum.reduce(errors, "", fn error, acc ->
+      acc <> prettify_error(error)
+    end)
+  end
+
+  defp prettify_error(%Zoi.Error{message: message, path: []}) do
+    prettify_error(message)
+  end
+
+  defp prettify_error(%Zoi.Error{message: message, path: path}) do
+    path_str =
+      Enum.with_index(path)
+      |> Enum.reduce("", fn {segment, index}, acc ->
+        cond do
+          is_integer(segment) ->
+            acc <> "[#{segment}]"
+
+          index == 0 ->
+            acc <> "#{segment}"
+
+          true ->
+            acc <> ".#{segment}"
+        end
+      end)
+
+    prettify_error("#{message}, at #{path_str}")
+  end
+
+  defp prettify_error(error) when is_binary(error) do
+    error <> "\n"
   end
 end
