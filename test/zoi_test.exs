@@ -1,5 +1,6 @@
 defmodule ZoiTest do
   use ExUnit.Case
+  doctest Zoi
 
   describe "parse/3" do
     test "parse types with custom errors" do
@@ -21,7 +22,13 @@ defmodule ZoiTest do
     end
   end
 
-  describe "string/2" do
+  describe "string/1" do
+    test "string with correct value" do
+      assert {:ok, "hello"} == Zoi.parse(Zoi.string(), "hello")
+      assert {:ok, ""} == Zoi.parse(Zoi.string(), "")
+      assert {:ok, "123"} == Zoi.parse(Zoi.string(), "123")
+    end
+
     test "string with coercion" do
       assert {:ok, "123"} == Zoi.parse(Zoi.string(coerce: false), 123, coerce: true)
       assert {:ok, "true"} == Zoi.parse(Zoi.string(), true, coerce: true)
@@ -36,7 +43,7 @@ defmodule ZoiTest do
     end
   end
 
-  describe "integer/2" do
+  describe "integer/1" do
     test "integer with correct value" do
       assert {:ok, 22} == Zoi.parse(Zoi.integer(), 22)
     end
@@ -64,7 +71,7 @@ defmodule ZoiTest do
     end
   end
 
-  describe "float/2" do
+  describe "float/1" do
     test "float with correct value" do
       assert {:ok, 12.34} == Zoi.parse(Zoi.float(), 12.34)
       assert {:ok, 42.0} == Zoi.parse(Zoi.float(), 42.00)
@@ -95,7 +102,7 @@ defmodule ZoiTest do
     end
   end
 
-  describe "number/2" do
+  describe "number/1" do
     test "number with correct value" do
       assert {:ok, 12.34} == Zoi.parse(Zoi.number(), 12.34)
       assert {:ok, 42} == Zoi.parse(Zoi.number(), 42)
@@ -113,7 +120,7 @@ defmodule ZoiTest do
     end
   end
 
-  describe "boolean/2" do
+  describe "boolean/1" do
     test "boolean with correct values" do
       assert {:ok, true} == Zoi.parse(Zoi.boolean(), true)
       assert {:ok, false} == Zoi.parse(Zoi.boolean(), false)
@@ -152,7 +159,7 @@ defmodule ZoiTest do
     end
   end
 
-  describe "any/2" do
+  describe "any/1" do
     test "any with correct value" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.any(), "hello")
       assert {:ok, 123} == Zoi.parse(Zoi.any(), 123)
@@ -810,6 +817,48 @@ defmodule ZoiTest do
     end
   end
 
+  describe "ipv4/0" do
+    test "valid IPv4 address" do
+      schema = Zoi.ipv4()
+      ipv4_addresses = ["127.0.0.1", "192.168.0.0"]
+
+      for address <- ipv4_addresses do
+        assert {:ok, ^address} = Zoi.parse(schema, address)
+      end
+    end
+
+    test "invalid IPv4 address" do
+      schema = Zoi.ipv4()
+      invalid_addresses = ["256.256.256.256", "192.168.0.300", "not an ipv4"]
+
+      for address <- invalid_addresses do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, address)
+        assert Exception.message(error) == "invalid IPv4 address"
+      end
+    end
+  end
+
+  describe "ipv6/0" do
+    test "valid IPv6 address" do
+      schema = Zoi.ipv6()
+      ipv6_addresses = ["::1", "2001:0db8:85a3:0000:0000:8a2e:0370:7334"]
+
+      for address <- ipv6_addresses do
+        assert {:ok, ^address} = Zoi.parse(schema, address)
+      end
+    end
+
+    test "invalid IPv6 address" do
+      schema = Zoi.ipv6()
+      invalid_addresses = ["not an ipv6", "127.0.0.1"]
+
+      for address <- invalid_addresses do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, address)
+        assert Exception.message(error) == "invalid IPv6 address"
+      end
+    end
+  end
+
   describe "min/2" do
     test "min for string" do
       schema = Zoi.string() |> Zoi.min(5)
@@ -1172,8 +1221,19 @@ defmodule ZoiTest do
 
     test "treefy errors without path" do
       error = %Zoi.Error{message: "invalid type"}
-      # No path means it cannot be treefied
-      assert %{} == Zoi.treefy_errors([error])
+      # No path means the error is at the root level
+      assert %{__errors__: [error.message]} == Zoi.treefy_errors([error])
+    end
+
+    test "treefy errors in array" do
+      schema = Zoi.array(Zoi.integer())
+      assert {:error, errors} = Zoi.parse(schema, ["not an integer", 2, "not an integer"])
+
+      assert %{
+               0 => ["invalid type: must be an integer"],
+               2 => ["invalid type: must be an integer"]
+             } ==
+               Zoi.treefy_errors(errors)
     end
 
     test "treefy empty errors" do
@@ -1223,7 +1283,8 @@ defmodule ZoiTest do
                      ]
                    }
                  }
-               }
+               },
+               __errors__: ["unrecognized key: 'invalid_key'"]
              }
     end
   end
@@ -1241,6 +1302,38 @@ defmodule ZoiTest do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.datetime(), value)
         assert Exception.message(error) == "invalid datetime type"
       end
+    end
+  end
+
+  describe "preetify_error/1" do
+    test "prettify single error" do
+      error = %Zoi.Error{path: [:name], message: "is required"}
+      assert "is required, at name\n" == Zoi.prettify_errors([error])
+    end
+
+    test "prettify nested errors" do
+      error_1 = %Zoi.Error{path: [:user, :name], message: "is required"}
+      error_2 = %Zoi.Error{path: [:user, :age], message: "is required"}
+
+      assert "is required, at user.name\nis required, at user.age\n" ==
+               Zoi.prettify_errors([error_1, error_2])
+    end
+
+    test "prettify errors without path" do
+      error = %Zoi.Error{message: "invalid type"}
+      assert "invalid type\n" == Zoi.prettify_errors([error])
+    end
+
+    test "prettify errors in array" do
+      schema = Zoi.array(Zoi.integer())
+      assert {:error, errors} = Zoi.parse(schema, ["not an integer", 2, "not an integer"])
+
+      assert "invalid type: must be an integer, at [0]\ninvalid type: must be an integer, at [2]\n" ==
+               Zoi.prettify_errors(errors)
+    end
+
+    test "prettify empty errors" do
+      assert "" == Zoi.prettify_errors([])
     end
   end
 

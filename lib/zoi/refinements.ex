@@ -1,7 +1,7 @@
 defmodule Zoi.Refinements do
   @moduledoc false
 
-  def refine(%Zoi.Types.String{}, input, [min: min], opts) do
+  def refine(%Zoi.Types.String{}, input, [gte: min], opts) do
     if String.length(input) >= min do
       :ok
     else
@@ -9,7 +9,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Integer{}, input, [min: min], opts) do
+  def refine(%Zoi.Types.Integer{}, input, [gte: min], opts) do
     if input >= min do
       :ok
     else
@@ -17,7 +17,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Float{}, input, [min: min], opts) do
+  def refine(%Zoi.Types.Float{}, input, [gte: min], opts) do
     if input >= min do
       :ok
     else
@@ -25,7 +25,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Array{}, input, [min: min], opts) do
+  def refine(%Zoi.Types.Array{}, input, [gte: min], opts) do
     if length(input) >= min do
       :ok
     else
@@ -65,7 +65,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.String{}, input, [max: max], opts) do
+  def refine(%Zoi.Types.String{}, input, [lte: max], opts) do
     if String.length(input) <= max do
       :ok
     else
@@ -73,7 +73,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Integer{}, input, [max: max], opts) do
+  def refine(%Zoi.Types.Integer{}, input, [lte: max], opts) do
     if input <= max do
       :ok
     else
@@ -81,7 +81,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Float{}, input, [max: max], opts) do
+  def refine(%Zoi.Types.Float{}, input, [lte: max], opts) do
     if input <= max do
       :ok
     else
@@ -89,7 +89,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Array{}, input, [max: max], opts) do
+  def refine(%Zoi.Types.Array{}, input, [lte: max], opts) do
     if length(input) <= max do
       :ok
     else
