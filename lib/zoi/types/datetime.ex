@@ -19,7 +19,7 @@ defmodule Zoi.Types.Datetime do
       end
     end
 
-    def parse(%Zoi.Types.Datetime{format: _format}, _input, _opts) do
+    def parse(%Zoi.Types.Datetime{}, _input, _opts) do
       {:error, "invalid datetime type"}
     end
   end
