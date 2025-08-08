@@ -195,6 +195,25 @@ defmodule Zoi do
   defdelegate boolean(opts \\ []), to: Zoi.Types.Boolean, as: :new
 
   @doc """
+  Defines a datetime type schema.
+
+  ## Example
+
+      iex> schema = Zoi.datetime()
+      iex> Zoi.parse(schema, "2025-08-07T10:04:22+03:00")
+      {:ok, "2025-08-07T10:04:22+03:00"}
+
+      iex> schema = Zoi.datetime()
+      iex> Zoi.parse(Zoi.datetime(schema, 1754646043)
+      {:error, [%Zoi.Error{message: "invalid datetime type", path: []}]}
+
+  Built-in transformations for include:
+      `Zoi.to_datetime/2`
+  """
+  @doc group: "Basic Types"
+  defdelegate datetime(opts \\ []), to: Zoi.Types.Datetime, as: :new
+
+  @doc """
   Defines a schema that accepts any type of input.
 
   This is useful when you want to allow any data type without validation.
@@ -690,6 +709,19 @@ defmodule Zoi do
   def to_downcase(schema) do
     schema
     |> transform({Zoi.Transforms, :transform, [[:to_downcase]]})
+  end
+
+  @doc """
+  Converts a given `Zoi.datetime()` to `DateTime` elixir struct.
+  ## Example
+      iex> schema = Zoi.datetime() |> Zoi.to_datetime()
+      iex> Zoi.parse(schema, "2025-08-07T10:04:22+03:00")
+      {:ok, ~U[2025-08-07 07:04:22.525569Z]}
+  """
+
+  def to_datetime(schema) do
+    schema
+    |> transform({Zoi.Transforms, :transform, [[:to_datetime]]})
   end
 
   @doc """

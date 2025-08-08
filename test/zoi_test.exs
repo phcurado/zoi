@@ -1227,4 +1227,30 @@ defmodule ZoiTest do
              }
     end
   end
+
+  describe "datetime/2" do
+    test "number with correct value" do
+      assert {:ok, "2025-08-07T10:04:22+03:00"} ==
+               Zoi.parse(Zoi.datetime(), "2025-08-07T10:04:22+03:00")
+    end
+
+    test "datetime with incorrect value" do
+      wrong_values = [12, nil, :atom]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.datetime(), value)
+        assert Exception.message(error) == "invalid datetime type"
+      end
+    end
+  end
+
+  describe "to_datetime/2" do
+    test "transforms to DateTime with correct values" do
+      iso_date = "2025-08-07T10:04:22+03:00"
+      {:ok, iso_datetime, _offset} = DateTime.from_iso8601(iso_date)
+
+      assert {:ok, iso_datetime} ==
+               Zoi.parse(Zoi.datetime() |> Zoi.to_datetime(), iso_date)
+    end
+  end
 end
