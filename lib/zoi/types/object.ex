@@ -49,6 +49,7 @@ defmodule Zoi.Types.Object do
       Enum.reduce(fields, {%{}, errs, path}, fn {key, type}, {parsed, errors, path} ->
         optional_key? = optional?(key)
         key = if optional_key?, do: key.inner, else: key
+
         case map_fetch(input, key) do
           :error ->
             cond do
