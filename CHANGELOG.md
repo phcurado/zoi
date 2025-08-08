@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.1 - 2025-08-08
+
+### Added
+
+- `Zoi.ISO.time/1` type
+- `Zoi.ISO.date/1` type
+- `Zoi.ISO.datetime/1` type
+- `Zoi.ISO.to_time/1` transform
+- `Zoi.ISO.to_date/1` transform
+- `Zoi.ISO.to_datetime/1` transform
+- `Zoi.ISO.to_iso8601/1` transform
+- `Zoi.prettify_errors/1` function to format errors in a human-readable way
+
 ## 0.3.0 - 2025-08-07
 
 ### Added
