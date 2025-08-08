@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - `Zoi.ISO.to_date/1` transform
 - `Zoi.ISO.to_datetime/1` transform
 - `Zoi.ISO.to_iso8601/1` transform
-- `Zoi.pretyfy_errors/1` function to format errors in a human-readable way
+- `Zoi.prettify_errors/1` function to format errors in a human-readable way
 
 ## 0.3.0 - 2025-08-07
 
