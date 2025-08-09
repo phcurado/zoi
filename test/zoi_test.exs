@@ -749,6 +749,166 @@ defmodule ZoiTest do
     end
   end
 
+  describe "time/1" do
+    test "time with correct value" do
+      schema = Zoi.time()
+      assert {:ok, ~T[12:34:56]} == Zoi.parse(schema, ~T[12:34:56])
+      assert {:ok, ~T[00:00:00]} == Zoi.parse(schema, ~T[00:00:00])
+    end
+
+    test "time with incorrect value" do
+      wrong_values = ["12:34", nil, "not a time", :atom]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.time(), value)
+        assert Exception.message(error) == "invalid type: must be a time"
+      end
+    end
+
+    test "time with coercion" do
+      assert {:ok, ~T[12:34:56]} == Zoi.parse(Zoi.time(), "12:34:56", coerce: true)
+      assert {:ok, ~T[00:00:00]} == Zoi.parse(Zoi.time(), "00:00:00", coerce: true)
+    end
+
+    test "time with coercion but incorrect value" do
+      wrong_values = [nil, "not a time", :atom]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.time(coerce: true), value)
+        assert Exception.message(error) == "invalid type: must be a time"
+      end
+    end
+
+    test "time with custom error" do
+      schema = Zoi.time(error: "custom time error")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a time")
+      assert Exception.message(error) == "custom time error"
+    end
+  end
+
+  describe "date/1" do
+    test "date with correct value" do
+      schema = Zoi.date()
+      assert {:ok, ~D[2023-10-01]} == Zoi.parse(schema, ~D[2023-10-01])
+      assert {:ok, ~D[0000-01-01]} == Zoi.parse(schema, ~D[0000-01-01])
+    end
+
+    test "date with incorrect value" do
+      wrong_values = ["2023-10", nil, "not a date", :atom]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.date(), value)
+        assert Exception.message(error) == "invalid type: must be a date"
+      end
+    end
+
+    test "date with coercion" do
+      assert {:ok, ~D[2023-10-01]} == Zoi.parse(Zoi.date(), "2023-10-01", coerce: true)
+      assert {:ok, ~D[0000-01-01]} == Zoi.parse(Zoi.date(), "0000-01-01", coerce: true)
+    end
+
+    test "date with coercion but incorrect value" do
+      wrong_values = [nil, "not a date", :atom]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.date(coerce: true), value)
+        assert Exception.message(error) == "invalid type: must be a date"
+      end
+    end
+
+    test "date with custom error" do
+      schema = Zoi.date(error: "custom date error")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a date")
+      assert Exception.message(error) == "custom date error"
+    end
+  end
+
+  describe "datetime/1" do
+    test "datetime with correct value" do
+      schema = Zoi.datetime()
+      assert {:ok, ~U[2023-10-01 12:34:56Z]} == Zoi.parse(schema, ~U[2023-10-01 12:34:56Z])
+      assert {:ok, ~U[0000-01-01 00:00:00Z]} == Zoi.parse(schema, ~U[0000-01-01 00:00:00Z])
+    end
+
+    test "datetime with incorrect value" do
+      wrong_values = ["2023-10-01", nil, "not a datetime", :atom]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.datetime(), value)
+        assert Exception.message(error) == "invalid type: must be a datetime"
+      end
+    end
+
+    test "datetime with coercion" do
+      assert {:ok, ~U[2023-10-01 12:34:56Z]} ==
+               Zoi.parse(Zoi.datetime(), "2023-10-01T12:34:56Z", coerce: true)
+
+      assert {:ok, ~U[0000-01-01 00:00:00Z]} ==
+               Zoi.parse(Zoi.datetime(), "0000-01-01T00:00:00Z", coerce: true)
+    end
+
+    test "datetime with coercion but incorrect value" do
+      wrong_values = [nil, "not a datetime", :atom, 253_402_300_800]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.datetime(coerce: true), value)
+        assert Exception.message(error) == "invalid type: must be a datetime"
+      end
+    end
+
+    test "datetime with custom error" do
+      schema = Zoi.datetime(error: "custom datetime error")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a datetime")
+      assert Exception.message(error) == "custom datetime error"
+    end
+  end
+
+  describe "naive_datetime/1" do
+    test "naive_datetime with correct value" do
+      schema = Zoi.naive_datetime()
+      assert {:ok, ~N[2023-10-01 12:34:56]} == Zoi.parse(schema, ~N[2023-10-01 12:34:56])
+      assert {:ok, ~N[0000-01-01 00:00:00]} == Zoi.parse(schema, ~N[0000-01-01 00:00:00])
+    end
+
+    test "naive_datetime with incorrect value" do
+      wrong_values = ["2023-10-01", nil, "not a naive datetime", :atom]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.naive_datetime(), value)
+        assert Exception.message(error) == "invalid type: must be a naive datetime"
+      end
+    end
+
+    test "naive_datetime with coercion" do
+      assert {:ok, ~N[2023-10-01 12:34:56]} ==
+               Zoi.parse(Zoi.naive_datetime(), "2023-10-01T12:34:56", coerce: true)
+
+      assert {:ok, ~N[0000-01-01 00:00:00]} ==
+               Zoi.parse(Zoi.naive_datetime(), "0000-01-01T00:00:00", coerce: true)
+    end
+
+    test "naive_datetime with coercion but incorrect value" do
+      wrong_values = [nil, "not a naive datetime", :atom]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} =
+                 Zoi.parse(Zoi.naive_datetime(coerce: true), value)
+
+        assert Exception.message(error) == "invalid type: must be a naive datetime"
+      end
+    end
+
+    test "naive_datetime with custom error" do
+      schema = Zoi.naive_datetime(error: "custom naive datetime error")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a naive datetime")
+      assert Exception.message(error) == "custom naive datetime error"
+    end
+  end
+
   describe "decimal/1" do
     test "decimal with correct value" do
       schema = Zoi.decimal()

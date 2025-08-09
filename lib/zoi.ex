@@ -467,6 +467,96 @@ defmodule Zoi do
   @doc group: "Complex Types"
   defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
 
+  @doc """
+  Defines a date type schema.
+
+  This type is used to validate and parse date values. It will convert the input to a `Date` structure.
+
+  ## Example
+
+      iex> schema = Zoi.date()
+      iex> Zoi.parse(schema, ~D[2000-01-01])
+      {:ok, ~D[2000-01-01]}
+      iex> Zoi.parse(schema, "2000-01-01")
+      {:error, [%Zoi.Error{message: "invalid type: must be a date"}]}
+
+  You can also specify the `:coerce` option to allow coercion from strings or integers:
+      iex> schema = Zoi.date(coerce: true)
+      iex> Zoi.parse(schema, "2000-01-01")
+      {:ok, ~D[2000-01-01]}
+      iex> Zoi.parse(schema, 730_485) # 730_485 is the number of days since epoch
+      {:ok, ~D[2000-01-01]}
+
+  """
+  @doc group: "Structured Types"
+  defdelegate date(opts \\ []), to: Zoi.Types.Date, as: :new
+
+  @doc """
+  Defines a time type schema.
+
+  This type is used to validate and parse time values. It will convert the input to a `Time` structure.
+
+  ## Example
+
+      iex> schema = Zoi.time()
+      iex> Zoi.parse(schema, ~T[12:34:56])
+      {:ok, ~T[12:34:56]}
+      iex> Zoi.parse(schema, "12:34:56")
+      {:error, [%Zoi.Error{message: "invalid type: must be a time"}]}
+
+  You can also specify the `:coerce` option to allow coercion from strings:
+      iex> schema = Zoi.time(coerce: true)
+      iex> Zoi.parse(schema, "12:34:56")
+      {:ok, ~T[12:34:56]}
+  """
+  @doc group: "Structured Types"
+  defdelegate time(opts \\ []), to: Zoi.Types.Time, as: :new
+
+  @doc """
+  Defines a DateTime type schema.
+
+  This type is used to validate and parse DateTime values. It will convert the input to a `DateTime` structure.
+
+  ## Example
+      iex> schema = Zoi.datetime()
+      iex> Zoi.parse(schema, ~U[2000-01-01 12:34:56Z])
+      {:ok, ~U[2000-01-01 12:34:56Z]}
+      iex> Zoi.parse(schema, "2000-01-01T12:34:56Z")
+      {:error, [%Zoi.Error{message: "invalid type: must be a datetime"}]}
+
+  You can also specify the `:coerce` option to allow coercion from strings or integers:
+      iex> schema = Zoi.datetime(coerce: true)
+      iex> Zoi.parse(schema, "2000-01-01T12:34:56Z")
+      {:ok, ~U[2000-01-01 12:34:56Z]}
+      iex> Zoi.parse(schema, 1_464_096_368) # 1_464_096_368 is the Unix timestamp
+      {:ok, ~U[2016-05-24 13:26:08Z]}
+  """
+  @doc group: "Structured Types"
+  defdelegate datetime(opts \\ []), to: Zoi.Types.DateTime, as: :new
+
+  @doc """
+  Defines a NaiveDateTime type schema.
+
+  This type is used to validate and parse NaiveDateTime values. It will convert the input to a `NaiveDateTime` structure.
+
+  ## Example
+
+      iex> schema = Zoi.naive_datetime()
+      iex> Zoi.parse(schema, ~N[2000-01-01 23:00:07])
+      {:ok, ~N[2000-01-01 23:00:07]}
+      iex> Zoi.parse(schema, "2000-01-01T12:34:56")
+      {:error, [%Zoi.Error{message: "invalid type: must be a naive datetime"}]}
+
+  You can also specify the `:coerce` option to allow coercion from strings or integers:
+      iex> schema = Zoi.naive_datetime(coerce: true)
+      iex> Zoi.parse(schema, "2000-01-01T12:34:56")
+      {:ok, ~N[2000-01-01 12:34:56]}
+      iex> Zoi.parse(schema, 1) # 1  is the number of days since epoch
+      {:ok, ~N[0000-01-01 00:00:01]}
+  """
+  @doc group: "Structured Types"
+  defdelegate naive_datetime(opts \\ []), to: Zoi.Types.NaiveDateTime, as: :new
+
   if Code.ensure_loaded?(Decimal) do
     @doc """
     Defines a decimal type schema.
@@ -489,7 +579,7 @@ defmodule Zoi do
         iex> Zoi.parse(schema, 123)
         {:ok, Decimal.new("123")}
     """
-    @doc group: "Transformation Types"
+    @doc group: "Structured Types"
     defdelegate decimal(opts \\ []), to: Zoi.Types.Decimal, as: :new
   else
     def decimal(_opts \\ []) do
