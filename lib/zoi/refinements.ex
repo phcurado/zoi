@@ -25,6 +25,19 @@ defmodule Zoi.Refinements do
     end
   end
 
+  for date_module <- [Date, NaiveDateTime, Time, DateTime] do
+    @module Module.concat(Zoi.Types, date_module)
+    @date_module date_module
+
+    def refine(%@module{}, input, [gte: min], opts) do
+      case @date_module.compare(input, min) do
+        :gt -> :ok
+        :eq -> :ok
+        :lt -> {:error, message(opts, "too small: must be at least #{min}")}
+      end
+    end
+  end
+
   if Code.ensure_loaded?(Decimal) do
     def refine(%Zoi.Types.Decimal{}, input, [gte: min], opts) do
       if Decimal.gte?(input, min) do
@@ -64,6 +77,18 @@ defmodule Zoi.Refinements do
       :ok
     else
       {:error, message(opts, "too small: must be greater than #{gt}")}
+    end
+  end
+
+  for date_module <- [Date, NaiveDateTime, Time, DateTime] do
+    @module Module.concat(Zoi.Types, date_module)
+    @date_module date_module
+
+    def refine(%@module{}, input, [gt: gt], opts) do
+      case @date_module.compare(input, gt) do
+        :gt -> :ok
+        _ -> {:error, message(opts, "too small: must be greater than #{gt}")}
+      end
     end
   end
 
@@ -109,6 +134,19 @@ defmodule Zoi.Refinements do
     end
   end
 
+  for date_module <- [Date, NaiveDateTime, Time, DateTime] do
+    @module Module.concat(Zoi.Types, date_module)
+    @date_module date_module
+
+    def refine(%@module{}, input, [lte: max], opts) do
+      case @date_module.compare(input, max) do
+        :lt -> :ok
+        :eq -> :ok
+        :gt -> {:error, message(opts, "too big: must be at most #{max}")}
+      end
+    end
+  end
+
   if Code.ensure_loaded?(Decimal) do
     def refine(%Zoi.Types.Decimal{}, input, [lte: max], opts) do
       if Decimal.lte?(input, max) do
@@ -148,6 +186,18 @@ defmodule Zoi.Refinements do
       :ok
     else
       {:error, message(opts, "too big: must be less than #{lt}")}
+    end
+  end
+
+  for date_module <- [Date, NaiveDateTime, Time, DateTime] do
+    @module Module.concat(Zoi.Types, date_module)
+    @date_module date_module
+
+    def refine(%@module{}, input, [lt: lt], opts) do
+      case @date_module.compare(input, lt) do
+        :lt -> :ok
+        _ -> {:error, message(opts, "too big: must be less than #{lt}")}
+      end
     end
   end
 

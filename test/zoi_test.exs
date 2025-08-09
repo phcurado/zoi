@@ -1124,6 +1124,38 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1])
       assert Exception.message(error) == "too small: must have at least 3 items"
     end
+
+    test "gte for time" do
+      schema = Zoi.time() |> Zoi.gte(~T[12:00:00])
+      assert {:ok, ~T[12:00:00]} == Zoi.parse(schema, ~T[12:00:00])
+      assert {:ok, ~T[13:00:00]} == Zoi.parse(schema, ~T[13:00:00])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~T[11:59:59])
+      assert Exception.message(error) == "too small: must be at least 12:00:00"
+    end
+
+    test "gte for date" do
+      schema = Zoi.date() |> Zoi.gte(~D[2023-01-01])
+      assert {:ok, ~D[2023-01-01]} == Zoi.parse(schema, ~D[2023-01-01])
+      assert {:ok, ~D[2023-02-01]} == Zoi.parse(schema, ~D[2023-02-01])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~D[2022-12-31])
+      assert Exception.message(error) == "too small: must be at least 2023-01-01"
+    end
+
+    test "gte for datetime" do
+      schema = Zoi.datetime() |> Zoi.gte(~U[2023-01-01 00:00:00Z])
+      assert {:ok, ~U[2023-01-01 00:00:00Z]} == Zoi.parse(schema, ~U[2023-01-01 00:00:00Z])
+      assert {:ok, ~U[2023-02-01 12:34:56Z]} == Zoi.parse(schema, ~U[2023-02-01 12:34:56Z])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~U[2022-12-31 23:59:59Z])
+      assert Exception.message(error) == "too small: must be at least 2023-01-01 00:00:00Z"
+    end
+
+    test "gte for naive_datetime" do
+      schema = Zoi.naive_datetime() |> Zoi.gte(~N[2023-01-01 00:00:00])
+      assert {:ok, ~N[2023-01-01 00:00:00]} == Zoi.parse(schema, ~N[2023-01-01 00:00:00])
+      assert {:ok, ~N[2023-02-01 12:34:56]} == Zoi.parse(schema, ~N[2023-02-01 12:34:56])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~N[2022-12-31 23:59:59])
+      assert Exception.message(error) == "too small: must be at least 2023-01-01 00:00:00"
+    end
   end
 
   describe "gt/2" do
@@ -1160,6 +1192,34 @@ defmodule ZoiTest do
       assert {:ok, [1, 2, 3, 4]} == Zoi.parse(schema, [1, 2, 3, 4])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2])
       assert Exception.message(error) == "too small: must have more than 3 items"
+    end
+
+    test "gt for time" do
+      schema = Zoi.time() |> Zoi.gt(~T[12:00:00])
+      assert {:ok, ~T[12:30:00]} == Zoi.parse(schema, ~T[12:30:00])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~T[11:59:59])
+      assert Exception.message(error) == "too small: must be greater than 12:00:00"
+    end
+
+    test "gt for date" do
+      schema = Zoi.date() |> Zoi.gt(~D[2023-01-01])
+      assert {:ok, ~D[2023-01-02]} == Zoi.parse(schema, ~D[2023-01-02])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~D[2023-01-01])
+      assert Exception.message(error) == "too small: must be greater than 2023-01-01"
+    end
+
+    test "gt for datetime" do
+      schema = Zoi.datetime() |> Zoi.gt(~U[2023-01-01 00:00:00Z])
+      assert {:ok, ~U[2023-01-01 12:34:56Z]} == Zoi.parse(schema, ~U[2023-01-01 12:34:56Z])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~U[2023-01-01 00:00:00Z])
+      assert Exception.message(error) == "too small: must be greater than 2023-01-01 00:00:00Z"
+    end
+
+    test "gt for naive_datetime" do
+      schema = Zoi.naive_datetime() |> Zoi.gt(~N[2023-01-01 00:00:00])
+      assert {:ok, ~N[2023-01-01 12:34:56]} == Zoi.parse(schema, ~N[2023-01-01 12:34:56])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~N[2023-01-01 00:00:00])
+      assert Exception.message(error) == "too small: must be greater than 2023-01-01 00:00:00"
     end
   end
 
@@ -1240,6 +1300,38 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3, 4])
       assert Exception.message(error) == "too big: must have at most 3 items"
     end
+
+    test "lte for time" do
+      schema = Zoi.time() |> Zoi.lte(~T[12:00:00])
+      assert {:ok, ~T[11:59:59]} == Zoi.parse(schema, ~T[11:59:59])
+      assert {:ok, ~T[12:00:00]} == Zoi.parse(schema, ~T[12:00:00])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~T[12:30:00])
+      assert Exception.message(error) == "too big: must be at most 12:00:00"
+    end
+
+    test "lte for date" do
+      schema = Zoi.date() |> Zoi.lte(~D[2023-01-01])
+      assert {:ok, ~D[2022-12-31]} == Zoi.parse(schema, ~D[2022-12-31])
+      assert {:ok, ~D[2023-01-01]} == Zoi.parse(schema, ~D[2023-01-01])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~D[2023-01-02])
+      assert Exception.message(error) == "too big: must be at most 2023-01-01"
+    end
+
+    test "lte for datetime" do
+      schema = Zoi.datetime() |> Zoi.lte(~U[2023-01-01 00:00:00Z])
+      assert {:ok, ~U[2022-12-31 23:59:59Z]} == Zoi.parse(schema, ~U[2022-12-31 23:59:59Z])
+      assert {:ok, ~U[2023-01-01 00:00:00Z]} == Zoi.parse(schema, ~U[2023-01-01 00:00:00Z])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~U[2023-01-01 12:34:56Z])
+      assert Exception.message(error) == "too big: must be at most 2023-01-01 00:00:00Z"
+    end
+
+    test "lte for naive_datetime" do
+      schema = Zoi.naive_datetime() |> Zoi.lte(~N[2023-01-01 00:00:00])
+      assert {:ok, ~N[2022-12-31 23:59:59]} == Zoi.parse(schema, ~N[2022-12-31 23:59:59])
+      assert {:ok, ~N[2023-01-01 00:00:00]} == Zoi.parse(schema, ~N[2023-01-01 00:00:00])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~N[2023-01-01 12:34:56])
+      assert Exception.message(error) == "too big: must be at most 2023-01-01 00:00:00"
+    end
   end
 
   describe "lt/2" do
@@ -1276,6 +1368,34 @@ defmodule ZoiTest do
       assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3])
       assert Exception.message(error) == "too big: must have less than 3 items"
+    end
+
+    test "lt for time" do
+      schema = Zoi.time() |> Zoi.lt(~T[12:00:00])
+      assert {:ok, ~T[11:59:59]} == Zoi.parse(schema, ~T[11:59:59])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~T[12:00:00])
+      assert Exception.message(error) == "too big: must be less than 12:00:00"
+    end
+
+    test "lt for date" do
+      schema = Zoi.date() |> Zoi.lt(~D[2023-01-01])
+      assert {:ok, ~D[2022-12-31]} == Zoi.parse(schema, ~D[2022-12-31])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~D[2023-01-01])
+      assert Exception.message(error) == "too big: must be less than 2023-01-01"
+    end
+
+    test "lt for datetime" do
+      schema = Zoi.datetime() |> Zoi.lt(~U[2023-01-01 00:00:00Z])
+      assert {:ok, ~U[2022-12-31 23:59:59Z]} == Zoi.parse(schema, ~U[2022-12-31 23:59:59Z])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~U[2023-01-01 00:00:00Z])
+      assert Exception.message(error) == "too big: must be less than 2023-01-01 00:00:00Z"
+    end
+
+    test "lt for naive_datetime" do
+      schema = Zoi.naive_datetime() |> Zoi.lt(~N[2023-01-01 00:00:00])
+      assert {:ok, ~N[2022-12-31 23:59:59]} == Zoi.parse(schema, ~N[2022-12-31 23:59:59])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~N[2023-01-01 00:00:00])
+      assert Exception.message(error) == "too big: must be less than 2023-01-01 00:00:00"
     end
   end
 
