@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.3 - 2025-08-09
+
+### Added
+
+- `Zoi.time/1` type
+- `Zoi.date/1` type
+- `Zoi.datetime/1` type
+- `Zoi.naive_datetime/1` type
+
 ## 0.3.2 - 2025-08-09
 
 ### Added
