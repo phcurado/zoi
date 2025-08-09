@@ -25,6 +25,16 @@ defmodule Zoi.Refinements do
     end
   end
 
+  if Code.ensure_loaded?(Decimal) do
+    def refine(%Zoi.Types.Decimal{}, input, [gte: min], opts) do
+      if Decimal.gte?(input, min) do
+        :ok
+      else
+        {:error, message(opts, "too small: must be at least #{min}")}
+      end
+    end
+  end
+
   def refine(%Zoi.Types.Array{}, input, [gte: min], opts) do
     if length(input) >= min do
       :ok
@@ -54,6 +64,16 @@ defmodule Zoi.Refinements do
       :ok
     else
       {:error, message(opts, "too small: must be greater than #{gt}")}
+    end
+  end
+
+  if Code.ensure_loaded?(Decimal) do
+    def refine(%Zoi.Types.Decimal{}, input, [gt: gt], opts) do
+      if Decimal.gt?(input, gt) do
+        :ok
+      else
+        {:error, message(opts, "too small: must be greater than #{gt}")}
+      end
     end
   end
 
@@ -89,6 +109,16 @@ defmodule Zoi.Refinements do
     end
   end
 
+  if Code.ensure_loaded?(Decimal) do
+    def refine(%Zoi.Types.Decimal{}, input, [lte: max], opts) do
+      if Decimal.lte?(input, max) do
+        :ok
+      else
+        {:error, message(opts, "too big: must be at most #{max}")}
+      end
+    end
+  end
+
   def refine(%Zoi.Types.Array{}, input, [lte: max], opts) do
     if length(input) <= max do
       :ok
@@ -118,6 +148,16 @@ defmodule Zoi.Refinements do
       :ok
     else
       {:error, message(opts, "too big: must be less than #{lt}")}
+    end
+  end
+
+  if Code.ensure_loaded?(Decimal) do
+    def refine(%Zoi.Types.Decimal{}, input, [lt: lt], opts) do
+      if Decimal.lt?(input, lt) do
+        :ok
+      else
+        {:error, message(opts, "too big: must be less than #{lt}")}
+      end
     end
   end
 

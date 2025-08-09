@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- `Zoi.decimal/1` type
+- `Zoi.min/2`, `Zoi.max/2`, `Zoi.gt/2`, `Zoi.gte/2`, `Zoi.lt/2`, `Zoi.lte/2` refinements for `Zoi.decimal/1` type
+
 ## 0.3.1 - 2025-08-08
 
 ### Added
