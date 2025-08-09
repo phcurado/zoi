@@ -493,6 +493,23 @@ defmodule Zoi do
   defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
 
   @doc """
+  Defines a decimal type schema.
+
+  This type is used to validate and parse decimal numbers, which can be useful for financial calculations or precise numeric values.
+  It uses the `Decimal` library for handling decimal numbers. It will convert the input to a `Decimal` structure.
+
+  ## Example
+
+      iex> schema = Zoi.decimal()
+      iex> Zoi.parse(schema, "123.45")
+      {:ok, Decimal.new("123.45")}
+      iex> Zoi.parse(schema, "invalid-decimal")
+      {:error, [%Zoi.Error{message: "invalid type: must be a decimal"}]}
+  """
+  @doc group: "Transformation Types"
+  defdelegate decimal(opts \\ []), to: Zoi.Types.Decimal, as: :new
+
+  @doc """
   Validates that the string is a valid email format.
 
   ## Example
