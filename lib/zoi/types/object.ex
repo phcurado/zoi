@@ -75,7 +75,7 @@ defmodule Zoi.Types.Object do
                 error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
                 {parsed, Zoi.Errors.merge(errors, error), path}
 
-              {obj_parsed, obj_errors, path} ->
+              {obj_parsed, obj_errors, _path} ->
                 {Map.put(parsed, key, obj_parsed), obj_errors, path}
             end
         end
