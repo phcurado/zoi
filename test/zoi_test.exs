@@ -174,24 +174,14 @@ defmodule ZoiTest do
       assert {:ok, "hello"} == Zoi.parse(Zoi.optional(Zoi.string()), "hello")
     end
 
-    test "optional should fail if send `nil` value" do
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.optional(Zoi.string()), nil)
-      assert Exception.message(error) == "invalid type: must be a string"
-    end
-
-    test "optional with incorrect type" do
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.optional(Zoi.string()), 123)
-      assert Exception.message(error) == "invalid type: must be a string"
-    end
-
-    test "optional with nullable" do
-      schema = Zoi.optional(Zoi.nullable(Zoi.string()))
+    test "optional" do
+      schema = Zoi.optional(Zoi.string())
       assert {:ok, nil} == Zoi.parse(schema, nil)
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
     end
 
     test "optional with default value" do
-      schema = Zoi.object(%{name: Zoi.optional(Zoi.default(Zoi.string(), "no name"))})
+      schema = Zoi.object(%{Zoi.optional(:name) => Zoi.default(Zoi.string(), "no name")})
       assert {:ok, %{}} == Zoi.parse(schema, %{})
 
       assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{name: nil})
@@ -202,17 +192,15 @@ defmodule ZoiTest do
 
       assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{})
     end
-  end
 
-  describe "nullable/2" do
-    test "nullable with nil value" do
-      schema = Zoi.nullable(Zoi.string())
+    test "optional with nil value" do
+      schema = Zoi.optional(Zoi.string())
       assert {:ok, nil} == Zoi.parse(schema, nil)
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
     end
 
-    test "nullable with incorrect type" do
-      schema = Zoi.nullable(Zoi.string())
+    test "optional with incorrect type" do
+      schema = Zoi.optional(Zoi.string())
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 123)
       assert Exception.message(error) == "invalid type: must be a string"
     end
@@ -455,7 +443,7 @@ defmodule ZoiTest do
 
     test "object with optional field" do
       schema =
-        Zoi.object(%{name: Zoi.string(), age: Zoi.optional(Zoi.integer())})
+        Zoi.object(%{Zoi.optional(:age) => Zoi.integer(), name: Zoi.string()})
 
       assert {:ok, %{name: "John"}} ==
                Zoi.parse(schema, %{
@@ -497,9 +485,10 @@ defmodule ZoiTest do
       schema =
         Zoi.object(
           %{
-            name: Zoi.string(),
-            address: Zoi.optional(Zoi.object(%{street: Zoi.optional(Zoi.string())})),
-            phone: Zoi.optional(Zoi.object(%{number: Zoi.optional(Zoi.string())}, strict: true))
+            Zoi.optional(:phone) =>
+              Zoi.object(%{Zoi.optional(:number) => Zoi.string()}, strict: true),
+            Zoi.optional(:address) => Zoi.object(%{Zoi.optional(:street) => Zoi.string()}),
+            name: Zoi.string()
           },
           strict: true
         )
