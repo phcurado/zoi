@@ -17,31 +17,6 @@ defmodule Zoi do
       })
       # {:ok, %{name: "Alice", age: 30, email: "alice@email.com"}}
 
-  ## Schemas
-  `Zoi` schemas are defined using a set of functions that create types and validations.
-
-  Primitive types:
-
-      Zoi.string()
-      Zoi.integer()
-      Zoi.float()
-      Zoi.number()
-      Zoi.boolean()
-
-  Encapsulated types:
-
-      Zoi.optional(inner_type)
-      Zoi.default(inner_type, default_value)
-      Zoi.union(fields)
-      Zoi.intersection(fields)
-
-  Complex types:
-      Zoi.object(fields)
-      Zoi.map(fields)
-      Zoi.enum(values)
-      Zoi.array(inner_type)
-      Zoi.tuple(inner_types)
-
   ## Coercion
   By default, `Zoi` will not attempt to infer input data to match the expected type. For example, if you define a schema that expects a string, passing an integer will result in an error.
       iex> Zoi.string() |> Zoi.parse(123)
