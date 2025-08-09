@@ -915,7 +915,7 @@ defmodule Zoi do
         refine(sub_schema, fun)
       end)
 
-    %Zoi.Types.Union{schema | schemas: schemas}
+    %{schema | schemas: schemas}
   end
 
   def refine(%Zoi.Types.Intersection{schemas: schemas} = schema, fun) do
@@ -924,7 +924,7 @@ defmodule Zoi do
         refine(sub_schema, fun)
       end)
 
-    %Zoi.Types.Intersection{schema | schemas: schemas}
+    %{schema | schemas: schemas}
   end
 
   def refine(schema, fun) do
@@ -954,7 +954,7 @@ defmodule Zoi do
         transform(sub_schema, fun)
       end)
 
-    %Zoi.Types.Union{schema | schemas: schemas}
+    %{schema | schemas: schemas}
   end
 
   def transform(%Zoi.Types.Intersection{schemas: schemas} = schema, fun) do
@@ -963,7 +963,7 @@ defmodule Zoi do
         transform(sub_schema, fun)
       end)
 
-    %Zoi.Types.Intersection{schema | schemas: schemas}
+    %{schema | schemas: schemas}
   end
 
   @spec transform(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.4 - 2025-08-09
+
+### Added
+
+- `Zoi.min/2`, `Zoi.max/2`, `Zoi.gt/2`, `Zoi.gte/2`, `Zoi.lt/2`, `Zoi.lte/2` refinements for `Zoi.time/1` type
+- `Zoi.min/2`, `Zoi.max/2`, `Zoi.gt/2`, `Zoi.gte/2`, `Zoi.lt/2`, `Zoi.lte/2` refinements for `Zoi.date/1` type
+- `Zoi.min/2`, `Zoi.max/2`, `Zoi.gt/2`, `Zoi.gte/2`, `Zoi.lt/2`, `Zoi.lte/2` refinements for `Zoi.datetime/1` type
+- `Zoi.min/2`, `Zoi.max/2`, `Zoi.gt/2`, `Zoi.gte/2`, `Zoi.lt/2`, `Zoi.lte/2` refinements for `Zoi.naive_datetime/1` type
+
 ## 0.3.3 - 2025-08-09
 
 ### Added
