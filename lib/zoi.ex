@@ -477,10 +477,17 @@ defmodule Zoi do
     ## Example
 
         iex> schema = Zoi.decimal()
-        iex> Zoi.parse(schema, "123.45")
+        iex> Zoi.parse(schema, Decimal.new("123.45"))
         {:ok, Decimal.new("123.45")}
         iex> Zoi.parse(schema, "invalid-decimal")
         {:error, [%Zoi.Error{message: "invalid type: must be a decimal"}]}
+
+    You can also specify the `:coerce` option to allow coercion from strings or integers:
+        iex> schema = Zoi.decimal(coerce: true)
+        iex> Zoi.parse(schema, "123.45")
+        {:ok, Decimal.new("123.45")}
+        iex> Zoi.parse(schema, 123)
+        {:ok, Decimal.new("123")}
     """
     @doc group: "Transformation Types"
     defdelegate decimal(opts \\ []), to: Zoi.Types.Decimal, as: :new

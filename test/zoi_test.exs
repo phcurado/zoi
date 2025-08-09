@@ -752,11 +752,8 @@ defmodule ZoiTest do
   describe "decimal/1" do
     test "decimal with correct value" do
       schema = Zoi.decimal()
-
-      assert {:ok, Decimal.new("12.34")} == Zoi.parse(schema, "12.34")
-      assert {:ok, Decimal.new("42.00")} == Zoi.parse(schema, "42.00")
-      assert {:ok, Decimal.new("0.0")} == Zoi.parse(schema, "0.0")
-      assert {:ok, Decimal.new("-1.0")} == Zoi.parse(schema, "-1.0")
+      assert {:ok, Decimal.new("12.34")} == Zoi.parse(schema, Decimal.new("12.34"))
+      assert {:ok, Decimal.new("0.0")} == Zoi.parse(schema, Decimal.new("0.0"))
     end
 
     test "decimal with incorrect value" do
@@ -766,6 +763,12 @@ defmodule ZoiTest do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.decimal(), value)
         assert Exception.message(error) == "invalid type: must be a decimal"
       end
+    end
+
+    test "decimal with coercion" do
+      assert {:ok, Decimal.new("12.34")} == Zoi.parse(Zoi.decimal(), "12.34", coerce: true)
+      assert {:ok, Decimal.new("0")} == Zoi.parse(Zoi.decimal(), "0", coerce: true)
+      assert {:ok, Decimal.new("-1")} == Zoi.parse(Zoi.decimal(), "-1", coerce: true)
     end
 
     test "decimal with coercion but incorrect value" do
@@ -949,9 +952,9 @@ defmodule ZoiTest do
 
     test "gte for decimal" do
       schema = Zoi.decimal() |> Zoi.gte(Decimal.new("10.5"))
-      assert {:ok, Decimal.new("12.34")} == Zoi.parse(schema, "12.34")
-      assert {:ok, Decimal.new("10.5")} == Zoi.parse(schema, "10.5")
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "9.99")
+      assert {:ok, Decimal.new("12.34")} == Zoi.parse(schema, "12.34", coerce: true)
+      assert {:ok, Decimal.new("10.5")} == Zoi.parse(schema, Decimal.new("10.5"))
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "9.99", coerce: true)
       assert Exception.message(error) == "too small: must be at least 10.5"
     end
 
@@ -987,7 +990,7 @@ defmodule ZoiTest do
 
     test "gt for decimal" do
       schema = Zoi.decimal() |> Zoi.gt(Decimal.new("10.5"))
-      assert {:ok, Decimal.new("12.34")} == Zoi.parse(schema, "12.34")
+      assert {:ok, Decimal.new("12.34")} == Zoi.parse(schema, "12.34", coerce: true)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "10.5")
       assert Exception.message(error) == "too small: must be greater than 10.5"
     end
@@ -1064,9 +1067,9 @@ defmodule ZoiTest do
 
     test "lte for decimal" do
       schema = Zoi.decimal() |> Zoi.lte(Decimal.new("10.5"))
-      assert {:ok, Decimal.new("9.99")} == Zoi.parse(schema, "9.99")
-      assert {:ok, Decimal.new("10.5")} == Zoi.parse(schema, "10.5")
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "12.34")
+      assert {:ok, Decimal.new("9.99")} == Zoi.parse(schema, Decimal.new("9.99"))
+      assert {:ok, Decimal.new("10.5")} == Zoi.parse(schema, "10.5", coerce: true)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, Decimal.new("12.34"))
       assert Exception.message(error) == "too big: must be at most 10.5"
     end
 
@@ -1103,8 +1106,8 @@ defmodule ZoiTest do
 
     test "lt for decimal" do
       schema = Zoi.decimal() |> Zoi.lt(Decimal.new("10.5"))
-      assert {:ok, Decimal.new("9.99")} == Zoi.parse(schema, "9.99")
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "10.5")
+      assert {:ok, Decimal.new("9.99")} == Zoi.parse(schema, Decimal.new("9.99"))
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, Decimal.new("10.5"))
       assert Exception.message(error) == "too big: must be less than 10.5"
     end
 
