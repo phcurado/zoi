@@ -27,16 +27,6 @@ defmodule Zoi.Types.Object do
       {:error, schema.meta.error || "invalid type: must be a map"}
     end
 
-    defp map_fetch(map, key) do
-      case Map.fetch(map, key) do
-        :error ->
-          Map.fetch(map, to_string(key))
-
-        {:ok, _val} = result ->
-          result
-      end
-    end
-
     defp do_parse(%Zoi.Types.Object{fields: fields, strict: strict}, input, opts, path, errs) do
       unknown_fields_errors =
         if strict do
@@ -106,6 +96,25 @@ defmodule Zoi.Types.Object do
       |> Enum.reject(&(&1 in schema_keys))
       |> Enum.map(fn key ->
         Zoi.Error.exception(message: "unrecognized key: '#{key}'")
+      end)
+    end
+
+    ## TODO: map_fetch infering string/atom keys should be done by explicitly passing a param
+    ## something like `:infer_keys` or `:coerce`
+    ## Add tests for input_map being string keys and key being an atom
+    defp map_fetch(input_map, key) do
+      Enum.map(input_map, fn {k, v} ->
+        {to_string(k), v}
+      end)
+      |> Enum.into(%{})
+      |> then(fn map ->
+        case Map.fetch(map, key) do
+          {:ok, value} ->
+            {:ok, value}
+
+          :error ->
+            Map.fetch(map, to_string(key))
+        end
       end)
     end
   end
