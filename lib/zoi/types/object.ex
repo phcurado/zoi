@@ -107,7 +107,7 @@ defmodule Zoi.Types.Object do
       end)
     end
 
-    defp map_fetch(input_map, key, _coerce = true) do
+    defp map_fetch(input_map, key, true = _coerce) do
       Enum.map(input_map, fn {k, v} ->
         {to_string(k), v}
       end)
