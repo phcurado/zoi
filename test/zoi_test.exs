@@ -407,8 +407,8 @@ defmodule ZoiTest do
 
       assert {:ok, %{name: "John", age: 30}} ==
                Zoi.parse(schema, %{
-                 "name" => "John",
-                 "age" => 30
+                 name: "John",
+                 age: 30
                })
     end
 
@@ -423,7 +423,7 @@ defmodule ZoiTest do
 
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{
-                 "name" => "John"
+                 name: "John"
                })
 
       assert Exception.message(error) == "is required"
@@ -435,8 +435,8 @@ defmodule ZoiTest do
 
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{
-                 "name" => "John",
-                 "age" => "not an integer"
+                 name: "John",
+                 age: "not an integer"
                })
 
       assert Exception.message(error) == "invalid type: must be an integer"
@@ -459,7 +459,7 @@ defmodule ZoiTest do
 
       assert {:ok, %{name: "John"}} ==
                Zoi.parse(schema, %{
-                 "name" => "John"
+                 name: "John"
                })
     end
 
@@ -479,14 +479,14 @@ defmodule ZoiTest do
 
       assert {:ok, %{user: %{name: "Alice", age: 25}, active: true}} ==
                Zoi.parse(schema, %{
-                 "user" => %{"name" => "Alice", "age" => 25},
-                 "active" => true
+                 user: %{name: "Alice", age: 25},
+                 active: true
                })
 
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{
-                 "user" => %{"name" => "Alice"},
-                 "active" => true
+                 user: %{name: "Alice"},
+                 active: true
                })
 
       assert Exception.message(error) == "is required"
@@ -504,16 +504,16 @@ defmodule ZoiTest do
           strict: true
         )
 
-      assert {:ok, %{name: "John"}} == Zoi.parse(schema, %{"name" => "John"})
+      assert {:ok, %{name: "John"}} == Zoi.parse(schema, %{name: "John"})
 
       assert {:error, errors} =
                Zoi.parse(
                  schema,
                  %{
-                   "name" => "John",
-                   "age" => 30,
-                   "address" => %{"wrong key" => "value"},
-                   "phone" => %{"wrong key" => "value"}
+                   name: "John",
+                   age: 30,
+                   address: %{"wrong key" => "value"},
+                   phone: %{"wrong key" => "value"}
                  }
                )
 
@@ -521,6 +521,24 @@ defmodule ZoiTest do
                %Zoi.Error{message: "unrecognized key: 'wrong key'", path: [:phone]},
                %Zoi.Error{message: "unrecognized key: 'age'", path: []}
              ]
+    end
+
+    test "object with string keys and input with atom keys" do
+      schema = Zoi.object(%{"name" => Zoi.string(), "age" => Zoi.integer()})
+
+      assert {:error, errors} =
+               Zoi.parse(schema, %{name: "John", age: 30})
+
+      for error <- errors do
+        assert Exception.message(error) == "is required"
+      end
+    end
+
+    test "object with coercion on string keys and input with atom keys" do
+      schema = Zoi.object(%{"name" => Zoi.string(), "age" => Zoi.integer()}, coerce: true)
+
+      assert {:ok, %{"age" => 30, "name" => "John"}} ==
+               Zoi.parse(schema, %{name: "John", age: 30})
     end
   end
 
@@ -1614,10 +1632,10 @@ defmodule ZoiTest do
 
       assert {:error, errors} =
                Zoi.parse(schema, %{
-                 "user" => %{
-                   "profile" => %{"email" => "tt", "numbers" => [1, 2, "not an integer"]}
+                 user: %{
+                   profile: %{email: "tt", numbers: [1, 2, "not an integer"]}
                  },
-                 "invalid_key" => "value"
+                 invalid_key: "value"
                })
 
       assert Zoi.treefy_errors(errors) == %{

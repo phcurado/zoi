@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- `Zoi.object/2` will not automatically parse objects with inputs that differ from the string/atom keys map format. For example:
+
+```elixir
+schema = Zoi.object(%{
+  name: Zoi.string(),
+  age: Zoi.integer()
+})
+Zoi.object(schema, %{"name" => "John", "age" => 30})
+{:error, _errors}
+```
+
+To make this API work, you can pass `coerce: true` option to `Zoi.object/2`. This will make the object parser to check from the `Map` input if the keys are strings or atoms and fetch it's values automatically.
+
+```elixir
+schema = Zoi.object(%{
+  name: Zoi.string(),
+  age: Zoi.integer()
+})
+Zoi.object(schema, %{"name" => "John", "age" => 30}, coerce: true)
+{:ok, %{name: "John", age: 30}}
+```
+
 ## 0.3.4 - 2025-08-09
 
 ### Added
