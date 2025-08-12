@@ -112,15 +112,7 @@ defmodule Zoi.Types.Object do
         {to_string(k), v}
       end)
       |> Enum.into(%{})
-      |> then(fn map ->
-        case Map.fetch(map, key) do
-          {:ok, value} ->
-            {:ok, value}
-
-          :error ->
-            Map.fetch(map, to_string(key))
-        end
-      end)
+      |> Map.fetch(to_string(key))
     end
 
     defp map_fetch(input_map, key, _coerce) do
