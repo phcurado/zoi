@@ -5,7 +5,8 @@ defmodule Zoi.ErrorsTest do
     test "add_error/2" do
       assert [%Zoi.Error{message: "issue"}] = Zoi.Errors.add_error("issue")
 
-      assert [%Zoi.Error{message: "invalid type"}] = errors = Zoi.Errors.add_error(%Zoi.Error{message: "invalid type"})
+      assert [%Zoi.Error{message: "invalid type"}] =
+               errors = Zoi.Errors.add_error(%Zoi.Error{message: "invalid type"})
 
       assert [%Zoi.Error{}, %Zoi.Error{message: "another issue"}] =
                Zoi.Errors.add_error(errors, "another issue")
