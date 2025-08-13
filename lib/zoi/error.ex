@@ -1,7 +1,8 @@
 defmodule Zoi.Error do
+  @type path :: [atom() | binary() | integer()]
   @type t :: %__MODULE__{
           message: binary(),
-          path: [atom()]
+          path: path()
         }
   defexception [:message, path: []]
 

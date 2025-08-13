@@ -3,10 +3,15 @@ defmodule Zoi.Errors do
 
   alias Zoi.Error
 
+  @type t :: list(Error.t())
+  @type error :: Error.t() | binary() | list(keyword())
+
+  @spec merge(t(), t()) :: t()
   def merge(errors1, errors2) do
     errors1 ++ errors2
   end
 
+  @spec add_error(error()) :: t()
   def add_error(error) do
     add_error([], error)
   end
@@ -20,9 +25,9 @@ defmodule Zoi.Errors do
     add_error(errors, error)
   end
 
-  def add_error(errors, opts) when is_list(opts) do
-    error = Error.exception(opts)
-    add_error(errors, error)
+
+  def add_error(errors_1, errors_2) when is_list(errors_2) do
+    errors_1 ++ errors_2
   end
 
   def message(errors) do
