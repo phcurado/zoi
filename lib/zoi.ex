@@ -64,16 +64,25 @@ defmodule Zoi do
   @doc group: "Parsing"
   @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: result()
   def parse(schema, input, opts \\ []) do
+    {result, _ctx} = parse_with_context(schema, input, opts)
+    result
+  end
+
+  defp parse_with_context(schema, input, opts) do
+    context = Keyword.get(opts, :ctx, Zoi.Context.new(schema, input))
+    opts = Keyword.put_new(opts, :ctx, context)
+
     with {:ok, result} <- Zoi.Type.parse(schema, input, opts),
          {:ok, result} <- Meta.run_transforms(schema, result),
-         {:ok, _refined_result} <- Meta.run_refinements(schema, result) do
-      {:ok, result}
+         ctx = Zoi.Context.add_parsed(context, result),
+         # {:ok, _refined_result} <- Meta.run_refinements(schema, result, opts) do
+         {:ok, _refined_result} <- Meta.run_refinements(ctx, opts) do
+      ctx = Zoi.Context.add_parsed(context, result)
+      {{:ok, result}, ctx}
     else
-      {:error, reason} when is_binary(reason) ->
-        {:error, Zoi.Errors.add_error(reason)}
-
       {:error, error} ->
-        {:error, error}
+        ctx = Zoi.Context.add_error(context, error)
+        {{:error, ctx.errors}, ctx}
     end
   end
 

@@ -84,7 +84,10 @@ defmodule Zoi.Types.Object do
     end
 
     ## Simple type parsing
-    defp do_parse(type, value, _opts, _path, _errors), do: Zoi.parse(type, value)
+    defp do_parse(type, value, _opts, path, _errors) do
+      ctx = Zoi.Context.new(type, value) |> Zoi.Context.add_path(path)
+      Zoi.parse(type, value, ctx: ctx)
+    end
 
     defp optional?(%Zoi.Types.Optional{}), do: true
     defp optional?(_), do: false

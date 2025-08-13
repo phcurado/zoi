@@ -40,65 +40,52 @@ defmodule Zoi.MetaTest do
 
   describe "run_refinements/2" do
     test "runs refinements and returns ok for valid input" do
-      schema = %Zoi.Types.Integer{
-        meta: %Meta{
-          refinements: [
-            fn val ->
-              if is_integer(val) do
-                :ok
-              else
-                {:error, "Value is not an integer"}
-              end
-            end
-          ]
-        }
-      }
+      schema =
+        Zoi.integer()
+        |> Zoi.refine(fn val ->
+          if val > 10 do
+            :ok
+          else
+            {:error, "Value is smaller or equal to 10"}
+          end
+        end)
 
-      assert {:ok, 42} == Meta.run_refinements(schema, 42)
-    end
+      input = 42
 
-    test "returns error for invalid input" do
-      schema = %Zoi.Types.Integer{
-        meta: %Meta{
-          refinements: [
-            fn _schema, val ->
-              if is_integer(val) do
-                :ok
-              else
-                {:error, "Value is not an integer"}
-              end
-            end
-          ]
-        }
-      }
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
 
-      assert {:error, [%Zoi.Error{} = errors]} = Meta.run_refinements(schema, "not an integer")
-      assert Exception.message(errors) == "Value is not an integer"
+      assert {:ok, 42} == Meta.run_refinements(ctx, [])
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Meta.run_refinements(Zoi.Context.add_parsed(ctx, 9), [])
+
+      assert Exception.message(error) == "Value is smaller or equal to 10"
     end
 
     test "refinement with mfa" do
-      schema = %Zoi.Types.Integer{
-        meta: %Meta{
-          refinements: [{Validation, :integer?, []}]
-        }
-      }
+      schema = Zoi.integer() |> Zoi.refine({Validation, :integer?, []})
 
-      assert {:ok, 42} == Meta.run_refinements(schema, 42)
-      assert {:error, [%Zoi.Error{} = errors]} = Meta.run_refinements(schema, "not an integer")
-      assert Exception.message(errors) == "Value is not an integer"
+      input = 42
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+      assert {:ok, 42} == Meta.run_refinements(ctx, [])
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Meta.run_refinements(Zoi.Context.add_parsed(ctx, "55"), [])
+
+      assert Exception.message(error) == "Value is not an integer"
     end
 
     test "accumulates errors from refinements" do
-      schema = %Zoi.Types.String{
-        meta: %Meta{
-          refinements: [
-            fn _schema, _val -> {:error, "refinement error 1"} end,
-            fn _schema, _val -> {:error, "refinement error 2"} end
-          ]
-        }
-      }
+      schema =
+        Zoi.string()
+        |> Zoi.refine(fn _val -> {:error, "refinement error 1"} end)
+        |> Zoi.refine(fn _val -> {:error, "refinement error 2"} end)
 
-      assert {:error, [error_1, error_2]} = Meta.run_refinements(schema, "test")
+      input = "test"
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+
+      assert {:error, [error_1, error_2]} = Meta.run_refinements(ctx, [])
+
       assert Exception.message(error_1) == "refinement error 1"
       assert Exception.message(error_2) == "refinement error 2"
     end

@@ -701,6 +701,22 @@ defmodule ZoiTest do
       assert Exception.message(error_2) == "invalid type: must be an integer"
       assert error_2.path == [1, 1, 1]
     end
+
+    test "array with refinement" do
+      schema = Zoi.array(Zoi.array(Zoi.integer() |> Zoi.min(1)) |> Zoi.min(2))
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, [[1, 2], [2]])
+
+      assert Exception.message(error) == "too small: must have at least 2 items"
+      assert error.path == [1]
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, [[1, 2], [2, 0]])
+
+      assert Exception.message(error) == "too small: must be at least 1"
+      assert error.path == [1, 1]
+    end
   end
 
   describe "enum/2" do
