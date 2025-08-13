@@ -1537,7 +1537,7 @@ defmodule ZoiTest do
     test "valid refinement" do
       schema =
         Zoi.string()
-        |> Zoi.refine(fn _schema, value ->
+        |> Zoi.refine(fn value ->
           if String.length(value) > 3 do
             :ok
           else
@@ -1551,7 +1551,7 @@ defmodule ZoiTest do
     test "invalid refinement" do
       schema =
         Zoi.string()
-        |> Zoi.refine(fn _schema, value ->
+        |> Zoi.refine(fn value ->
           if String.length(value) > 3 do
             :ok
           else

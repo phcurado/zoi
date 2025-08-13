@@ -75,8 +75,7 @@ defmodule Zoi do
     with {:ok, result} <- Zoi.Type.parse(schema, input, opts),
          {:ok, result} <- Meta.run_transforms(schema, result),
          ctx = Zoi.Context.add_parsed(context, result),
-         # {:ok, _refined_result} <- Meta.run_refinements(schema, result, opts) do
-         {:ok, _refined_result} <- Meta.run_refinements(ctx, opts) do
+         {:ok, _refined_result} <- Meta.run_refinements(ctx) do
       ctx = Zoi.Context.add_parsed(context, result)
       {{:ok, result}, ctx}
     else
@@ -914,13 +913,29 @@ defmodule Zoi do
 
   ## Example
 
-      iex> schema = Zoi.string() |> Zoi.refine(fn _schema, value -> 
+      iex> schema = Zoi.string() |> Zoi.refine(fn value -> 
       ...>   if String.length(value) > 5, do: :ok, else: {:error, "must be longer than 5 characters"}
       ...> end)
       iex> Zoi.parse(schema, "hello")
       {:error, [%Zoi.Error{message: "must be longer than 5 characters"}]}
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
+
+  ## Returning multiple errors
+
+  You can use the context when defining the `Zoi.refine/2` function to return multiple errors.
+
+      iex> schema = Zoi.string() |> Zoi.refine(fn value, ctx ->
+      ...>   if String.length(value) < 5 do
+      ...>     Zoi.Context.add_error(ctx, "must be longer than 5 characters")
+      ...>     |> Zoi.Context.add_error("must be shorter than 10 characters")
+      ...>   end
+      ...> end)
+      iex> Zoi.parse(schema, "hi")
+      {:error, [
+        %Zoi.Error{message: "must be longer than 5 characters"},
+        %Zoi.Error{message: "must be shorter than 10 characters"}
+      ]}
   """
   @doc group: "Extensions"
   @spec refine(schema :: Zoi.Type.t(), fun :: refinement()) :: Zoi.Type.t()

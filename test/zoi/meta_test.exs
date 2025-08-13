@@ -38,7 +38,7 @@ defmodule Zoi.MetaTest do
     end
   end
 
-  describe "run_refinements/2" do
+  describe "run_refinements/1" do
     test "runs refinements and returns ok for valid input" do
       schema =
         Zoi.integer()
@@ -54,10 +54,10 @@ defmodule Zoi.MetaTest do
 
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
 
-      assert {:ok, 42} == Meta.run_refinements(ctx, [])
+      assert {:ok, 42} == Meta.run_refinements(ctx)
 
       assert {:error, [%Zoi.Error{} = error]} =
-               Meta.run_refinements(Zoi.Context.add_parsed(ctx, 9), [])
+               Meta.run_refinements(Zoi.Context.add_parsed(ctx, 9))
 
       assert Exception.message(error) == "Value is smaller or equal to 10"
     end
@@ -67,10 +67,10 @@ defmodule Zoi.MetaTest do
 
       input = 42
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
-      assert {:ok, 42} == Meta.run_refinements(ctx, [])
+      assert {:ok, 42} == Meta.run_refinements(ctx)
 
       assert {:error, [%Zoi.Error{} = error]} =
-               Meta.run_refinements(Zoi.Context.add_parsed(ctx, "55"), [])
+               Meta.run_refinements(Zoi.Context.add_parsed(ctx, "55"))
 
       assert Exception.message(error) == "Value is not an integer"
     end
@@ -84,7 +84,24 @@ defmodule Zoi.MetaTest do
       input = "test"
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
 
-      assert {:error, [error_1, error_2]} = Meta.run_refinements(ctx, [])
+      assert {:error, [error_1, error_2]} = Meta.run_refinements(ctx)
+
+      assert Exception.message(error_1) == "refinement error 1"
+      assert Exception.message(error_2) == "refinement error 2"
+    end
+
+    test "return multiple errors from a single refinement" do
+      schema =
+        Zoi.string()
+        |> Zoi.refine(fn _val, ctx ->
+          Zoi.Context.add_error(ctx, %{message: "refinement error 1", path: [:test]})
+          |> Zoi.Context.add_error("refinement error 2")
+        end)
+
+      input = "test"
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+
+      assert {:error, [error_1, error_2]} = Meta.run_refinements(ctx)
 
       assert Exception.message(error_1) == "refinement error 1"
       assert Exception.message(error_2) == "refinement error 2"
