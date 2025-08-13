@@ -17,7 +17,7 @@ defmodule Zoi.MetaTest do
   describe "create_meta/1" do
     test "creates a meta struct with refinements and transforms" do
       opts = [
-        refinements: [{:refine, &is_integer/1}],
+        refinements: [&is_integer/1],
         transforms: [&String.upcase/1],
         extra_param: "value"
       ]
@@ -25,7 +25,7 @@ defmodule Zoi.MetaTest do
       assert {%Meta{refinements: refinements, transforms: transforms}, rest} =
                Meta.create_meta(opts)
 
-      assert refinements == [{:refine, &is_integer/1}]
+      assert refinements == [&is_integer/1]
       assert transforms == [&String.upcase/1]
       assert rest == [extra_param: "value"]
     end
@@ -43,7 +43,7 @@ defmodule Zoi.MetaTest do
       schema = %Zoi.Types.Integer{
         meta: %Meta{
           refinements: [
-            fn _schema, val ->
+            fn val ->
               if is_integer(val) do
                 :ok
               else
@@ -121,7 +121,7 @@ defmodule Zoi.MetaTest do
     test "runs transforms and returns the tuple for valid input" do
       schema = %Zoi.Types.String{
         meta: %Meta{
-          transforms: [fn _schema, _val -> {:ok, "random return"} end]
+          transforms: [fn _val -> {:ok, "random return"} end]
         }
       }
 

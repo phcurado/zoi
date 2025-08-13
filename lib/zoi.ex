@@ -700,19 +700,20 @@ defmodule Zoi do
   """
 
   @doc group: "Refinements"
-  @spec length(schema :: Zoi.Type.t(), length :: non_neg_integer()) :: Zoi.Type.t()
-  def length(schema, length) do
+  @spec length(schema :: Zoi.Type.t(), length :: non_neg_integer(), opts :: options()) ::
+          Zoi.Type.t()
+  def length(schema, length, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[length: length], []]})
+    |> refine({Zoi.Refinements, :refine, [[length: length], opts]})
   end
 
   @doc """
   alias for `Zoi.gte/2`
   """
   @doc group: "Refinements"
-  @spec min(schema :: Zoi.Type.t(), min :: non_neg_integer()) :: Zoi.Type.t()
-  def min(schema, min) do
-    __MODULE__.gte(schema, min)
+  @spec min(schema :: Zoi.Type.t(), min :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  def min(schema, min, opts \\ []) do
+    __MODULE__.gte(schema, min, opts)
   end
 
   @doc """
@@ -728,10 +729,10 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "too small: must have at least 3 characters"}]}
   """
   @doc group: "Refinements"
-  @spec gte(schema :: Zoi.Type.t(), min :: non_neg_integer()) :: Zoi.Type.t()
-  def gte(schema, gte) do
+  @spec gte(schema :: Zoi.Type.t(), min :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  def gte(schema, gte, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[gte: gte], []]})
+    |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
   end
 
   @doc """
@@ -747,17 +748,19 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "too small: must be greater than 2"}]}
   """
   @doc group: "Refinements"
-  def gt(schema, gt) do
+  @spec gt(schema :: Zoi.Type.t(), gt :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  def gt(schema, gt, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[gt: gt], []]})
+    |> refine({Zoi.Refinements, :refine, [[gt: gt], opts]})
   end
 
   @doc """
   alias for `Zoi.lte/2`
   """
   @doc group: "Refinements"
-  def max(schema, max) do
-    lte(schema, max)
+  @spec max(schema :: Zoi.Type.t(), max :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  def max(schema, max, opts \\ []) do
+    lte(schema, max, opts)
   end
 
   @doc """
@@ -773,9 +776,10 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "too big: must have at most 5 characters"}]}
   """
   @doc group: "Refinements"
-  def lte(schema, lte) do
+  @spec lte(schema :: Zoi.Type.t(), lte :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  def lte(schema, lte, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[lte: lte], []]})
+    |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
   end
 
   @doc """
@@ -791,9 +795,10 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "too big: must be less than 10"}]}
   """
   @doc group: "Refinements"
-  def lt(schema, lt) do
+  @spec lt(schema :: Zoi.Type.t(), lt :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  def lt(schema, lt, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[lt: lt], []]})
+    |> refine({Zoi.Refinements, :refine, [[lt: lt], opts]})
   end
 
   @doc """
@@ -805,6 +810,7 @@ defmodule Zoi do
       {:ok, "12345"}
   """
   @doc group: "Refinements"
+  @spec regex(schema :: Zoi.Type.t(), regex :: Regex.t(), opts :: options()) :: Zoi.Type.t()
   def regex(schema, regex, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[regex: regex], opts]})
@@ -822,10 +828,10 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "invalid string: must start with 'hello'"}]}
   """
   @doc group: "Refinements"
-  @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary()) :: Zoi.Type.t()
-  def starts_with(schema, prefix) do
+  @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary(), opts :: options()) :: Zoi.Type.t()
+  def starts_with(schema, prefix, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[starts_with: prefix], []]})
+    |> refine({Zoi.Refinements, :refine, [[starts_with: prefix], opts]})
   end
 
   @doc """
@@ -839,10 +845,10 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "invalid string: must end with 'world'"}]}
   """
   @doc group: "Refinements"
-  @spec ends_with(schema :: Zoi.Type.t(), suffix :: binary()) :: Zoi.Type.t()
-  def ends_with(schema, suffix) do
+  @spec ends_with(schema :: Zoi.Type.t(), suffix :: binary(), opts :: options()) :: Zoi.Type.t()
+  def ends_with(schema, suffix, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[ends_with: suffix], []]})
+    |> refine({Zoi.Refinements, :refine, [[ends_with: suffix], opts]})
   end
 
   # Transforms

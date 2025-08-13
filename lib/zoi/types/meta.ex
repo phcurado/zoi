@@ -43,13 +43,20 @@ defmodule Zoi.Types.Meta do
             {{:ok, input}, Zoi.Errors.add_error(errors, err)}
         end
 
-      refine_func, {{:ok, input}, error} ->
-        case refine_func.(schema, input) do
+      refine_func, {{:ok, input}, errors} ->
+        cond do
+          is_function(refine_func, 2) ->
+            refine_func.(schema, input)
+
+          is_function(refine_func, 1) ->
+            refine_func.(input)
+        end
+        |> case do
           :ok ->
-            {{:ok, input}, error}
+            {{:ok, input}, errors}
 
           {:error, err} ->
-            {{:ok, input}, Zoi.Errors.add_error(error, err)}
+            {{:ok, input}, Zoi.Errors.add_error(errors, err)}
         end
     end)
     |> then(fn {{:ok, value}, errors} ->
@@ -66,28 +73,35 @@ defmodule Zoi.Types.Meta do
   def run_transforms(schema, input) do
     schema.meta.transforms
     |> Enum.reduce({{:ok, input}, []}, fn
-      {mod, func, args}, {{:ok, input}, error} ->
+      {mod, func, args}, {{:ok, input}, errors} ->
         case apply(mod, func, [schema, input] ++ args) do
           {:ok, value} ->
-            {{:ok, value}, error}
+            {{:ok, value}, errors}
 
           {:error, err} ->
-            {{:ok, input}, Zoi.Errors.add_error(error, err)}
+            {{:ok, input}, Zoi.Errors.add_error(errors, err)}
 
           value ->
-            {{:ok, value}, error}
+            {{:ok, value}, errors}
         end
 
-      transform_func, {{:ok, input}, error} ->
-        case transform_func.(schema, input) do
+      transform_func, {{:ok, input}, errors} ->
+        cond do
+          is_function(transform_func, 2) ->
+            transform_func.(schema, input)
+
+          is_function(transform_func, 1) ->
+            transform_func.(input)
+        end
+        |> case do
           {:ok, value} ->
-            {{:ok, value}, error}
+            {{:ok, value}, errors}
 
           {:error, err} ->
-            {{:ok, input}, Zoi.Errors.add_error(error, err)}
+            {{:ok, input}, Zoi.Errors.add_error(errors, err)}
 
           value ->
-            {{:ok, value}, error}
+            {{:ok, value}, errors}
         end
     end)
     |> then(fn {{:ok, value}, errors} ->

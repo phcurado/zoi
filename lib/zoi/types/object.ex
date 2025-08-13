@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Object do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:fields, :strict]
+  use Zoi.Type.Def, fields: [:fields, :strict, :coerce]
 
   def new(fields, opts) when is_map(fields) do
     apply_type(opts ++ [fields: fields])
@@ -27,17 +27,15 @@ defmodule Zoi.Types.Object do
       {:error, schema.meta.error || "invalid type: must be a map"}
     end
 
-    defp map_fetch(map, key) do
-      case Map.fetch(map, key) do
-        :error ->
-          Map.fetch(map, to_string(key))
+    defp do_parse(
+           %Zoi.Types.Object{fields: fields, strict: strict, coerce: coerce},
+           input,
+           opts,
+           path,
+           errs
+         ) do
+      coerce = Keyword.get(opts, :coerce, coerce)
 
-        {:ok, _val} = result ->
-          result
-      end
-    end
-
-    defp do_parse(%Zoi.Types.Object{fields: fields, strict: strict}, input, opts, path, errs) do
       unknown_fields_errors =
         if strict do
           unknown_fields(fields, input)
@@ -47,7 +45,7 @@ defmodule Zoi.Types.Object do
         |> Enum.map(&Zoi.Error.add_path(&1, path))
 
       Enum.reduce(fields, {%{}, errs, path}, fn {key, type}, {parsed, errors, path} ->
-        case map_fetch(input, key) do
+        case map_fetch(input, key, coerce) do
           :error ->
             cond do
               optional?(type) ->
@@ -107,6 +105,18 @@ defmodule Zoi.Types.Object do
       |> Enum.map(fn key ->
         Zoi.Error.exception(message: "unrecognized key: '#{key}'")
       end)
+    end
+
+    defp map_fetch(input_map, key, true = _coerce) do
+      Enum.map(input_map, fn {k, v} ->
+        {to_string(k), v}
+      end)
+      |> Enum.into(%{})
+      |> Map.fetch(to_string(key))
+    end
+
+    defp map_fetch(input_map, key, _coerce) do
+      Map.fetch(input_map, key)
     end
   end
 end
