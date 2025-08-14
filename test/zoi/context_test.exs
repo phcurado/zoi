@@ -1,5 +1,6 @@
 defmodule Zoi.ContextTest do
   use ExUnit.Case
+  doctest Zoi.Context
 
   alias Zoi.Context
 

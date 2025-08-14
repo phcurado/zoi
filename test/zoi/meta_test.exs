@@ -4,14 +4,14 @@ defmodule Zoi.MetaTest do
   alias Zoi.Types.Meta
 
   defmodule Validation do
-    def integer?(_schema, value) when is_integer(value), do: :ok
-    def integer?(_schema, _value), do: {:error, "Value is not an integer"}
+    def integer?(input, _opts) when is_integer(input), do: :ok
+    def integer?(_input, _opts), do: {:error, "Value is not an integer"}
 
-    def upcase(_schema, value) when is_binary(value) do
+    def upcase(value, _opts) when is_binary(value) do
       {:ok, String.upcase(value)}
     end
 
-    def upcase(_schema, _value), do: {:error, "Value is not a string"}
+    def upcase(_value, _opts), do: {:error, "Value is not a string"}
   end
 
   describe "create_meta/1" do
@@ -108,67 +108,53 @@ defmodule Zoi.MetaTest do
     end
   end
 
-  describe "run_transforms/2" do
+  describe "run_transforms/1" do
     test "runs transforms and returns the transformed value" do
-      schema = %Zoi.Types.String{
-        meta: %Meta{
-          transforms: [
-            fn _schema, input -> String.trim(input) end,
-            {Validation, :upcase, []}
-          ]
-        }
-      }
+      schema =
+        Zoi.string()
+        |> Zoi.transform(fn input ->
+          String.trim(input)
+        end)
+        |> Zoi.transform({Validation, :upcase, []})
 
-      assert {:ok, "HELLO"} == Meta.run_transforms(schema, "  hello  ")
+      input = "   hello   "
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+
+      assert {:ok, "HELLO"} == Meta.run_transforms(ctx)
     end
 
     test "runs transforms and returns the tuple for valid input" do
-      schema = %Zoi.Types.String{
-        meta: %Meta{
-          transforms: [fn _val -> {:ok, "random return"} end]
-        }
-      }
-
-      assert {:ok, "random return"} == Meta.run_transforms(schema, "hello")
+      schema = Zoi.string() |> Zoi.transform(fn _val -> {:ok, "random return"} end)
+      input = "hello"
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+      assert {:ok, "random return"} == Meta.run_transforms(ctx)
     end
 
     test "returns error for invalid transform" do
-      schema = %Zoi.Types.String{
-        meta: %Meta{
-          transforms: [fn _schema, _val -> {:error, "Transform failed"} end]
-        }
-      }
-
-      assert {:error, [%Zoi.Error{} = error]} = Meta.run_transforms(schema, "not a number")
+      schema = Zoi.string() |> Zoi.transform(fn _val -> {:error, "Transform failed"} end)
+      input = "not a number"
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+      assert {:error, [%Zoi.Error{} = error]} = Meta.run_transforms(ctx)
       assert Exception.message(error) == "Transform failed"
     end
 
     test "returns error for invalid transform using mfa" do
-      schema = %Zoi.Types.String{
-        meta: %Meta{
-          transforms: [{Validation, :upcase, []}]
-        }
-      }
-
-      assert {:error, [%Zoi.Error{} = error]} = Meta.run_transforms(schema, 12)
+      schema = Zoi.string() |> Zoi.transform({Validation, :upcase, []})
+      input = 12
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+      assert {:error, [%Zoi.Error{} = error]} = Meta.run_transforms(ctx)
       assert Exception.message(error) == "Value is not a string"
     end
 
     test "accumulates errors from transforms" do
-      schema = %Zoi.Types.String{
-        meta: %Meta{
-          transforms: [
-            fn _schema, _val ->
-              {:error, "transform error 1"}
-            end,
-            fn _schema, _val ->
-              {:error, "transform error 2"}
-            end
-          ]
-        }
-      }
+      schema =
+        Zoi.string()
+        |> Zoi.transform(fn _val -> {:error, "transform error 1"} end)
+        |> Zoi.transform(fn _val -> {:error, "transform error 2"} end)
 
-      assert {:error, [error_1, error_2]} = Meta.run_transforms(schema, "test")
+      input = "test"
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+      assert {:error, [error_1, error_2]} = Meta.run_transforms(ctx)
       assert Exception.message(error_1) == "transform error 1"
       assert Exception.message(error_2) == "transform error 2"
     end

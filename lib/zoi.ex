@@ -69,18 +69,18 @@ defmodule Zoi do
   end
 
   defp parse_with_context(schema, input, opts) do
-    context = Keyword.get(opts, :ctx, Zoi.Context.new(schema, input))
-    opts = Keyword.put_new(opts, :ctx, context)
+    ctx = Keyword.get(opts, :ctx, Zoi.Context.new(schema, input))
+    opts = Keyword.put_new(opts, :ctx, ctx)
 
     with {:ok, result} <- Zoi.Type.parse(schema, input, opts),
-         {:ok, result} <- Meta.run_transforms(schema, result),
-         ctx = Zoi.Context.add_parsed(context, result),
+         ctx = Zoi.Context.add_parsed(ctx, result),
+         {:ok, result} <- Meta.run_transforms(ctx),
+         ctx = Zoi.Context.add_parsed(ctx, result),
          {:ok, _refined_result} <- Meta.run_refinements(ctx) do
-      ctx = Zoi.Context.add_parsed(context, result)
       {{:ok, result}, ctx}
     else
       {:error, error} ->
-        ctx = Zoi.Context.add_error(context, error)
+        ctx = Zoi.Context.add_error(ctx, error)
         {{:error, ctx.errors}, ctx}
     end
   end
@@ -911,8 +911,6 @@ defmodule Zoi do
 
   This function will be called with the input data and options, and should return `:ok` for valid data or `{:error, reason}` for invalid data.
 
-  ## Example
-
       iex> schema = Zoi.string() |> Zoi.refine(fn value -> 
       ...>   if String.length(value) > 5, do: :ok, else: {:error, "must be longer than 5 characters"}
       ...> end)
@@ -936,6 +934,29 @@ defmodule Zoi do
         %Zoi.Error{message: "must be longer than 5 characters"},
         %Zoi.Error{message: "must be shorter than 10 characters"}
       ]}
+
+  ## mfa 
+
+  You can also pass a `mfa` (module, function, args) to the `Zoi.refine/2` function. This is recommended if
+  you are declaring schemas during compile time:
+
+      defmodule MySchema do
+        use Zoi
+
+        @schema Zoi.string() |> Zoi.refine({__MODULE__, :validate, []})
+
+        def validate(value, opts \\ []) do
+          if String.length(value) > 5 do
+            :ok
+          else 
+            {:error, "must be longer than 5 characters"}
+          end
+        end
+      end
+
+  Since during the module compilation, anonymous functions are not available, you can use the `mfa` option to pass a module, function and arguments.
+  The `opts` argument is mandatory, this is where the `ctx` is passed to the function and you can leverage the `Zoi.Context` to add extra errors.
+  In general, most cases will be returning `:ok` or `{:error, reason}`. Use the context only if you need extra errors or modify the context in some way.
   """
   @doc group: "Extensions"
   @spec refine(schema :: Zoi.Type.t(), fun :: refinement()) :: Zoi.Type.t()
@@ -970,7 +991,7 @@ defmodule Zoi do
 
   ## Example
 
-      iex> schema = Zoi.string() |> Zoi.transform(fn _schema, value ->
+      iex> schema = Zoi.string() |> Zoi.transform(fn value ->
       ...>   {:ok, String.trim(value)}
       ...> end)
       iex> Zoi.parse(schema, "  hello world  ")

@@ -33,12 +33,15 @@ defmodule Zoi.Types.Meta do
     schema.meta.refinements
     |> Enum.reduce({{:ok, input}, []}, fn
       {mod, func, args}, {{:ok, input}, errors} ->
-        case apply(mod, func, [schema, input] ++ args) do
+        case apply(mod, func, [input] ++ args ++ [[ctx: ctx]]) do
           :ok ->
             {{:ok, input}, errors}
 
           {:error, err} ->
             {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+
+          %Zoi.Context{} = context ->
+            {{:ok, context.parsed}, context.errors}
         end
 
       refine_func, {{:ok, input}, errors} ->
@@ -69,30 +72,32 @@ defmodule Zoi.Types.Meta do
     end)
   end
 
-  @spec run_transforms(schema :: Zoi.Type.t(), input :: Zoi.input()) ::
-          {:ok, Zoi.input()} | {:error, binary()}
-  def run_transforms(schema, input) do
+  @spec run_transforms(ctx :: Zoi.Context.t()) :: {:ok, Zoi.input()} | {:error, [Zoi.Errors.t()]}
+  def run_transforms(%Zoi.Context{schema: schema, parsed: input} = ctx) do
     schema.meta.transforms
     |> Enum.reduce({{:ok, input}, []}, fn
       {mod, func, args}, {{:ok, input}, errors} ->
-        case apply(mod, func, [schema, input] ++ args) do
+        case apply(mod, func, [input] ++ args ++ [[ctx: ctx]]) do
           {:ok, value} ->
             {{:ok, value}, errors}
 
           {:error, err} ->
             {{:ok, input}, Zoi.Errors.add_error(errors, err)}
 
+          %Zoi.Context{} = context ->
+            {{:ok, context.parsed}, context.errors}
+
           value ->
             {{:ok, value}, errors}
         end
 
-      transform_func, {{:ok, input}, errors} ->
+      refine_func, {{:ok, input}, errors} ->
         cond do
-          is_function(transform_func, 2) ->
-            transform_func.(schema, input)
+          is_function(refine_func, 1) ->
+            refine_func.(input)
 
-          is_function(transform_func, 1) ->
-            transform_func.(input)
+          is_function(refine_func, 2) ->
+            refine_func.(input, ctx)
         end
         |> case do
           {:ok, value} ->
@@ -100,6 +105,9 @@ defmodule Zoi.Types.Meta do
 
           {:error, err} ->
             {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+
+          %Zoi.Context{} = context ->
+            {{:ok, context.parsed}, context.errors}
 
           value ->
             {{:ok, value}, errors}

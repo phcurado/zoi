@@ -1,7 +1,11 @@
 defmodule Zoi.Refinements do
   @moduledoc false
 
-  def refine(%Zoi.Types.String{}, input, [gte: min], opts) do
+  def refine(input, args, opts, ctx: ctx) do
+    do_refine(ctx.schema, input, args, opts)
+  end
+
+  defp do_refine(%Zoi.Types.String{}, input, [gte: min], opts) do
     if String.length(input) >= min do
       :ok
     else
@@ -9,7 +13,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Integer{}, input, [gte: min], opts) do
+  defp do_refine(%Zoi.Types.Integer{}, input, [gte: min], opts) do
     if input >= min do
       :ok
     else
@@ -17,7 +21,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Float{}, input, [gte: min], opts) do
+  defp do_refine(%Zoi.Types.Float{}, input, [gte: min], opts) do
     if input >= min do
       :ok
     else
@@ -29,7 +33,7 @@ defmodule Zoi.Refinements do
     @module Module.concat(Zoi.Types, date_module)
     @date_module date_module
 
-    def refine(%@module{}, input, [gte: min], opts) do
+    defp do_refine(%@module{}, input, [gte: min], opts) do
       case @date_module.compare(input, min) do
         :gt -> :ok
         :eq -> :ok
@@ -39,7 +43,7 @@ defmodule Zoi.Refinements do
   end
 
   if Code.ensure_loaded?(Decimal) do
-    def refine(%Zoi.Types.Decimal{}, input, [gte: min], opts) do
+    defp do_refine(%Zoi.Types.Decimal{}, input, [gte: min], opts) do
       if Decimal.gte?(input, min) do
         :ok
       else
@@ -48,7 +52,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Array{}, input, [gte: min], opts) do
+  defp do_refine(%Zoi.Types.Array{}, input, [gte: min], opts) do
     if length(input) >= min do
       :ok
     else
@@ -56,7 +60,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.String{}, input, [gt: gt], opts) do
+  defp do_refine(%Zoi.Types.String{}, input, [gt: gt], opts) do
     if String.length(input) > gt do
       :ok
     else
@@ -64,7 +68,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Integer{}, input, [gt: gt], opts) do
+  defp do_refine(%Zoi.Types.Integer{}, input, [gt: gt], opts) do
     if input > gt do
       :ok
     else
@@ -72,7 +76,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Float{}, input, [gt: gt], opts) do
+  defp do_refine(%Zoi.Types.Float{}, input, [gt: gt], opts) do
     if input > gt do
       :ok
     else
@@ -84,7 +88,7 @@ defmodule Zoi.Refinements do
     @module Module.concat(Zoi.Types, date_module)
     @date_module date_module
 
-    def refine(%@module{}, input, [gt: gt], opts) do
+    defp do_refine(%@module{}, input, [gt: gt], opts) do
       case @date_module.compare(input, gt) do
         :gt -> :ok
         _ -> {:error, message(opts, "too small: must be greater than #{gt}")}
@@ -93,7 +97,7 @@ defmodule Zoi.Refinements do
   end
 
   if Code.ensure_loaded?(Decimal) do
-    def refine(%Zoi.Types.Decimal{}, input, [gt: gt], opts) do
+    defp do_refine(%Zoi.Types.Decimal{}, input, [gt: gt], opts) do
       if Decimal.gt?(input, gt) do
         :ok
       else
@@ -102,7 +106,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Array{}, input, [gt: gt], opts) do
+  defp do_refine(%Zoi.Types.Array{}, input, [gt: gt], opts) do
     if length(input) > gt do
       :ok
     else
@@ -110,7 +114,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.String{}, input, [lte: max], opts) do
+  defp do_refine(%Zoi.Types.String{}, input, [lte: max], opts) do
     if String.length(input) <= max do
       :ok
     else
@@ -118,7 +122,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Integer{}, input, [lte: max], opts) do
+  defp do_refine(%Zoi.Types.Integer{}, input, [lte: max], opts) do
     if input <= max do
       :ok
     else
@@ -126,7 +130,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Float{}, input, [lte: max], opts) do
+  defp do_refine(%Zoi.Types.Float{}, input, [lte: max], opts) do
     if input <= max do
       :ok
     else
@@ -138,7 +142,7 @@ defmodule Zoi.Refinements do
     @module Module.concat(Zoi.Types, date_module)
     @date_module date_module
 
-    def refine(%@module{}, input, [lte: max], opts) do
+    defp do_refine(%@module{}, input, [lte: max], opts) do
       case @date_module.compare(input, max) do
         :lt -> :ok
         :eq -> :ok
@@ -148,7 +152,7 @@ defmodule Zoi.Refinements do
   end
 
   if Code.ensure_loaded?(Decimal) do
-    def refine(%Zoi.Types.Decimal{}, input, [lte: max], opts) do
+    defp do_refine(%Zoi.Types.Decimal{}, input, [lte: max], opts) do
       if Decimal.lte?(input, max) do
         :ok
       else
@@ -157,7 +161,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Array{}, input, [lte: max], opts) do
+  defp do_refine(%Zoi.Types.Array{}, input, [lte: max], opts) do
     if length(input) <= max do
       :ok
     else
@@ -165,7 +169,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.String{}, input, [lt: lt], opts) do
+  defp do_refine(%Zoi.Types.String{}, input, [lt: lt], opts) do
     if String.length(input) < lt do
       :ok
     else
@@ -173,7 +177,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Integer{}, input, [lt: lt], opts) do
+  defp do_refine(%Zoi.Types.Integer{}, input, [lt: lt], opts) do
     if input < lt do
       :ok
     else
@@ -181,7 +185,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Float{}, input, [lt: lt], opts) do
+  defp do_refine(%Zoi.Types.Float{}, input, [lt: lt], opts) do
     if input < lt do
       :ok
     else
@@ -193,7 +197,7 @@ defmodule Zoi.Refinements do
     @module Module.concat(Zoi.Types, date_module)
     @date_module date_module
 
-    def refine(%@module{}, input, [lt: lt], opts) do
+    defp do_refine(%@module{}, input, [lt: lt], opts) do
       case @date_module.compare(input, lt) do
         :lt -> :ok
         _ -> {:error, message(opts, "too big: must be less than #{lt}")}
@@ -202,7 +206,7 @@ defmodule Zoi.Refinements do
   end
 
   if Code.ensure_loaded?(Decimal) do
-    def refine(%Zoi.Types.Decimal{}, input, [lt: lt], opts) do
+    defp do_refine(%Zoi.Types.Decimal{}, input, [lt: lt], opts) do
       if Decimal.lt?(input, lt) do
         :ok
       else
@@ -211,7 +215,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Array{}, input, [lt: lt], opts) do
+  defp do_refine(%Zoi.Types.Array{}, input, [lt: lt], opts) do
     if length(input) < lt do
       :ok
     else
@@ -219,7 +223,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.String{}, input, [length: length], opts) do
+  defp do_refine(%Zoi.Types.String{}, input, [length: length], opts) do
     if String.length(input) == length do
       :ok
     else
@@ -227,7 +231,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.Array{}, input, [length: length], opts) do
+  defp do_refine(%Zoi.Types.Array{}, input, [length: length], opts) do
     if length(input) == length do
       :ok
     else
@@ -235,7 +239,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.String{}, input, [regex: regex], opts) do
+  defp do_refine(%Zoi.Types.String{}, input, [regex: regex], opts) do
     if String.match?(input, regex) do
       :ok
     else
@@ -243,7 +247,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.String{}, input, [starts_with: prefix], opts) do
+  defp do_refine(%Zoi.Types.String{}, input, [starts_with: prefix], opts) do
     if String.starts_with?(input, prefix) do
       :ok
     else
@@ -251,7 +255,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(%Zoi.Types.String{}, input, [ends_with: suffix], opts) do
+  defp do_refine(%Zoi.Types.String{}, input, [ends_with: suffix], opts) do
     if String.ends_with?(input, suffix) do
       :ok
     else
@@ -259,7 +263,7 @@ defmodule Zoi.Refinements do
     end
   end
 
-  def refine(_schema, _input, _args, _opts) do
+  defp do_refine(_schema, _input, _args, _opts) do
     # Default to :ok if there is no type pattern match
     :ok
   end

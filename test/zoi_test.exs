@@ -1573,7 +1573,7 @@ defmodule ZoiTest do
     test "valid transform" do
       schema =
         Zoi.string()
-        |> Zoi.transform(fn _schema, value -> {:ok, String.upcase(value)} end)
+        |> Zoi.transform(fn value -> {:ok, String.upcase(value)} end)
 
       assert {:ok, "HELLO"} == Zoi.parse(schema, "hello")
     end
