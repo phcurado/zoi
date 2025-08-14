@@ -7,11 +7,21 @@ defmodule Zoi.MetaTest do
     def integer?(input, _opts) when is_integer(input), do: :ok
     def integer?(_input, _opts), do: {:error, "Value is not an integer"}
 
+    def integer_error?(_input, opts) do
+      opts[:ctx]
+      |> Zoi.Context.add_error(%{message: "Value is not an integer", path: [:test]})
+    end
+
     def upcase(value, _opts) when is_binary(value) do
       {:ok, String.upcase(value)}
     end
 
     def upcase(_value, _opts), do: {:error, "Value is not a string"}
+
+    def upcase_error(_value, opts) do
+      opts[:ctx]
+      |> Zoi.Context.add_error(%{message: "Value is not a string"})
+    end
   end
 
   describe "create_meta/1" do
@@ -106,6 +116,16 @@ defmodule Zoi.MetaTest do
       assert Exception.message(error_1) == "refinement error 1"
       assert Exception.message(error_2) == "refinement error 2"
     end
+
+    test "return multiple errors from a refinement with mfa" do
+      schema = Zoi.string() |> Zoi.refine({Validation, :integer_error?, []})
+
+      input = "not an integer"
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+
+      assert {:error, [error]} = Meta.run_refinements(ctx)
+      assert Exception.message(error) == "Value is not an integer"
+    end
   end
 
   describe "run_transforms/1" do
@@ -172,6 +192,16 @@ defmodule Zoi.MetaTest do
       assert {:error, [error_1, error_2]} = Meta.run_transforms(ctx)
       assert Exception.message(error_1) == "transform error 1"
       assert Exception.message(error_2) == "transform error 2"
+    end
+
+    test "return multiple errors from a transform with mfa" do
+      schema = Zoi.string() |> Zoi.transform({Validation, :upcase_error, []})
+
+      input = 12
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+
+      assert {:error, [error]} = Meta.run_transforms(ctx)
+      assert Exception.message(error) == "Value is not a string"
     end
   end
 end
