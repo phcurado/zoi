@@ -12,7 +12,9 @@ defmodule Zoi.Types.Array do
       inputs
       |> Enum.with_index()
       |> Enum.reduce({[], []}, fn {input, index}, {parsed, errors} ->
-        case Zoi.parse(inner, input) do
+        ctx = Zoi.Context.new(inner, input) |> Zoi.Context.add_path(index)
+
+        case Zoi.parse(inner, input, ctx: ctx) do
           {:ok, value} ->
             {[value | parsed], errors}
 

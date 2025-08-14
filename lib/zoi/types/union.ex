@@ -22,6 +22,9 @@ defmodule Zoi.Types.Union do
   defimpl Zoi.Type do
     def parse(%Zoi.Types.Union{schemas: schemas}, value, opts) do
       Enum.reduce_while(schemas, nil, fn schema, _acc ->
+        ctx = Zoi.Context.new(schema, value)
+        opts = Keyword.put(opts, :ctx, ctx)
+
         case Zoi.parse(schema, value, opts) do
           {:ok, result} ->
             {:halt, {:ok, result}}

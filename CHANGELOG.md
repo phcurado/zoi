@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `Zoi.Context` module to provide context when parsing data
+
 ### Changed
 
 - `Zoi.object/2` will not automatically parse objects with inputs that differ from the string/atom keys map format. For example:

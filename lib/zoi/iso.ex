@@ -128,30 +128,32 @@ defmodule Zoi.ISO do
   # Transforms MFAs
 
   @doc false
-  def __transform__(schema, input, transforms, opts \\ [])
+  def __transform__(input, args, ctx: ctx) do
+    do_transform(ctx.schema, input, args)
+  end
 
-  def __transform__(%Zoi.ISO.Time{}, input, [:to_time], _opts) do
+  def do_transform(%Zoi.ISO.Time{}, input, [:to_time]) do
     # since `Zoi.ISO.Time` already validates the input as an ISO time,
     # we can safely parse it to a Time struct
     {:ok, parsed} = Time.from_iso8601(input)
     {:ok, parsed}
   end
 
-  def __transform__(%Zoi.ISO.Date{}, input, [:to_date], _opts) do
+  def do_transform(%Zoi.ISO.Date{}, input, [:to_date]) do
     # since `Zoi.ISO.Date` already validates the input as an ISO date,
     # we can safely parse it to a Date struct
     {:ok, parsed} = Date.from_iso8601(input)
     {:ok, parsed}
   end
 
-  def __transform__(%Zoi.ISO.DateTime{}, input, [:to_datetime], _opts) do
+  def do_transform(%Zoi.ISO.DateTime{}, input, [:to_datetime]) do
     # since `Zoi.ISO.DateTime` already validates the input as an ISO datetime,
     # we can safely parse it to a DateTime struct
     {:ok, parsed, _offset} = DateTime.from_iso8601(input)
     {:ok, parsed}
   end
 
-  def __transform__(%Zoi.ISO.NaiveDateTime{}, input, [:to_naive_datetime], _opts) do
+  def do_transform(%Zoi.ISO.NaiveDateTime{}, input, [:to_naive_datetime]) do
     # since `Zoi.ISO.NaiveDateTime` already validates the input as an ISO naive datetime,
     # we can safely parse it to a NaiveDateTime struct
     {:ok, parsed} = NaiveDateTime.from_iso8601(input)
@@ -159,7 +161,7 @@ defmodule Zoi.ISO do
   end
 
   # coveralls-ignore-start
-  def __transform__(_schema, input, _args, _opts) do
+  def do_transform(_schema, input, _args) do
     # Default to the input if there is no type pattern match
     {:ok, input}
   end

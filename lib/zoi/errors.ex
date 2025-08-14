@@ -25,6 +25,11 @@ defmodule Zoi.Errors do
     add_error(errors, error)
   end
 
+  def add_error(errors, error) when is_map(error) do
+    error = Error.exception(error)
+    add_error(errors, error)
+  end
+
   def add_error(errors_1, errors_2) when is_list(errors_2) do
     errors_1 ++ errors_2
   end

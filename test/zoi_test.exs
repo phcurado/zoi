@@ -701,6 +701,22 @@ defmodule ZoiTest do
       assert Exception.message(error_2) == "invalid type: must be an integer"
       assert error_2.path == [1, 1, 1]
     end
+
+    test "array with refinement" do
+      schema = Zoi.array(Zoi.array(Zoi.integer() |> Zoi.min(1)) |> Zoi.min(2))
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, [[1, 2], [2]])
+
+      assert Exception.message(error) == "too small: must have at least 2 items"
+      assert error.path == [1]
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, [[1, 2], [2, 0]])
+
+      assert Exception.message(error) == "too small: must be at least 1"
+      assert error.path == [1, 1]
+    end
   end
 
   describe "enum/2" do
@@ -1521,7 +1537,7 @@ defmodule ZoiTest do
     test "valid refinement" do
       schema =
         Zoi.string()
-        |> Zoi.refine(fn _schema, value ->
+        |> Zoi.refine(fn value ->
           if String.length(value) > 3 do
             :ok
           else
@@ -1535,7 +1551,7 @@ defmodule ZoiTest do
     test "invalid refinement" do
       schema =
         Zoi.string()
-        |> Zoi.refine(fn _schema, value ->
+        |> Zoi.refine(fn value ->
           if String.length(value) > 3 do
             :ok
           else
@@ -1557,7 +1573,7 @@ defmodule ZoiTest do
     test "valid transform" do
       schema =
         Zoi.string()
-        |> Zoi.transform(fn _schema, value -> {:ok, String.upcase(value)} end)
+        |> Zoi.transform(fn value -> {:ok, String.upcase(value)} end)
 
       assert {:ok, "HELLO"} == Zoi.parse(schema, "hello")
     end
@@ -1572,7 +1588,7 @@ defmodule ZoiTest do
     end
 
     test "transform with no pattern match" do
-      schema = Zoi.string() |> Zoi.transform({Zoi.Transforms, :transform, [[], []]})
+      schema = Zoi.string() |> Zoi.transform({Zoi.Transforms, :transform, [[]]})
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
     end
   end

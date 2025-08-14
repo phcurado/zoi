@@ -7,7 +7,7 @@ defmodule Zoi.Error do
   defexception [:message, path: []]
 
   @impl true
-  def exception(opts) when is_list(opts) do
+  def exception(opts) do
     struct!(__MODULE__, opts)
   end
 
