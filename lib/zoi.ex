@@ -906,7 +906,7 @@ defmodule Zoi do
     |> transform({Zoi.Transforms, :transform, [[:to_upcase]]})
   end
 
-  @doc """
+  @doc ~S"""
   Adds a custom validation function to the schema.
 
   This function will be called with the input data and options, and should return `:ok` for valid data or `{:error, reason}` for invalid data.
@@ -956,7 +956,7 @@ defmodule Zoi do
 
   Since during the module compilation, anonymous functions are not available, you can use the `mfa` option to pass a module, function and arguments.
   The `opts` argument is mandatory, this is where the `ctx` is passed to the function and you can leverage the `Zoi.Context` to add extra errors.
-  In general, most cases will be returning `:ok` or `{:error, reason}`. Use the context only if you need extra errors or modify the context in some way.
+  In general, most cases the `:ok` or `{:error, reason}` returns will be enough. Use the context only if you need extra errors or modify the context in some way.
   """
   @doc group: "Extensions"
   @spec refine(schema :: Zoi.Type.t(), fun :: refinement()) :: Zoi.Type.t()
@@ -1017,7 +1017,6 @@ defmodule Zoi do
     %{schema | schemas: schemas}
   end
 
-  @spec transform(schema :: Zoi.Type.t(), fun :: function()) :: Zoi.Type.t()
   def transform(schema, fun) do
     update_in(schema.meta.transforms, fn transforms ->
       transforms ++ [fun]

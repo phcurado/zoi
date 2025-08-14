@@ -158,5 +158,20 @@ defmodule Zoi.MetaTest do
       assert Exception.message(error_1) == "transform error 1"
       assert Exception.message(error_2) == "transform error 2"
     end
+
+    test "return multiple errors from a single transform" do
+      schema =
+        Zoi.string()
+        |> Zoi.transform(fn _val, ctx ->
+          Zoi.Context.add_error(ctx, %{message: "transform error 1", path: [:test]})
+          |> Zoi.Context.add_error("transform error 2")
+        end)
+
+      input = "test"
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
+      assert {:error, [error_1, error_2]} = Meta.run_transforms(ctx)
+      assert Exception.message(error_1) == "transform error 1"
+      assert Exception.message(error_2) == "transform error 2"
+    end
   end
 end
