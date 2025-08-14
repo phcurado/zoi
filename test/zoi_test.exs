@@ -1588,7 +1588,7 @@ defmodule ZoiTest do
     end
 
     test "transform with no pattern match" do
-      schema = Zoi.string() |> Zoi.transform({Zoi.Transforms, :transform, [[], []]})
+      schema = Zoi.string() |> Zoi.transform({Zoi.Transforms, :transform, [[]]})
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
     end
   end

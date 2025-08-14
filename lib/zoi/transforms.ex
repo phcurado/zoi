@@ -5,12 +5,6 @@ defmodule Zoi.Transforms do
     do_transform(ctx.schema, input, args, [])
   end
 
-  def transform(input, args, opts, ctx: ctx) do
-    do_transform(ctx.schema, input, args, opts)
-  end
-
-  # defp do_transform(schema, input, transforms, opts \\ [])
-
   defp do_transform(%Zoi.Types.String{}, input, [:trim], _opts) do
     String.trim(input)
   end
