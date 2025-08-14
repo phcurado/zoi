@@ -64,11 +64,6 @@ defmodule Zoi do
   @doc group: "Parsing"
   @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: result()
   def parse(schema, input, opts \\ []) do
-    {result, _ctx} = parse_with_context(schema, input, opts)
-    result
-  end
-
-  defp parse_with_context(schema, input, opts) do
     ctx = Keyword.get(opts, :ctx, Zoi.Context.new(schema, input))
     opts = Keyword.put_new(opts, :ctx, ctx)
 
@@ -77,11 +72,11 @@ defmodule Zoi do
          {:ok, result} <- Meta.run_transforms(ctx),
          ctx = Zoi.Context.add_parsed(ctx, result),
          {:ok, _refined_result} <- Meta.run_refinements(ctx) do
-      {{:ok, result}, ctx}
+      {:ok, result}
     else
       {:error, error} ->
         ctx = Zoi.Context.add_error(ctx, error)
-        {{:error, ctx.errors}, ctx}
+        {:error, ctx.errors}
     end
   end
 
