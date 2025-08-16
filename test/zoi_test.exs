@@ -153,7 +153,7 @@ defmodule ZoiTest do
   describe "string_boolean/1" do
     test "string_boolean with correct values" do
       truthy = [true, "true", "1", "yes", "on", "y", "enabled", "True", "ENabled"]
-      falsy = [false, "false", "0", "no", "off", "n", "disabled",  "False", "DISabled"]
+      falsy = [false, "false", "0", "no", "off", "n", "disabled", "False", "DISabled"]
 
       for truthy_value <- truthy do
         assert {:ok, true} == Zoi.parse(Zoi.string_boolean(), truthy_value)
@@ -176,6 +176,7 @@ defmodule ZoiTest do
     test "string_boolean case sensitive" do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.string_boolean(case: "sensitive"), "True")
+
       assert Exception.message(error) == "invalid type: must be a string boolean"
     end
   end
