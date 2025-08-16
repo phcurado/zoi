@@ -152,8 +152,8 @@ defmodule ZoiTest do
 
   describe "string_boolean/1" do
     test "string_boolean with correct values" do
-      truthy = ["true", "1", "yes", "on", "y", "enabled", "True", "ENabled"]
-      falsy = ["false", "0", "no", "off", "n", "disabled",  "False", "DISabled"]
+      truthy = [true, "true", "1", "yes", "on", "y", "enabled", "True", "ENabled"]
+      falsy = [false, "false", "0", "no", "off", "n", "disabled",  "False", "DISabled"]
 
       for truthy_value <- truthy do
         assert {:ok, true} == Zoi.parse(Zoi.string_boolean(), truthy_value)
