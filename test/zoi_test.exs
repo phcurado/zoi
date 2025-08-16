@@ -169,6 +169,25 @@ defmodule ZoiTest do
     end
   end
 
+  describe "atom/1" do
+    test "atom with correct value" do
+      assert {:ok, :hello} == Zoi.parse(Zoi.atom(), :hello)
+      assert {:ok, :world} == Zoi.parse(Zoi.atom(), :world)
+      assert {:ok, nil} == Zoi.parse(Zoi.atom(), nil)
+      assert {:ok, true} == Zoi.parse(Zoi.atom(), true)
+      assert {:ok, false} == Zoi.parse(Zoi.atom(), false)
+    end
+
+    test "atom with incorrect value" do
+      wrong_values = ["hello", 123, 1.5]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.atom(), value)
+        assert Exception.message(error) == "invalid type: must be an atom"
+      end
+    end
+  end
+
   describe "optional/2" do
     test "optional with correct value" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.optional(Zoi.string()), "hello")
