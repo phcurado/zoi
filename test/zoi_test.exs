@@ -285,17 +285,17 @@ defmodule ZoiTest do
     end
 
     test "union with empty schemas or 1 element" do
-      assert_raise ArgumentError, "Union type must be receive a list of minimum 2 schemas", fn ->
+      assert_raise ArgumentError, "Union type must receive a list of minimum 2 schemas", fn ->
         Zoi.union([])
       end
 
-      assert_raise ArgumentError, "Union type must be receive a list of minimum 2 schemas", fn ->
+      assert_raise ArgumentError, "Union type must receive a list of minimum 2 schemas", fn ->
         Zoi.union([Zoi.string()])
       end
     end
 
     test "union with incorrect type" do
-      assert_raise ArgumentError, "Union type must be receive a list of minimum 2 schemas", fn ->
+      assert_raise ArgumentError, "Union type must receive a list of minimum 2 schemas", fn ->
         Zoi.union(Zoi.string())
       end
     end
@@ -333,6 +333,14 @@ defmodule ZoiTest do
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
       assert Exception.message(error) == "invalid type: must be an integer"
+    end
+
+    test "union custom error" do
+      schema =
+        Zoi.union([Zoi.string(), Zoi.integer()], error: "custom union error")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
+      assert Exception.message(error) == "custom union error"
     end
   end
 
@@ -417,6 +425,14 @@ defmodule ZoiTest do
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "prefix_suffix")
       assert Exception.message(error) == "too small: must have at least 14 characters"
+    end
+
+    test "intersection custom error" do
+      schema =
+        Zoi.intersection([Zoi.string(), Zoi.integer()], error: "custom intersection error")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
+      assert Exception.message(error) == "custom intersection error"
     end
   end
 
@@ -601,6 +617,42 @@ defmodule ZoiTest do
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
       assert Exception.message(error) == "invalid type: must be a map"
+    end
+
+    test "map with atom keys" do
+      schema = Zoi.map(Zoi.atom(), Zoi.any())
+      assert {:ok, %{name: "John", age: 30}} == Zoi.parse(schema, %{name: "John", age: 30})
+
+      assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
+               Zoi.parse(schema, %{"name" => "John", "age" => 30})
+
+      assert Exception.message(error1) == "invalid type: must be an atom"
+      assert error1.path == ["age"]
+      assert Exception.message(error2) == "invalid type: must be an atom"
+      assert error2.path == ["name"]
+    end
+
+    test "map with union type" do
+      schema =
+        Zoi.map(
+          Zoi.union([Zoi.atom(), Zoi.string()],
+            error: "invalid type: must be an atom or a string"
+          ),
+          Zoi.union([Zoi.string(), Zoi.integer()])
+        )
+
+      assert {:ok, %{name: "John", age: 30}} == Zoi.parse(schema, %{name: "John", age: 30})
+
+      assert {:ok, %{"name" => "John", "age" => 30}} ==
+               Zoi.parse(schema, %{"name" => "John", "age" => 30})
+
+      assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
+               Zoi.parse(schema, %{1 => 123, "age" => :atom})
+
+      assert Exception.message(error1) == "invalid type: must be an atom or a string"
+      assert error1.path == [1]
+      assert Exception.message(error2) == "invalid type: must be an integer"
+      assert error2.path == ["age"]
     end
   end
 
