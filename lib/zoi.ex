@@ -914,6 +914,32 @@ defmodule Zoi do
     |> transform({Zoi.Transforms, :transform, [[:to_upcase]]})
   end
 
+  @doc """
+  Converts a schema to a struct of the given module.
+  This is useful for transforming parsed data into a specific struct type.
+
+  ## Example
+
+      defmodule User do
+        defstruct [:name, :age]
+      end
+
+      schema = Zoi.object(%{
+        name: Zoi.string() |> Zoi.required(),
+        age: Zoi.integer() |> Zoi.required()
+      })
+      |> Zoi.to_struct(User)
+
+      Zoi.parse(schema, %{name: "Alice", age: 30})
+      #=> {:ok, %User{name: "Alice", age: 30}}
+  """
+  @doc group: "Transforms"
+  @spec to_struct(schema :: Zoi.Type.t(), struct :: module()) :: Zoi.Type.t()
+  def to_struct(schema, module) do
+    schema
+    |> transform({Zoi.Transforms, :transform, [[struct: module]]})
+  end
+
   @doc ~S"""
   Adds a custom validation function to the schema.
 

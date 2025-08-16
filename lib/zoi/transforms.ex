@@ -17,6 +17,10 @@ defmodule Zoi.Transforms do
     String.upcase(input)
   end
 
+  defp do_transform(%Zoi.Types.Object{}, input, [struct: struct], _opts) do
+    struct!(struct, input)
+  end
+
   defp do_transform(_schema, input, _args, _opts) do
     # Default to the input if there is no type pattern match
     {:ok, input}

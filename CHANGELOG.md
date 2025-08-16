@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- `Zoi.union/2` custom error messages
+- `Zoi.intersection/2` custom error messages
+- `Zoi.atom/2` type
+- `Zoi.to_struct/2` transform
+
 ## 0.4.0 - 2025-08-14
 
 ### Added
@@ -118,16 +127,16 @@ Zoi.object(schema, %{"name" => "John", "age" => 30}, coerce: true)
 
 ### Changed
 
-- `number/2` now returns proper error message
+- `Zoi.number/2` now returns proper error message
 
 ## 0.2.0 - 2025-08-05
 
 ### Added
 
-- `mfa` to `refine` and `transform` functions
-- accumulator errors to `refine` and `transform` functions
-- `array` type
-- `length`, `min` and `max` validators for arrays
+- `mfa` to `Zoi.refine/2` and `Zoi.transform/2` functions
+- accumulator errors to `Zoi.refine/2` and `Zoi.transform/2` functions
+- `Zoi.array/2` type
+- `Zoi.length/2`, `Zoi.min/2` and `Zoi.max/2` validators for arrays
 
 ### Changed
 
