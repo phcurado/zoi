@@ -195,6 +195,19 @@ defmodule Zoi do
   defdelegate any(opts \\ []), to: Zoi.Types.Any, as: :new
 
   @doc """
+  Defines an atom type schema.
+
+  ## Examples
+      iex> schema = Zoi.atom()
+      iex> Zoi.parse(schema, :atom)
+      {:ok, :atom}
+      iex> Zoi.parse(schema, "not_an_atom")
+      {:error, [%Zoi.Error{message: "invalid type: must be an atom"}]}
+  """
+  @doc group: "Basic Types"
+  defdelegate atom(opts \\ []), to: Zoi.Types.Atom, as: :new
+
+  @doc """
   Makes the schema optional for the `Zoi.object/2` type.
 
   ## Example
