@@ -1604,6 +1604,32 @@ defmodule ZoiTest do
     end
   end
 
+  describe "to_struct/2" do
+    defmodule User do
+      defstruct [:name, :age]
+    end
+
+    test "valid struct conversion" do
+      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
+      assert {:ok, %User{name: "Alice", age: 30}} == Zoi.parse(schema, %{name: "Alice", age: 30})
+    end
+
+    test "invalid struct conversion" do
+      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{name: "Alice", age: "not an integer"})
+
+      assert Exception.message(error) == "invalid type: must be an integer"
+    end
+
+    test "struct conversion with missing fields" do
+      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{name: "Alice"})
+      assert Exception.message(error) == "is required"
+    end
+  end
+
   describe "refine/2" do
     test "valid refinement" do
       schema =

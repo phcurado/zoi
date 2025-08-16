@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - `Zoi.union/2` custom error messages
 - `Zoi.intersection/2` custom error messages
 - `Zoi.atom/2` type
+- `Zoi.to_struct/2` transform
 
 ## 0.4.0 - 2025-08-14
 
