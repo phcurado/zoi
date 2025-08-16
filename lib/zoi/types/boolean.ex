@@ -15,12 +15,10 @@ defmodule Zoi.Types.Boolean do
     def parse(schema, input, opts) when is_binary(input) do
       coerce = Keyword.get(opts, :coerce, schema.coerce)
 
-      cond do
-        coerce and input in ["true", "false"] ->
-          {:ok, input == "true"}
-
-        true ->
-          error(schema)
+      if coerce and input in ["true", "false"] do
+        {:ok, input == "true"}
+      else
+        error(schema)
       end
     end
 
