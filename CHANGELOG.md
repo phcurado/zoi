@@ -12,6 +12,10 @@ All notable changes to this project will be documented in this file.
 - `Zoi.intersection/2` custom error messages
 - `Zoi.to_struct/2` transform
 
+### Changed
+
+- `Zoi.boolean/1` does not coerce values besides "true" and "false" anymore. For coercion of other values, use `Zoi.string_boolean/1` type.
+
 ## 0.4.0 - 2025-08-14
 
 ### Added
