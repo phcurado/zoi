@@ -136,26 +136,48 @@ defmodule ZoiTest do
     end
 
     test "boolean with coercion" do
-      thruth_values = ["true", "1", "yes", "on", "y", "enabled"]
-
-      for value <- thruth_values do
-        assert {:ok, true} == Zoi.parse(Zoi.boolean(), value, coerce: true)
-      end
-
-      false_values = ["false", "0", "no", "off", "n", "disabled"]
-
-      for value <- false_values do
-        assert {:ok, false} == Zoi.parse(Zoi.boolean(), value, coerce: true)
-      end
+      assert {:ok, true} == Zoi.parse(Zoi.boolean(), "true", coerce: true)
+      assert {:ok, false} == Zoi.parse(Zoi.boolean(), "false", coerce: true)
     end
 
     test "invalid boolean with coercion" do
-      wrong_values = ["True", "False", 1, 0]
+      wrong_values = ["True", "False", "1", "0", "on", "off", 1, 0]
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.boolean(), value, coerce: true)
         assert Exception.message(error) == "invalid type: must be a boolean"
       end
+    end
+  end
+
+  describe "string_boolean/1" do
+    test "string_boolean with correct values" do
+      truthy = [true, "true", "1", "yes", "on", "y", "enabled", "True", "ENabled"]
+      falsy = [false, "false", "0", "no", "off", "n", "disabled", "False", "DISabled"]
+
+      for truthy_value <- truthy do
+        assert {:ok, true} == Zoi.parse(Zoi.string_boolean(), truthy_value)
+      end
+
+      for falsy_value <- falsy do
+        assert {:ok, false} == Zoi.parse(Zoi.string_boolean(), falsy_value)
+      end
+    end
+
+    test "string_boolean with incorrect value" do
+      wrong_values = [nil, 12.34, :atom, "not a boolean"]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.string_boolean(), value)
+        assert Exception.message(error) == "invalid type: must be a string boolean"
+      end
+    end
+
+    test "string_boolean case sensitive" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.string_boolean(case: "sensitive"), "True")
+
+      assert Exception.message(error) == "invalid type: must be a string boolean"
     end
   end
 

@@ -8,32 +8,22 @@ defmodule Zoi.Types.Boolean do
   end
 
   defimpl Zoi.Type do
-    def parse(schema, input, opts) do
+    def parse(_schema, input, _opts) when is_boolean(input) do
+      {:ok, input}
+    end
+
+    def parse(schema, input, opts) when is_binary(input) do
       coerce = Keyword.get(opts, :coerce, schema.coerce)
 
-      cond do
-        is_boolean(input) ->
-          {:ok, input}
-
-        coerce ->
-          coerce_boolean(schema, input)
-
-        true ->
-          error(schema)
+      if coerce and input in ["true", "false"] do
+        {:ok, input == "true"}
+      else
+        error(schema)
       end
     end
 
-    defp coerce_boolean(schema, input) do
-      cond do
-        input in ["true", "1", "yes", "on", "y", "enabled"] ->
-          {:ok, true}
-
-        input in ["false", "0", "no", "off", "n", "disabled"] ->
-          {:ok, false}
-
-        true ->
-          error(schema)
-      end
+    def parse(schema, _input, _opts) do
+      error(schema)
     end
 
     defp error(schema) do

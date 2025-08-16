@@ -177,6 +177,44 @@ defmodule Zoi do
   defdelegate boolean(opts \\ []), to: Zoi.Types.Boolean, as: :new
 
   @doc """
+  Defines a string boolean type schema.
+
+  This type parses "boolish" string values:
+      # thruthy values: true, "true", "1", "yes", "on", "y", "enabled"
+      # falsy values: false, "false", "0", "no", "off", "n", "disabled"
+
+
+  ## Example
+
+      iex> schema = Zoi.string_boolean()
+      iex> Zoi.parse(schema, "true")
+      {:ok, true}
+      iex> Zoi.parse(schema, "false")
+      {:ok, false}
+      iex> Zoi.parse(schema, "yes")
+      {:ok, true}
+      iex> Zoi.parse(schema, "no")
+      {:ok, false}
+
+  You can also specify custom truthy and falsy values using the `:truthy` and `:falsy` options:
+      iex> schema = Zoi.string_boolean(truthy: ["yes", "y"], falsy: ["no", "n"])
+      iex> Zoi.parse(schema, "yes")
+      {:ok, true}
+      iex> Zoi.parse(schema, "no")
+      {:ok, false}
+
+  By default the string boolean type is case insensitive and the input is converted to lowercase during the comparison. You can change this behavior using the `:case` option:
+
+      iex> schema = Zoi.string_boolean(case: "sensitive")
+      iex> Zoi.parse(schema, "True")
+      {:error, [%Zoi.Error{message: "invalid type: must be a string boolean"}]}
+      iex> Zoi.parse(schema, "true")
+      {:ok, true}
+  """
+  @doc group: "Basic Types"
+  defdelegate string_boolean(opts \\ []), to: Zoi.Types.StringBoolean, as: :new
+
+  @doc """
   Defines a schema that accepts any type of input.
 
   This is useful when you want to allow any data type without validation.
