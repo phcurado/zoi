@@ -13,6 +13,8 @@ defmodule Zoi.Context do
           errors: list(Zoi.Error.t())
         }
 
+  @type error :: Zoi.Error.t() | binary() | list(Zoi.Error.t())
+
   defstruct [:schema, :input, :parsed, :path, :errors]
 
   @doc false
@@ -42,7 +44,7 @@ defmodule Zoi.Context do
       ...> Zoi.parse(schema, "s")
       {:error, [%Zoi.Error{message: "Input too long"}]}
   """
-  @spec add_error(t(), Zoi.Errors.error()) :: t()
+  @spec add_error(t(), error()) :: t()
   def add_error(%__MODULE__{errors: errors} = context, error) do
     error = Zoi.Errors.add_error(errors, error)
     %{context | errors: error}

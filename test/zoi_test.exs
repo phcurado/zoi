@@ -1686,6 +1686,18 @@ defmodule ZoiTest do
       schema = Zoi.string() |> Zoi.refine({Zoi.Refinements, :refine, [[], []]})
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
     end
+
+    test "refinement with context errors" do
+      schema =
+        Zoi.string()
+        |> Zoi.refine(fn _value, ctx ->
+          Zoi.Context.add_error(ctx, %{message: "context error", path: [:hello]})
+        end)
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
+      assert Exception.message(error) == "context error"
+      assert error.path == [:hello]
+    end
   end
 
   describe "transform/2" do
@@ -1709,6 +1721,18 @@ defmodule ZoiTest do
     test "transform with no pattern match" do
       schema = Zoi.string() |> Zoi.transform({Zoi.Transforms, :transform, [[]]})
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+
+    test "transform with context errors" do
+      schema =
+        Zoi.string()
+        |> Zoi.transform(fn _value, ctx ->
+          Zoi.Context.add_error(ctx, %{message: "context error", path: [:hello]})
+        end)
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
+      assert Exception.message(error) == "context error"
+      assert error.path == [:hello]
     end
   end
 

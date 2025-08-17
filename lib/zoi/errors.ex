@@ -4,14 +4,13 @@ defmodule Zoi.Errors do
   alias Zoi.Error
 
   @type t :: list(Error.t())
-  @type error :: Error.t() | binary() | list(keyword())
 
   @spec merge(t(), t()) :: t()
   def merge(errors1, errors2) do
     errors1 ++ errors2
   end
 
-  @spec add_error(error()) :: t()
+  @spec add_error(Zoi.Context.error()) :: t()
   def add_error(error) do
     add_error([], error)
   end

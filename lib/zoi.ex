@@ -18,6 +18,7 @@ defmodule Zoi do
       # {:ok, %{name: "Alice", age: 30, email: "alice@email.com"}}
 
   ## Coercion
+
   By default, `Zoi` will not attempt to infer input data to match the expected type. For example, if you define a schema that expects a string, passing an integer will result in an error.
       iex> Zoi.string() |> Zoi.parse(123)
       {:error, [%Zoi.Error{message: "invalid type: must be a string"}]}
