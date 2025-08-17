@@ -650,6 +650,9 @@ defmodule Zoi do
       {:ok, "test@test.com"}
       iex> Zoi.parse(schema, "invalid-email")
       {:error, [%Zoi.Error{message: "invalid email format"}]}
+
+  It uses a regex pattern to validate the email format, which checks for a standard email structure including local part, domain, and top-level domain:
+      ~r/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i
   """
   @doc group: "Formats"
   @spec email() :: Zoi.Type.t()
@@ -963,8 +966,8 @@ defmodule Zoi do
       end
 
       schema = Zoi.object(%{
-        name: Zoi.string() |> Zoi.required(),
-        age: Zoi.integer() |> Zoi.required()
+        name: Zoi.string(),
+        age: Zoi.integer()
       })
       |> Zoi.to_struct(User)
 
