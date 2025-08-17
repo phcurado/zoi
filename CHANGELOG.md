@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 0.5.1 - 2025-08-17
+
+### Changed
+
+- `Zoi.prettify_errors/1` don't return `\n` at the end of the string anymore
+
+## 0.5.0 - 2025-08-17
 
 ### Added
 

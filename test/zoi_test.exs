@@ -1823,27 +1823,27 @@ defmodule ZoiTest do
   describe "preetify_error/1" do
     test "prettify single error" do
       error = %Zoi.Error{path: [:name], message: "is required"}
-      assert "is required, at name\n" == Zoi.prettify_errors([error])
+      assert "is required, at name" == Zoi.prettify_errors([error])
     end
 
     test "prettify nested errors" do
       error_1 = %Zoi.Error{path: [:user, :name], message: "is required"}
       error_2 = %Zoi.Error{path: [:user, :age], message: "is required"}
 
-      assert "is required, at user.name\nis required, at user.age\n" ==
+      assert "is required, at user.name\nis required, at user.age" ==
                Zoi.prettify_errors([error_1, error_2])
     end
 
     test "prettify errors without path" do
       error = %Zoi.Error{message: "invalid type"}
-      assert "invalid type\n" == Zoi.prettify_errors([error])
+      assert "invalid type" == Zoi.prettify_errors([error])
     end
 
     test "prettify errors in array" do
       schema = Zoi.array(Zoi.integer())
       assert {:error, errors} = Zoi.parse(schema, ["not an integer", 2, "not an integer"])
 
-      assert "invalid type: must be an integer, at [0]\ninvalid type: must be an integer, at [2]\n" ==
+      assert "invalid type: must be an integer, at [0]\ninvalid type: must be an integer, at [2]" ==
                Zoi.prettify_errors(errors)
     end
 

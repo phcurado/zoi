@@ -1152,12 +1152,16 @@ defmodule Zoi do
   @spec prettify_errors([Zoi.Error.t() | binary()]) :: binary()
   def prettify_errors(errors) when is_list(errors) do
     Enum.reduce(errors, "", fn error, acc ->
-      acc <> prettify_error(error)
+      if acc == "" do
+        prettify_error(error)
+      else
+        acc <> "\n" <> prettify_error(error)
+      end
     end)
   end
 
   defp prettify_error(%Zoi.Error{message: message, path: []}) do
-    prettify_error(message)
+    message
   end
 
   defp prettify_error(%Zoi.Error{message: message, path: path}) do
@@ -1176,10 +1180,6 @@ defmodule Zoi do
         end
       end)
 
-    prettify_error("#{message}, at #{path_str}")
-  end
-
-  defp prettify_error(error) when is_binary(error) do
-    error <> "\n"
+    "#{message}, at #{path_str}"
   end
 end
