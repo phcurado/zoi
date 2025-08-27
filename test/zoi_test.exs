@@ -599,6 +599,44 @@ defmodule ZoiTest do
     end
   end
 
+  describe "extend/3" do
+    test "extend with correct value" do
+      schema1 = Zoi.object(%{name: Zoi.string()})
+      schema2 = Zoi.object(%{age: Zoi.integer()})
+      schema = Zoi.extend(schema1, schema2)
+
+      assert {:ok, %{name: "John", age: 30}} ==
+               Zoi.parse(schema, %{
+                 name: "John",
+                 age: 30
+               })
+    end
+
+    test "extend with incorrect value" do
+      schema1 = Zoi.object(%{name: Zoi.string()})
+      schema2 = Zoi.object(%{age: Zoi.integer()})
+      schema = Zoi.extend(schema1, schema2)
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{
+                 name: "John",
+                 age: "not an integer"
+               })
+
+      assert Exception.message(error) == "invalid type: must be an integer"
+      assert error.path == [:age]
+    end
+
+    test "extend with non-object schema" do
+      schema1 = Zoi.object(%{name: Zoi.string()})
+      schema2 = Zoi.string()
+
+      assert_raise ArgumentError, "must be an object", fn ->
+        Zoi.extend(schema1, schema2)
+      end
+    end
+  end
+
   describe "map/3" do
     test "map with correct values" do
       schema = Zoi.map(Zoi.string(), Zoi.integer())

@@ -420,6 +420,20 @@ defmodule Zoi do
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
 
   @doc """
+  Extends two object type schemas into one.
+  This function merges the fields of two object schemas. If there are overlapping fields, the fields from the second schema will override those from the first.
+
+  ## Example
+      iex> user = Zoi.object(%{name: Zoi.string()})
+      iex> role = Zoi.object(%{role: Zoi.enum([:admin,:user])})
+      iex> user_with_role = Zoi.extend(user, role)
+      iex> Zoi.parse(user_with_role, %{name: "Alice", role: :admin})
+      {:ok, %{name: "Alice", role: :admin}}
+  """
+  @doc group: "Complex Types"
+  defdelegate extend(schema1, schema2, opts \\ []), to: Zoi.Types.Extend, as: :new
+
+  @doc """
   Defines a map type schema.
 
   ## Example
@@ -1149,6 +1163,23 @@ defmodule Zoi do
     Map.put(acc, key, insert_error(nested, rest, error))
   end
 
+  @doc """
+  Converts a list of errors into a human-readable string format.
+  Each error is displayed on a new line, with its message and path.
+  ## Example
+
+      iex> errors = [
+      ...>   %Zoi.Error{path: ["name"], message: "is required"},
+      ...>   %Zoi.Error{path: ["age"], message: "invalid type: must be an integer"},
+      ...>   %Zoi.Error{path: ["address", "city"], message: "is required"}
+      ...> ]
+      iex> Zoi.prettify_errors(errors)
+      "is required, at name\\ninvalid type: must be an integer, at age\\nis required, at address.city"
+
+      iex> errors = [%Zoi.Error{message: "invalid type: must be a string"}]
+      iex> Zoi.prettify_errors(errors)
+      "invalid type: must be a string"
+  """
   @spec prettify_errors([Zoi.Error.t() | binary()]) :: binary()
   def prettify_errors(errors) when is_list(errors) do
     Enum.reduce(errors, "", fn error, acc ->
