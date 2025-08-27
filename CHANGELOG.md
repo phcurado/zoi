@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.2 - Unreleased
+
+### Added
+
+- `Zoi.prettify_errors/2` added docs
+- `Zoi.extend/3` type
+
 ## 0.5.1 - 2025-08-17
 
 ### Changed
