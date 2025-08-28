@@ -639,10 +639,10 @@ defmodule ZoiTest do
 
   describe "map/3" do
     test "map with correct values" do
-      schema = Zoi.map(Zoi.string(), Zoi.integer())
+      schema = Zoi.map(Zoi.string(), Zoi.integer(coerce: true))
 
       assert {:ok, %{"key1" => 1, "key2" => 2}} ==
-               Zoi.parse(schema, %{"key1" => 1, "key2" => 2})
+               Zoi.parse(schema, %{"key1" => 1, "key2" => "2"})
     end
 
     test "map with incorrect key type" do

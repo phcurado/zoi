@@ -13,10 +13,10 @@ defmodule Zoi.Types.Map do
 
   defimpl Zoi.Type do
     def parse(%Zoi.Types.Map{} = schema, input, _opts) when is_map(input) do
-      Enum.reduce(input, {input, []}, fn {key, value}, {input, errors} ->
-        with {:ok, _parsed} <- Zoi.parse(schema.key_type, key),
-             {:ok, _parsed} <- Zoi.parse(schema.value_type, value) do
-          {input, errors}
+      Enum.reduce(input, {%{}, []}, fn {key, value}, {input, errors} ->
+        with {:ok, key_parsed} <- Zoi.parse(schema.key_type, key),
+             {:ok, value_parsed} <- Zoi.parse(schema.value_type, value) do
+          {Map.put(input, key_parsed, value_parsed), errors}
         else
           {:error, err} ->
             error = Enum.map(err, &Zoi.Error.add_path(&1, [key]))
