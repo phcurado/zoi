@@ -70,9 +70,9 @@ defmodule Zoi do
 
     with {:ok, result} <- Zoi.Type.parse(schema, input, opts),
          ctx = Zoi.Context.add_parsed(ctx, result),
-         {:ok, result} <- Meta.run_transforms(ctx),
+         {:ok, result} <- Meta.run_transforms(schema, ctx),
          ctx = Zoi.Context.add_parsed(ctx, result),
-         {:ok, _refined_result} <- Meta.run_refinements(ctx) do
+         {:ok, _refined_result} <- Meta.run_refinements(schema, ctx) do
       {:ok, result}
     else
       {:error, error} ->
@@ -82,6 +82,7 @@ defmodule Zoi do
   end
 
   # Types
+
   @doc """
   Defines a string type schema.
 

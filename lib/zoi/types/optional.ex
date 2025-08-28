@@ -8,6 +8,8 @@ defmodule Zoi.Types.Optional do
   end
 
   defimpl Zoi.Type do
-    def parse(%{inner: schema}, value, opts), do: Zoi.parse(schema, value, opts)
+    def parse(%{inner: schema}, value, opts) do
+      Zoi.parse(schema, value, opts)
+    end
   end
 end

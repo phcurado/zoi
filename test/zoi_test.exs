@@ -257,6 +257,12 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 123)
       assert Exception.message(error) == "invalid type: must be a string"
     end
+
+    test "nullable with transform" do
+      schema = Zoi.nullable(Zoi.string() |> Zoi.transform(fn value -> String.upcase(value) end))
+
+      assert {:ok, "HELLO"} == Zoi.parse(schema, "hello")
+    end
   end
 
   describe "default/2" do
@@ -273,6 +279,24 @@ defmodule ZoiTest do
                    fn ->
                      Zoi.default(Zoi.integer(), "10")
                    end
+    end
+
+    test "optional with default value" do
+      schema =
+        Zoi.object(%{
+          name:
+            Zoi.optional(
+              Zoi.default(
+                Zoi.string() |> Zoi.transform(fn value -> value <> "_refined" end),
+                "no name"
+              )
+            )
+        })
+
+      assert {:ok, %{}} == Zoi.parse(schema, %{})
+      # Transform will not run since it could not parse as string
+      assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{name: nil})
+      assert {:ok, %{name: "John_refined"}} == Zoi.parse(schema, %{name: "John"})
     end
   end
 
@@ -639,10 +663,10 @@ defmodule ZoiTest do
 
   describe "map/3" do
     test "map with correct values" do
-      schema = Zoi.map(Zoi.string(), Zoi.integer())
+      schema = Zoi.map(Zoi.string(), Zoi.integer(coerce: true))
 
       assert {:ok, %{"key1" => 1, "key2" => 2}} ==
-               Zoi.parse(schema, %{"key1" => 1, "key2" => 2})
+               Zoi.parse(schema, %{"key1" => 1, "key2" => "2"})
     end
 
     test "map with incorrect key type" do

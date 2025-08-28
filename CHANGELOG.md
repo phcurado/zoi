@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 - `Zoi.prettify_errors/2` added docs
 - `Zoi.extend/3` type
 
+### Changed
+
+- `Zoi.map/3` now parses key and value types correctly
+- Fix encapsulated types ignoring refinements and transforms when parsing
+
 ## 0.5.1 - 2025-08-17
 
 ### Changed
