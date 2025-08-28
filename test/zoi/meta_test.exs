@@ -48,7 +48,7 @@ defmodule Zoi.MetaTest do
     end
   end
 
-  describe "run_refinements/1" do
+  describe "run_refinements/2" do
     test "runs refinements and returns ok for valid input" do
       schema =
         Zoi.integer()
@@ -64,10 +64,10 @@ defmodule Zoi.MetaTest do
 
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
 
-      assert {:ok, 42} == Meta.run_refinements(ctx)
+      assert {:ok, 42} == Meta.run_refinements(schema, ctx)
 
       assert {:error, [%Zoi.Error{} = error]} =
-               Meta.run_refinements(Zoi.Context.add_parsed(ctx, 9))
+               Meta.run_refinements(schema, Zoi.Context.add_parsed(ctx, 9))
 
       assert Exception.message(error) == "Value is smaller or equal to 10"
     end
@@ -77,10 +77,10 @@ defmodule Zoi.MetaTest do
 
       input = 42
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
-      assert {:ok, 42} == Meta.run_refinements(ctx)
+      assert {:ok, 42} == Meta.run_refinements(schema, ctx)
 
       assert {:error, [%Zoi.Error{} = error]} =
-               Meta.run_refinements(Zoi.Context.add_parsed(ctx, "55"))
+               Meta.run_refinements(schema, Zoi.Context.add_parsed(ctx, "55"))
 
       assert Exception.message(error) == "Value is not an integer"
     end
@@ -94,7 +94,7 @@ defmodule Zoi.MetaTest do
       input = "test"
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
 
-      assert {:error, [error_1, error_2]} = Meta.run_refinements(ctx)
+      assert {:error, [error_1, error_2]} = Meta.run_refinements(schema, ctx)
 
       assert Exception.message(error_1) == "refinement error 1"
       assert Exception.message(error_2) == "refinement error 2"
@@ -111,7 +111,7 @@ defmodule Zoi.MetaTest do
       input = "test"
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
 
-      assert {:error, [error_1, error_2]} = Meta.run_refinements(ctx)
+      assert {:error, [error_1, error_2]} = Meta.run_refinements(schema, ctx)
 
       assert Exception.message(error_1) == "refinement error 1"
       assert Exception.message(error_2) == "refinement error 2"
@@ -123,12 +123,12 @@ defmodule Zoi.MetaTest do
       input = "not an integer"
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
 
-      assert {:error, [error]} = Meta.run_refinements(ctx)
+      assert {:error, [error]} = Meta.run_refinements(schema, ctx)
       assert Exception.message(error) == "Value is not an integer"
     end
   end
 
-  describe "run_transforms/1" do
+  describe "run_transforms/2" do
     test "runs transforms and returns the transformed value" do
       schema =
         Zoi.string()
@@ -140,21 +140,21 @@ defmodule Zoi.MetaTest do
       input = "   hello   "
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
 
-      assert {:ok, "HELLO"} == Meta.run_transforms(ctx)
+      assert {:ok, "HELLO"} == Meta.run_transforms(schema, ctx)
     end
 
     test "runs transforms and returns the tuple for valid input" do
       schema = Zoi.string() |> Zoi.transform(fn _val -> {:ok, "random return"} end)
       input = "hello"
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
-      assert {:ok, "random return"} == Meta.run_transforms(ctx)
+      assert {:ok, "random return"} == Meta.run_transforms(schema, ctx)
     end
 
     test "returns error for invalid transform" do
       schema = Zoi.string() |> Zoi.transform(fn _val -> {:error, "Transform failed"} end)
       input = "not a number"
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
-      assert {:error, [%Zoi.Error{} = error]} = Meta.run_transforms(ctx)
+      assert {:error, [%Zoi.Error{} = error]} = Meta.run_transforms(schema, ctx)
       assert Exception.message(error) == "Transform failed"
     end
 
@@ -162,7 +162,7 @@ defmodule Zoi.MetaTest do
       schema = Zoi.string() |> Zoi.transform({Validation, :upcase, []})
       input = 12
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
-      assert {:error, [%Zoi.Error{} = error]} = Meta.run_transforms(ctx)
+      assert {:error, [%Zoi.Error{} = error]} = Meta.run_transforms(schema, ctx)
       assert Exception.message(error) == "Value is not a string"
     end
 
@@ -174,7 +174,7 @@ defmodule Zoi.MetaTest do
 
       input = "test"
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
-      assert {:error, [error_1, error_2]} = Meta.run_transforms(ctx)
+      assert {:error, [error_1, error_2]} = Meta.run_transforms(schema, ctx)
       assert Exception.message(error_1) == "transform error 1"
       assert Exception.message(error_2) == "transform error 2"
     end
@@ -189,7 +189,7 @@ defmodule Zoi.MetaTest do
 
       input = "test"
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
-      assert {:error, [error_1, error_2]} = Meta.run_transforms(ctx)
+      assert {:error, [error_1, error_2]} = Meta.run_transforms(schema, ctx)
       assert Exception.message(error_1) == "transform error 1"
       assert Exception.message(error_2) == "transform error 2"
     end
@@ -200,7 +200,7 @@ defmodule Zoi.MetaTest do
       input = 12
       ctx = Zoi.Context.new(schema, input) |> Zoi.Context.add_parsed(input)
 
-      assert {:error, [error]} = Meta.run_transforms(ctx)
+      assert {:error, [error]} = Meta.run_transforms(schema, ctx)
       assert Exception.message(error) == "Value is not a string"
     end
   end
