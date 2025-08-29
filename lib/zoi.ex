@@ -44,10 +44,14 @@ defmodule Zoi do
   @type result :: {:ok, any()} | {:error, [Zoi.Error.t() | binary()]}
   @type options :: keyword()
   @type refinement ::
-          {module(), atom(), [any()]} | (Zoi.Type.t(), Zoi.input() -> :ok | {:error, binary()})
+          {module(), atom(), [any()]}
+          | (input() -> :ok | {:error, binary()})
+          | (input(), Zoi.Context.t() -> :ok | {:error, binary()})
   @type transform ::
           {module(), atom(), [any()]}
-          | (Zoi.Type.t(), Zoi.input() -> {:ok, Zoi.input()} | {:error, binary()} | Zoi.input())
+          | (input() -> {:ok, input()} | {:error, binary()} | input())
+          | (input(), Zoi.Context.t() ->
+               {:ok, input()} | {:error, binary()} | input())
 
   @doc """
   Parse input data against a schema.
