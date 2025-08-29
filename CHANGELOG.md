@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.4 - 2025-08-29
+
+### Added
+
+- Guide for converting keys from maps
+- Guide for generating schema from JSON structure
+
 ## 0.5.3 - 2025-08-29
 
 ### Changed
