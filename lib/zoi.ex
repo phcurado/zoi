@@ -387,6 +387,24 @@ defmodule Zoi do
       iex> Zoi.parse(schema, %{name: "Alice", age: 30})
       {:error, [%Zoi.Error{message: "unrecognized key: 'age'"}]}
 
+  ## String keys and Atom keys
+
+  Objects can be declared using string keys too, this would set the expectation that the param data is also using string keys:
+
+      iex> schema = Zoi.object(%{"name" => Zoi.string()})
+      iex> Zoi.parse(schema, %{"name" => "Alice"})
+      {:ok, %{"name" => "Alice"}}
+      iex> Zoi.parse(schema, %{name: "Alice"})
+      {:error, [%Zoi.Error{message: "is required", path: ["name"]}]}
+
+  It's possible coerce the keys to atoms using the `:coerce` option:
+
+      iex> schema = Zoi.object(%{name: Zoi.string()}, coerce: true)
+      iex> Zoi.parse(schema, %{"name" => "Alice"})
+      {:ok, %{name: "Alice"}}
+
+  Which will automatically convert string keys to atom keys.
+
 
   ## Nullable vs Optional fields
 
