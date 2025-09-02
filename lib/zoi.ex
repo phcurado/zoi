@@ -443,6 +443,24 @@ defmodule Zoi do
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
 
   @doc """
+  Defines a keyword list type schema.
+
+      iex> schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
+      iex> Zoi.parse(schema, [name: "Alice", age: 30])
+      {:ok, [name: "Alice", age: 30]}
+      iex> Zoi.parse(schema, %{name: "Alice", age: 30})
+      {:error, [%Zoi.Error{message: "invalid type: must be a keyword list"}]}
+
+  By default, unrecognized keys will be removed from the parsed data. If you want to not allow unrecognized keys, use the `:strict` option:
+
+      iex> schema = Zoi.keyword([name: Zoi.string()], strict: true)
+      iex> Zoi.parse(schema, [name: "Alice", age: 30])
+      {:error, [%Zoi.Error{message: "unrecognized key: 'age'"}]}
+  """
+  @doc group: "Complex Types"
+  defdelegate keyword(fields, opts \\ []), to: Zoi.Types.Keyword, as: :new
+
+  @doc """
   Extends two object type schemas into one.
   This function merges the fields of two object schemas. If there are overlapping fields, the fields from the second schema will override those from the first.
 
