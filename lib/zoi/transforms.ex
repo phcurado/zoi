@@ -21,6 +21,10 @@ defmodule Zoi.Transforms do
     struct!(struct, input)
   end
 
+  defp do_transform(%Zoi.Types.Keyword{}, input, [struct: struct], _opts) do
+    struct!(struct, input)
+  end
+
   defp do_transform(_schema, input, _args, _opts) do
     # Default to the input if there is no type pattern match
     {:ok, input}

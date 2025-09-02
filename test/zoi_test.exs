@@ -1802,6 +1802,11 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{name: "Alice"})
       assert Exception.message(error) == "is required"
     end
+
+    test "struct conversion with keyword list" do
+      schema = Zoi.keyword([name: Zoi.string(), age: Zoi.integer()]) |> Zoi.to_struct(User)
+      assert {:ok, %User{name: "Bob", age: 25}} == Zoi.parse(schema, [name: "Bob", age: 25])
+    end
   end
 
   describe "refine/2" do

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.5 - 2025-09-02
+
+### Added
+
+- `Zoi.keyword/2` type
+
+### Changed
+
+- `Zoi.struct/2` now works with the new `Zoi.keyword/2` type
+- Improved `Zoi.transform/2` documentation
+
 ## 0.5.4 - 2025-08-29
 
 ### Added
