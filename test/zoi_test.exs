@@ -749,6 +749,13 @@ defmodule ZoiTest do
         Zoi.extend(schema1, schema2)
       end
     end
+
+    test "extend with keyword schema" do
+      schema1 = Zoi.keyword(name: Zoi.string())
+      schema2 = Zoi.keyword(age: Zoi.integer())
+      schema = Zoi.extend(schema1, schema2)
+      assert {:ok, [name: "John", age: 30]} == Zoi.parse(schema, name: "John", age: 30)
+    end
   end
 
   describe "map/3" do
