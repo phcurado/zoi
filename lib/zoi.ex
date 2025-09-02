@@ -1109,6 +1109,42 @@ defmodule Zoi do
       ...> end)
       iex> Zoi.parse(schema, "  hello world  ")
       {:ok, "hello world"}
+
+  You can also use `mfa` (module, function, args) to pass a transformation function:
+
+      iex> defmodule MyTransforms do
+      ...>   def trim(value, _opts) do
+      ...>     {:ok, String.trim(value)}
+      ...>   end
+      ...> end
+      iex> schema = Zoi.string() |> Zoi.transform({MyTransforms, :trim, []})
+      iex> Zoi.parse(schema, "  hello world  ")
+      {:ok, "hello world"}
+
+  This is useful if you are defining schemas at compile time, where anonymous functions are not available.
+  The `opts` argument is mandatory, this is where the `ctx` is passed to the function and you can leverage the `Zoi.Context` to add extra errors.
+  In general, most cases the `{:ok, value}` or `{:error, reason}` returns will be enough. Use the context only if you need extra errors or modify the context in
+  some way.
+
+  ## Using context for validation
+
+  You can use the context when defining the `Zoi.transform/2` function to return multiple errors.
+
+      iex> schema = Zoi.string() |> Zoi.transform(fn value, ctx ->
+      ...>   if String.length(value) < 5 do
+      ...>     Zoi.Context.add_error(ctx, "must be longer than 5 characters")
+      ...>     |> Zoi.Context.add_error("must be shorter than 10 characters")
+      ...>   else
+      ...>     {:ok, String.trim(value)}
+      ...>   end
+      ...> end)
+      iex> Zoi.parse(schema, "hi")
+      {:error, [
+        %Zoi.Error{message: "must be longer than 5 characters"},
+        %Zoi.Error{message: "must be shorter than 10 characters"}
+      ]}
+
+  The `ctx` is a `Zoi.Context` struct that contains information about the current parsing context, including the path, options, and any errors that have been added so far.
   """
   @doc group: "Extensions"
   @spec transform(schema :: Zoi.Type.t(), fun :: transform()) :: Zoi.Type.t()
