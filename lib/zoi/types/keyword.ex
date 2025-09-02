@@ -1,16 +1,10 @@
 defmodule Zoi.Types.Keyword do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:inner, :strict]
+  use Zoi.Type.Def, fields: [:fields, :strict, :coerce]
 
   def new(fields, opts) when is_list(fields) do
-    inner =
-      Zoi.object(Map.new(fields), opts)
-      |> Zoi.transform(fn map ->
-        Enum.to_list(map)
-      end)
-
-    apply_type(opts ++ [inner: inner])
+    apply_type(opts ++ [fields: fields])
   end
 
   def new(_fields, _opts) do
@@ -18,12 +12,109 @@ defmodule Zoi.Types.Keyword do
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Keyword{inner: inner}, input, opts) when is_list(input) do
-      Zoi.parse(inner, Map.new(input), opts)
+    def parse(%Zoi.Types.Keyword{} = type, input, opts) when is_list(input) do
+      do_parse(type, input, opts, [], [])
+      |> then(fn {parsed, errors, _path} ->
+        if errors == [] do
+          {:ok, parsed}
+        else
+          {:error, errors}
+        end
+      end)
     end
 
     def parse(schema, _, _) do
       {:error, schema.meta.error || "invalid type: must be a keyword list"}
+    end
+
+    defp do_parse(
+           %Zoi.Types.Keyword{fields: fields, strict: strict, coerce: coerce},
+           input,
+           opts,
+           path,
+           errs
+         ) do
+      unknown_fields_errors =
+        if strict do
+          unknown_fields(fields, input)
+        else
+          []
+        end
+        |> Enum.map(&Zoi.Error.add_path(&1, path))
+
+      Enum.reduce(fields, {[], errs, path}, fn {key, type}, {parsed, errors, path} ->
+        case keyword_fetch(input, key, coerce) do
+          :error ->
+            cond do
+              optional?(type) ->
+                # If the field is optional, we skip it and do not add it to parsed
+                {parsed, errors, path}
+
+              default?(type) ->
+                # If the field has a default value, we add it to parsed
+                {[{key, type.value} | parsed], errors, path}
+
+              true ->
+                {parsed,
+                 Zoi.Errors.add_error(
+                   errors,
+                   Zoi.Error.exception(message: "is required", path: path ++ [key])
+                 ), path}
+            end
+
+          {:ok, value} ->
+            case do_parse(type, value, opts, path ++ [key], errors) do
+              {:ok, val} ->
+                {[{key, val} | parsed], errors, path}
+
+              {:error, err} ->
+                error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
+                {parsed, Zoi.Errors.merge(errors, error), path}
+
+              {obj_parsed, obj_errors, _path} ->
+                {[{key, obj_parsed} | parsed], Zoi.Errors.merge(errors, obj_errors), path}
+            end
+        end
+      end)
+      |> then(fn {parsed, errors, path} ->
+        {Enum.reverse(parsed), Zoi.Errors.merge(errors, unknown_fields_errors), path}
+      end)
+    end
+
+    ## Simple type parsing
+    defp do_parse(type, value, _opts, path, _errors) do
+      ctx = Zoi.Context.new(type, value) |> Zoi.Context.add_path(path)
+      Zoi.parse(type, value, ctx: ctx)
+    end
+
+    defp optional?(%Zoi.Types.Optional{}), do: true
+    defp optional?(_), do: false
+
+    defp default?(%Zoi.Types.Default{}), do: true
+    defp default?(_), do: false
+
+    def unknown_fields(fields, input) do
+      schema_keys = Keyword.keys(fields)
+
+      input
+      |> Enum.map(fn {k, _v} -> k end)
+      |> Enum.reject(&(&1 in schema_keys))
+      |> Enum.map(fn key ->
+        Zoi.Error.exception(message: "unrecognized key: '#{key}'")
+      end)
+    end
+
+    defp keyword_fetch(input_map, key, true = _coerce) do
+      Enum.map(input_map, fn {k, v} ->
+        {to_string(k), v}
+      end)
+      |> Enum.into(%{})
+      |> Map.fetch(to_string(key))
+    end
+
+    defp keyword_fetch(input_map, key, _coerce) do
+      Enum.into(input_map, %{})
+      |> Map.fetch(key)
     end
   end
 end

@@ -674,7 +674,7 @@ defmodule ZoiTest do
           active: Zoi.boolean()
         )
 
-      assert {:ok, [active: true, user: [name: "Alice", age: 25]]} ==
+      assert {:ok, [user: [name: "Alice", age: 25], active: true]} ==
                Zoi.parse(schema, user: [name: "Alice", age: 25], active: true)
 
       assert {:error, [%Zoi.Error{} = error]} =
@@ -1804,8 +1804,8 @@ defmodule ZoiTest do
     end
 
     test "struct conversion with keyword list" do
-      schema = Zoi.keyword([name: Zoi.string(), age: Zoi.integer()]) |> Zoi.to_struct(User)
-      assert {:ok, %User{name: "Bob", age: 25}} == Zoi.parse(schema, [name: "Bob", age: 25])
+      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer()) |> Zoi.to_struct(User)
+      assert {:ok, %User{name: "Bob", age: 25}} == Zoi.parse(schema, name: "Bob", age: 25)
     end
   end
 
