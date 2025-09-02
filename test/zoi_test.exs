@@ -623,6 +623,96 @@ defmodule ZoiTest do
     end
   end
 
+  describe "keyword/2" do
+    test "keyword with correct value" do
+      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
+
+      assert {:ok, [name: "John", age: 30]} == Zoi.parse(schema, name: "John", age: 30)
+    end
+
+    test "keyword not a keyword list" do
+      assert_raise ArgumentError, "keyword must receive a keyword list", fn ->
+        Zoi.keyword(%{})
+      end
+    end
+
+    test "keyword with missing required field" do
+      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, name: "John")
+      assert Exception.message(error) == "is required"
+      assert error.path == [:age]
+    end
+
+    test "keyword with incorrect values" do
+      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, name: "John", age: "not an integer")
+
+      assert Exception.message(error) == "invalid type: must be an integer"
+      assert error.path == [:age]
+    end
+
+    test "keyword with optional field" do
+      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.optional(Zoi.integer()))
+
+      assert {:ok, [name: "John"]} == Zoi.parse(schema, name: "John")
+    end
+
+    test "keyword with non-keyword input" do
+      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{})
+      assert Exception.message(error) == "invalid type: must be a keyword list"
+    end
+
+    test "keyword with nested keyword" do
+      schema =
+        Zoi.keyword(
+          user: Zoi.keyword(name: Zoi.string(), age: Zoi.integer()),
+          active: Zoi.boolean()
+        )
+
+      assert {:ok, [user: [name: "Alice", age: 25], active: true]} ==
+               Zoi.parse(schema, user: [name: "Alice", age: 25], active: true)
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, user: [name: "Alice"], active: true)
+
+      assert Exception.message(error) == "is required"
+      assert error.path == [:user, :age]
+    end
+
+    test "keyword with strict keys" do
+      schema =
+        Zoi.keyword(
+          [
+            name: Zoi.string(),
+            address: Zoi.optional(Zoi.keyword(street: Zoi.optional(Zoi.string()))),
+            phone: Zoi.optional(Zoi.keyword([number: Zoi.optional(Zoi.string())], strict: true))
+          ],
+          strict: true
+        )
+
+      assert {:ok, [name: "John"]} == Zoi.parse(schema, name: "John")
+
+      assert {:error, errors} =
+               Zoi.parse(
+                 schema,
+                 name: "John",
+                 age: 30,
+                 address: [wrong_key: "value"],
+                 phone: [wrong_key: "value"]
+               )
+
+      assert ^errors = [
+               %Zoi.Error{message: "unrecognized key: 'wrong_key'", path: [:phone]},
+               %Zoi.Error{message: "unrecognized key: 'age'", path: []}
+             ]
+    end
+  end
+
   describe "extend/3" do
     test "extend with correct value" do
       schema1 = Zoi.object(%{name: Zoi.string()})
@@ -658,6 +748,13 @@ defmodule ZoiTest do
       assert_raise ArgumentError, "must be an object", fn ->
         Zoi.extend(schema1, schema2)
       end
+    end
+
+    test "extend with keyword schema" do
+      schema1 = Zoi.keyword(name: Zoi.string())
+      schema2 = Zoi.keyword(age: Zoi.integer())
+      schema = Zoi.extend(schema1, schema2)
+      assert {:ok, [name: "John", age: 30]} == Zoi.parse(schema, name: "John", age: 30)
     end
   end
 
@@ -1711,6 +1808,11 @@ defmodule ZoiTest do
       schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{name: "Alice"})
       assert Exception.message(error) == "is required"
+    end
+
+    test "struct conversion with keyword list" do
+      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer()) |> Zoi.to_struct(User)
+      assert {:ok, %User{name: "Bob", age: 25}} == Zoi.parse(schema, name: "Bob", age: 25)
     end
   end
 
