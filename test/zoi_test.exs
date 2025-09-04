@@ -2064,6 +2064,7 @@ defmodule ZoiTest do
         {Zoi.date(), quote(do: Date.t())},
         {Zoi.datetime(), quote(do: DateTime.t())},
         {Zoi.decimal(), quote(do: Decimal.t())},
+        {Zoi.default(Zoi.string(), "default"), quote(do: binary())},
         {Zoi.enum(["a", "b", "c"]), quote(do: "a" | "b" | "c")},
         {Zoi.enum([:a, :b, :c]), quote(do: :a | :b | :c)},
         {Zoi.enum([1, 2, 3]), quote(do: 1 | 2 | 3)},
