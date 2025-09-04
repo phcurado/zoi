@@ -3,7 +3,7 @@ defmodule Zoi.Types.Array do
 
   use Zoi.Type.Def, fields: [:inner]
 
-  def new(inner, opts \\ []) do
+  def new(inner, opts) do
     apply_type(opts ++ [inner: inner])
   end
 

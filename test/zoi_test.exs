@@ -2021,40 +2021,37 @@ defmodule ZoiTest do
   end
 
   describe "type_spec/2" do
-    test "all typespecs" do
-      # any.ex
-      # array.ex
-      # atom.ex
-      # boolean.ex
-      # date.ex
-      # datetime.ex
-      # decimal.ex
-      # default.ex
-      # enum.ex
-      # extend.ex
-      # float.ex
-      # integer.ex
-      # intersection.ex
-      # keyword.ex
-      # map.ex
-      # meta.ex
-      # naive_datetime.ex
-      # nullable.ex
-      # number.ex
-      # object.ex
-      # optional.ex
-      # string.ex
-      # string_boolean.ex
-      # time.ex
-      # tuple.ex
-      # union.ex
+    test "all iso typespecs" do
+      types = [
+        {Zoi.ISO.date(), quote(do: binary())},
+        {Zoi.ISO.datetime(), quote(do: binary())},
+        {Zoi.ISO.naive_datetime(), quote(do: binary())},
+        {Zoi.ISO.time(), quote(do: binary())}
+      ]
+
+      Enum.each(types, fn {schema, expected} ->
+        assert Zoi.type_spec(schema) == expected
+      end)
+    end
+
+    test "all main typespecs" do
       types = [
         {Zoi.any(), quote(do: any())},
-        {Zoi.array(), quote(do: [any()])},
         {Zoi.array(Zoi.string()), quote(do: [binary()])},
+        {Zoi.atom(), quote(do: atom())},
+        {Zoi.boolean(), quote(do: boolean())},
+        {Zoi.date(), quote(do: Date.t())},
+        {Zoi.datetime(), quote(do: DateTime.t())},
+        {Zoi.decimal(), quote(do: Decimal.t())},
+        {Zoi.enum(["a", "b", "c"]), quote(do: "a" | "b" | "c")},
+        {Zoi.enum([:a, :b, :c]), quote(do: :a | :b | :c)},
+        {Zoi.enum([1, 2, 3]), quote(do: 1 | 2 | 3)},
+        {Zoi.enum([red: "Red", green: "Green", blue: "Blue"]), quote(do: :red | :green | :blue)},
+        {Zoi.enum([one: 1, two: 2, three: 3]), quote(do: :one | :two | :three)},
+        # {Zoi.extend(Zoi.string(), min: 3), quote(do: binary())},
         {Zoi.float(), quote(do: float())},
         {Zoi.integer(), quote(do: integer())},
-        # {Zoi.intersection(), quote(do: integer())},
+        {Zoi.intersection([Zoi.string(), Zoi.atom()]), quote(do: binary() | atom())},
         # {Zoi.keyword(), quote(do: integer())},
         {Zoi.map(), quote(do: map())},
         {Zoi.map(Zoi.string(), Zoi.integer()), quote(do: %{optional(binary()) => integer()})},
@@ -2065,7 +2062,10 @@ defmodule ZoiTest do
         {Zoi.optional(Zoi.string()), quote(do: binary())},
         {Zoi.string(), quote(do: binary())},
         {Zoi.string_boolean(), quote(do: boolean())},
-        {Zoi.time(), quote(do: Time.t())}
+        {Zoi.time(), quote(do: Time.t())},
+        {Zoi.tuple({Zoi.string(), Zoi.integer(), Zoi.any()}),
+         quote(do: {binary(), integer(), any()})},
+        {Zoi.union([Zoi.string(), Zoi.integer(), Zoi.number()]), quote(do: binary() | integer() | integer() | float())}
       ]
 
       Enum.each(types, fn {schema, expected} ->
