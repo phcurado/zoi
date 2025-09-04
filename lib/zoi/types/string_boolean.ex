@@ -41,5 +41,9 @@ defmodule Zoi.Types.StringBoolean do
     defp error(schema) do
       {:error, schema.meta.error || "invalid type: must be a string boolean"}
     end
+
+    def type_spec(_schema, _opts) do
+      quote(do: boolean())
+    end
   end
 end

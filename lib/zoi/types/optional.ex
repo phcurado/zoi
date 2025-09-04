@@ -11,5 +11,9 @@ defmodule Zoi.Types.Optional do
     def parse(%{inner: schema}, value, opts) do
       Zoi.parse(schema, value, opts)
     end
+
+    def type_spec(%{inner: schema}, opts) do
+      Zoi.Type.type_spec(schema, opts)
+    end
   end
 end

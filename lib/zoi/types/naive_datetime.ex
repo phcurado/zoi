@@ -41,5 +41,9 @@ defmodule Zoi.Types.NaiveDateTime do
     defp error(schema) do
       {:error, schema.meta.error || "invalid type: must be a naive datetime"}
     end
+
+    def type_spec(_schema, _opts) do
+      quote(do: NaiveDateTime.t())
+    end
   end
 end

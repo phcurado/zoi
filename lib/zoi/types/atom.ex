@@ -14,5 +14,9 @@ defmodule Zoi.Types.Atom do
     def parse(schema, _input, _opts) do
       {:error, schema.meta.error || "invalid type: must be an atom"}
     end
+
+    def type_spec(_schema, _opts) do
+      quote(do: atom())
+    end
   end
 end

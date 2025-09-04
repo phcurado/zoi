@@ -21,5 +21,9 @@ defmodule Zoi.Types.String do
           {:error, schema.meta.error || "invalid type: must be a string"}
       end
     end
+
+    def type_spec(_schema, _opts) do
+      quote(do: binary())
+    end
   end
 end

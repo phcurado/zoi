@@ -41,6 +41,10 @@ defmodule ZoiTest do
 
       assert Exception.message(error) == "invalid type: must be a string"
     end
+
+    test "string type spec" do
+      assert Zoi.type_spec(Zoi.string()) == quote(do: binary())
+    end
   end
 
   describe "integer/1" do
@@ -2013,6 +2017,60 @@ defmodule ZoiTest do
 
     test "prettify empty errors" do
       assert "" == Zoi.prettify_errors([])
+    end
+  end
+
+  describe "type_spec/2" do
+    test "all typespecs" do
+      # any.ex
+      # array.ex
+      # atom.ex
+      # boolean.ex
+      # date.ex
+      # datetime.ex
+      # decimal.ex
+      # default.ex
+      # enum.ex
+      # extend.ex
+      # float.ex
+      # integer.ex
+      # intersection.ex
+      # keyword.ex
+      # map.ex
+      # meta.ex
+      # naive_datetime.ex
+      # nullable.ex
+      # number.ex
+      # object.ex
+      # optional.ex
+      # string.ex
+      # string_boolean.ex
+      # time.ex
+      # tuple.ex
+      # union.ex
+      types = [
+        {Zoi.any(), quote(do: any())},
+        {Zoi.array(), quote(do: [any()])},
+        {Zoi.array(Zoi.string()), quote(do: [binary()])},
+        {Zoi.float(), quote(do: float())},
+        {Zoi.integer(), quote(do: integer())},
+        # {Zoi.intersection(), quote(do: integer())},
+        # {Zoi.keyword(), quote(do: integer())},
+        {Zoi.map(), quote(do: map())},
+        {Zoi.map(Zoi.string(), Zoi.integer()), quote(do: %{optional(binary()) => integer()})},
+        {Zoi.naive_datetime(), quote(do: NaiveDateTime.t())},
+        {Zoi.nullable(Zoi.string()), quote(do: binary() | nil)},
+        {Zoi.number(), quote(do: integer() | float())},
+        # {Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}
+        {Zoi.optional(Zoi.string()), quote(do: binary())},
+        {Zoi.string(), quote(do: binary())},
+        {Zoi.string_boolean(), quote(do: boolean())},
+        {Zoi.time(), quote(do: Time.t())}
+      ]
+
+      Enum.each(types, fn {schema, expected} ->
+        assert Zoi.type_spec(schema) == expected
+      end)
     end
   end
 end

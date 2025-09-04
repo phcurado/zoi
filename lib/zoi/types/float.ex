@@ -33,5 +33,9 @@ defmodule Zoi.Types.Float do
     defp error(schema) do
       {:error, schema.meta.error || "invalid type: must be a float"}
     end
+
+    def type_spec(_schema, _opts) do
+      quote(do: float())
+    end
   end
 end

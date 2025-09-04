@@ -85,6 +85,25 @@ defmodule Zoi do
     end
   end
 
+  @doc """
+  Generates the Elixir type specification for a given schema.
+
+  ## Example
+
+      defmodule MyApp.Schema do
+        @schema Zoi.string() |> Zoi.min(2) |> Zoi.max(100)
+        @type t :: unquote(Zoi.type_spec(@schema))
+      end
+
+  This will generate the following type specification:
+      @type t :: binary()
+  """
+  @doc group: "Parsing"
+  @spec type_spec(schema :: Zoi.Type.t(), opts :: options) :: Macro.t()
+  def type_spec(schema, opts \\ []) do
+    Zoi.Type.type_spec(schema, opts)
+  end
+
   # Types
 
   @doc """

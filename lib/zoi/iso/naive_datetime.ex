@@ -24,5 +24,9 @@ defmodule Zoi.ISO.NaiveDateTime do
     defp error(schema) do
       {:error, schema.meta.error || "invalid type: must be an ISO naive datetime"}
     end
+
+    def type_spec(_schema, _opts) do
+      quote(do: binary())
+    end
   end
 end

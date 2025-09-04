@@ -42,4 +42,6 @@ defprotocol Zoi.Type do
   """
 
   def parse(schema, input, opts)
+
+  def type_spec(schema, opts)
 end

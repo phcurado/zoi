@@ -17,9 +17,16 @@ defmodule Zoi.Types.Default do
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Default{value: value}, nil, _opts), do: {:ok, value}
+    def parse(%Zoi.Types.Default{value: value}, nil, _opts) do
+      {:ok, value}
+    end
 
-    def parse(%Zoi.Types.Default{inner: schema}, value, opts),
-      do: Zoi.parse(schema, value, opts)
+    def parse(%Zoi.Types.Default{inner: schema}, value, opts) do
+      Zoi.parse(schema, value, opts)
+    end
+
+    def type_spec(%Zoi.Types.Default{inner: schema}, opts) do
+      Zoi.Type.type_spec(schema, opts)
+    end
   end
 end

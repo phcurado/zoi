@@ -41,5 +41,9 @@ defmodule Zoi.Types.Date do
     defp error(schema) do
       {:error, schema.meta.error || "invalid type: must be a date"}
     end
+
+    def type_spec(_schema, _opts) do
+      quote(do: Date.t())
+    end
   end
 end
