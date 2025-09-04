@@ -35,5 +35,21 @@ defmodule Zoi.Types.Map do
     def parse(schema, _, _) do
       {:error, schema.meta.error || "invalid type: must be a map"}
     end
+
+    def type_spec(%Zoi.Types.Map{key_type: key_type, value_type: value_type}, opts) do
+      key_spec = Zoi.Type.type_spec(key_type, opts)
+      value_spec = Zoi.Type.type_spec(value_type, opts)
+
+      # If key and value are any type, we use map() (any map)
+      if key_type == Zoi.any() and value_type == Zoi.any() do
+        quote do
+          map()
+        end
+      else
+        quote do
+          %{optional(unquote(key_spec)) => unquote(value_spec)}
+        end
+      end
+    end
   end
 end

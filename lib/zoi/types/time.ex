@@ -37,5 +37,9 @@ defmodule Zoi.Types.Time do
     defp error(schema) do
       {:error, schema.meta.error || "invalid type: must be a time"}
     end
+
+    def type_spec(_schema, _opts) do
+      quote(do: Time.t())
+    end
   end
 end

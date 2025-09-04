@@ -34,5 +34,12 @@ defmodule Zoi.Types.Intersection do
         end
       end)
     end
+
+    # There is no direct representation of a intersection in Elixir types, so we use union `|`
+    def type_spec(%Zoi.Types.Intersection{schemas: schemas}, opts) do
+      Enum.map(schemas, &Zoi.Type.type_spec(&1, opts))
+      |> Enum.reverse()
+      |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
+    end
   end
 end

@@ -47,5 +47,9 @@ defmodule Zoi.Types.DateTime do
     defp error(schema) do
       {:error, schema.meta.error || "invalid type: must be a datetime"}
     end
+
+    def type_spec(_schema, _opts) do
+      quote(do: DateTime.t())
+    end
   end
 end

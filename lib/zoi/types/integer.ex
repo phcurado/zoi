@@ -33,5 +33,9 @@ defmodule Zoi.Types.Integer do
     defp error(schema) do
       {:error, schema.meta.error || "invalid type: must be an integer"}
     end
+
+    def type_spec(_schema, _opts) do
+      quote(do: integer())
+    end
   end
 end

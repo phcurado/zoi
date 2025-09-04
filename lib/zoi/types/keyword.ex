@@ -116,5 +116,23 @@ defmodule Zoi.Types.Keyword do
       Enum.into(input_map, %{})
       |> Map.fetch(key)
     end
+
+    def type_spec(%Zoi.Types.Keyword{fields: fields}, opts) do
+      fields
+      |> Enum.map(fn {key, type} ->
+        quote do
+          {unquote(key), unquote(Zoi.Type.type_spec(type, opts))}
+        end
+      end)
+      |> Enum.reverse()
+      |> then(fn list ->
+        if list == [] do
+          quote(do: keyword())
+        else
+          list
+          |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
+        end
+      end)
+    end
   end
 end

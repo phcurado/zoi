@@ -87,5 +87,11 @@ defmodule Zoi.Types.Enum do
     defp stringify_enum(values) do
       Enum.map_join(values, ", ", fn {_key, value} -> value end)
     end
+
+    def type_spec(%Zoi.Types.Enum{values: values} = _schema, _opts) do
+      Enum.map(values, fn {key, _value} -> key end)
+      |> Enum.reverse()
+      |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
+    end
   end
 end

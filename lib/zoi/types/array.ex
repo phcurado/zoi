@@ -3,7 +3,7 @@ defmodule Zoi.Types.Array do
 
   use Zoi.Type.Def, fields: [:inner]
 
-  def new(inner, opts \\ []) do
+  def new(inner, opts) do
     apply_type(opts ++ [inner: inner])
   end
 
@@ -34,6 +34,14 @@ defmodule Zoi.Types.Array do
 
     def parse(schema, _, _) do
       {:error, schema.meta.error || "invalid type: must be an array"}
+    end
+
+    def type_spec(%Zoi.Types.Array{inner: inner}, opts) do
+      inner_spec = Zoi.Type.type_spec(inner, opts)
+
+      quote do
+        [unquote(inner_spec)]
+      end
     end
   end
 end

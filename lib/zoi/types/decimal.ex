@@ -32,6 +32,10 @@ if Code.ensure_loaded?(Decimal) do
       defp error(schema) do
         {:error, schema.meta.error || "invalid type: must be a decimal"}
       end
+
+      def type_spec(_schema, _opts) do
+        quote(do: Decimal.t())
+      end
     end
   end
 end

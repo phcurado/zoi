@@ -55,5 +55,11 @@ defmodule Zoi.Types.Tuple do
       {:error,
        schema.meta.error || "invalid type: must be a tuple with #{schema.length} elements"}
     end
+
+    def type_spec(%Zoi.Types.Tuple{fields: fields}, opts) do
+      field_specs = Enum.map(fields, &Zoi.Type.type_spec(&1, opts))
+
+      {:{}, [], field_specs}
+    end
   end
 end
