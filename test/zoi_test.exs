@@ -22,6 +22,27 @@ defmodule ZoiTest do
     end
   end
 
+  describe "parse!/3" do
+    test "parse! with correct value" do
+      assert "hello" == Zoi.parse!(Zoi.string(), "hello")
+      assert 123 == Zoi.parse!(Zoi.integer(), 123)
+    end
+
+    test "parse! with incorrect value" do
+      assert_raise Zoi.ParseError,
+                   "Error while parsing:\n\ninvalid type: must be a string\n",
+                   fn ->
+                     Zoi.parse!(Zoi.string(), 123)
+                   end
+
+      assert_raise Zoi.ParseError,
+                   "Error while parsing:\n\ninvalid type: must be an integer\n",
+                   fn ->
+                     Zoi.parse!(Zoi.integer(), "not an integer")
+                   end
+    end
+  end
+
   describe "string/1" do
     test "string with correct value" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.string(), "hello")
