@@ -23,3 +23,22 @@ defmodule Zoi.Error do
     message
   end
 end
+
+defmodule Zoi.ParseError do
+  @moduledoc false
+  defexception [:errors]
+
+  @impl true
+  def exception(opts) do
+    struct!(__MODULE__, opts)
+  end
+
+  @impl true
+  def message(%__MODULE__{errors: errors}) when is_list(errors) do
+    """
+    Error while parsing:
+
+    #{Zoi.prettify_errors(errors)}
+    """
+  end
+end

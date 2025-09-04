@@ -86,6 +86,21 @@ defmodule Zoi do
   end
 
   @doc """
+  Similar to `Zoi.parse/3`, but raises an error if parsing fails.
+  """
+  @doc group: "Parsing"
+  @spec parse!(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: any()
+  def parse!(schema, input, opts \\ []) do
+    case parse(schema, input, opts) do
+      {:ok, result} ->
+        result
+
+      {:error, errors} ->
+        raise Zoi.ParseError, errors: errors
+    end
+  end
+
+  @doc """
   Generates the Elixir type specification for a given schema.
 
   ## Example
