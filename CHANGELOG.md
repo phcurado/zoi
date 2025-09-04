@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.6 - Unreleased
+
+### Added
+
+- `Zoi.parse!/3` function that raises an error if parsing fails
+- `Zoi.type_spec/2` function that returns the Elixir type spec for a given Zoi schema, implemented for all types
+
 ## 0.5.5 - 2025-09-03
 
 ### Added

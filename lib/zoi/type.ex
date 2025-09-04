@@ -28,6 +28,12 @@ defprotocol Zoi.Type do
           def parse(_schema, _input, _opts) do
             {:error, "invalid string or boolean type"}
           end
+
+          def type_spec(_schema, _opts) do
+            quote do
+              boolean() | binary()
+            end
+          end
         end
       end
 
