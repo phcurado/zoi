@@ -2086,12 +2086,12 @@ defmodule ZoiTest do
           address: Zoi.optional(Zoi.string())
         })
 
-      assert Zoi.type_spec(schema) ==
+      assert Zoi.type_spec(schema) |> normalize_map_ast() ==
                quote(
                  do: %{
-                   required(:name) => binary(),
                    optional(:address) => binary(),
-                   required(:age) => integer()
+                   required(:age) => integer(),
+                   required(:name) => binary()
                  }
                )
 
@@ -2105,13 +2105,29 @@ defmodule ZoiTest do
 
       schema = Zoi.extend(schema_1, schema_2)
 
-      assert Zoi.type_spec(schema) ==
+      assert Zoi.type_spec(schema) |> normalize_map_ast() ==
                quote(
                  do: %{
-                   required(:name) => binary(),
-                   required(:age) => integer()
+                   required(:age) => integer(),
+                   required(:name) => binary()
                  }
                )
     end
+  end
+
+  defp normalize_map_ast(ast) do
+    Macro.postwalk(ast, fn
+      {:%{}, meta, pairs} when is_list(pairs) ->
+        sorted =
+          Enum.sort_by(pairs, fn {k, _v} ->
+            # Sorting by string so we can compare
+            Macro.to_string(k)
+          end)
+
+        {:%{}, meta, sorted}
+
+      other ->
+        other
+    end)
   end
 end

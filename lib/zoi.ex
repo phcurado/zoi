@@ -97,6 +97,31 @@ defmodule Zoi do
 
   This will generate the following type specification:
       @type t :: binary()
+
+  This also applies to complex types, such as `Zoi.object/2`:
+
+      defmodule MyApp.User do
+        @schema Zoi.object(%{
+          name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
+          age: Zoi.integer() |> Zoi.optional(),
+          email: Zoi.email()
+        })
+        @type t :: unquote(Zoi.type_spec(@schema))
+      end
+
+  Which will generate:
+      @type t :: %{
+        required(:name) => binary(),
+        optional(:age) => integer(),
+        required(:email) => binary()
+      }
+
+  Union types are also supported:
+
+        Zoi.union([Zoi.string(), Zoi.integer()])
+        #=> binary() | integer()
+
+  All the types provided by `Zoi` supports the type spec generation.
   """
   @doc group: "Parsing"
   @spec type_spec(schema :: Zoi.Type.t(), opts :: options) :: Macro.t()
