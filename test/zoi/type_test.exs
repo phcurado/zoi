@@ -12,10 +12,23 @@ defmodule Zoi.TypeTest do
       def parse(_schema, _input, _opts) do
         {:ok, "hello"}
       end
+
+      def type_spec(_schema, _opts) do
+        quote(do: binary())
+      end
     end
   end
 
   test "create a custom type" do
     assert %CustomType{} = CustomType.new()
+  end
+
+  test "parse with custom type" do
+    assert {:ok, "hello"} = Zoi.parse(CustomType.new(), 123)
+  end
+
+  test "type_spec with custom type" do
+    schema = CustomType.new()
+    assert Zoi.type_spec(schema) == quote(do: binary())
   end
 end
