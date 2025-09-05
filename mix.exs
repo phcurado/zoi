@@ -70,7 +70,6 @@ defmodule Zoi.MixProject do
       logo: "guides/images/logo.png",
       extra_section: "GUIDES",
       source_url: @source_url,
-      source_url: @source_url,
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
       extras: extras()
     ]
