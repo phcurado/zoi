@@ -1,6 +1,8 @@
 # Zoi
 
-<img src="logo.png" alt="Zoi" width="150">
+<img src="logo.png" alt="Zoi" width="250">
+
+---
 
 [![CI](https://github.com/phcurado/zoi/actions/workflows/ci.yml/badge.svg)](https://github.com/phcurado/zoi/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/phcurado/zoi/badge.svg?branch=main)](https://coveralls.io/github/phcurado/zoi?branch=main)
