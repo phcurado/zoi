@@ -67,7 +67,7 @@ defmodule Zoi.MixProject do
     [
       main: "Zoi",
       source_ref: "v#{@version}",
-      source_url: @source_url,
+      logo: "guides/images/logo.png",
       extra_section: "GUIDES",
       source_url: @source_url,
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"],

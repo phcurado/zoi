@@ -1,5 +1,7 @@
 # Zoi
 
+<img src="https://github.com/phcurado/zoi/raw/main/guides/images/logo.png" alt="Zoi" width="150">
+
 [![CI](https://github.com/phcurado/zoi/actions/workflows/ci.yml/badge.svg)](https://github.com/phcurado/zoi/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/phcurado/zoi/badge.svg?branch=main)](https://coveralls.io/github/phcurado/zoi?branch=main)
 [![Hex.pm](https://img.shields.io/hexpm/v/zoi)](https://hex.pm/packages/zoi)

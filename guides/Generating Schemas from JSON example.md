@@ -108,7 +108,6 @@ This code might be difficult to understand at first glance, but the key function
 Now we can use this module to generate a schema from the provided JSON example:
 
 ```elixir
-# Let's use Jason to parse the JSON string into a map
 jason_string = "..." # Replace with the JSON string from the example
 ZoiJsonCodegen.write_module_from_json(decoded_json, "MyApp.ExternalApiResponse")
 ```
