@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.7 - 2025-09-06
+
+### Changed
+
+- `Zoi.parse!/3` Error message
+
 ## 0.5.6 - 2025-09-05
 
 ### Added

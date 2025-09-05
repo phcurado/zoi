@@ -30,13 +30,13 @@ defmodule ZoiTest do
 
     test "parse! with incorrect value" do
       assert_raise Zoi.ParseError,
-                   "Error while parsing:\n\ninvalid type: must be a string\n",
+                   "Parsing error:\n\ninvalid type: must be a string\n",
                    fn ->
                      Zoi.parse!(Zoi.string(), 123)
                    end
 
       assert_raise Zoi.ParseError,
-                   "Error while parsing:\n\ninvalid type: must be an integer\n",
+                   "Parsing error:\n\ninvalid type: must be an integer\n",
                    fn ->
                      Zoi.parse!(Zoi.integer(), "not an integer")
                    end

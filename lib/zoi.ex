@@ -87,6 +87,15 @@ defmodule Zoi do
 
   @doc """
   Similar to `Zoi.parse/3`, but raises an error if parsing fails.
+
+  ## Examples
+      schema = Zoi.string() |> Zoi.min(2) |> Zoi.max(100)
+      Zoi.parse!(schema, "hello")
+      #=> "hello"
+      Zoi.parse!(schema, "h")
+      # ** (Zoi.ParseError) Parsing error:
+      #
+      # too small: must have at least 2 characters
   """
   @doc group: "Parsing"
   @spec parse!(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: any()

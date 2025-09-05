@@ -36,7 +36,7 @@ defmodule Zoi.ParseError do
   @impl true
   def message(%__MODULE__{errors: errors}) when is_list(errors) do
     """
-    Error while parsing:
+    Parsing error:
 
     #{Zoi.prettify_errors(errors)}
     """
