@@ -87,8 +87,9 @@ defmodule Zoi.Types.Keyword do
       Zoi.parse(type, value, ctx: ctx)
     end
 
-    defp optional?(%Zoi.Types.Optional{}), do: true
-    defp optional?(_), do: false
+    defp optional?(type) do
+      !type.meta.required
+    end
 
     defp default?(%Zoi.Types.Default{}), do: true
     defp default?(_), do: false

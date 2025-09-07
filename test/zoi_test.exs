@@ -652,6 +652,7 @@ defmodule ZoiTest do
     test "keyword with correct value" do
       schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
 
+      assert {:ok, []} == Zoi.parse(schema, [])
       assert {:ok, [name: "John", age: 30]} == Zoi.parse(schema, name: "John", age: 30)
     end
 
@@ -662,7 +663,7 @@ defmodule ZoiTest do
     end
 
     test "keyword with missing required field" do
-      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
+      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.required(Zoi.integer()))
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, name: "John")
       assert Exception.message(error) == "is required"
@@ -679,12 +680,6 @@ defmodule ZoiTest do
       assert error.path == [:age]
     end
 
-    test "keyword with optional field" do
-      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.optional(Zoi.integer()))
-
-      assert {:ok, [name: "John"]} == Zoi.parse(schema, name: "John")
-    end
-
     test "keyword with non-keyword input" do
       schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
 
@@ -695,7 +690,7 @@ defmodule ZoiTest do
     test "keyword with nested keyword" do
       schema =
         Zoi.keyword(
-          user: Zoi.keyword(name: Zoi.string(), age: Zoi.integer()),
+          user: Zoi.keyword(name: Zoi.string(), age: Zoi.required(Zoi.integer())),
           active: Zoi.boolean()
         )
 

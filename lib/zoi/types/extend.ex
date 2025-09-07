@@ -4,7 +4,7 @@ defmodule Zoi.Types.Extend do
   use Zoi.Type.Def, fields: [:schema1, :schema2]
 
   def new(%Zoi.Types.Object{} = schema1, %Zoi.Types.Object{} = schema2, _opts) do
-    fields = Map.merge(schema1.fields, schema2.fields)
+    fields = Keyword.merge(schema1.fields, schema2.fields)
     strict = schema1.strict || schema2.strict
     coerce = schema1.coerce || schema2.coerce
 
