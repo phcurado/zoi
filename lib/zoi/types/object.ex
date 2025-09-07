@@ -6,15 +6,17 @@ defmodule Zoi.Types.Object do
   def new(fields, opts) when is_map(fields) do
     inner =
       Zoi.keyword(Map.to_list(fields), opts)
-      |> Zoi.transform(fn map ->
-        Enum.into(map, %{})
-      end)
+      |> Zoi.transform({__MODULE__, :__transform__, []})
 
     apply_type(opts ++ [fields: fields, inner: inner])
   end
 
   def new(_fields, _opts) do
     raise ArgumentError, "object must receive a map"
+  end
+
+  def __transform__(value, _opts) do
+    Enum.into(value, %{})
   end
 
   defimpl Zoi.Type do
