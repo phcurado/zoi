@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.5.8 - Unreleased
+## 0.6.0 - Unreleased
 
 ### Added
 
@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - `Zoi.object/2` now uses `mfa` to call inner `transform` function
+- `Zoi.keyword/2` have all fields set as optional by default, use `Zoi.required/2` to enforce presence of a value
 
 ## 0.5.7 - 2025-09-06
 

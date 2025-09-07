@@ -3,9 +3,20 @@ defmodule Zoi.Types.Object do
 
   use Zoi.Type.Def, fields: [:fields, :inner, :strict, :coerce]
 
-  def new(fields, opts) when is_map(fields) do
+  def new(fields, opts) when is_map(fields) or is_list(fields) do
+    fields =
+      fields
+      |> Enum.map(fn {key, type} ->
+        if type.meta.required == nil do
+          {key, Zoi.required(type)}
+        else
+          {key, type}
+        end
+      end)
+
     inner =
-      Zoi.keyword(Map.to_list(fields), opts)
+      fields
+      |> Zoi.keyword(opts)
       |> Zoi.transform({__MODULE__, :__transform__, []})
 
     apply_type(opts ++ [fields: fields, inner: inner])
@@ -34,9 +45,9 @@ defmodule Zoi.Types.Object do
         {key, Zoi.Type.type_spec(type, opts), type}
       end)
       |> Enum.map(fn {key, type_spec, type} ->
-        case type do
-          %Zoi.Types.Optional{} -> quote do: {optional(unquote(key)), unquote(type_spec)}
-          _ -> quote do: {required(unquote(key)), unquote(type_spec)}
+        case type.meta.required do
+          true -> quote do: {required(unquote(key)), unquote(type_spec)}
+          _ -> quote do: {optional(unquote(key)), unquote(type_spec)}
         end
       end)
       |> then(&quote(do: %{unquote_splicing(&1)}))

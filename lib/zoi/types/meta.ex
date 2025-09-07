@@ -4,10 +4,11 @@ defmodule Zoi.Types.Meta do
   @type t :: %__MODULE__{
           refinements: [Zoi.refinement()],
           transforms: [Zoi.transform()],
-          error: nil | binary()
+          error: nil | binary(),
+          required: boolean()
         }
 
-  @struct_fields [refinements: [], transforms: [], error: nil]
+  @struct_fields [refinements: [], transforms: [], required: nil, error: nil]
   @struct_keys Keyword.keys(@struct_fields)
 
   defstruct @struct_fields

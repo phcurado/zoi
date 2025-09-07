@@ -3,17 +3,9 @@ defmodule Zoi.Types.Optional do
 
   use Zoi.Type.Def, fields: [:inner]
 
-  def new(inner, opts \\ []) do
-    apply_type(opts ++ [inner: inner])
-  end
+  alias Zoi.Types.Meta
 
-  defimpl Zoi.Type do
-    def parse(%{inner: schema}, value, opts) do
-      Zoi.parse(schema, value, opts)
-    end
-
-    def type_spec(%{inner: schema}, opts) do
-      Zoi.Type.type_spec(schema, opts)
-    end
+  def new(inner, _opts) do
+    %{inner | meta: %Meta{inner.meta | required: false}}
   end
 end

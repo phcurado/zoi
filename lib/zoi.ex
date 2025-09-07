@@ -320,7 +320,7 @@ defmodule Zoi do
   defdelegate atom(opts \\ []), to: Zoi.Types.Atom, as: :new
 
   @doc """
-  Makes the schema optional for the `Zoi.object/2` type.
+  Makes the schema optional for the `Zoi.object/2` and `Zoi.keyword/2` types.
 
   ## Example
 
@@ -329,10 +329,10 @@ defmodule Zoi do
       {:ok, %{}}
   """
   @doc group: "Encapsulated Types"
-  defdelegate optional(opts \\ []), to: Zoi.Types.Optional, as: :new
+  defdelegate optional(inner, opts \\ []), to: Zoi.Types.Optional, as: :new
 
   @doc """
-  Makes the schema required for the `Zoi.object/2` type.
+  Makes the schema required for the `Zoi.object/2` and `Zoi.keyword/2` types.
 
   ## Example
 
@@ -341,7 +341,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
   """
   @doc group: "Encapsulated Types"
-  defdelegate required(opts \\ []), to: Zoi.Types.Required, as: :new
+  defdelegate required(inner, opts \\ []), to: Zoi.Types.Required, as: :new
 
   @doc """
   Defines a schema that allows `nil` values.
@@ -536,6 +536,12 @@ defmodule Zoi do
       iex> schema = Zoi.keyword([name: Zoi.string()], strict: true)
       iex> Zoi.parse(schema, [name: "Alice", age: 30])
       {:error, [%Zoi.Error{message: "unrecognized key: 'age'"}]}
+
+  All fields are optional by default in keyword lists, but you can make them required by using `Zoi.required/1`:
+
+      iex> schema = Zoi.keyword([name: Zoi.string() |> Zoi.required()])
+      iex> Zoi.parse(schema, [])
+      {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
   """
   @doc group: "Complex Types"
   defdelegate keyword(fields, opts \\ []), to: Zoi.Types.Keyword, as: :new
