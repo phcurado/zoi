@@ -320,6 +320,20 @@ defmodule Zoi do
   defdelegate atom(opts \\ []), to: Zoi.Types.Atom, as: :new
 
   @doc """
+  Defines a nil type schema.
+  This schema only accepts `nil` as valid input.
+  ## Example
+
+      iex> schema = Zoi.null()
+      iex> Zoi.parse(schema, nil)
+      {:ok, nil}
+      iex> Zoi.parse(schema, "not_nil")
+      {:error, [%Zoi.Error{message: "invalid type: must be nil"}]}
+  """
+  @doc group: "Basic Types"
+  defdelegate null(opts \\ []), to: Zoi.Types.Null, as: :new
+
+  @doc """
   Makes the schema optional for the `Zoi.object/2` and `Zoi.keyword/2` types.
 
   ## Example
