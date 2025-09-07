@@ -621,6 +621,12 @@ defmodule Zoi do
   defdelegate array(elements, opts \\ []), to: Zoi.Types.Array, as: :new
 
   @doc """
+  alias for `Zoi.array/2`
+  """
+  @doc group: "Complex Types"
+  defdelegate list(elements, opts \\ []), to: Zoi.Types.Array, as: :new
+
+  @doc """
   Defines an enum type schema.
 
   Use `Zoi.enum(values)` to define a schema that accepts only specific values:
@@ -998,6 +1004,38 @@ defmodule Zoi do
   def lt(schema, lt, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[lt: lt], opts]})
+  end
+
+  @doc """
+  Validates that the input is a positive number (greater than 0).
+  This can be used for integers, floats and numbers.
+  ## Example
+      iex> schema = Zoi.integer() |> Zoi.positive()
+      iex> Zoi.parse(schema, 5)
+      {:ok, 5}
+      iex> Zoi.parse(schema, 0)
+      {:error, [%Zoi.Error{message: "too small: must be greater than 0"}]}
+  """
+  @spec positive(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  def positive(schema, opts \\ []) do
+    schema
+    |> refine({Zoi.Refinements, :refine, [[gt: 0], opts]})
+  end
+
+  @doc """
+  Validates that the input is a negative number (less than 0).
+  This can be used for integers, floats and numbers.
+  ## Example
+      iex> schema = Zoi.integer() |> Zoi.negative()
+      iex> Zoi.parse(schema, -5)
+      {:ok, -5}
+      iex> Zoi.parse(schema, 0)
+      {:error, [%Zoi.Error{message: "too big: must be less than 0"}]}
+  """
+  @spec negative(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  def negative(schema, opts \\ []) do
+    schema
+    |> refine({Zoi.Refinements, :refine, [[lt: 0], opts]})
   end
 
   @doc """
