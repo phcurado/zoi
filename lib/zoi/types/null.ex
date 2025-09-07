@@ -1,0 +1,23 @@
+defmodule Zoi.Types.Null do
+  @moduledoc false
+
+  use Zoi.Type.Def
+
+  def new(opts \\ []) do
+    apply_type(opts)
+  end
+
+  defimpl Zoi.Type do
+    def parse(_schema, input, _opts) when is_nil(input) do
+      {:ok, input}
+    end
+
+    def parse(schema, _input, _opts) do
+      {:error, schema.meta.error || "invalid type: must be nil"}
+    end
+
+    def type_spec(_schema, _opts) do
+      quote(do: nil)
+    end
+  end
+end

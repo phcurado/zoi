@@ -235,6 +235,21 @@ defmodule ZoiTest do
     end
   end
 
+  describe "null/1" do
+    test "null with nil value" do
+      assert {:ok, nil} == Zoi.parse(Zoi.null(), nil)
+    end
+
+    test "null with incorrect value" do
+      wrong_values = ["hello", 123, 1.5, :atom, true, false, %{}, []]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.null(), value)
+        assert Exception.message(error) == "invalid type: must be nil"
+      end
+    end
+  end
+
   describe "optional/2" do
     test "optional with correct value" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.optional(Zoi.string()), "hello")

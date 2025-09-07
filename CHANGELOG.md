@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.6.1 - Unreleased
+
+### Added
+
+- `Zoi.null/1` type to accept only `nil` values
+- `Zoi.positive/1` refinement for numbers to accept only positive values
+- `Zoi.negative/1` refinement for numbers to accept only negative values
+
 ## 0.6.0 - 2025-09-07
 
 ### Added
