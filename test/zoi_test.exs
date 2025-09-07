@@ -248,6 +248,13 @@ defmodule ZoiTest do
         assert Exception.message(error) == "invalid type: must be nil"
       end
     end
+
+    test "null with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.null(error: "custom null error"), "not nil")
+
+      assert Exception.message(error) == "custom null error"
+    end
   end
 
   describe "optional/2" do
@@ -2086,6 +2093,7 @@ defmodule ZoiTest do
         {Zoi.map(), quote(do: map())},
         {Zoi.map(Zoi.string(), Zoi.integer()), quote(do: %{optional(binary()) => integer()})},
         {Zoi.naive_datetime(), quote(do: NaiveDateTime.t())},
+        {Zoi.null(), quote(do: nil)},
         {Zoi.nullable(Zoi.string()), quote(do: binary() | nil)},
         {Zoi.number(), quote(do: integer() | float())},
         {Zoi.optional(Zoi.string()), quote(do: binary())},
