@@ -332,6 +332,18 @@ defmodule Zoi do
   defdelegate optional(opts \\ []), to: Zoi.Types.Optional, as: :new
 
   @doc """
+  Makes the schema required for the `Zoi.object/2` type.
+
+  ## Example
+
+      iex> schema = Zoi.keyword([name: Zoi.string() |> Zoi.required()])
+      iex> Zoi.parse(schema, [])
+      {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
+  """
+  @doc group: "Encapsulated Types"
+  defdelegate required(opts \\ []), to: Zoi.Types.Required, as: :new
+
+  @doc """
   Defines a schema that allows `nil` values.
 
   ## Examples

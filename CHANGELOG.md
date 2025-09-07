@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.8 - Unreleased
+
+### Added
+
+- `Zoi.required/2` type to enforce presence of a value in `keyword` and `object` types
+
+### Changed
+
+- `Zoi.object/2` now uses `mfa` to call inner `transform` function
+
 ## 0.5.7 - 2025-09-06
 
 ### Changed
