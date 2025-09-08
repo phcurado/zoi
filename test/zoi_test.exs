@@ -302,13 +302,24 @@ defmodule ZoiTest do
     test "nullable with incorrect type" do
       schema = Zoi.nullable(Zoi.string())
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 123)
-      assert Exception.message(error) == "invalid type: must be a string or nil"
+      assert Exception.message(error) == "invalid type: must be a string"
     end
 
     test "nullable with transform" do
       schema = Zoi.nullable(Zoi.string() |> Zoi.transform(fn value -> String.upcase(value) end))
 
       assert {:ok, "HELLO"} == Zoi.parse(schema, "hello")
+    end
+
+    test "nested nullable" do
+      schema = Zoi.nullable(Zoi.array(Zoi.nullable(Zoi.string())))
+      assert {:ok, nil} == Zoi.parse(schema, nil)
+      assert {:ok, ["hello", nil, "world"]} == Zoi.parse(schema, ["hello", nil, "world"])
+      assert {:error, [error_1, error_2]} = Zoi.parse(schema, ["1", 2, nil, 4])
+      assert Exception.message(error_1) == "invalid type: must be a string"
+      assert error_1.path == [1]
+      assert Exception.message(error_2) == "invalid type: must be a string"
+      assert error_2.path == [3]
     end
   end
 
