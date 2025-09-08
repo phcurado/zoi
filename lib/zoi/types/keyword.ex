@@ -12,6 +12,8 @@ defmodule Zoi.Types.Keyword do
   end
 
   defimpl Zoi.Type do
+    alias Zoi.Types.Meta
+
     def parse(%Zoi.Types.Keyword{} = type, input, opts) when is_list(input) do
       do_parse(type, input, opts, [], [])
       |> then(fn {parsed, errors, _path} ->
@@ -46,7 +48,7 @@ defmodule Zoi.Types.Keyword do
         case keyword_fetch(input, key, coerce) do
           :error ->
             cond do
-              optional?(type) ->
+              Meta.optional?(type.meta) ->
                 # If the field is optional, we skip it and do not add it to parsed
                 {parsed, errors, path}
 
@@ -85,10 +87,6 @@ defmodule Zoi.Types.Keyword do
     defp do_parse(type, value, _opts, path, _errors) do
       ctx = Zoi.Context.new(type, value) |> Zoi.Context.add_path(path)
       Zoi.parse(type, value, ctx: ctx)
-    end
-
-    defp optional?(type) do
-      !type.meta.required
     end
 
     defp default?(%Zoi.Types.Default{}), do: true
