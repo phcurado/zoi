@@ -4,6 +4,20 @@ defmodule Zoi.Types.StringBoolean do
   use Zoi.Type.Def, fields: [:case, :truthy, :falsy]
 
   def new(opts \\ []) do
+    truthy = ["true", "1", "yes", "on", "y", "enabled"]
+    falsy = ["false", "0", "no", "off", "n", "disabled"]
+
+    opts =
+      Keyword.merge(
+        [
+          case: "insensitive",
+          error: "invalid type: must be a string boolean",
+          truthy: truthy,
+          falsy: falsy
+        ],
+        opts
+      )
+
     apply_type(opts)
   end
 
@@ -13,17 +27,13 @@ defmodule Zoi.Types.StringBoolean do
     end
 
     def parse(schema, input, _opts) when is_binary(input) do
-      truthy = schema.truthy || ["true", "1", "yes", "on", "y", "enabled"]
-      falsy = schema.falsy || ["false", "0", "no", "off", "n", "disabled"]
-      case_sensitive = schema.case || "insensitive"
-
-      input = modify_input_case(input, case_sensitive)
+      input = modify_input_case(input, schema.case)
 
       cond do
-        input in truthy ->
+        input in schema.truthy ->
           {:ok, true}
 
-        input in falsy ->
+        input in schema.falsy ->
           {:ok, false}
 
         true ->

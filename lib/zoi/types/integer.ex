@@ -4,6 +4,7 @@ defmodule Zoi.Types.Integer do
   use Zoi.Type.Def, fields: [coerce: false]
 
   def new(opts) do
+    opts = Keyword.merge([error: "invalid type: must be an integer", coerce: false], opts)
     apply_type(opts)
   end
 
@@ -31,7 +32,7 @@ defmodule Zoi.Types.Integer do
     end
 
     defp error(schema) do
-      {:error, schema.meta.error || "invalid type: must be an integer"}
+      {:error, schema.meta.error}
     end
 
     def type_spec(_schema, _opts) do

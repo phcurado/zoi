@@ -4,6 +4,7 @@ defmodule Zoi.Types.Array do
   use Zoi.Type.Def, fields: [:inner]
 
   def new(inner, opts) do
+    opts = Keyword.merge([error: "invalid type: must be an array"], opts)
     apply_type(opts ++ [inner: inner])
   end
 
@@ -33,7 +34,7 @@ defmodule Zoi.Types.Array do
     end
 
     def parse(schema, _, _) do
-      {:error, schema.meta.error || "invalid type: must be an array"}
+      {:error, schema.meta.error}
     end
 
     def type_spec(%Zoi.Types.Array{inner: inner}, opts) do

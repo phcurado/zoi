@@ -4,7 +4,9 @@ defmodule Zoi.Types.Tuple do
 
   def new(fields, opts) when is_tuple(fields) do
     fields = Tuple.to_list(fields)
-    apply_type(Keyword.merge(opts, fields: fields, length: length(fields)))
+    length = length(fields)
+    opts = Keyword.merge([error: "invalid type: must be a tuple with #{length} elements"], opts)
+    apply_type(Keyword.merge(opts, fields: fields, length: length))
   end
 
   def new(_fields, _opts) do
@@ -52,8 +54,7 @@ defmodule Zoi.Types.Tuple do
     end
 
     defp error(schema) do
-      {:error,
-       schema.meta.error || "invalid type: must be a tuple with #{schema.length} elements"}
+      {:error, schema.meta.error}
     end
 
     def type_spec(%Zoi.Types.Tuple{fields: fields}, opts) do

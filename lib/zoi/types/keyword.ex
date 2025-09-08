@@ -4,6 +4,12 @@ defmodule Zoi.Types.Keyword do
   use Zoi.Type.Def, fields: [:fields, :strict, :coerce]
 
   def new(fields, opts) when is_list(fields) do
+    opts =
+      Keyword.merge(
+        [error: "invalid type: must be a keyword list", strict: false, coerce: false],
+        opts
+      )
+
     apply_type(opts ++ [fields: fields])
   end
 
@@ -24,7 +30,7 @@ defmodule Zoi.Types.Keyword do
     end
 
     def parse(schema, _, _) do
-      {:error, schema.meta.error || "invalid type: must be a keyword list"}
+      {:error, schema.meta.error}
     end
 
     defp do_parse(

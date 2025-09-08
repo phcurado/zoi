@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.6.2 - Unreleased
+
+### Changed
+
+- Refactor all errors to be generated on type creation instead of parsing time
+- `Zoi.nullable/2` now returns the error message "invalid type: must be a %{type} or nil"
+
 ## 0.6.1 - 2025-09-08
 
 ### Added

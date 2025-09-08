@@ -302,7 +302,7 @@ defmodule ZoiTest do
     test "nullable with incorrect type" do
       schema = Zoi.nullable(Zoi.string())
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 123)
-      assert Exception.message(error) == "invalid type: must be a string"
+      assert Exception.message(error) == "invalid type: must be a string or nil"
     end
 
     test "nullable with transform" do
