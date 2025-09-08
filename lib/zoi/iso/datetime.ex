@@ -3,6 +3,7 @@ defmodule Zoi.ISO.DateTime do
   use Zoi.Type.Def
 
   def new(opts \\ []) do
+    opts = Keyword.merge([error: "invalid type: must be an ISO datetime"], opts)
     apply_type(opts)
   end
 
@@ -22,7 +23,7 @@ defmodule Zoi.ISO.DateTime do
     end
 
     defp error(schema) do
-      {:error, schema.meta.error || "invalid type: must be an ISO datetime"}
+      {:error, schema.meta.error}
     end
 
     def type_spec(_schema, _opts) do

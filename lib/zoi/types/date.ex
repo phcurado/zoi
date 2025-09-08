@@ -3,6 +3,7 @@ defmodule Zoi.Types.Date do
   use Zoi.Type.Def, fields: [coerce: false]
 
   def new(opts \\ []) do
+    opts = Keyword.merge([error: "invalid type: must be a date", coerce: false], opts)
     apply_type(opts)
   end
 
@@ -39,7 +40,7 @@ defmodule Zoi.Types.Date do
     end
 
     defp error(schema) do
-      {:error, schema.meta.error || "invalid type: must be a date"}
+      {:error, schema.meta.error}
     end
 
     def type_spec(_schema, _opts) do

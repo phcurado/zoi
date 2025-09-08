@@ -19,6 +19,9 @@ defmodule Zoi.Types.Object do
       |> Zoi.keyword(opts)
       |> Zoi.transform({__MODULE__, :__transform__, []})
 
+    opts =
+      Keyword.merge([error: "invalid type: must be a map", strict: false, coerce: false], opts)
+
     apply_type(opts ++ [fields: fields, inner: inner])
   end
 
@@ -36,7 +39,7 @@ defmodule Zoi.Types.Object do
     end
 
     def parse(schema, _, _) do
-      {:error, schema.meta.error || "invalid type: must be a map"}
+      {:error, schema.meta.error}
     end
 
     def type_spec(%Zoi.Types.Object{fields: fields}, opts) do

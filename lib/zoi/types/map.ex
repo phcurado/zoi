@@ -4,6 +4,7 @@ defmodule Zoi.Types.Map do
   use Zoi.Type.Def, fields: [:key_type, :value_type]
 
   def new(key_type, value_type, opts) do
+    opts = Keyword.merge([error: "invalid type: must be a map"], opts)
     apply_type(Keyword.merge(opts, key_type: key_type, value_type: value_type))
   end
 
@@ -33,7 +34,7 @@ defmodule Zoi.Types.Map do
     end
 
     def parse(schema, _, _) do
-      {:error, schema.meta.error || "invalid type: must be a map"}
+      {:error, schema.meta.error}
     end
 
     def type_spec(%Zoi.Types.Map{key_type: key_type, value_type: value_type}, opts) do
