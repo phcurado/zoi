@@ -50,6 +50,9 @@ jobs:
           - pair:
               elixir: 1.18.3
               otp: 27.2.2
+          - pair:
+              elixir: 1.18.4
+              otp: 28.0.2
             lint: lint
 
     runs-on: ubuntu-latest
