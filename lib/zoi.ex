@@ -320,6 +320,25 @@ defmodule Zoi do
   defdelegate atom(opts \\ []), to: Zoi.Types.Atom, as: :new
 
   @doc """
+  Defines a literal type schema.
+  This schema only accepts a specific literal value as valid input.
+
+  ## Example
+      iex> schema = Zoi.literal(true)
+      iex> Zoi.parse(schema, true)
+      {:ok, true}
+      iex> Zoi.parse(schema, :other_value)
+      {:error, [%Zoi.Error{message: "invalid type: does not match literal"}]}
+      iex> schema = Zoi.literal(42)
+      iex> Zoi.parse(schema, 42)
+      {:ok, 42}
+      iex> Zoi.parse(schema, 43)
+      {:error, [%Zoi.Error{message: "invalid type: does not match literal"}]}
+  """
+  @doc group: "Basic Types"
+  defdelegate literal(value, opts \\ []), to: Zoi.Types.Literal, as: :new
+
+  @doc """
   Defines a nil type schema.
   This schema only accepts `nil` as valid input.
   ## Example
