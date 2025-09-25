@@ -235,6 +235,34 @@ defmodule ZoiTest do
     end
   end
 
+  describe "literal/2" do
+    test "literal with correct value" do
+      assert {:ok, "hello"} == Zoi.parse(Zoi.literal("hello"), "hello")
+      assert {:ok, 123} == Zoi.parse(Zoi.literal(123), 123)
+      assert {:ok, true} == Zoi.parse(Zoi.literal(true), true)
+      assert {:ok, false} == Zoi.parse(Zoi.literal(false), false)
+      assert {:ok, nil} == Zoi.parse(Zoi.literal(nil), nil)
+      assert {:ok, :atom} == Zoi.parse(Zoi.literal(:atom), :atom)
+    end
+
+    test "literal with incorrect value" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.literal("hello"), "not_hello")
+
+      assert Exception.message(error) == "invalid type: does not match literal"
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.literal(123), 456)
+      assert Exception.message(error) == "invalid type: does not match literal"
+    end
+
+    test "literal with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.literal("hello", error: "custom literal error"), "not_hello")
+
+      assert Exception.message(error) == "custom literal error"
+    end
+  end
+
   describe "null/1" do
     test "null with nil value" do
       assert {:ok, nil} == Zoi.parse(Zoi.null(), nil)
@@ -2101,6 +2129,11 @@ defmodule ZoiTest do
         {Zoi.float(), quote(do: float())},
         {Zoi.integer(), quote(do: integer())},
         {Zoi.intersection([Zoi.string(), Zoi.atom()]), quote(do: binary() | atom())},
+        {Zoi.literal("hello"), quote(do: "hello")},
+        {Zoi.literal(1), quote(do: 1)},
+        {Zoi.literal(true), quote(do: true)},
+        {Zoi.literal(%{hello: "world"}), quote(do: map())},
+        {Zoi.literal(["hello", "world"]), quote(do: list())},
         {Zoi.map(), quote(do: map())},
         {Zoi.map(Zoi.string(), Zoi.integer()), quote(do: %{optional(binary()) => integer()})},
         {Zoi.naive_datetime(), quote(do: NaiveDateTime.t())},
