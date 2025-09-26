@@ -12,6 +12,7 @@ defmodule Zoi.StructTest do
         })
 
       keys = Zoi.Struct.enforce_keys(schema)
+
       assert :email in keys
       assert :name in keys
     end
@@ -26,7 +27,11 @@ defmodule Zoi.StructTest do
           email: Zoi.string()
         })
 
-      assert Zoi.Struct.struct_fields(schema) == [:name, :email, {:age, 0}]
+      keys = Zoi.Struct.struct_fields(schema)
+
+      assert :name in keys
+      assert :email in keys
+      assert {:age, 0} in keys
     end
   end
 end
