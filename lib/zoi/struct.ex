@@ -22,7 +22,6 @@ defmodule Zoi.Struct do
   Returns a list of keys that are required for the struct based on the schema.
   This is useful for defining `@enforce_keys` in Elixir structs.
   """
-  @spec enforce_keys(Zoi.Types.Struct.t()) :: [atom()]
   def enforce_keys(%Zoi.Types.Struct{fields: fields}) do
     Enum.reduce(fields, [], fn {key, type}, acc ->
       if Meta.required?(type.meta) do
@@ -38,11 +37,14 @@ defmodule Zoi.Struct do
   of the form `{key, default_value}`.
   This is useful for defining the fields of an Elixir struct.
   """
-  @spec struct_fields(Zoi.Types.Struct.t()) :: [atom() | {atom(), Zoi.input()}]
   def struct_fields(%Zoi.Types.Struct{fields: fields}) do
     Enum.map(fields, fn
       {key, %Zoi.Types.Default{value: value}} -> {key, value}
       {key, _type} -> key
+    end)
+    |> Enum.sort_by(fn
+      {_, _} -> 1
+      _ -> 0
     end)
   end
 end

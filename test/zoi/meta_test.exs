@@ -215,5 +215,10 @@ defmodule Zoi.MetaTest do
       meta = %Meta{required: false}
       assert Meta.required?(meta) == false
     end
+
+    test "returns false if the meta's required field is nil" do
+      meta = %Meta{required: nil}
+      assert Meta.required?(meta) == false
+    end
   end
 end

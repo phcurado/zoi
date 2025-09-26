@@ -817,9 +817,7 @@ defmodule ZoiTest do
 
     test "struct with missing required field" do
       schema =
-        Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()},
-          coerce: true
-        )
+        Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()}, coerce: true)
 
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{
@@ -852,15 +850,25 @@ defmodule ZoiTest do
 
     test "struct with optional field" do
       schema =
-        Zoi.struct(User, %{
-          name: Zoi.string(),
-          age: Zoi.optional(Zoi.integer())
-        }, coerce: true)
+        Zoi.struct(
+          User,
+          %{
+            name: Zoi.string(),
+            age: Zoi.optional(Zoi.integer())
+          },
+          coerce: true
+        )
 
       assert {:ok, %User{name: "John"}} ==
                Zoi.parse(schema, %{
                  name: "John"
                })
+    end
+
+    test "all keys must be atoms" do
+      assert_raise ArgumentError, "all keys in struct must be atoms", fn ->
+        Zoi.struct(User, %{"name" => Zoi.string(), age: Zoi.integer()})
+      end
     end
   end
 
@@ -2195,9 +2203,11 @@ defmodule ZoiTest do
         {Zoi.float(), quote(do: float())},
         {Zoi.integer(), quote(do: integer())},
         {Zoi.intersection([Zoi.string(), Zoi.atom()]), quote(do: binary() | atom())},
+        {Zoi.literal(nil), quote(do: nil)},
         {Zoi.literal("hello"), quote(do: "hello")},
         {Zoi.literal(1), quote(do: 1)},
         {Zoi.literal(true), quote(do: true)},
+        {Zoi.literal(false), quote(do: false)},
         {Zoi.literal(%{hello: "world"}), quote(do: map())},
         {Zoi.literal(["hello", "world"]), quote(do: list())},
         {Zoi.map(), quote(do: map())},

@@ -24,7 +24,7 @@ defmodule Zoi.StructTest do
           email: Zoi.string()
         })
 
-      assert Zoi.Struct.struct_fields(schema) == [:name, {:age, 0}, :email]
+      assert Zoi.Struct.struct_fields(schema) == [:name, :email, {:age, 0}]
     end
   end
 end
