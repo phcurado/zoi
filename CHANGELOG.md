@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.6.2 - Unreleased
+
+### Added
+
+- `keys` in `Zoi.object/2` data structure
+- `Zoi.struct/2` type to parse structs and maps into structs
+
 ## 0.6.2 - 2025-09-26
 
 ### Added

@@ -204,4 +204,16 @@ defmodule Zoi.MetaTest do
       assert Exception.message(error) == "Value is not a string"
     end
   end
+
+  describe "required?/1" do
+    test "returns true if the meta is marked as required" do
+      meta = %Meta{required: true}
+      assert Meta.required?(meta) == true
+    end
+
+    test "returns false if the meta is not marked as required" do
+      meta = %Meta{required: false}
+      assert Meta.required?(meta) == false
+    end
+  end
 end

@@ -124,4 +124,12 @@ defmodule Zoi.Types.Meta do
       end
     end)
   end
+
+  @spec required?(t()) :: boolean()
+  def required?(%__MODULE__{required: required}) do
+    case required do
+      nil -> false
+      val -> val
+    end
+  end
 end

@@ -1,6 +1,10 @@
 defmodule ZoiTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest Zoi
+
+  defmodule User do
+    defstruct [:name, :age]
+  end
 
   describe "parse/3" do
     test "parse types with custom errors" do
@@ -791,6 +795,72 @@ defmodule ZoiTest do
                %Zoi.Error{message: "unrecognized key: 'wrong_key'", path: [:phone]},
                %Zoi.Error{message: "unrecognized key: 'age'", path: []}
              ]
+    end
+  end
+
+  describe "struct/3" do
+    test "struct with correct value" do
+      schema = Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()})
+
+      assert {:ok, %User{name: "John", age: 30}} ==
+               Zoi.parse(schema, %User{
+                 name: "John",
+                 age: 30
+               })
+    end
+
+    test "struct not a map" do
+      assert_raise ArgumentError, "struct must receive a map", fn ->
+        Zoi.struct(User, "not a map")
+      end
+    end
+
+    test "struct with missing required field" do
+      schema =
+        Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()},
+          coerce: true
+        )
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{
+                 name: "John"
+               })
+
+      assert Exception.message(error) == "is required"
+      assert error.path == [:age]
+    end
+
+    test "struct with incorrect values" do
+      schema = Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()})
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %User{
+                 name: "John",
+                 age: "not an integer"
+               })
+
+      assert Exception.message(error) == "invalid type: must be an integer"
+      assert error.path == [:age]
+    end
+
+    test "struct with non-map input" do
+      schema = Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()}, coerce: true)
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
+      assert Exception.message(error) == "invalid type: must be a struct"
+    end
+
+    test "struct with optional field" do
+      schema =
+        Zoi.struct(User, %{
+          name: Zoi.string(),
+          age: Zoi.optional(Zoi.integer())
+        }, coerce: true)
+
+      assert {:ok, %User{name: "John"}} ==
+               Zoi.parse(schema, %{
+                 name: "John"
+               })
     end
   end
 
@@ -1867,10 +1937,6 @@ defmodule ZoiTest do
   end
 
   describe "to_struct/2" do
-    defmodule User do
-      defstruct [:name, :age]
-    end
-
     test "valid struct conversion" do
       schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
       assert {:ok, %User{name: "Alice", age: 30}} == Zoi.parse(schema, %{name: "Alice", age: 30})
@@ -2170,7 +2236,7 @@ defmodule ZoiTest do
           address: Zoi.optional(Zoi.string())
         })
 
-      assert Zoi.type_spec(schema) |> normalize_map_ast() ==
+      assert Zoi.type_spec(schema) |> normalize_map_or_struct_ast() ==
                quote(
                  do: %{
                    optional(:address) => binary(),
@@ -2183,13 +2249,34 @@ defmodule ZoiTest do
       assert Zoi.type_spec(schema) == quote(do: %{})
     end
 
+    test "struct typespec" do
+      schema =
+        Zoi.struct(User, %{
+          name: Zoi.string(),
+          age: Zoi.integer()
+        })
+
+      left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
+
+      right =
+        quote(
+          do: %User{
+            age: integer(),
+            name: binary()
+          }
+        )
+        |> normalize_map_or_struct_ast()
+
+      assert left == right
+    end
+
     test "extend typespec" do
       schema_1 = Zoi.object(%{age: Zoi.integer()})
       schema_2 = Zoi.object(%{name: Zoi.string()})
 
       schema = Zoi.extend(schema_1, schema_2)
 
-      assert Zoi.type_spec(schema) |> normalize_map_ast() ==
+      assert Zoi.type_spec(schema) |> normalize_map_or_struct_ast() ==
                quote(
                  do: %{
                    required(:age) => integer(),
@@ -2199,7 +2286,7 @@ defmodule ZoiTest do
     end
   end
 
-  defp normalize_map_ast(ast) do
+  defp normalize_map_or_struct_ast(ast) do
     Macro.postwalk(ast, fn
       {:%{}, meta, pairs} when is_list(pairs) ->
         sorted =
@@ -2207,6 +2294,12 @@ defmodule ZoiTest do
             # Sorting by string so we can compare
             Macro.to_string(k)
           end)
+
+        {:%{}, meta, sorted}
+
+      {:%, meta, [mod, {:%{}, meta2, kv}]} ->
+        sorted = Enum.sort_by(kv, fn {k, _} -> Macro.to_string(k) end)
+        {:%, meta, [mod, {:%{}, meta2, sorted}]}
 
         {:%{}, meta, sorted}
 
