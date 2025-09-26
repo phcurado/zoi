@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Object do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:fields, :inner, :strict, :coerce]
+  use Zoi.Type.Def, fields: [:fields, :keys, :inner, :strict, :coerce]
 
   def new(fields, opts) when is_map(fields) or is_list(fields) do
     fields =
@@ -19,10 +19,12 @@ defmodule Zoi.Types.Object do
       |> Zoi.keyword(opts)
       |> Zoi.transform({__MODULE__, :__transform__, []})
 
+    keys = Enum.map(fields, fn {key, _type} -> key end)
+
     opts =
       Keyword.merge([error: "invalid type: must be a map", strict: false, coerce: false], opts)
 
-    apply_type(opts ++ [fields: fields, inner: inner])
+    apply_type(opts ++ [fields: fields, keys: keys, inner: inner])
   end
 
   def new(_fields, _opts) do

@@ -580,6 +580,53 @@ defmodule Zoi do
   defdelegate keyword(fields, opts \\ []), to: Zoi.Types.Keyword, as: :new
 
   @doc """
+  Defines a struct type schema.
+  This type is similar to `Zoi.object/2`, but it is specifically designed to work with Elixir structs.
+
+  ## Example
+
+      defmodule MyApp.User do
+        defstruct [:name, :age, :email]
+      end
+
+      schema = Zoi.struct(MyApp.User, %{
+        name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
+        age: Zoi.integer() |> Zoi.min(18) |> Zoi.max(120),
+        email: Zoi.email()
+      })
+      Zoi.parse(schema, %MyApp.User{name: "Alice", age: 30, email: "alice@email.com"})
+      #=> {:ok, %MyApp.User{name: "Alice", age: 30, email: "alice@email.com"}}
+      Zoi.parse(schema, %{})
+      #=> {:error, "invalid type: must be a struct"}
+
+  By default, all fields are required, but you can make them optional by using `Zoi.optional/1`:
+
+      schema = Zoi.struct(MyApp.User, %{
+        name: Zoi.string() |> Zoi.optional(),
+        age: Zoi.integer() |> Zoi.optional(),
+        email: Zoi.email() |> Zoi.optional()
+      })
+      Zoi.parse(schema, %MyApp.User{name: "Alice"})
+      #=> {:ok, %MyApp.User{name: "Alice"}}
+
+  You can also parse maps into structs by enabling the `:coerce` option:
+      schema = Zoi.struct(MyApp.User, %{
+        name: Zoi.string(),
+        age: Zoi.integer(),
+        email: Zoi.email()
+      }, coerce: true)
+      Zoi.parse(schema, %{name: "Alice", age: 30, email: "alice@email.com"})
+      #=> {:ok, %MyApp.User{name: "Alice", age: 30, email: "alice@email.com"}}
+      # Also with string keys
+      Zoi.parse(schema, %{"name" => "Alice", "age" => 30, "email" => "alice@email.com"})
+      #=> {:ok, %MyApp.User{name: "Alice", age: 30, email: "alice@email.com"}}
+
+
+  """
+  @doc group: "Complex Types"
+  defdelegate struct(module, fields, opts \\ []), to: Zoi.Types.Struct, as: :new
+
+  @doc """
   Extends two object type schemas into one.
   This function merges the fields of two object schemas. If there are overlapping fields, the fields from the second schema will override those from the first.
 
