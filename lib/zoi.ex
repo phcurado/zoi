@@ -617,6 +617,10 @@ defmodule Zoi do
       }, coerce: true)
       Zoi.parse(schema, %{name: "Alice", age: 30, email: "alice@email.com"})
       #=> {:ok, %MyApp.User{name: "Alice", age: 30, email: "alice@email.com"}}
+      # Also with string keys
+      Zoi.parse(schema, %{"name" => "Alice", "age" => 30, "email" => "alice@email.com"})
+      #=> {:ok, %MyApp.User{name: "Alice", age: 30, email: "alice@email.com"}}
+
 
   """
   @doc group: "Complex Types"
