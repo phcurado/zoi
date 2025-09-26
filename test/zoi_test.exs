@@ -865,6 +865,24 @@ defmodule ZoiTest do
                })
     end
 
+    test "coerce map with string keys" do
+      schema =
+        Zoi.struct(
+          User,
+          %{
+            name: Zoi.string(),
+            age: Zoi.integer()
+          },
+          coerce: true
+        )
+
+      assert {:ok, %User{name: "John", age: 30}} ==
+               Zoi.parse(schema, %{
+                 "name" => "John",
+                 "age" => 30
+               })
+    end
+
     test "all keys must be atoms" do
       assert_raise ArgumentError, "all keys in struct must be atoms", fn ->
         Zoi.struct(User, %{"name" => Zoi.string(), age: Zoi.integer()})
