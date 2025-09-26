@@ -19,7 +19,7 @@ defmodule Zoi.Types.Object do
       |> Zoi.keyword(opts)
       |> Zoi.transform({__MODULE__, :__transform__, []})
 
-    keys = Keyword.keys(fields)
+    keys = Enum.map(fields, fn {key, _type} -> key end)
 
     opts =
       Keyword.merge([error: "invalid type: must be a map", strict: false, coerce: false], opts)
