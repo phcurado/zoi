@@ -3,16 +3,17 @@ defmodule Zoi.Struct do
   A helper module to define and validate structs using Zoi schemas.
   This module provides functions to extract `@enforce_keys` and struct fields from a Zoi struct schema.
   It is particularly useful when you want to create Elixir structs that align with Zoi schemas.
+
   ## Examples
       defmodule MyApp.SomeModule do
         @schema Zoi.struct(__MODULE__, %{
-          name: Zoi.string() |> Zoi.required(),
-          age: Zoi.integer() |> Zoi.default(0),
+          name: Zoi.string()
+          age: Zoi.integer() |> Zoi.default(0) |> Zoi.optional(),
           email: Zoi.string()
         })
 
         @enforce_keys Zoi.Struct.enforce_keys(schema) # [:name]
-        defstruct Zoi.Struct.struct_fields(schema) # [:name, {:age, 0}, :email]
+        defstruct Zoi.Struct.struct_fields(schema) # [:name, :email, {:age, 0}]
       end
   """
 
