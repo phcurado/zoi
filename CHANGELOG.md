@@ -2,12 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.6.2 - Unreleased
+## 0.6.3 - 2025-09-27
 
 ### Added
 
 - `keys` in `Zoi.object/2` data structure
 - `Zoi.struct/2` type to parse structs and maps into structs
+- `Zoi.Struct` module with helper functions to work with structs. This module offers two main functions:
+  - `Zoi.Struct.enforce_keys/1`: List of keys that must be present in the struct
+  - `Zoi.Struct.struct_keys/1`: List of keys and their default values to be used with `defstruct`
 
 ## 0.6.2 - 2025-09-26
 
