@@ -955,6 +955,7 @@ defmodule Zoi do
 
   @doc """
   Validates that the string is a valid IPv6 address.
+
   ## Example
 
       iex> schema = Zoi.ipv6()
@@ -973,6 +974,14 @@ defmodule Zoi do
 
   @doc """
   Validates that the string is a valid hexadecimal format.
+
+  ## Example
+
+      iex> schema = Zoi.hex()
+      iex> Zoi.parse(schema, "a3c113")
+      {:ok, "a3c113"}
+      iex> Zoi.parse(schema, "invalid-hex")
+      {:error, [%Zoi.Error{message: "invalid hex format"}]}
   """
   @doc group: "Formats"
   def hex() do
