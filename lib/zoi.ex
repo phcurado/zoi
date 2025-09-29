@@ -971,6 +971,17 @@ defmodule Zoi do
     )
   end
 
+  @doc """
+  Validates that the string is a valid hexadecimal format.
+  """
+  @doc group: "Formats"
+  def hex() do
+    Zoi.string()
+    |> regex(Regexes.hex(),
+      message: "invalid hex format"
+    )
+  end
+
   # Refinements
 
   @doc """
