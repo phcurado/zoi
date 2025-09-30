@@ -83,8 +83,8 @@ And many more possibilities, including nested schemas, custom validations and da
 
 ```elixir
 defmodule MyApp.Schema do
-    @schema Zoi.string() |> Zoi.min(2) |> Zoi.max(100)
-    @type t :: unquote(Zoi.type_spec(@schema))
+  @schema Zoi.string() |> Zoi.min(2) |> Zoi.max(100)
+  @type t :: unquote(Zoi.type_spec(@schema))
 end
 ```
 
@@ -98,12 +98,12 @@ This also applies to complex types, such as `Zoi.object/2`:
 
 ```elixir
 defmodule MyApp.User do
-    @schema Zoi.object(%{
-        name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
-        age: Zoi.integer() |> Zoi.optional(),
-        email: Zoi.email()
-    })
-    @type t :: unquote(Zoi.type_spec(@schema))
+  @schema Zoi.object(%{
+    name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
+    age: Zoi.integer() |> Zoi.optional(),
+    email: Zoi.email()
+  })
+  @type t :: unquote(Zoi.type_spec(@schema))
 end
 ```
 
@@ -111,9 +111,9 @@ Which will generate:
 
 ```elixir
 @type t :: %{
-    required(:name) => binary(),
-    optional(:age) => integer(),
-    required(:email) => binary()
+  required(:name) => binary(),
+  optional(:age) => integer(),
+  required(:email) => binary()
 }
 ```
 
@@ -135,17 +135,17 @@ You can view the error in a map format using the `Zoi.treefy_errors/1` function:
 ```elixir
 iex> Zoi.treefy_errors(errors)
 %{
-    name: ["invalid type: must be a string"],
-    age: ["invalid type: must be an integer"]
+  name: ["invalid type: must be a string"],
+  age: ["invalid type: must be an integer"]
 }
 ```
 
 You can also customize error messages using the `Zoi.message/2` function:
 
 ```elixir
-iex> schema = Zoi.string(error: "Min of 3 characters") |> Zoi.min(3)
-iex> Zoi.parse(schema, "hi")
-{:error, [%Zoi.Error{message: "Min of 3 characters"}]}
+iex> schema = Zoi.string(error: "not a string")
+iex> Zoi.parse(schema, :hi)
+{:error, [%Zoi.Error{message: "not a string"}]}
 ```
 
 ## Acknowledgements
