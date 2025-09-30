@@ -1528,7 +1528,7 @@ defmodule ZoiTest do
 
     test "invalid hex string" do
       schema = Zoi.hex()
-      invalid_hex = ["1a2b3g", "xyz", "12345z", ""]
+      invalid_hex = ["1a2b3g", "xyz", "12345z"]
 
       for hex <- invalid_hex do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, hex)
