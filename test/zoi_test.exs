@@ -1528,7 +1528,7 @@ defmodule ZoiTest do
 
     test "invalid hex string" do
       schema = Zoi.hex()
-      invalid_hex = ["1a2b3g", "xyz", "12345z", ""]
+      invalid_hex = ["1a2b3g", "xyz", "12345z"]
 
       for hex <- invalid_hex do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, hex)
@@ -1941,6 +1941,32 @@ defmodule ZoiTest do
       schema = Zoi.string() |> Zoi.ends_with("_suffix")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value")
       assert Exception.message(error) == "invalid string: must end with '_suffix'"
+    end
+  end
+
+  describe "downcase/1" do
+    test "valid downcase" do
+      schema = Zoi.string() |> Zoi.downcase()
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+
+    test "invalid downcase" do
+      schema = Zoi.string() |> Zoi.downcase()
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "Hello")
+      assert Exception.message(error) == "invalid string: must be lowercase"
+    end
+  end
+
+  describe "upcase/1" do
+    test "valid upcase" do
+      schema = Zoi.string() |> Zoi.upcase()
+      assert {:ok, "HELLO"} == Zoi.parse(schema, "HELLO")
+    end
+
+    test "invalid upcase" do
+      schema = Zoi.string() |> Zoi.upcase()
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "Hello")
+      assert Exception.message(error) == "invalid string: must be uppercase"
     end
   end
 

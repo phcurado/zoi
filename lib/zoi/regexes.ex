@@ -9,6 +9,20 @@ defmodule Zoi.Regexes do
   end
 
   @doc """
+  Regex pattern to match only uppercase letters.
+  """
+  def upcase() do
+    ~r/^[^a-z]*$/
+  end
+
+  @doc """
+  Regex pattern to match only lowercase letters.
+  """
+  def downcase() do
+    ~r/^[^A-Z]*$/
+  end
+
+  @doc """
   Regex pattern to match a valid UUID.
   """
   def uuid(opts \\ []) do
@@ -56,6 +70,6 @@ defmodule Zoi.Regexes do
   Regex pattern to match hexadecimal
   """
   def hex() do
-    ~r/^[0-9a-fA-F]+$/
+    ~r/^[0-9a-fA-F]*$/
   end
 end

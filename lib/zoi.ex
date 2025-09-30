@@ -184,6 +184,10 @@ defmodule Zoi do
       |> Zoi.trim()
       |> Zoi.to_downcase()
       |> Zoi.to_uppercase()
+
+  for coercion, you can pass the `:coerce` option:
+      iex> Zoi.string(coerce: true) |> Zoi.parse(123)
+      {:ok, "123"}
   """
   @doc group: "Basic Types"
   defdelegate string(opts \\ []), to: Zoi.Types.String, as: :new
@@ -196,11 +200,12 @@ defmodule Zoi do
       iex> shema = Zoi.integer()
       iex> Zoi.parse(shema, 42)
       {:ok, 42}
+      iex> Zoi.parse(shema, "42")
+      {:error, [%Zoi.Error{message: "invalid type: must be an integer"}]}
 
-  Built-in validations for integers include:
-
-      Zoi.min(0)
-      Zoi.max(100)
+  For coercion, you can pass the `:coerce` option:
+      iex> Zoi.integer(coerce: true) |> Zoi.parse("42")
+      {:ok, 42}
   """
   @doc group: "Basic Types"
   defdelegate integer(opts \\ []), to: Zoi.Types.Integer, as: :new
@@ -236,6 +241,8 @@ defmodule Zoi do
       {:ok, 42}
       iex> Zoi.parse(schema, 3.14)
       {:ok, 3.14}
+      iex> Zoi.parse(schema, "42")
+      {:error, [%Zoi.Error{message: "invalid type: must be a number"}]}
   """
   @doc group: "Basic Types"
   defdelegate number(opts \\ []), to: Zoi.Types.Number, as: :new
@@ -1192,6 +1199,47 @@ defmodule Zoi do
   def ends_with(schema, suffix, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[ends_with: suffix], opts]})
+  end
+
+  @doc """
+  Validates that a string is in downcase.
+
+  ## Example
+
+      iex> schema = Zoi.string() |> Zoi.downcase()
+      iex> Zoi.parse(schema, "hello world")
+      {:ok, "hello world"}
+      iex> Zoi.parse(schema, "Hello World")
+      {:error, [%Zoi.Error{message: "invalid string: must be lowercase"}]}
+  """
+  @doc group: "Refinements"
+  @spec downcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  def downcase(schema) do
+    schema
+    |> regex(Regexes.downcase(),
+      message: "invalid string: must be lowercase"
+    )
+  end
+
+  @doc """
+  Validates that a string is in upcase.
+
+  ## Example
+
+      iex> schema = Zoi.string() |> Zoi.upcase()
+      iex> Zoi.parse(schema, "HELLO")
+      {:ok, "HELLO"}
+      iex> Zoi.parse(schema, "Hello")
+      {:error, [%Zoi.Error{message: "invalid string: must be uppercase"}]}
+
+  """
+  @doc group: "Refinements"
+  @spec upcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  def upcase(schema) do
+    schema
+    |> regex(Regexes.upcase(),
+      message: "invalid string: must be uppercase"
+    )
   end
 
   # Transforms
