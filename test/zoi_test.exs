@@ -1944,6 +1944,32 @@ defmodule ZoiTest do
     end
   end
 
+  describe "downcase/1" do
+    test "valid downcase" do
+      schema = Zoi.string() |> Zoi.downcase()
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+
+    test "invalid downcase" do
+      schema = Zoi.string() |> Zoi.downcase()
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "Hello")
+      assert Exception.message(error) == "invalid string: must be lowercase"
+    end
+  end
+
+  describe "upcase/1" do
+    test "valid upcase" do
+      schema = Zoi.string() |> Zoi.upcase()
+      assert {:ok, "HELLO"} == Zoi.parse(schema, "HELLO")
+    end
+
+    test "invalid upcase" do
+      schema = Zoi.string() |> Zoi.upcase()
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "Hello")
+      assert Exception.message(error) == "invalid string: must be uppercase"
+    end
+  end
+
   describe "trim/2" do
     test "trim whitespace" do
       schema = Zoi.string() |> Zoi.trim()
