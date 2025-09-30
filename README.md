@@ -140,7 +140,7 @@ iex> Zoi.treefy_errors(errors)
 }
 ```
 
-You can also customize error messages using the `Zoi.message/2` function:
+You can also customize error messages:
 
 ```elixir
 iex> schema = Zoi.string(error: "not a string")
