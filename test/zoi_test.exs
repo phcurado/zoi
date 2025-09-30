@@ -1519,6 +1519,27 @@ defmodule ZoiTest do
     end
   end
 
+  describe "hex/0" do
+    test "valid hex string" do
+      schema = Zoi.hex()
+      assert {:ok, "1a2b3c"} == Zoi.parse(schema, "1a2b3c")
+      assert {:ok, "ABCDEF"} == Zoi.parse(schema, "ABCDEF")
+    end
+
+    test "invalid hex string" do
+      schema = Zoi.hex()
+      invalid_hex = ["1a2b3g", "xyz", "12345z", ""]
+
+      for hex <- invalid_hex do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, hex)
+        assert Exception.message(error) == "invalid hex format"
+      end
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, nil)
+      assert Exception.message(error) == "invalid type: must be a string"
+    end
+  end
+
   describe "min/2" do
     test "min for string" do
       schema = Zoi.string() |> Zoi.min(5)

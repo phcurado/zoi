@@ -160,6 +160,12 @@ defmodule Zoi do
 
   ## Example
 
+      iex> schema = Zoi.string()
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, :world)
+      {:error, [%Zoi.Error{message: "invalid type: must be a string"}]}
+
   Zoi provides built-in validations for strings, such as:
 
       Zoi.gt(100)
@@ -955,6 +961,7 @@ defmodule Zoi do
 
   @doc """
   Validates that the string is a valid IPv6 address.
+
   ## Example
 
       iex> schema = Zoi.ipv6()
@@ -968,6 +975,25 @@ defmodule Zoi do
     Zoi.string()
     |> regex(Regexes.ipv6(),
       message: "invalid IPv6 address"
+    )
+  end
+
+  @doc """
+  Validates that the string is a valid hexadecimal format.
+
+  ## Example
+
+      iex> schema = Zoi.hex()
+      iex> Zoi.parse(schema, "a3c113")
+      {:ok, "a3c113"}
+      iex> Zoi.parse(schema, "invalid-hex")
+      {:error, [%Zoi.Error{message: "invalid hex format"}]}
+  """
+  @doc group: "Formats"
+  def hex() do
+    Zoi.string()
+    |> regex(Regexes.hex(),
+      message: "invalid hex format"
     )
   end
 
