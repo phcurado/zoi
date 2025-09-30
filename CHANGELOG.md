@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.6.4 - Unreleased
+
+### Added
+
+- `Zoi.downcase/1` refinement to validate if a string is in lowercase
+- `Zoi.upcase/1` refinement to validate if a string is in uppercase
+- `Zoi.hex/1` refinement to validate if a string is a valid hexadecimal
+
 ## 0.6.3 - 2025-09-27
 
 ### Added
