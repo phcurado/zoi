@@ -160,6 +160,12 @@ defmodule Zoi do
 
   ## Example
 
+      iex> schema = Zoi.string()
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, :world)
+      {:error, [%Zoi.Error{message: "invalid type: must be a string"}]}
+
   Zoi provides built-in validations for strings, such as:
 
       Zoi.gt(100)
