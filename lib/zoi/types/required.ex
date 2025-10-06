@@ -6,6 +6,7 @@ defmodule Zoi.Types.Required do
   alias Zoi.Types.Meta
 
   def new(inner, _opts) do
-    %{inner | meta: %Meta{inner.meta | required: true}}
+    meta = %Meta{} = inner.meta
+    %{inner | meta: %{meta | required: true}}
   end
 end
