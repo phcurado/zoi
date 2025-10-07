@@ -2406,6 +2406,20 @@ defmodule ZoiTest do
     end
   end
 
+  describe "metadata/1" do
+    test "all main types metadata" do
+      types = [
+        Zoi.any(metadata: [description: "metadata"]),
+        Zoi.array(Zoi.string(), metadata: [description: "metadata"]),
+        Zoi.string(metadata: [description: "metadata"])
+      ]
+
+      Enum.each(types, fn schema ->
+        assert Zoi.metadata(schema) == [description: "metadata"]
+      end)
+    end
+  end
+
   defp normalize_map_or_struct_ast(ast) do
     Macro.postwalk(ast, fn
       {:%{}, meta, pairs} when is_list(pairs) ->

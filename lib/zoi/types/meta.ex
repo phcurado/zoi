@@ -6,10 +6,18 @@ defmodule Zoi.Types.Meta do
           transforms: [Zoi.transform()],
           error: nil | binary(),
           required: boolean(),
-          example: Zoi.input()
+          example: Zoi.input(),
+          metadata: [keyword()]
         }
 
-  @struct_fields [refinements: [], transforms: [], required: nil, error: nil, example: nil]
+  @struct_fields [
+    refinements: [],
+    transforms: [],
+    metadata: [],
+    required: nil,
+    error: nil,
+    example: nil
+  ]
   @struct_keys Keyword.keys(@struct_fields)
 
   defstruct @struct_fields
