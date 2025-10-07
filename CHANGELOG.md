@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.6.5 - 2025-10-07
+
+### Added
+
+- `Zoi.example/1` option to add example values to types for documentation purposes
+
 ## 0.6.4 - 2025-09-30
 
 ### Added
