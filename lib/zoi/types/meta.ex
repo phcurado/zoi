@@ -5,10 +5,11 @@ defmodule Zoi.Types.Meta do
           refinements: [Zoi.refinement()],
           transforms: [Zoi.transform()],
           error: nil | binary(),
-          required: boolean()
+          required: boolean(),
+          example: Zoi.input()
         }
 
-  @struct_fields [refinements: [], transforms: [], required: nil, error: nil]
+  @struct_fields [refinements: [], transforms: [], required: nil, error: nil, example: nil]
   @struct_keys Keyword.keys(@struct_fields)
 
   defstruct @struct_fields

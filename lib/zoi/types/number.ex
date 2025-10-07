@@ -7,6 +7,8 @@ defmodule Zoi.Types.Number do
 
     error = meta.error || "invalid type: must be a number"
 
-    Zoi.union([Zoi.integer(error: error), Zoi.float(error: error)], opts)
+    opts = Keyword.merge(opts, error: error, example: meta.example)
+
+    Zoi.union([Zoi.integer(), Zoi.float()], opts)
   end
 end

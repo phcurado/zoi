@@ -2361,6 +2361,51 @@ defmodule ZoiTest do
     end
   end
 
+  describe "example/1" do
+    test "all main types examples" do
+      types = [
+        Zoi.any(example: :example),
+        Zoi.array(Zoi.string(), example: ["example"]),
+        Zoi.atom(example: :example),
+        Zoi.boolean(example: true),
+        Zoi.date(example: ~D[2023-01-01]),
+        Zoi.datetime(example: ~U[2023-01-01 00:00:00Z]),
+        Zoi.decimal(example: Decimal.new("123.45")),
+        Zoi.default(Zoi.string(), "default", example: "default"),
+        Zoi.enum(["a", "b", "c"], example: "a"),
+        Zoi.float(example: 1.23),
+        Zoi.integer(example: 123),
+        Zoi.intersection([Zoi.string(coerce: true), Zoi.atom()], example: :example),
+        Zoi.literal("true", example: "true"),
+        Zoi.map(example: %{"key" => "value"}),
+        Zoi.naive_datetime(example: ~N[2023-01-01 00:00:00]),
+        Zoi.null(example: nil),
+        Zoi.nullable(Zoi.string(), example: nil),
+        Zoi.number(example: 123),
+        Zoi.optional(Zoi.string(example: "example")),
+        Zoi.string(example: "example"),
+        Zoi.string_boolean(example: true),
+        Zoi.time(example: ~T[12:34:56]),
+        Zoi.tuple({Zoi.string(), Zoi.integer(), Zoi.any()}, example: {"example", 123, :any}),
+        Zoi.union([Zoi.integer(), Zoi.float()], example: 1.5),
+        Zoi.keyword([name: Zoi.string(), age: Zoi.integer()],
+          example: [name: "example", age: 123]
+        ),
+        Zoi.object(%{name: Zoi.string(), age: Zoi.integer()},
+          example: %{name: "example", age: 123}
+        ),
+        Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()},
+          example: %User{name: "example", age: 123}
+        )
+      ]
+
+      Enum.each(types, fn schema ->
+        example = Zoi.example(schema)
+        assert Zoi.parse(schema, example) == {:ok, example}
+      end)
+    end
+  end
+
   defp normalize_map_or_struct_ast(ast) do
     Macro.postwalk(ast, fn
       {:%{}, meta, pairs} when is_list(pairs) ->
