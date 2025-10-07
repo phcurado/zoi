@@ -153,6 +153,49 @@ defmodule Zoi do
     Zoi.Type.type_spec(schema, opts)
   end
 
+  @doc """
+  Retrieves an example value from the schema, if one is defined.
+  If no example is defined, it returns `nil`.
+
+  ## Example
+
+      iex> schema = Zoi.string(example: "example string")
+      iex> Zoi.example(schema)
+      "example string"
+
+  The example is specally useful for documentation and testing purposes.
+  As an example, you can define a schema with an example:
+
+      defmodule MyApp.UserSchema do
+        @schema Zoi.object(%{
+          name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100) |> Zoi.example("Alice"),
+          age: Zoi.integer() |> Zoi.optional() |> Zoi.example(30)
+        }, %{name: "Alice", age: 30})
+
+        @type t :: unquote(Zoi.type_spec(@schema))
+
+        def schema, do: @schema
+      end
+
+  Then you can test if the example matches the schema:
+
+      defmodule MyApp.UserSchemaTest do
+        use ExUnit.Case
+
+        alias MyApp.UserSchema
+
+        test "example matches schema" do
+          example = Zoi.example(UserSchema.schema())
+          assert {:ok, _} = Zoi.parse(UserSchema.schema(), example)
+        end
+      end
+  """
+  @doc group: "Parsing"
+  @spec example(schema :: Zoi.Type.t()) :: input()
+  def example(schema) do
+    schema.meta.example
+  end
+
   # Types
 
   @doc """
@@ -375,7 +418,7 @@ defmodule Zoi do
       {:ok, %{}}
   """
   @doc group: "Encapsulated Types"
-  defdelegate optional(inner, opts \\ []), to: Zoi.Types.Optional, as: :new
+  defdelegate optional(inner), to: Zoi.Types.Optional, as: :new
 
   @doc """
   Makes the schema required for the `Zoi.object/2` and `Zoi.keyword/2` types.
@@ -387,7 +430,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
   """
   @doc group: "Encapsulated Types"
-  defdelegate required(inner, opts \\ []), to: Zoi.Types.Required, as: :new
+  defdelegate required(inner), to: Zoi.Types.Required, as: :new
 
   @doc """
   Defines a schema that allows `nil` values.
@@ -400,7 +443,7 @@ defmodule Zoi do
       {:ok, "hello"}
   """
   @doc group: "Encapsulated Types"
-  defdelegate nullable(opts \\ []), to: Zoi.Types.Nullable, as: :new
+  defdelegate nullable(inner, opts \\ []), to: Zoi.Types.Nullable, as: :new
 
   @doc """
   Creates a default value for the schema.
