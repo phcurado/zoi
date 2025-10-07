@@ -195,6 +195,21 @@ defmodule Zoi do
     schema.meta.example
   end
 
+  @doc """
+  Retrieves the metadata associated with the schema.
+  It's often useful to store additional information about the schema, such as descriptions, titles, or custom identifiers.
+
+  ## Example
+
+      iex> schema = Zoi.string(metadata: [id: "1", description: "A simple string"])
+      iex> Zoi.metadata(schema)
+      [id: "1", description: "A simple string"]
+  """
+  @doc group: "Parsing"
+  def metadata(schema) do
+    schema.meta.metadata
+  end
+
   # Types
 
   @doc """
