@@ -154,8 +154,7 @@ defmodule Zoi do
   end
 
   @doc """
-  Retrieves an example value from the schema, if one is defined.
-  If no example is defined, it returns `nil`.
+  Retrieves an example value from the schema. If no example is defined, it returns `nil`.
 
   ## Example
 
@@ -163,16 +162,17 @@ defmodule Zoi do
       iex> Zoi.example(schema)
       "example string"
 
-  The example is specally useful for documentation and testing purposes.
-  As an example, you can define a schema with an example:
+  This directive is specally useful for documentation and testing purposes.
+  As an example, you can define a schema as it follows:
 
       defmodule MyApp.UserSchema do
-        @schema Zoi.object(%{
-          name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100) |> Zoi.example("Alice"),
-          age: Zoi.integer() |> Zoi.optional() |> Zoi.example(30)
-        }, %{name: "Alice", age: 30})
-
-        @type t :: unquote(Zoi.type_spec(@schema))
+        @schema Zoi.object(
+                  %{
+                    name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
+                    age: Zoi.integer() |> Zoi.optional()
+                  },
+                  example: %{name: "Alice", age: 30}
+                )
 
         def schema, do: @schema
       end
@@ -181,12 +181,11 @@ defmodule Zoi do
 
       defmodule MyApp.UserSchemaTest do
         use ExUnit.Case
-
         alias MyApp.UserSchema
 
         test "example matches schema" do
           example = Zoi.example(UserSchema.schema())
-          assert {:ok, _} = Zoi.parse(UserSchema.schema(), example)
+          assert {:ok, example} == Zoi.parse(UserSchema.schema(), example)
         end
       end
   """
