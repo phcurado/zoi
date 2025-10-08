@@ -150,7 +150,7 @@ iex> Zoi.parse(schema, :hi)
 
 ### Metadata
 
-You can attach metadata to schemas using the `:metadata` option. This metadata can be useful for documentation or other purposes.
+You can attach metadata to schemas using the `:metadata` option. This metadata can be useful for documentation, testing, or other any purpose your application may require.
 
 ```elixir
 iex> schema = Zoi.string(metadata: [id: "1", description: "A simple string"])
@@ -158,7 +158,7 @@ iex> Zoi.metadata(schema)
 [id: "1", description: "A simple string"]
 ```
 
-You can also add an example helper that can be used on your tests and documentation:
+You can use this feature to create self-documenting schemas, with example and tests. For example:
 
 ```elixir
 defmodule MyApp.UserSchema do
@@ -173,6 +173,7 @@ defmodule MyApp.UserSchema do
               moduledoc: "Schema representing a user with name and optional age"
             ]
           )
+
   @moduledoc """
   #{Zoi.metadata(@schema)[:moduledoc]}
   """
