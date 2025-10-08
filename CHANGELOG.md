@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - `Zoi.metadata/1` - option to add metadata to types for documentation purposes
 
+### Changed
+
+- `Zoi.example/1` deprecated in favor of `Zoi.metadata/1`
+
 ## 0.6.5 - 2025-10-07
 
 ### Added

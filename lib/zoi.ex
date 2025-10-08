@@ -189,13 +189,14 @@ defmodule Zoi do
         end
       end
   """
+  @doc deprecated: "Use Zoi.metadata/1 instead"
   @doc group: "Parsing"
   @spec example(schema :: Zoi.Type.t()) :: input()
   def example(schema) do
     schema.meta.example
   end
 
-  @doc """
+  @doc ~S"""
   Retrieves the metadata associated with the schema.
   It's often useful to store additional information about the schema, such as descriptions, titles, or custom identifiers.
 
@@ -204,8 +205,43 @@ defmodule Zoi do
       iex> schema = Zoi.string(metadata: [id: "1", description: "A simple string"])
       iex> Zoi.metadata(schema)
       [id: "1", description: "A simple string"]
+
+  You can also add an example helper that can be used on your tests and documentation:
+
+      defmodule MyApp.UserSchema do
+        @schema Zoi.object(
+                  %{
+                    name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
+                    age: Zoi.integer() |> Zoi.optional()
+                  },
+                  metadata: [
+                    example: %{name: "Alice", age: 30},
+                    doc: "A user schema with name and optional age",
+                    moduledoc: "Schema representing a user with name and optional age"
+                  ]
+                )
+        @moduledoc \"""
+        #{Zoi.metadata(@schema)[:moduledoc]}
+        \"""
+
+        @doc \"""
+        #{Zoi.metadata(@schema)[:doc]}
+        \"""
+        def schema, do: @schema
+      end
+
+      defmodule MyApp.UserSchemaTest do
+        use ExUnit.Case
+        alias MyApp.UserSchema
+
+        test "example matches schema" do
+          example = Zoi.metadata(UserSchema.schema())[:example]
+          assert {:ok, example} == Zoi.parse(UserSchema.schema(), example)
+        end
+      end
   """
   @doc group: "Parsing"
+  @spec metadata(schema :: Zoi.Type.t()) :: keyword()
   def metadata(schema) do
     schema.meta.metadata
   end
@@ -1186,6 +1222,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 0)
       {:error, [%Zoi.Error{message: "too small: must be greater than 0"}]}
   """
+  @doc group: "Refinements"
   @spec positive(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
   def positive(schema, opts \\ []) do
     schema
@@ -1202,6 +1239,7 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 0)
       {:error, [%Zoi.Error{message: "too big: must be less than 0"}]}
   """
+  @doc group: "Refinements"
   @spec negative(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
   def negative(schema, opts \\ []) do
     schema
