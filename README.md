@@ -148,6 +148,52 @@ iex> Zoi.parse(schema, :hi)
 {:error, [%Zoi.Error{message: "not a string"}]}
 ```
 
+### Metadata
+
+You can attach metadata to schemas using the `:metadata` option. This metadata can be useful for documentation or other purposes.
+
+```elixir
+iex> schema = Zoi.string(metadata: [id: "1", description: "A simple string"])
+iex> Zoi.metadata(schema)
+[id: "1", description: "A simple string"]
+```
+
+You can also add an example helper that can be used on your tests and documentation:
+
+```elixir
+defmodule MyApp.UserSchema do
+  @schema Zoi.object(
+            %{
+              name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
+              age: Zoi.integer() |> Zoi.optional()
+            },
+            metadata: [
+              example: %{name: "Alice", age: 30},
+              doc: "A user schema with name and optional age",
+              moduledoc: "Schema representing a user with name and optional age"
+            ]
+          )
+  @moduledoc """
+  #{Zoi.metadata(@schema)[:moduledoc]}
+  """
+
+  @doc """
+  #{Zoi.metadata(@schema)[:doc]}
+  """
+  def schema, do: @schema
+end
+
+defmodule MyApp.UserSchemaTest do
+  use ExUnit.Case
+  alias MyApp.UserSchema
+
+  test "example matches schema" do
+    example = Zoi.metadata(UserSchema.schema())[:example]
+    assert {:ok, example} == Zoi.parse(UserSchema.schema(), example)
+  end
+end
+```
+
 ## Acknowledgements
 
 `Zoi` is inspired by [Zod](https://zod.dev/) and [Joi](https://joi.dev/), providing a similar experience for Elixir.
