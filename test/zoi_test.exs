@@ -147,6 +147,29 @@ defmodule ZoiTest do
         assert Exception.message(error) == "invalid type: must be a number"
       end
     end
+
+    test "number with coercion" do
+      assert {:ok, 12.34} == Zoi.parse(Zoi.number(coerce: true), "12.34")
+      assert {:ok, 0} == Zoi.parse(Zoi.number(), "0", coerce: true)
+      assert {:ok, -1} == Zoi.parse(Zoi.number(), "-1", coerce: true)
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.number(), "not_number", coerce: true)
+
+      assert Exception.message(error) == "invalid type: must be a number"
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.number(), "34.not", coerce: true)
+
+      assert Exception.message(error) == "invalid type: must be a number"
+    end
+
+    test "number with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.number(error: "custom number error"), "not a number")
+
+      assert Exception.message(error) == "custom number error"
+    end
   end
 
   describe "boolean/1" do
@@ -1078,6 +1101,15 @@ defmodule ZoiTest do
       assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
     end
 
+    test "array with no arguments should create a `any` array" do
+      schema = Zoi.array()
+
+      assert %{inner: %Zoi.Types.Any{}} = schema
+
+      assert {:ok, [1, "two", 3.0, true, nil, %{}, []]} ==
+               Zoi.parse(schema, [1, "two", 3.0, true, nil, %{}, []])
+    end
+
     test "array with incorrect value" do
       schema = Zoi.array(Zoi.integer())
 
@@ -1568,6 +1600,13 @@ defmodule ZoiTest do
       assert Exception.message(error) == "too small: must be at least 10.5"
     end
 
+    test "min for number" do
+      schema = Zoi.number() |> Zoi.min(10.5)
+      assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 9.99)
+      assert Exception.message(error) == "too small: must be at least 10.5"
+    end
+
     test "min for array" do
       schema = Zoi.array(Zoi.integer()) |> Zoi.min(3)
       assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
@@ -1594,6 +1633,14 @@ defmodule ZoiTest do
 
     test "gte for float" do
       schema = Zoi.float() |> Zoi.gte(10.5)
+      assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
+      assert {:ok, 10.5} == Zoi.parse(schema, 10.5)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 9.99)
+      assert Exception.message(error) == "too small: must be at least 10.5"
+    end
+
+    test "gte for number" do
+      schema = Zoi.number() |> Zoi.gte(10.5)
       assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
       assert {:ok, 10.5} == Zoi.parse(schema, 10.5)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 9.99)
@@ -1670,6 +1717,13 @@ defmodule ZoiTest do
       assert Exception.message(error) == "too small: must be greater than 10.5"
     end
 
+    test "gt for number" do
+      schema = Zoi.number() |> Zoi.gt(10.5)
+      assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10.5)
+      assert Exception.message(error) == "too small: must be greater than 10.5"
+    end
+
     test "gt for decimal" do
       schema = Zoi.decimal() |> Zoi.gt(Decimal.new("10.5"))
       assert {:ok, Decimal.new("12.34")} == Zoi.parse(schema, "12.34", coerce: true)
@@ -1735,6 +1789,13 @@ defmodule ZoiTest do
       assert Exception.message(error) == "too big: must be at most 10.5"
     end
 
+    test "max for number" do
+      schema = Zoi.number() |> Zoi.max(10.5)
+      assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
+      assert Exception.message(error) == "too big: must be at most 10.5"
+    end
+
     test "max for decimal" do
       schema = Zoi.decimal() |> Zoi.max(Decimal.new("10.5"))
       assert {:ok, Decimal.new("9.99")} == Zoi.parse(schema, "9.99", coerce: true)
@@ -1769,6 +1830,14 @@ defmodule ZoiTest do
 
     test "lte for float" do
       schema = Zoi.float() |> Zoi.lte(10.5)
+      assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
+      assert {:ok, 10.5} == Zoi.parse(schema, 10.5)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
+      assert Exception.message(error) == "too big: must be at most 10.5"
+    end
+
+    test "lte for number" do
+      schema = Zoi.number() |> Zoi.lte(10.5)
       assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
       assert {:ok, 10.5} == Zoi.parse(schema, 10.5)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
@@ -1841,6 +1910,13 @@ defmodule ZoiTest do
 
     test "lt for float" do
       schema = Zoi.float() |> Zoi.lt(10.5)
+      assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10.5)
+      assert Exception.message(error) == "too big: must be less than 10.5"
+    end
+
+    test "lt for number" do
+      schema = Zoi.number() |> Zoi.lt(10.5)
       assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10.5)
       assert Exception.message(error) == "too big: must be less than 10.5"
@@ -2286,7 +2362,7 @@ defmodule ZoiTest do
         {Zoi.naive_datetime(), quote(do: NaiveDateTime.t())},
         {Zoi.null(), quote(do: nil)},
         {Zoi.nullable(Zoi.string()), quote(do: binary() | nil)},
-        {Zoi.number(), quote(do: integer() | float())},
+        {Zoi.number(), quote(do: number())},
         {Zoi.optional(Zoi.string()), quote(do: binary())},
         {Zoi.string(), quote(do: binary())},
         {Zoi.string_boolean(), quote(do: boolean())},
@@ -2294,7 +2370,7 @@ defmodule ZoiTest do
         {Zoi.tuple({Zoi.string(), Zoi.integer(), Zoi.any()}),
          quote(do: {binary(), integer(), any()})},
         {Zoi.union([Zoi.string(), Zoi.integer(), Zoi.number()]),
-         quote(do: binary() | integer() | integer() | float())}
+         quote(do: binary() | integer() | number())}
       ]
 
       Enum.each(types, fn {schema, expected} ->

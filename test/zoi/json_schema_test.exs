@@ -1,0 +1,64 @@
+defmodule Zoi.JSONSchemaTest do
+  use ExUnit.Case, async: true
+
+  alias Zoi.JSONSchema
+
+  describe "encode/1" do
+    @schemas_and_expected_outputs [
+      {"string", Zoi.string(), %{type: :string}},
+      {"integer", Zoi.integer(), %{type: :integer}},
+      {"float", Zoi.float(), %{type: :number}},
+      {"number", Zoi.number(), %{type: :number}},
+      {"boolean", Zoi.boolean(), %{type: :boolean}},
+      {"literal", Zoi.literal("fixed"), %{const: "fixed"}},
+      {"null", Zoi.null(), %{type: :null}},
+      {"array", Zoi.array(Zoi.integer()), %{type: :array, items: %{type: :integer}}},
+      {"any array", Zoi.array(), %{type: :array}},
+      {"tuple", Zoi.tuple({Zoi.string(), Zoi.integer()}),
+       %{type: :array, prefixItems: [%{type: :string}, %{type: :integer}]}},
+      {"enum", Zoi.enum(["red", "green", "blue"]),
+       %{type: :string, enum: ["red", "green", "blue"]}},
+      {"any object", Zoi.map(), %{type: :object}},
+      {"intersection", Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
+       %{allOf: [%{type: :string}, %{const: "fixed"}]}},
+      {"union", Zoi.union([Zoi.string(), Zoi.integer()]),
+       %{anyOf: [%{type: :string}, %{type: :integer}]}}
+    ]
+
+    for {test_ref, schema, expected} <- @schemas_and_expected_outputs do
+      @schema schema
+      @expected expected
+      test "encoding #{test_ref}" do
+        expected = Map.put(@expected, :"$schema", "https://json-schema.org/draft/2020-12/schema")
+        assert JSONSchema.encode(@schema) == expected
+      end
+    end
+
+    test "enconding object" do
+      schema =
+        Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), valid: Zoi.optional(Zoi.boolean())})
+
+      assert %{
+               type: :object,
+               properties: %{
+                 name: %{type: :string},
+                 age: %{type: :integer},
+                 valid: %{type: :boolean}
+               },
+               required: required_properties,
+               additionalProperties: false
+             } = JSONSchema.encode(schema)
+
+      assert :name in required_properties
+      assert :age in required_properties
+    end
+
+    test "raise if schema is not supported" do
+      assert_raise RuntimeError,
+                   "Encoding not implemented for schema: %Zoi.Types.Atom{meta: nil}",
+                   fn ->
+                     JSONSchema.encode(%Zoi.Types.Atom{})
+                   end
+    end
+  end
+end
