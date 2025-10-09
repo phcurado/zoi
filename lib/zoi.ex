@@ -246,6 +246,115 @@ defmodule Zoi do
     schema.meta.metadata
   end
 
+  @doc """
+  Converts a list of errors into a tree structure, where each error is placed at its corresponding path.
+
+  This is useful for displaying validation errors in a structured way, such as in a form.
+
+  ## Example
+
+      iex> errors = [
+      ...>   %Zoi.Error{path: ["name"], message: "is required"},
+      ...>   %Zoi.Error{path: ["age"], message: "invalid type: must be an integer"},
+      ...>   %Zoi.Error{path: ["address", "city"], message: "is required"}
+      ...> ]
+      iex> Zoi.treefy_errors(errors)
+      %{
+        "name" => ["is required"],
+        "age" => ["invalid type: must be an integer"],
+        "address" => %{
+          "city" => ["is required"]
+        }
+      }
+
+  If you use this function on types without path (like `Zoi.string()`), it will create a top-level `:__errors__` key:
+
+      iex> errors = [%Zoi.Error{message: "invalid type: must be a string"}]
+      iex> Zoi.treefy_errors(errors)
+      %{__errors__: ["invalid type: must be a string"]}
+
+  Errors without a path are considered top-level errors and are grouped under `:__errors__`.
+  This is how `Zoi` also handles errors when `Zoi.object/2` is used with `:strict` option, where unrecognized keys are added to the `:__errors__` key.
+  """
+  @doc group: "Parsing"
+  @spec treefy_errors([Zoi.Error.t()]) :: map()
+  def treefy_errors(errors) when is_list(errors) do
+    Enum.reduce(errors, %{}, fn %Zoi.Error{path: path} = error, acc ->
+      insert_error(acc, path, error.message)
+    end)
+  end
+
+  defp insert_error(acc, [], error) do
+    Map.update(acc, :__errors__, [error], fn existing -> existing ++ [error] end)
+  end
+
+  defp insert_error(acc, [key], error) do
+    Map.update(acc, key, [error], fn existing -> existing ++ [error] end)
+  end
+
+  defp insert_error(acc, [key | rest], error) do
+    nested = Map.get(acc, key, %{})
+    Map.put(acc, key, insert_error(nested, rest, error))
+  end
+
+  @doc """
+  Converts a list of errors into a human-readable string format.
+  Each error is displayed on a new line, with its message and path.
+  ## Example
+
+      iex> errors = [
+      ...>   %Zoi.Error{path: ["name"], message: "is required"},
+      ...>   %Zoi.Error{path: ["age"], message: "invalid type: must be an integer"},
+      ...>   %Zoi.Error{path: ["address", "city"], message: "is required"}
+      ...> ]
+      iex> Zoi.prettify_errors(errors)
+      "is required, at name\\ninvalid type: must be an integer, at age\\nis required, at address.city"
+
+      iex> errors = [%Zoi.Error{message: "invalid type: must be a string"}]
+      iex> Zoi.prettify_errors(errors)
+      "invalid type: must be a string"
+  """
+  @doc group: "Parsing"
+  @spec prettify_errors([Zoi.Error.t() | binary()]) :: binary()
+  def prettify_errors(errors) when is_list(errors) do
+    Enum.reduce(errors, "", fn error, acc ->
+      if acc == "" do
+        prettify_error(error)
+      else
+        acc <> "\n" <> prettify_error(error)
+      end
+    end)
+  end
+
+  defp prettify_error(%Zoi.Error{message: message, path: []}) do
+    message
+  end
+
+  defp prettify_error(%Zoi.Error{message: message, path: path}) do
+    path_str =
+      Enum.with_index(path)
+      |> Enum.reduce("", fn {segment, index}, acc ->
+        cond do
+          is_integer(segment) ->
+            acc <> "[#{segment}]"
+
+          index == 0 ->
+            acc <> "#{segment}"
+
+          true ->
+            acc <> ".#{segment}"
+        end
+      end)
+
+    "#{message}, at #{path_str}"
+  end
+
+  @doc """
+  See `Zoi.JSONSchema`
+  """
+  @doc group: "Parsing"
+  defdelegate to_json_schema(schema), to: Zoi.JSONSchema, as: :encode
+
   # Types
 
   @doc """
@@ -995,6 +1104,7 @@ defmodule Zoi do
   def email() do
     Zoi.string()
     |> regex(Regexes.email(),
+      format: :email,
       message: "invalid email format"
     )
   end
@@ -1260,7 +1370,7 @@ defmodule Zoi do
   @spec regex(schema :: Zoi.Type.t(), regex :: Regex.t(), opts :: options()) :: Zoi.Type.t()
   def regex(schema, regex, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[regex: regex], opts]})
+    |> refine({Zoi.Refinements, :refine, [[regex: regex.source], opts]})
   end
 
   @doc """
@@ -1563,106 +1673,5 @@ defmodule Zoi do
     update_in(schema.meta.transforms, fn transforms ->
       transforms ++ [fun]
     end)
-  end
-
-  @doc """
-  Converts a list of errors into a tree structure, where each error is placed at its corresponding path.
-
-  This is useful for displaying validation errors in a structured way, such as in a form.
-
-  ## Example
-
-      iex> errors = [
-      ...>   %Zoi.Error{path: ["name"], message: "is required"},
-      ...>   %Zoi.Error{path: ["age"], message: "invalid type: must be an integer"},
-      ...>   %Zoi.Error{path: ["address", "city"], message: "is required"}
-      ...> ]
-      iex> Zoi.treefy_errors(errors)
-      %{
-        "name" => ["is required"],
-        "age" => ["invalid type: must be an integer"],
-        "address" => %{
-          "city" => ["is required"]
-        }
-      }
-
-  If you use this function on types without path (like `Zoi.string()`), it will create a top-level `:__errors__` key:
-
-      iex> errors = [%Zoi.Error{message: "invalid type: must be a string"}]
-      iex> Zoi.treefy_errors(errors)
-      %{__errors__: ["invalid type: must be a string"]}
-
-  Errors without a path are considered top-level errors and are grouped under `:__errors__`.
-  This is how `Zoi` also handles errors when `Zoi.object/2` is used with `:strict` option, where unrecognized keys are added to the `:__errors__` key.
-  """
-  @spec treefy_errors([Zoi.Error.t()]) :: map()
-  def treefy_errors(errors) when is_list(errors) do
-    Enum.reduce(errors, %{}, fn %Zoi.Error{path: path} = error, acc ->
-      insert_error(acc, path, error.message)
-    end)
-  end
-
-  defp insert_error(acc, [], error) do
-    Map.update(acc, :__errors__, [error], fn existing -> existing ++ [error] end)
-  end
-
-  defp insert_error(acc, [key], error) do
-    Map.update(acc, key, [error], fn existing -> existing ++ [error] end)
-  end
-
-  defp insert_error(acc, [key | rest], error) do
-    nested = Map.get(acc, key, %{})
-    Map.put(acc, key, insert_error(nested, rest, error))
-  end
-
-  @doc """
-  Converts a list of errors into a human-readable string format.
-  Each error is displayed on a new line, with its message and path.
-  ## Example
-
-      iex> errors = [
-      ...>   %Zoi.Error{path: ["name"], message: "is required"},
-      ...>   %Zoi.Error{path: ["age"], message: "invalid type: must be an integer"},
-      ...>   %Zoi.Error{path: ["address", "city"], message: "is required"}
-      ...> ]
-      iex> Zoi.prettify_errors(errors)
-      "is required, at name\\ninvalid type: must be an integer, at age\\nis required, at address.city"
-
-      iex> errors = [%Zoi.Error{message: "invalid type: must be a string"}]
-      iex> Zoi.prettify_errors(errors)
-      "invalid type: must be a string"
-  """
-  @spec prettify_errors([Zoi.Error.t() | binary()]) :: binary()
-  def prettify_errors(errors) when is_list(errors) do
-    Enum.reduce(errors, "", fn error, acc ->
-      if acc == "" do
-        prettify_error(error)
-      else
-        acc <> "\n" <> prettify_error(error)
-      end
-    end)
-  end
-
-  defp prettify_error(%Zoi.Error{message: message, path: []}) do
-    message
-  end
-
-  defp prettify_error(%Zoi.Error{message: message, path: path}) do
-    path_str =
-      Enum.with_index(path)
-      |> Enum.reduce("", fn {segment, index}, acc ->
-        cond do
-          is_integer(segment) ->
-            acc <> "[#{segment}]"
-
-          index == 0 ->
-            acc <> "#{segment}"
-
-          true ->
-            acc <> ".#{segment}"
-        end
-      end)
-
-    "#{message}, at #{path_str}"
   end
 end
