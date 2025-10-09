@@ -804,7 +804,9 @@ defmodule Zoi do
       Zoi.length(5)
   """
   @doc group: "Complex Types"
-  defdelegate array(elements, opts \\ []), to: Zoi.Types.Array, as: :new
+  def array(elements \\ Zoi.any(), opts \\ []) do
+    Zoi.Types.Array.new(elements, opts)
+  end
 
   @doc """
   alias for `Zoi.array/2`

@@ -1078,6 +1078,15 @@ defmodule ZoiTest do
       assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
     end
 
+    test "array with no arguments should create a `any` array" do
+      schema = Zoi.array()
+
+      assert %{inner: %Zoi.Types.Any{}} = schema
+
+      assert {:ok, [1, "two", 3.0, true, nil, %{}, []]} ==
+               Zoi.parse(schema, [1, "two", 3.0, true, nil, %{}, []])
+    end
+
     test "array with incorrect value" do
       schema = Zoi.array(Zoi.integer())
 
