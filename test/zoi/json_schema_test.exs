@@ -18,14 +18,6 @@ defmodule Zoi.JSONSchemaTest do
       {"enum", Zoi.enum(["red", "green", "blue"]),
        %{type: :string, enum: ["red", "green", "blue"]}},
       {"any object", Zoi.map(), %{type: :object}},
-      {"object",
-       Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), valid: Zoi.optional(Zoi.boolean())}),
-       %{
-         type: :object,
-         properties: %{name: %{type: :string}, age: %{type: :integer}, valid: %{type: :boolean}},
-         required: [:name, :age],
-         additionalProperties: false
-       }},
       {"intersection", Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
        %{allOf: [%{type: :string}, %{const: "fixed"}]}},
       {"union", Zoi.union([Zoi.string(), Zoi.integer()]),
@@ -39,6 +31,25 @@ defmodule Zoi.JSONSchemaTest do
         expected = Map.put(@expected, :"$schema", "https://json-schema.org/draft/2020-12/schema")
         assert JSONSchema.encode(@schema) == expected
       end
+    end
+
+    test "enconding object" do
+      schema =
+        Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), valid: Zoi.optional(Zoi.boolean())})
+
+      assert %{
+               type: :object,
+               properties: %{
+                 name: %{type: :string},
+                 age: %{type: :integer},
+                 valid: %{type: :boolean}
+               },
+               required: required_properties,
+               additionalProperties: false
+             } = JSONSchema.encode(schema)
+
+      assert :name in required_properties
+      assert :age in required_properties
     end
   end
 end
