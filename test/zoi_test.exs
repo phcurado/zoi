@@ -147,6 +147,29 @@ defmodule ZoiTest do
         assert Exception.message(error) == "invalid type: must be a number"
       end
     end
+
+    test "number with coercion" do
+      assert {:ok, 12.34} == Zoi.parse(Zoi.number(coerce: true), "12.34")
+      assert {:ok, 0} == Zoi.parse(Zoi.number(), "0", coerce: true)
+      assert {:ok, -1} == Zoi.parse(Zoi.number(), "-1", coerce: true)
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.number(), "not_number", coerce: true)
+
+      assert Exception.message(error) == "invalid type: must be a number"
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.number(), "34.not", coerce: true)
+
+      assert Exception.message(error) == "invalid type: must be a number"
+    end
+
+    test "number with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.number(error: "custom number error"), "not a number")
+
+      assert Exception.message(error) == "custom number error"
+    end
   end
 
   describe "boolean/1" do

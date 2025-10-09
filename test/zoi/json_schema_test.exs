@@ -7,6 +7,7 @@ defmodule Zoi.JSONSchemaTest do
     @schemas_and_expected_outputs [
       {"string", Zoi.string(), %{type: :string}},
       {"integer", Zoi.integer(), %{type: :integer}},
+      {"float", Zoi.float(), %{type: :number}},
       {"number", Zoi.number(), %{type: :number}},
       {"boolean", Zoi.boolean(), %{type: :boolean}},
       {"literal", Zoi.literal("fixed"), %{const: "fixed"}},
@@ -50,6 +51,14 @@ defmodule Zoi.JSONSchemaTest do
 
       assert :name in required_properties
       assert :age in required_properties
+    end
+
+    test "raise if schema is not supported" do
+      assert_raise RuntimeError,
+                   "Encoding not implemented for schema: %Zoi.Types.Atom{meta: nil}",
+                   fn ->
+                     JSONSchema.encode(%Zoi.Types.Atom{})
+                   end
     end
   end
 end

@@ -28,9 +28,9 @@ defmodule Zoi.Types.Number do
         {number, ""} ->
           {:ok, number}
 
-        {number, rest} ->
-          case Float.parse(rest) do
-            {float, ""} -> {:ok, number + float}
+        {_number, _rest} ->
+          case Float.parse(input) do
+            {float, ""} -> {:ok, float}
             _error -> error(schema)
           end
 
