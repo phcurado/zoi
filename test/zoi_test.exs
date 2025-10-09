@@ -1112,7 +1112,13 @@ defmodule ZoiTest do
                Zoi.parse(schema, [[1, 2], ["not an integer", 4]])
 
       assert Exception.message(error) == "invalid type: must be an integer"
-      assert error.path == [0, 1]
+      assert error.path == [1, 0]
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, [[1, 2], [3, "not an integer"]])
+
+      assert Exception.message(error) == "invalid type: must be an integer"
+      assert error.path == [1, 1]
     end
 
     test "array with deeply nested arrays" do

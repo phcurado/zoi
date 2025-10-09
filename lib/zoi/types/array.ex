@@ -20,7 +20,7 @@ defmodule Zoi.Types.Array do
             {[value | parsed], errors}
 
           {:error, err} ->
-            error = Enum.map(err, &Zoi.Error.append_path(&1, [index]))
+            error = Enum.map(err, &Zoi.Error.add_path(&1, [index]))
             {parsed, Zoi.Errors.merge(errors, error)}
         end
       end)
