@@ -2361,7 +2361,7 @@ defmodule ZoiTest do
         {Zoi.map(Zoi.string(), Zoi.integer()), quote(do: %{optional(binary()) => integer()})},
         {Zoi.naive_datetime(), quote(do: NaiveDateTime.t())},
         {Zoi.null(), quote(do: nil)},
-        {Zoi.nullable(Zoi.string()), quote(do: binary() | nil)},
+        {Zoi.nullable(Zoi.string()), quote(do: nil | binary())},
         {Zoi.number(), quote(do: number())},
         {Zoi.optional(Zoi.string()), quote(do: binary())},
         {Zoi.string(), quote(do: binary())},

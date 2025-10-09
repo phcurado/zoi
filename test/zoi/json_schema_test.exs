@@ -2,9 +2,10 @@ defmodule Zoi.JSONSchemaTest do
   use ExUnit.Case, async: true
 
   alias Zoi.JSONSchema
+  alias Zoi.Regexes
 
   describe "encode/1" do
-    @schemas_and_expected_outputs [
+    @base_schemas [
       {"string", Zoi.string(), %{type: :string}},
       {"integer", Zoi.integer(), %{type: :integer}},
       {"float", Zoi.float(), %{type: :number}},
@@ -22,10 +23,11 @@ defmodule Zoi.JSONSchemaTest do
       {"intersection", Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
        %{allOf: [%{type: :string}, %{const: "fixed"}]}},
       {"union", Zoi.union([Zoi.string(), Zoi.integer()]),
-       %{anyOf: [%{type: :string}, %{type: :integer}]}}
+       %{anyOf: [%{type: :string}, %{type: :integer}]}},
+      {"nullable", Zoi.nullable(Zoi.integer()), %{anyOf: [%{type: :null}, %{type: :integer}]}}
     ]
 
-    for {test_ref, schema, expected} <- @schemas_and_expected_outputs do
+    for {test_ref, schema, expected} <- @base_schemas do
       @schema schema
       @expected expected
       test "encoding #{test_ref}" do
@@ -59,6 +61,19 @@ defmodule Zoi.JSONSchemaTest do
                    fn ->
                      JSONSchema.encode(%Zoi.Types.Atom{})
                    end
+    end
+
+    @string_patterns [
+      {"email", Zoi.email(), %{type: :string, format: :email, pattern: Regexes.email().source}}
+    ]
+
+    for {test_ref, schema, expected} <- @string_patterns do
+      @schema schema
+      @expected expected
+      test "encoding #{test_ref} pattern" do
+        expected = Map.put(@expected, :"$schema", "https://json-schema.org/draft/2020-12/schema")
+        assert JSONSchema.encode(@schema) == expected
+      end
     end
   end
 end

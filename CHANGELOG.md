@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.6.7 - Unreleased
+
+### Added
+
+- `Zoi.to_json_schema/1` function to convert `Zoi` schemas to JSON Schema format
+
+### Changed
+
+- `Zoi.array/2` fixed path in errors when parsing arrays
+- `Zoi.regex/2` fixed regex compile errors when used in module attributes
+
 ## 0.6.6 - 2025-10-08
 
 ### Added

@@ -1,5 +1,6 @@
 defmodule Zoi.Refinements do
   @moduledoc false
+
   def refine(input, args, opts, ctx: ctx) do
     do_refine(ctx.schema, input, args, opts)
   end
@@ -46,6 +47,9 @@ defmodule Zoi.Refinements do
   end
 
   defp do_refine(%Zoi.Types.String{}, input, [regex: regex], opts) do
+    # To allow both string and regex input for regex refinement
+    regex = Regex.compile!(regex)
+
     if String.match?(input, regex) do
       :ok
     else
