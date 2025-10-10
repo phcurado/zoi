@@ -38,6 +38,10 @@ defmodule Zoi.JSONSchema do
     - `Zoi.intersection/1`
     - `Zoi.union/1`
     - `Zoi.nullable/1`
+    - `Zoi.date/0` and `Zoi.ISO.date/0`
+    - `Zoi.datetime/0` and `Zoi.ISO.datetime/0`
+    - `Zoi.naive_datetime/0` and `Zoi.ISO.naive_datetime/0`
+    - `Zoi.time/0` and `Zoi.ISO.time/0`
 
   ## Limitations
 
@@ -162,6 +166,38 @@ defmodule Zoi.JSONSchema do
     %{
       anyOf: Enum.map(schemas, &encode_schema/1)
     }
+  end
+
+  defp encode_schema(%Zoi.Types.Date{}) do
+    %{type: :string, format: :date}
+  end
+
+  defp encode_schema(%Zoi.ISO.Date{}) do
+    %{type: :string, format: :date}
+  end
+
+  defp encode_schema(%Zoi.Types.DateTime{}) do
+    %{type: :string, format: :"date-time"}
+  end
+
+  defp encode_schema(%Zoi.ISO.DateTime{}) do
+    %{type: :string, format: :"date-time"}
+  end
+
+  defp encode_schema(%Zoi.Types.NaiveDateTime{}) do
+    %{type: :string, format: :"date-time"}
+  end
+
+  defp encode_schema(%Zoi.ISO.NaiveDateTime{}) do
+    %{type: :string, format: :"date-time"}
+  end
+
+  defp encode_schema(%Zoi.Types.Time{}) do
+    %{type: :string, format: :time}
+  end
+
+  defp encode_schema(%Zoi.ISO.Time{}) do
+    %{type: :string, format: :time}
   end
 
   defp encode_schema(schema) do

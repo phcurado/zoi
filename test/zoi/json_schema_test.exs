@@ -145,6 +145,25 @@ defmodule Zoi.JSONSchemaTest do
       end
     end
 
+    @date_schemas [
+      {"date", Zoi.date(), %{type: :string, format: :date}},
+      {"time", Zoi.time(), %{type: :string, format: :time}},
+      {"datetime", Zoi.datetime(), %{type: :string, format: :"date-time"}},
+      {"naive_datetime", Zoi.naive_datetime(), %{type: :string, format: :"date-time"}},
+      {"iso date", Zoi.ISO.date(), %{type: :string, format: :date}},
+      {"iso time", Zoi.ISO.time(), %{type: :string, format: :time}},
+      {"iso datetime", Zoi.ISO.datetime(), %{type: :string, format: :"date-time"}},
+      {"iso naive_datetime", Zoi.ISO.naive_datetime(), %{type: :string, format: :"date-time"}}
+    ]
+    for {test_ref, schema, expected} <- @date_schemas do
+      @schema schema
+      @expected expected
+      test "encoding #{test_ref} schema" do
+        expected = Map.put(@expected, :"$schema", @draft)
+        assert JSONSchema.encode(@schema) == expected
+      end
+    end
+
     test "length in map type have no effect" do
       schema = Zoi.map() |> Zoi.length(3)
       expected = %{type: :object}
