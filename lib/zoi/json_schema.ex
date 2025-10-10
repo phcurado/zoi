@@ -38,6 +38,10 @@ defmodule Zoi.JSONSchema do
     - `Zoi.intersection/1`
     - `Zoi.union/1`
     - `Zoi.nullable/1`
+    - `Zoi.date/0` and `Zoi.ISO.date/0`
+    - `Zoi.datetime/0` and `Zoi.ISO.datetime/0`
+    - `Zoi.naive_datetime/0` and `Zoi.ISO.naive_datetime/0`
+    - `Zoi.time/0` and `Zoi.ISO.time/0`
 
   ## Limitations
 
