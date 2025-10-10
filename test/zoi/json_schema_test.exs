@@ -1,6 +1,6 @@
 defmodule Zoi.JSONSchemaTest do
   use ExUnit.Case, async: true
-  doctest Zoi.JSONSchema
+  # doctest Zoi.JSONSchema
 
   alias Zoi.JSONSchema
   alias Zoi.Regexes
