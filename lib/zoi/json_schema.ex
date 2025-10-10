@@ -9,7 +9,7 @@ defmodule Zoi.JSONSchema do
       iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
       iex> Zoi.to_json_schema(schema)
       %{
-        "$schema" => "https://json-schema.org/draft/2020-12/schema",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
         type: :object,
         properties: %{
           name: %{type: :string},
@@ -43,6 +43,24 @@ defmodule Zoi.JSONSchema do
     - `Zoi.naive_datetime/0` and `Zoi.ISO.naive_datetime/0`
     - `Zoi.time/0` and `Zoi.ISO.time/0`
 
+  ## Metadata
+  `Zoi.to_json_schema/1` will attempt to parse metadata defined on types. For more information, check the `Zoi.metadata/1` documentation.
+  The following metadata will be parsed on JSON Schema conversion:
+
+    - `:description` - Adds a `description` field to the JSON Schema.
+    - `:example` - Adds an `example` field to the JSON Schema.
+
+  ```elixir
+  iex> schema = Zoi.string(metadata: [description: "A simple string", example: "Hello, World!"])
+  iex> Zoi.to_json_schema(schema)
+  %{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    type: :string,
+    description: "A simple string",
+    example: "Hello, World!"
+  }
+  ```
+
   ## Limitations
 
   - Complex types or custom types not listed above will raise an error during conversion.
@@ -72,36 +90,43 @@ defmodule Zoi.JSONSchema do
 
   defp encode_schema(%Zoi.Types.String{} = schema) do
     %{type: :string}
+    |> encode_metadata(schema)
     |> encode_refinements(schema.meta)
   end
 
   defp encode_schema(%Zoi.Types.Integer{} = schema) do
     %{type: :integer}
+    |> encode_metadata(schema)
     |> encode_refinements(schema.meta)
   end
 
   defp encode_schema(%Zoi.Types.Float{} = schema) do
     %{type: :number}
+    |> encode_metadata(schema)
     |> encode_refinements(schema.meta)
   end
 
   defp encode_schema(%Zoi.Types.Number{} = schema) do
     %{type: :number}
+    |> encode_metadata(schema)
     |> encode_refinements(schema.meta)
   end
 
-  defp encode_schema(%Zoi.Types.Boolean{}) do
+  defp encode_schema(%Zoi.Types.Boolean{} = schema) do
     %{type: :boolean}
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.Types.Literal{value: value}) do
+  defp encode_schema(%Zoi.Types.Literal{value: value} = schema) do
     %{
       const: value
     }
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.Types.Null{}) do
+  defp encode_schema(%Zoi.Types.Null{} = schema) do
     %{type: :null}
+    |> encode_metadata(schema)
   end
 
   defp encode_schema(%Zoi.Types.Array{inner: inner} = schema) do
@@ -110,6 +135,7 @@ defmodule Zoi.JSONSchema do
         %{
           type: :array
         }
+        |> encode_metadata(schema)
         |> encode_refinements(schema.meta)
 
       _inner ->
@@ -117,6 +143,7 @@ defmodule Zoi.JSONSchema do
           type: :array,
           items: encode_schema(inner)
         }
+        |> encode_metadata(schema)
         |> encode_refinements(schema.meta)
     end
   end
@@ -126,6 +153,7 @@ defmodule Zoi.JSONSchema do
       type: :array,
       prefixItems: Enum.map(schema.fields, &encode_schema/1)
     }
+    |> encode_metadata(schema)
     |> encode_refinements(schema.meta)
   end
 
@@ -134,12 +162,14 @@ defmodule Zoi.JSONSchema do
       type: :string,
       enum: Enum.map(schema.values, fn {_k, v} -> v end)
     }
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.Types.Map{}) do
+  defp encode_schema(%Zoi.Types.Map{} = schema) do
     %{
       type: :object
     }
+    |> encode_metadata(schema)
   end
 
   defp encode_schema(%Zoi.Types.Object{} = schema) do
@@ -154,50 +184,61 @@ defmodule Zoi.JSONSchema do
         |> Enum.map(fn {k, _v} -> k end),
       additionalProperties: false
     }
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.Types.Intersection{schemas: schemas}) do
+  defp encode_schema(%Zoi.Types.Intersection{schemas: schemas} = schema) do
     %{
       allOf: Enum.map(schemas, &encode_schema/1)
     }
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.Types.Union{schemas: schemas}) do
+  defp encode_schema(%Zoi.Types.Union{schemas: schemas} = schema) do
     %{
       anyOf: Enum.map(schemas, &encode_schema/1)
     }
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.Types.Date{}) do
+  defp encode_schema(%Zoi.Types.Date{} = schema) do
     %{type: :string, format: :date}
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.ISO.Date{}) do
+  defp encode_schema(%Zoi.ISO.Date{} = schema) do
     %{type: :string, format: :date}
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.Types.DateTime{}) do
+  defp encode_schema(%Zoi.Types.DateTime{} = schema) do
     %{type: :string, format: :"date-time"}
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.ISO.DateTime{}) do
+  defp encode_schema(%Zoi.ISO.DateTime{} = schema) do
     %{type: :string, format: :"date-time"}
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.Types.NaiveDateTime{}) do
+  defp encode_schema(%Zoi.Types.NaiveDateTime{} = schema) do
     %{type: :string, format: :"date-time"}
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.ISO.NaiveDateTime{}) do
+  defp encode_schema(%Zoi.ISO.NaiveDateTime{} = schema) do
     %{type: :string, format: :"date-time"}
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.Types.Time{}) do
+  defp encode_schema(%Zoi.Types.Time{} = schema) do
     %{type: :string, format: :time}
+    |> encode_metadata(schema)
   end
 
-  defp encode_schema(%Zoi.ISO.Time{}) do
+  defp encode_schema(%Zoi.ISO.Time{} = schema) do
     %{type: :string, format: :time}
+    |> encode_metadata(schema)
   end
 
   defp encode_schema(schema) do
@@ -336,5 +377,18 @@ defmodule Zoi.JSONSchema do
         # # No other refinements exist for arrays
         # json_schema
     end
+  end
+
+  defp encode_metadata(json_schema, zoi_schema) do
+    Enum.reduce(Zoi.metadata(zoi_schema), json_schema, fn
+      {:description, description}, acc ->
+        Map.put(acc, :description, description)
+
+      {:example, example}, acc ->
+        Map.put(acc, :example, example)
+
+      _, acc ->
+        acc
+    end)
   end
 end

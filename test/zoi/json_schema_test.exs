@@ -1,5 +1,6 @@
 defmodule Zoi.JSONSchemaTest do
   use ExUnit.Case, async: true
+  # doctest Zoi.JSONSchema
 
   alias Zoi.JSONSchema
   alias Zoi.Regexes
@@ -167,6 +168,18 @@ defmodule Zoi.JSONSchemaTest do
     test "length in map type have no effect" do
       schema = Zoi.map() |> Zoi.length(3)
       expected = %{type: :object}
+      assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
+    end
+
+    test "parse schema metadata" do
+      schema = Zoi.string(metadata: [description: "This is a string", example: "Hello World"])
+
+      expected = %{
+        type: :string,
+        description: "This is a string",
+        example: "Hello World"
+      }
+
       assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
     end
   end
