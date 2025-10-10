@@ -67,16 +67,19 @@ defmodule Zoi.JSONSchema do
     |> encode_refinements(schema.meta)
   end
 
-  defp encode_schema(%Zoi.Types.Integer{}) do
+  defp encode_schema(%Zoi.Types.Integer{} = schema) do
     %{type: :integer}
+    |> encode_refinements(schema.meta)
   end
 
-  defp encode_schema(%Zoi.Types.Float{}) do
+  defp encode_schema(%Zoi.Types.Float{} = schema) do
     %{type: :number}
+    |> encode_refinements(schema.meta)
   end
 
-  defp encode_schema(%Zoi.Types.Number{}) do
+  defp encode_schema(%Zoi.Types.Number{} = schema) do
     %{type: :number}
+    |> encode_refinements(schema.meta)
   end
 
   defp encode_schema(%Zoi.Types.Boolean{}) do
@@ -93,18 +96,20 @@ defmodule Zoi.JSONSchema do
     %{type: :null}
   end
 
-  defp encode_schema(%Zoi.Types.Array{inner: inner}) do
+  defp encode_schema(%Zoi.Types.Array{inner: inner} = schema) do
     case inner do
       %Zoi.Types.Any{} ->
         %{
           type: :array
         }
+        |> encode_refinements(schema.meta)
 
       _inner ->
         %{
           type: :array,
           items: encode_schema(inner)
         }
+        |> encode_refinements(schema.meta)
     end
   end
 
@@ -113,6 +118,7 @@ defmodule Zoi.JSONSchema do
       type: :array,
       prefixItems: Enum.map(schema.fields, &encode_schema/1)
     }
+    |> encode_refinements(schema.meta)
   end
 
   defp encode_schema(%Zoi.Types.Enum{} = schema) do
@@ -161,22 +167,135 @@ defmodule Zoi.JSONSchema do
   defp encode_refinements(encoded_schema, %Meta{refinements: []}), do: encoded_schema
 
   defp encode_refinements(encoded_schema, %Meta{refinements: refinements}) do
-    # Note: Currently, only regex refinements are encoded into JSON Schema.
-    # Needs to be improved to cover more refinement types.
-    # Needs to manage aggregated data (multiple regexes) to use AnyOf/AllOf/OneOf
-    Enum.reduce(refinements, encoded_schema, fn
-      {_module, :refine, [[regex: regex], opts]}, acc ->
-        Keyword.fetch(opts, :format)
-        |> case do
-          {:ok, format} ->
-            Map.merge(acc, %{format: format, pattern: regex})
+    # Separate regex refinements from others
+    {regex_refinements, other_refinements} =
+      Enum.split_with(refinements, fn
+        {_module, :refine, [[regex: _regex], _opts]} -> true
+        _ -> false
+      end)
 
-          :error ->
-            Map.put(acc, :pattern, regex)
-        end
+    encoded_schema
+    |> encode_length_refinements(other_refinements)
+    |> encode_regex_refinements(regex_refinements)
+  end
+
+  defp encode_regex_refinements(json_schema, []), do: json_schema
+
+  defp encode_regex_refinements(%{type: :string} = json_schema, [
+         {_module, :refine, [[regex: regex], opts]}
+       ]) do
+    Keyword.fetch(opts, :format)
+    |> case do
+      {:ok, format} ->
+        Map.merge(json_schema, %{format: format, pattern: regex})
+
+      :error ->
+        Map.put(json_schema, :pattern, regex)
+    end
+  end
+
+  defp encode_regex_refinements(json_schema, regex_refinements) do
+    patterns =
+      Enum.map(regex_refinements, fn {_module, :refine, [[regex: regex], _opts]} -> regex end)
+
+    Map.put(json_schema, :allOf, Enum.map(patterns, fn pattern -> %{pattern: pattern} end))
+  end
+
+  defp encode_length_refinements(json_schema, []), do: json_schema
+
+  defp encode_length_refinements(json_schema, refinements) do
+    Enum.reduce(refinements, json_schema, fn
+      {_module, :refine, [func_param, _opts]}, acc ->
+        length_to_json_schema(acc, func_param)
 
       _, acc ->
         acc
     end)
+  end
+
+  defp length_to_json_schema(json_schema, param) do
+    case json_schema do
+      %{type: :string} ->
+        string_length_to_json_schema(json_schema, param)
+
+      %{type: :number} ->
+        numeric_length_to_json_schema(json_schema, param)
+
+      %{type: :integer} ->
+        numeric_length_to_json_schema(json_schema, param)
+
+      %{type: :array} ->
+        array_length_to_json_schema(json_schema, param)
+
+      _ ->
+        json_schema
+    end
+  end
+
+  defp string_length_to_json_schema(json_schema, param) do
+    case param do
+      [gt: gt] ->
+        Map.put(json_schema, :minLength, gt + 1)
+
+      [gte: gte] ->
+        Map.put(json_schema, :minLength, gte)
+
+      [lt: lt] ->
+        Map.put(json_schema, :maxLength, lt - 1)
+
+      [lte: lte] ->
+        Map.put(json_schema, :maxLength, lte)
+
+      [length: length] ->
+        json_schema
+        |> Map.put(:minLength, length)
+        |> Map.put(:maxLength, length)
+
+      _ ->
+        json_schema
+    end
+  end
+
+  defp numeric_length_to_json_schema(json_schema, param) do
+    case param do
+      [gt: gt] ->
+        Map.put(json_schema, :exclusiveMinimum, gt)
+
+      [gte: gte] ->
+        Map.put(json_schema, :minimum, gte)
+
+      [lt: lt] ->
+        Map.put(json_schema, :exclusiveMaximum, lt)
+
+      [lte: lte] ->
+        Map.put(json_schema, :maximum, lte)
+
+      _ ->
+        json_schema
+    end
+  end
+
+  defp array_length_to_json_schema(json_schema, param) do
+    case param do
+      [gt: gt] ->
+        Map.put(json_schema, :minItems, gt + 1)
+
+      [gte: gte] ->
+        Map.put(json_schema, :minItems, gte)
+
+      [lt: lt] ->
+        Map.put(json_schema, :maxItems, lt - 1)
+
+      [lte: lte] ->
+        Map.put(json_schema, :maxItems, lte)
+
+      [length: length] ->
+        json_schema
+        |> Map.put(:minItems, length)
+        |> Map.put(:maxItems, length)
+
+      _ ->
+        json_schema
+    end
   end
 end
