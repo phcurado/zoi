@@ -271,8 +271,8 @@ defmodule Zoi.JSONSchema do
       [lte: lte] ->
         Map.put(json_schema, :maximum, lte)
 
-      # _ ->
-      # # No other refinements exist for numbers
+        # _ ->
+        # # No other refinements exist for numbers
         # json_schema
     end
   end
@@ -296,8 +296,8 @@ defmodule Zoi.JSONSchema do
         |> Map.put(:minItems, length)
         |> Map.put(:maxItems, length)
 
-      # _ ->
-      # # No other refinements exist for arrays
+        # _ ->
+        # # No other refinements exist for arrays
         # json_schema
     end
   end
