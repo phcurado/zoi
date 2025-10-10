@@ -4,6 +4,8 @@ defmodule Zoi.JSONSchemaTest do
   alias Zoi.JSONSchema
   alias Zoi.Regexes
 
+  @draft "https://json-schema.org/draft/2020-12/schema"
+
   describe "encode/1" do
     @base_schemas [
       {"string", Zoi.string(), %{type: :string}},
@@ -31,7 +33,7 @@ defmodule Zoi.JSONSchemaTest do
       @schema schema
       @expected expected
       test "encoding #{test_ref}" do
-        expected = Map.put(@expected, :"$schema", "https://json-schema.org/draft/2020-12/schema")
+        expected = Map.put(@expected, :"$schema", @draft)
         assert JSONSchema.encode(@schema) == expected
       end
     end
@@ -64,16 +66,97 @@ defmodule Zoi.JSONSchemaTest do
     end
 
     @string_patterns [
-      {"email", Zoi.email(), %{type: :string, format: :email, pattern: Regexes.email().source}}
+      {"email", Zoi.email(), %{type: :string, format: :email, pattern: Regexes.email().source}},
+      {"multiple regex", Zoi.email() |> Zoi.regex(~r/@example\.com$/),
+       %{
+         type: :string,
+         allOf: [%{pattern: Regexes.email().source}, %{pattern: "@example\\.com$"}]
+       }},
+      {"min max length", Zoi.string() |> Zoi.min(3) |> Zoi.max(10),
+       %{type: :string, minLength: 3, maxLength: 10}},
+      {"exact length", Zoi.string() |> Zoi.length(5),
+       %{type: :string, minLength: 5, maxLength: 5}},
+      {"uuid", Zoi.uuid(), %{type: :string, pattern: Regexes.uuid().source}},
+      {"url", Zoi.url(), %{type: :string, pattern: Regexes.url().source}},
+      {"lt gt", Zoi.string() |> Zoi.lt(10) |> Zoi.gt(3),
+       %{type: :string, maxLength: 9, minLength: 4}},
+      {"starts_with have no effect", Zoi.string() |> Zoi.starts_with("prefix"), %{type: :string}},
+      {"custom refinement", Zoi.string() |> Zoi.refine({__MODULE__, :custom_refinemnet, []}),
+       %{type: :string}}
     ]
 
     for {test_ref, schema, expected} <- @string_patterns do
       @schema schema
       @expected expected
       test "encoding #{test_ref} pattern" do
-        expected = Map.put(@expected, :"$schema", "https://json-schema.org/draft/2020-12/schema")
+        expected = Map.put(@expected, :"$schema", @draft)
         assert JSONSchema.encode(@schema) == expected
       end
+    end
+
+    @number_ranges [
+      {"integer min max", Zoi.integer() |> Zoi.min(3) |> Zoi.max(10),
+       %{type: :integer, minimum: 3, maximum: 10}},
+      {"integer exclusive min max", Zoi.integer() |> Zoi.gt(3) |> Zoi.lt(10),
+       %{type: :integer, exclusiveMinimum: 3, exclusiveMaximum: 10}},
+      {"number min max", Zoi.number() |> Zoi.min(3.5) |> Zoi.max(10.5),
+       %{type: :number, minimum: 3.5, maximum: 10.5}},
+      {"number exclusive min max", Zoi.number() |> Zoi.gt(3.5) |> Zoi.lt(10.5),
+       %{type: :number, exclusiveMinimum: 3.5, exclusiveMaximum: 10.5}}
+    ]
+    for {test_ref, schema, expected} <- @number_ranges do
+      @schema schema
+      @expected expected
+      test "encoding #{test_ref} range" do
+        expected = Map.put(@expected, :"$schema", @draft)
+        assert JSONSchema.encode(@schema) == expected
+      end
+    end
+
+    @array_lengths [
+      {"array min max", Zoi.array(Zoi.integer()) |> Zoi.min(2) |> Zoi.max(5),
+       %{type: :array, items: %{type: :integer}, minItems: 2, maxItems: 5}},
+      {"array exact length", Zoi.array(Zoi.integer()) |> Zoi.length(3),
+       %{type: :array, items: %{type: :integer}, minItems: 3, maxItems: 3}},
+      {"array gt lt", Zoi.array(Zoi.integer()) |> Zoi.gt(2) |> Zoi.lt(5),
+       %{type: :array, items: %{type: :integer}, minItems: 3, maxItems: 4}},
+      {"tuple min max", Zoi.tuple({Zoi.string(), Zoi.integer()}) |> Zoi.min(2) |> Zoi.max(4),
+       %{
+         type: :array,
+         prefixItems: [%{type: :string}, %{type: :integer}],
+         minItems: 2,
+         maxItems: 4
+       }},
+      {"tuple exact length", Zoi.tuple({Zoi.string(), Zoi.integer()}) |> Zoi.length(2),
+       %{
+         type: :array,
+         prefixItems: [%{type: :string}, %{type: :integer}],
+         minItems: 2,
+         maxItems: 2
+       }}
+    ]
+
+    for {test_ref, schema, expected} <- @array_lengths do
+      @schema schema
+      @expected expected
+      test "encoding #{test_ref} length" do
+        expected = Map.put(@expected, :"$schema", @draft)
+        assert JSONSchema.encode(@schema) == expected
+      end
+    end
+
+    test "length in map type have no effect" do
+      schema = Zoi.map() |> Zoi.length(3)
+      expected = %{type: :object}
+      assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
+    end
+  end
+
+  def custom_refinement(value) do
+    if value == "valid" do
+      :ok
+    else
+      {:error, "must be valid"}
     end
   end
 end
