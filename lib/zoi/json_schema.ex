@@ -41,8 +41,10 @@ defmodule Zoi.JSONSchema do
 
   ## Limitations
 
-  - Refinements and custom validations defined in `Zoi` are not represented in the JSON Schema output. This is a limitation that will be addressed in future updates.
   - Complex types or custom types not listed above will raise an error during conversion.
+  - Some advanced `Zoi` features may not have direct equivalents in JSON Schema.
+  - Refinements are partially supported, primarily for string patterns and length constraints.
+  - Additional properties in objects are disallowed by default (`additionalProperties: false`).
 
   ## References
 
@@ -50,6 +52,8 @@ defmodule Zoi.JSONSchema do
   """
 
   alias Zoi.Types.Meta
+
+  @draft "https://json-schema.org/draft/2020-12/schema"
 
   @spec encode(Zoi.Type.t()) :: map()
   def encode(schema) do
@@ -59,7 +63,7 @@ defmodule Zoi.JSONSchema do
   end
 
   defp add_dialect(encoded_schema) do
-    Map.put(encoded_schema, :"$schema", "https://json-schema.org/draft/2020-12/schema")
+    Map.put(encoded_schema, :"$schema", @draft)
   end
 
   defp encode_schema(%Zoi.Types.String{} = schema) do
@@ -226,9 +230,6 @@ defmodule Zoi.JSONSchema do
 
       %{type: :array} ->
         array_length_to_json_schema(json_schema, param)
-
-      _ ->
-        json_schema
     end
   end
 
@@ -270,8 +271,9 @@ defmodule Zoi.JSONSchema do
       [lte: lte] ->
         Map.put(json_schema, :maximum, lte)
 
-      _ ->
-        json_schema
+      # _ ->
+      # # No other refinements exist for numbers
+        # json_schema
     end
   end
 
@@ -294,8 +296,9 @@ defmodule Zoi.JSONSchema do
         |> Map.put(:minItems, length)
         |> Map.put(:maxItems, length)
 
-      _ ->
-        json_schema
+      # _ ->
+      # # No other refinements exist for arrays
+        # json_schema
     end
   end
 end
