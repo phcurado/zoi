@@ -79,9 +79,10 @@ defmodule Zoi.MixProject do
     [
       "README.md",
       "CHANGELOG.md",
-      "guides/Converting Keys from Object.md",
-      "guides/Generating Schemas from JSON example.md",
-      "guides/Validating controller parameters.md"
+      "guides/converting_keys_from_object.md",
+      "guides/generating_schemas_from_json_example.md",
+      "guides/using_zoi_to_generate_openapi_specs.md",
+      "guides/validating_controller_parameters.md"
     ]
   end
 end
