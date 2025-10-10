@@ -164,6 +164,38 @@ defmodule Zoi.JSONSchema do
     }
   end
 
+  defp encode_schema(%Zoi.Types.Date{}) do
+    %{type: :string, format: :date}
+  end
+
+  defp encode_schema(%Zoi.ISO.Date{}) do
+    %{type: :string, format: :date}
+  end
+
+  defp encode_schema(%Zoi.Types.DateTime{}) do
+    %{type: :string, format: :"date-time"}
+  end
+
+  defp encode_schema(%Zoi.ISO.DateTime{}) do
+    %{type: :string, format: :"date-time"}
+  end
+
+  defp encode_schema(%Zoi.Types.NaiveDateTime{}) do
+    %{type: :string, format: :"date-time"}
+  end
+
+  defp encode_schema(%Zoi.ISO.NaiveDateTime{}) do
+    %{type: :string, format: :"date-time"}
+  end
+
+  defp encode_schema(%Zoi.Types.Time{}) do
+    %{type: :string, format: :time}
+  end
+
+  defp encode_schema(%Zoi.ISO.Time{}) do
+    %{type: :string, format: :time}
+  end
+
   defp encode_schema(schema) do
     raise "Encoding not implemented for schema: #{inspect(schema)}"
   end
