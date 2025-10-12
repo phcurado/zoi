@@ -70,6 +70,7 @@ defmodule Zoi.MixProject do
       logo: "guides/images/logo.png",
       extra_section: "GUIDES",
       source_url: @source_url,
+      groups_for_extras: groups_for_extras(),
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
       extras: extras()
     ]
@@ -77,12 +78,19 @@ defmodule Zoi.MixProject do
 
   defp extras do
     [
-      "README.md",
       "CHANGELOG.md",
-      "guides/converting_keys_from_object.md",
-      "guides/generating_schemas_from_json_example.md",
+      "README.md",
+      "guides/quickstart_guide.md",
       "guides/using_zoi_to_generate_openapi_specs.md",
-      "guides/validating_controller_parameters.md"
+      "guides/validating_controller_parameters.md",
+      "guides/converting_keys_from_object.md",
+      "guides/generating_schemas_from_json_example.md"
+    ]
+  end
+
+  defp groups_for_extras do
+    [
+      Guides: ~r/guides\/.*\.md/
     ]
   end
 end

@@ -44,7 +44,7 @@ defmodule MyAppWeb.UserController do
     name: Zoi.string(),
     email: Zoi.email() |> Zoi.min(4) |> Zoi.max(100),
     age: Zoi.integer(coerce: true) |> Zoi.min(18) |> Zoi.max(100)
-  })
+  }, coerce: true)
 
   def create(conn, params) do
     case Zoi.parse(@user_params, params) do
@@ -124,5 +124,3 @@ will return a structured error response like this:
   }
 }
 ```
-
-This approach allows you to:

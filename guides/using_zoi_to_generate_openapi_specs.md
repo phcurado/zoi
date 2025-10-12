@@ -1,9 +1,9 @@
 # Using Zoi to generate OpenAPI specs
 
-The OpenAPI Specification define a standard interface for HTTP APIs. It uses the [JSON Schema](https://json-schema.org) specification to describe the structure of request and response payloads.
+The OpenAPI Specification define a standard interface for HTTP APIs. The 3.1 version officially supports 100% compatibility with the latest draft (2020-12) of [JSON Schema](https://json-schema.org) specification to describe the structure of request and response payloads.
 `Zoi` implements the conversion between `Zoi` schemas and JSON Schema, which can be used to generate OpenAPI specs for your Phoenix application.
 
-For example, you can define a `Zoi` schema for a user resource:
+You can define a `Zoi` schema for a user resource:
 
 ```elixir
 schema = Zoi.object(%{
@@ -67,4 +67,7 @@ defmodule MyAppWeb.UserController do
 end
 ```
 
+With this setup, you get both request validation and OpenAPI documentation generation out of the box.
 For more details on how to validate parameters in a Phoenix controller using `Zoi`, see the [Validating controller parameters](validating_controller_parameters.md) guide.
+
+You can also validate the request params using Oaskit directly, see the [Oaskit documentation](https://hexdocs.pm/oaskit/index.html) for more details.
