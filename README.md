@@ -195,6 +195,16 @@ defmodule MyApp.UserSchemaTest do
 end
 ```
 
+## Guides
+
+Check the official guides for more examples and use cases:
+
+- [Quickstart Guide](https://hexdocs.pm/zoi/quickstart_guide.html)
+- [Using Zoi to generate OpenAPI specs](https://hexdocs.pm/zoi/using_zoi_to_generate_openapi_specs.html)
+- [Validating controller parameters](https://hexdocs.pm/zoi/validating_controller_parameters.html)
+- [Converting Keys From Object](https://hexdocs.pm/zoi/converting_keys_from_object.html)
+- [Generating Schemas from JSON](https://hexdocs.pm/zoi/generating_schemas_from_json_example.html)
+
 ## Acknowledgements
 
 `Zoi` is inspired by [Zod](https://zod.dev/) and [Joi](https://joi.dev/), providing a similar experience for Elixir.
