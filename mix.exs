@@ -65,7 +65,7 @@ defmodule Zoi.MixProject do
 
   defp docs do
     [
-      main: "Zoi",
+      main: "readme",
       source_ref: "v#{@version}",
       logo: "guides/images/logo.png",
       extra_section: "GUIDES",
