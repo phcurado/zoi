@@ -2,11 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.7.1 - Unreleased
+## 0.7.1 - 2025-10-12
 
 ### Added
 
 - `Zoi.to_json_schema/1` support for metadata (e.g., example, description)
+- `guides/quickstart_guide.md` added to the documentation
 
 ## 0.7.0 - 2025-10-10
 
