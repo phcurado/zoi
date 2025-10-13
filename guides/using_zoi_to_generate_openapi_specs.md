@@ -58,7 +58,7 @@ defmodule MyAppWeb.UserController do
 
   operation :create,
     summary: "Create User",
-    request_body: {@user_spec [required: true]},
+    request_body: {@user_spec, [required: true]},
     responses: [ok: {@user_spec, []}]
 
     def create(conn, params) do
