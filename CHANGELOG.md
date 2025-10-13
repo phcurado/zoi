@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.7.2 - 2025-10-13
+
+### Added
+
+- Fixed example in `guides/using_zoi_to_generate_openapi_specs.md`
+
 ## 0.7.1 - 2025-10-12
 
 ### Added

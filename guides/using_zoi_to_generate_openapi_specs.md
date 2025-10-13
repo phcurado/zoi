@@ -46,8 +46,6 @@ defmodule MyAppWeb.UserController do
   use MyAppWeb, :controller
   use Oaskit.Controller
 
-  alias MyApp.Users
-
   @user_schema Zoi.object(%{
     id: Zoi.integer() |> Zoi.min(1),
     name: Zoi.string() |> Zoi.min(1) |> Zoi.max(100),
