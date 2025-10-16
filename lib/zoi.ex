@@ -962,6 +962,17 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 4)
       {:error, [%Zoi.Error{message: "invalid value for enum"}]}
       {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
+
+  You can also specify the `:coerce` option to allow coercion for both key and value of the enum:
+      iex> schema = Zoi.enum([one: 1, two: 2, three: 3], coerce: true)
+      iex> Zoi.parse(schema, 1)
+      {:ok, :one}
+      iex> Zoi.parse(schema, :one)
+      {:ok, :one}
+      iex> Zoi.parse(schema, "1")
+      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
+      iex> Zoi.parse(schema, "one")
+      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
   """
   @doc group: "Complex Types"
   defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new

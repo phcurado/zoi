@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - `Zoi.email/1` now accepts `pattern` option to customize the email regex
 
+### Changed
+
+- `Zoi.enum/2` now accepts `coerce` option to coerce values to the key or to the value
+
 ## 0.7.2 - 2025-10-13
 
 ### Added
