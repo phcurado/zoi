@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.7.3 - Unreleased
+
+### Changed
+
+- `Zoi.enum/2` now accepts `coerce` option to coerce values to the key or to the value
+
 ## 0.7.2 - 2025-10-13
 
 ### Added

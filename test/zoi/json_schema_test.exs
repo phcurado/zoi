@@ -172,7 +172,14 @@ defmodule Zoi.JSONSchemaTest do
     end
 
     test "parse schema metadata" do
-      schema = Zoi.string(metadata: [description: "This is a string", example: "Hello World"])
+      schema =
+        Zoi.string(
+          metadata: [
+            description: "This is a string",
+            example: "Hello World",
+            not_used_metadata: 123
+          ]
+        )
 
       expected = %{
         type: :string,
