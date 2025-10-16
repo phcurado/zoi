@@ -51,28 +51,22 @@ defmodule Zoi.Types.Enum do
 
   defimpl Zoi.Type do
     def parse(%Zoi.Types.Enum{} = schema, input, opts) do
-      case parse_enum(schema, input, opts) do
-        {:error, _reason} = error ->
-          error
-
-        nil ->
-          error(schema)
-
-        {key, _value} ->
-          {:ok, key}
-      end
-    end
-
-    defp parse_enum(%Zoi.Types.Enum{values: values} = schema, input, opts) do
       coerce = Keyword.get(opts, :coerce, schema.coerce)
 
-      Enum.find(values, fn {key, value} ->
+      Enum.find(schema.values, fn {key, value} ->
         if coerce do
           input == value or input == key
         else
           input == value
         end
       end)
+      |> case do
+        nil ->
+          error(schema)
+
+        {key, _value} ->
+          {:ok, key}
+      end
     end
 
     defp error(schema) do
