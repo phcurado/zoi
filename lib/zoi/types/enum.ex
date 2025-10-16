@@ -80,3 +80,21 @@ defmodule Zoi.Types.Enum do
     end
   end
 end
+
+defimpl Inspect, for: Zoi.Types.Enum do
+  import Inspect.Algebra
+
+  def inspect(enum, opts) do
+    enum_values =
+      Enum.map_join(enum.values, ", ", fn
+        {key, value} -> "#{to_string(key)}: #{inspect(value)}"
+        value -> "#{inspect(value)}"
+      end)
+
+    concat([
+      "#Zoi.#{Zoi.Inspect.inspect_name(enum)}<",
+      "values: #{enum_values}",
+      ">"
+    ])
+  end
+end
