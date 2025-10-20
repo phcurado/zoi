@@ -1456,6 +1456,39 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.email(), "invalid-email")
       assert Exception.message(error) == "invalid email format"
     end
+
+    test "regex pattern: html5_email" do
+      schema = Zoi.email(pattern: Zoi.Regexes.html5_email())
+
+      assert {:ok, "test@test.com"} == Zoi.parse(schema, "test@test.com")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-email")
+      assert Exception.message(error) == "invalid email format"
+    end
+
+    test "regex pattern: rfc5322_email" do
+      schema = Zoi.email(pattern: Zoi.Regexes.rfc5322_email())
+
+      assert {:ok, "test@test.com"} == Zoi.parse(schema, "test@test.com")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-email")
+      assert Exception.message(error) == "invalid email format"
+    end
+
+    test "regex pattern: simple_email" do
+      schema = Zoi.email(pattern: Zoi.Regexes.simple_email())
+
+      assert {:ok, "A@B"} == Zoi.parse(schema, "A@B")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid")
+      assert Exception.message(error) == "invalid email format"
+    end
+
+    test "regex pattern: user custom format" do
+      custom_pattern = ~r/^[a-zA-Z0-9]+@example\.com$/
+      schema = Zoi.email(pattern: custom_pattern)
+
+      assert {:ok, "user@example.com"} == Zoi.parse(schema, "user@example.com")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "user@notexample.com")
+      assert Exception.message(error) == "invalid email format"
+    end
   end
 
   describe "uuid/1" do
