@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.7.3 - Unreleased
+
+### Added
+
+- `Zoi.email/1` now accepts `pattern` option to customize the email regex
+
 ## 0.7.2 - 2025-10-13
 
 ### Added

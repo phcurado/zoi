@@ -1098,12 +1098,32 @@ defmodule Zoi do
 
   It uses a regex pattern to validate the email format, which checks for a standard email structure including local part, domain, and top-level domain:
       ~r/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i
+
+  You can customize the email pattern by `Zoi` built-in options:
+
+      # Regex based on on https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email
+      Zoi.email(pattern: Zoi.Regexes.html5_email())
+
+      # Regex pattern based on RFC 5322 official standard
+      Zoi.email(pattern: Zoi.Regexes.rfc5322_email())
+
+      # Regex pattern based on how Phoenix framework validates emails
+      Zoi.email(pattern: Zoi.Regexes.simple_email())
+
+      # The default, inspired by the [reasonable email regex}(https://colinhacks.com/essays/reasonable-email-regex)
+      Zoi.email(pattern: Zoi.Regexes.email())
+
+  or adding your own custom regex:
+
+      Zoi.email(pattern: ~r/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)  
   """
   @doc group: "Formats"
-  @spec email() :: Zoi.Type.t()
-  def email() do
+  @spec email(opts :: options()) :: Zoi.Type.t()
+  def email(opts \\ []) do
+    regex = Keyword.get(opts, :pattern, Regexes.email())
+
     Zoi.string()
-    |> regex(Regexes.email(),
+    |> regex(regex,
       format: :email,
       message: "invalid email format"
     )
@@ -1126,7 +1146,7 @@ defmodule Zoi do
       {:ok, "6d084cef-a067-8e9e-be6d-7c5aefdfd9b4"}
   """
   @doc group: "Formats"
-  @spec uuid(opts :: keyword()) :: Zoi.Type.t()
+  @spec uuid(opts :: options()) :: Zoi.Type.t()
   def uuid(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.uuid(opts),

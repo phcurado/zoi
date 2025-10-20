@@ -9,6 +9,27 @@ defmodule Zoi.Regexes do
   end
 
   @doc """
+  Regex pattern based on on https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email
+  """
+  def html5_email() do
+    ~r/^[\w.!#$%&'*+\/=?^`{|}~-]+@[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?(?:\.[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?)*$/i
+  end
+
+  @doc """
+  Regex pattern based on RFC 5322 official standard
+  """
+  def rfc5322_email() do
+    ~r/^(?:"[^"]+"|[!#-'*+\/-9=?A-Z^_`a-z{|}~]+)@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/
+  end
+
+  @doc """
+  Regex pattern based on phoenix implementation: https://github.com/phoenixframework/phoenix/blob/main/priv/templates/phx.gen.auth/schema.ex#L38C34-L38C59
+  """
+  def simple_email() do
+    ~r/^[^@,;\s]+@[^@,;\s]+$/
+  end
+
+  @doc """
   Regex pattern to match only uppercase letters.
   """
   def upcase() do
