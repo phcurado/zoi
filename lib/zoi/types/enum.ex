@@ -1,6 +1,6 @@
 defmodule Zoi.Types.Enum do
   @moduledoc false
-  use Zoi.Type.Def, fields: [:values, :enum_type]
+  use Zoi.Type.Def, fields: [:values, :enum_type, :coerce]
 
   def new(values, opts \\ []) when is_list(values) do
     type = verify_type(values)
@@ -50,37 +50,23 @@ defmodule Zoi.Types.Enum do
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Enum{} = schema, input, _opts) do
-      case parse_enum(schema, input) do
-        {:error, _reason} = error ->
-          error
+    def parse(%Zoi.Types.Enum{} = schema, input, opts) do
+      coerce = Keyword.get(opts, :coerce, schema.coerce)
 
+      Enum.find(schema.values, fn {key, value} ->
+        if coerce do
+          input == value or input == key
+        else
+          input == value
+        end
+      end)
+      |> case do
         nil ->
           error(schema)
 
         {key, _value} ->
           {:ok, key}
       end
-    end
-
-    defp parse_enum(schema, input) do
-      cond do
-        schema.enum_type in [:atom_binary, :binary] and is_binary(input) ->
-          compare_input(schema.values, input)
-
-        schema.enum_type in [:atom_integer, :integer] and is_integer(input) ->
-          compare_input(schema.values, input)
-
-        schema.enum_type == :atom and is_atom(input) ->
-          compare_input(schema.values, input)
-
-        true ->
-          error(schema)
-      end
-    end
-
-    defp compare_input(values, input) do
-      Enum.find(values, fn {_key, value} -> input == value end)
     end
 
     defp error(schema) do

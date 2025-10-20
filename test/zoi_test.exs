@@ -1225,6 +1225,16 @@ defmodule ZoiTest do
       assert {:ok, :cherry} == Zoi.parse(schema, 3)
     end
 
+    test "enum with coercion" do
+      schema = Zoi.enum([apple: "apple", banana: "banana", cherry: "cherry"], coerce: true)
+      assert {:ok, :apple} == Zoi.parse(schema, "apple")
+      assert {:ok, :apple} == Zoi.parse(schema, :apple)
+      assert {:ok, :banana} == Zoi.parse(schema, "banana")
+      assert {:ok, :banana} == Zoi.parse(schema, :banana)
+      assert {:ok, :cherry} == Zoi.parse(schema, "cherry")
+      assert {:ok, :cherry} == Zoi.parse(schema, :cherry)
+    end
+
     test "enum with incorrect value" do
       schema = Zoi.enum([:apple, :banana, :cherry])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, :orange)
