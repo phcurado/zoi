@@ -251,7 +251,7 @@ defmodule Zoi.JSONSchema do
     # Separate regex refinements from others
     {regex_refinements, other_refinements} =
       Enum.split_with(refinements, fn
-        {_module, :refine, [[regex: _regex], _opts]} -> true
+        {_module, :refine, [[regex: _regex, opts: _regex_opts], _opts]} -> true
         _ -> false
       end)
 
@@ -263,7 +263,7 @@ defmodule Zoi.JSONSchema do
   defp encode_regex_refinements(json_schema, []), do: json_schema
 
   defp encode_regex_refinements(%{type: :string} = json_schema, [
-         {_module, :refine, [[regex: regex], opts]}
+         {_module, :refine, [[regex: regex, opts: _regex_opts], opts]}
        ]) do
     Keyword.fetch(opts, :format)
     |> case do
@@ -277,7 +277,10 @@ defmodule Zoi.JSONSchema do
 
   defp encode_regex_refinements(json_schema, regex_refinements) do
     patterns =
-      Enum.map(regex_refinements, fn {_module, :refine, [[regex: regex], _opts]} -> regex end)
+      Enum.map(regex_refinements, fn {_module, :refine,
+                                      [[regex: regex, opts: _regex_opts], _opts]} ->
+        regex
+      end)
 
     Map.put(json_schema, :allOf, Enum.map(patterns, fn pattern -> %{pattern: pattern} end))
   end
