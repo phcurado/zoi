@@ -21,3 +21,7 @@ zoi-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# dialyxir plt files
+/priv/plts/*.plt
+/priv/plts/*.plt.hash
