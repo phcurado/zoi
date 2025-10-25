@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.7.4 - 2025-10-25
+
+### Changed
+
+- `Zoi.regex/3` fix regex compilation, now the `regex.opts` are properly handled
+
 ## 0.7.3 - 2025-10-20
 
 ### Added

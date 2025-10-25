@@ -1460,6 +1460,7 @@ defmodule ZoiTest do
   describe "email/0" do
     test "valid email" do
       assert {:ok, "test@test.com"} == Zoi.parse(Zoi.email(), "test@test.com")
+      assert {:ok, "TEST@TEST.COM"} == Zoi.parse(Zoi.email(), "TEST@TEST.COM")
     end
 
     test "invalid email" do

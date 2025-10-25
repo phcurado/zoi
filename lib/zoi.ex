@@ -1401,7 +1401,7 @@ defmodule Zoi do
   @spec regex(schema :: Zoi.Type.t(), regex :: Regex.t(), opts :: options()) :: Zoi.Type.t()
   def regex(schema, regex, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[regex: regex.source], opts]})
+    |> refine({Zoi.Refinements, :refine, [[regex: regex.source, opts: regex.opts], opts]})
   end
 
   @doc """
