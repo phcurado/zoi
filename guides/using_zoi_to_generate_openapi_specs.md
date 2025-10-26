@@ -35,7 +35,7 @@ This will generate the following structure:
 }
 ```
 
-You can then use this JSON Schema to define the request and response bodies in your OpenAPI specification.
+You can then use this JSON Schema to define the request and response bodies in your OpenAPI specification. For further details on how `Zoi` maps to JSON Schemma, check the `Zoi.JSONSchema` module documentation.
 
 ## Integrating with Phoenix
 

@@ -171,6 +171,22 @@ defmodule Zoi.JSONSchemaTest do
       assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
     end
 
+    test "parse schema description and example" do
+      schema =
+        Zoi.string(
+          description: "This is a string",
+          example: "Hello World"
+        )
+
+      expected = %{
+        type: :string,
+        description: "This is a string",
+        example: "Hello World"
+      }
+
+      assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
+    end
+
     test "parse schema metadata" do
       schema =
         Zoi.string(
@@ -185,6 +201,26 @@ defmodule Zoi.JSONSchemaTest do
         type: :string,
         description: "This is a string",
         example: "Hello World"
+      }
+
+      assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
+    end
+
+    test "prioritize direct options over metadata" do
+      schema =
+        Zoi.string(
+          description: "Direct description",
+          example: "Direct example",
+          metadata: [
+            description: "Metadata description",
+            example: "Metadata example"
+          ]
+        )
+
+      expected = %{
+        type: :string,
+        description: "Direct description",
+        example: "Direct example"
       }
 
       assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)

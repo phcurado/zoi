@@ -2,13 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.7.5 - Unreleased
+## 0.10.0 - Unreleased
 
 ### Added
 
 - `Zoi.nullish/2` type to accept `nil` or a value of a specific type
 - `@spec` for all public functions
 - `@typedoc` for all public types
+- `Zoi.description/1` option to add description metadata to types for documentation purposes
+- `Zoi.example/1` option to add example metadata to types for documentation purposes
+
+### Changed
+
+- `Zoi.to_json_schema/1` now reads `description`, `example` opts from types to include them in the generated JSON Schema
 
 ## 0.7.4 - 2025-10-25
 

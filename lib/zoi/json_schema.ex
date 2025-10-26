@@ -44,14 +44,10 @@ defmodule Zoi.JSONSchema do
     - `Zoi.time/0` and `Zoi.ISO.time/0`
 
   ## Metadata
-  `Zoi.to_json_schema/1` will attempt to parse metadata defined on types. For more information, check the `Zoi.metadata/1` documentation.
-  The following metadata will be parsed on JSON Schema conversion:
-
-    - `:description` - Adds a `description` field to the JSON Schema.
-    - `:example` - Adds an `example` field to the JSON Schema.
+  `Zoi.to_json_schema/1` can also incorporate `description` and `example` metadata into the resulting JSON Schema:
 
   ```elixir
-  iex> schema = Zoi.string(metadata: [description: "A simple string", example: "Hello, World!"])
+  iex> schema = Zoi.string(description: "A simple string", example: "Hello, World!")
   iex> Zoi.to_json_schema(schema)
   %{
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -383,15 +379,28 @@ defmodule Zoi.JSONSchema do
   end
 
   defp encode_metadata(json_schema, zoi_schema) do
+    json_schema =
+      json_schema
+      |> maybe_add_metadata(:description, Zoi.description(zoi_schema))
+      |> maybe_add_metadata(:example, Zoi.example(zoi_schema))
+
     Enum.reduce(Zoi.metadata(zoi_schema), json_schema, fn
       {:description, description}, acc ->
-        Map.put(acc, :description, description)
+        Map.put_new(acc, :description, description)
 
       {:example, example}, acc ->
-        Map.put(acc, :example, example)
+        Map.put_new(acc, :example, example)
 
       _, acc ->
         acc
     end)
+  end
+
+  defp maybe_add_metadata(json_schema, key, value) do
+    if value do
+      Map.put(json_schema, key, value)
+    else
+      json_schema
+    end
   end
 end
