@@ -383,15 +383,28 @@ defmodule Zoi.JSONSchema do
   end
 
   defp encode_metadata(json_schema, zoi_schema) do
+    json_schema =
+      json_schema
+      |> maybe_add_metadata(:description, Zoi.description(zoi_schema))
+      |> maybe_add_metadata(:example, Zoi.example(zoi_schema))
+
     Enum.reduce(Zoi.metadata(zoi_schema), json_schema, fn
       {:description, description}, acc ->
-        Map.put(acc, :description, description)
+        maybe_add_metadata(acc, :description, description)
 
       {:example, example}, acc ->
-        Map.put(acc, :example, example)
+        maybe_add_metadata(acc, :example, example)
 
       _, acc ->
         acc
     end)
+  end
+
+  defp maybe_add_metadata(json_schema, key, value) do
+    if value != nil do
+      Map.put(json_schema, key, value)
+    else
+      json_schema
+    end
   end
 end
