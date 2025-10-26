@@ -214,7 +214,6 @@ defmodule Zoi do
         end
       end
   """
-  @doc deprecated: "Use Zoi.metadata/1 instead"
   @doc group: "Parsing"
   @spec example(schema :: Zoi.Type.t()) :: input()
   def example(schema) do
