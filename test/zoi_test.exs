@@ -2565,13 +2565,13 @@ defmodule ZoiTest do
   describe "metadata/1" do
     test "all main types metadata" do
       types = [
-        Zoi.any(metadata: [description: "metadata"]),
-        Zoi.array(Zoi.string(), metadata: [description: "metadata"]),
-        Zoi.string(metadata: [description: "metadata"])
+        Zoi.any(metadata: [doc: "metadata"]),
+        Zoi.array(Zoi.string(), metadata: [doc: "metadata"]),
+        Zoi.string(metadata: [doc: "metadata"])
       ]
 
       Enum.each(types, fn schema ->
-        assert Zoi.metadata(schema) == [description: "metadata"]
+        assert Zoi.metadata(schema) == [doc: "metadata"]
       end)
     end
   end

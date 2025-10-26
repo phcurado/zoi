@@ -386,10 +386,10 @@ defmodule Zoi.JSONSchema do
 
     Enum.reduce(Zoi.metadata(zoi_schema), json_schema, fn
       {:description, description}, acc ->
-        maybe_add_metadata(acc, :description, description)
+        Map.put_new(acc, :description, description)
 
       {:example, example}, acc ->
-        maybe_add_metadata(acc, :example, example)
+        Map.put_new(acc, :example, example)
 
       _, acc ->
         acc
@@ -397,7 +397,7 @@ defmodule Zoi.JSONSchema do
   end
 
   defp maybe_add_metadata(json_schema, key, value) do
-    if value != nil do
+    if value do
       Map.put(json_schema, key, value)
     else
       json_schema

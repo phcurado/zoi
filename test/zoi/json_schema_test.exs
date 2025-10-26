@@ -205,6 +205,26 @@ defmodule Zoi.JSONSchemaTest do
 
       assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
     end
+
+    test "prioritize direct options over metadata" do
+      schema =
+        Zoi.string(
+          description: "Direct description",
+          example: "Direct example",
+          metadata: [
+            description: "Metadata description",
+            example: "Metadata example"
+          ]
+        )
+
+      expected = %{
+        type: :string,
+        description: "Direct description",
+        example: "Direct example"
+      }
+
+      assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
+    end
   end
 
   def custom_refinement(value) do
