@@ -2436,6 +2436,7 @@ defmodule ZoiTest do
         {Zoi.naive_datetime(), quote(do: NaiveDateTime.t())},
         {Zoi.null(), quote(do: nil)},
         {Zoi.nullable(Zoi.string()), quote(do: nil | binary())},
+        {Zoi.nullish(Zoi.integer()), quote(do: nil | integer())},
         {Zoi.number(), quote(do: number())},
         {Zoi.optional(Zoi.string()), quote(do: binary())},
         {Zoi.string(), quote(do: binary())},
@@ -2463,7 +2464,7 @@ defmodule ZoiTest do
       schema =
         Zoi.object(%{
           name: Zoi.string(),
-          age: Zoi.integer(),
+          age: Zoi.nullish(Zoi.integer()),
           address: Zoi.optional(Zoi.string())
         })
 
@@ -2471,7 +2472,7 @@ defmodule ZoiTest do
                quote(
                  do: %{
                    optional(:address) => binary(),
-                   required(:age) => integer(),
+                   optional(:age) => nil | integer(),
                    required(:name) => binary()
                  }
                )
@@ -2517,6 +2518,42 @@ defmodule ZoiTest do
     end
   end
 
+  describe "description/1" do
+    test "all main types description" do
+      types = [
+        Zoi.any(description: "description"),
+        Zoi.array(Zoi.string(), description: "description"),
+        Zoi.atom(description: "description"),
+        Zoi.boolean(description: "description"),
+        Zoi.date(description: "description"),
+        Zoi.datetime(description: "description"),
+        Zoi.decimal(description: "description"),
+        Zoi.default(Zoi.string(), "default", description: "description"),
+        Zoi.enum(["a", "b", "c"], description: "description"),
+        Zoi.float(description: "description"),
+        Zoi.integer(description: "description"),
+        Zoi.intersection([Zoi.string(coerce: true), Zoi.atom()], description: "description"),
+        Zoi.literal("true", description: "description"),
+        Zoi.map(description: "description"),
+        Zoi.naive_datetime(description: "description"),
+        Zoi.null(description: "description"),
+        Zoi.nullable(Zoi.string(), description: "description"),
+        Zoi.nullish(Zoi.integer(), description: "description"),
+        Zoi.number(description: "description"),
+        Zoi.optional(Zoi.string(description: "description")),
+        Zoi.string(description: "description"),
+        Zoi.string_boolean(description: "description"),
+        Zoi.time(description: "description"),
+        Zoi.tuple({Zoi.string(), Zoi.integer(), Zoi.any()}, description: "description"),
+        Zoi.union([Zoi.integer(), Zoi.float()], description: "description")
+      ]
+
+      Enum.each(types, fn schema ->
+        assert Zoi.description(schema) == "description"
+      end)
+    end
+  end
+
   describe "example/1" do
     test "all main types examples" do
       types = [
@@ -2537,6 +2574,7 @@ defmodule ZoiTest do
         Zoi.naive_datetime(example: ~N[2023-01-01 00:00:00]),
         Zoi.null(example: nil),
         Zoi.nullable(Zoi.string(), example: nil),
+        Zoi.nullish(Zoi.integer(), example: 12),
         Zoi.number(example: 123),
         Zoi.optional(Zoi.string(example: "example")),
         Zoi.string(example: "example"),
