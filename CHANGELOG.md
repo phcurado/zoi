@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.7.5 - Unreleased
+
+### Added
+
+- `Zoi.nullish/2` type to accept `nil` or a value of a specific type
+- `@spec` for all public functions
+- `@typedoc` for all public types
+
 ## 0.7.4 - 2025-10-25
 
 ### Changed

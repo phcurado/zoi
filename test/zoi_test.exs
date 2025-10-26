@@ -378,6 +378,36 @@ defmodule ZoiTest do
     end
   end
 
+  describe "nullish/2" do
+    test "nullish with nil value" do
+      schema = Zoi.nullish(Zoi.string())
+      assert {:ok, nil} == Zoi.parse(schema, nil)
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+
+    test "nullish with missing value on object" do
+      schema = Zoi.object(%{name: Zoi.nullish(Zoi.string())})
+      assert {:ok, %{}} == Zoi.parse(schema, %{})
+      assert {:ok, %{name: nil}} == Zoi.parse(schema, %{name: nil})
+      assert {:ok, %{name: "hello"}} == Zoi.parse(schema, %{name: "hello"})
+    end
+
+    test "nullish with incorrect type" do
+      schema = Zoi.nullish(Zoi.string())
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 123)
+      assert Exception.message(error) == "invalid type: must be a string"
+    end
+
+    test "nullish with transform" do
+      # Transform function should handle nil value
+      schema =
+        Zoi.nullish(Zoi.string()) |> Zoi.transform(fn value -> value && String.upcase(value) end)
+
+      assert {:ok, "HELLO"} == Zoi.parse(schema, "hello")
+      assert {:ok, nil} == Zoi.parse(schema, nil)
+    end
+  end
+
   describe "default/2" do
     test "default with correct value" do
       schema = Zoi.default(Zoi.string(), "default_value")

@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Optional do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:inner]
+  use Zoi.Type.Def
 
   alias Zoi.Types.Meta
 

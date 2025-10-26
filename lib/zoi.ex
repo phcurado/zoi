@@ -40,13 +40,22 @@ defmodule Zoi do
   alias Zoi.Regexes
   alias Zoi.Types.Meta
 
+  @typedoc "The input data to be validated against a schema."
   @type input :: any()
+
+  @typedoc "The result of parsing, either `{:ok, value}` or `{:error, errors}`."
   @type result :: {:ok, any()} | {:error, [Zoi.Error.t() | binary()]}
+
+  @typedoc "Options for parsing and schema definitions."
   @type options :: keyword()
+
+  @typedoc "Refinement function or module specification."
   @type refinement ::
           {module(), atom(), [any()]}
           | (input() -> :ok | {:error, binary()})
           | (input(), Zoi.Context.t() -> :ok | {:error, binary()})
+
+  @typedoc "Transformation function or module specification."
   @type transform ::
           {module(), atom(), [any()]}
           | (input() -> {:ok, input()} | {:error, binary()} | input())
@@ -353,6 +362,7 @@ defmodule Zoi do
   See `Zoi.JSONSchema`
   """
   @doc group: "Parsing"
+  @spec to_json_schema(schema :: Zoi.Type.t()) :: map()
   defdelegate to_json_schema(schema), to: Zoi.JSONSchema, as: :encode
 
   # Types
@@ -392,6 +402,7 @@ defmodule Zoi do
       {:ok, "123"}
   """
   @doc group: "Basic Types"
+  @spec string(opts :: options()) :: Zoi.Type.t()
   defdelegate string(opts \\ []), to: Zoi.Types.String, as: :new
 
   @doc """
@@ -410,6 +421,7 @@ defmodule Zoi do
       {:ok, 42}
   """
   @doc group: "Basic Types"
+  @spec integer(opts :: options()) :: Zoi.Type.t()
   defdelegate integer(opts \\ []), to: Zoi.Types.Integer, as: :new
 
   @doc """
@@ -430,6 +442,7 @@ defmodule Zoi do
       {:ok, 3.14}
   """
   @doc group: "Basic Types"
+  @spec float(opts :: options()) :: Zoi.Type.t()
   defdelegate float(opts \\ []), to: Zoi.Types.Float, as: :new
 
   @doc """
@@ -447,6 +460,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "invalid type: must be a number"}]}
   """
   @doc group: "Basic Types"
+  @spec number(opts :: options()) :: Zoi.Type.t()
   defdelegate number(opts \\ []), to: Zoi.Types.Number, as: :new
 
   @doc """
@@ -463,6 +477,7 @@ defmodule Zoi do
       {:ok, true}
   """
   @doc group: "Basic Types"
+  @spec boolean(opts :: options()) :: Zoi.Type.t()
   defdelegate boolean(opts \\ []), to: Zoi.Types.Boolean, as: :new
 
   @doc """
@@ -501,6 +516,7 @@ defmodule Zoi do
       {:ok, true}
   """
   @doc group: "Basic Types"
+  @spec string_boolean(opts :: options()) :: Zoi.Type.t()
   defdelegate string_boolean(opts \\ []), to: Zoi.Types.StringBoolean, as: :new
 
   @doc """
@@ -519,6 +535,7 @@ defmodule Zoi do
       {:ok, %{key: "value"}}
   """
   @doc group: "Basic Types"
+  @spec any(opts :: options()) :: Zoi.Type.t()
   defdelegate any(opts \\ []), to: Zoi.Types.Any, as: :new
 
   @doc """
@@ -532,6 +549,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "invalid type: must be an atom"}]}
   """
   @doc group: "Basic Types"
+  @spec atom(opts :: options()) :: Zoi.Type.t()
   defdelegate atom(opts \\ []), to: Zoi.Types.Atom, as: :new
 
   @doc """
@@ -551,6 +569,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "invalid type: does not match literal"}]}
   """
   @doc group: "Basic Types"
+  @spec literal(value :: input(), opts :: options()) :: Zoi.Type.t()
   defdelegate literal(value, opts \\ []), to: Zoi.Types.Literal, as: :new
 
   @doc """
@@ -565,6 +584,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "invalid type: must be nil"}]}
   """
   @doc group: "Basic Types"
+  @spec null(opts :: options()) :: Zoi.Type.t()
   defdelegate null(opts \\ []), to: Zoi.Types.Null, as: :new
 
   @doc """
@@ -577,6 +597,7 @@ defmodule Zoi do
       {:ok, %{}}
   """
   @doc group: "Encapsulated Types"
+  @spec optional(inner :: Zoi.Type.t()) :: Zoi.Type.t()
   defdelegate optional(inner), to: Zoi.Types.Optional, as: :new
 
   @doc """
@@ -589,6 +610,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
   """
   @doc group: "Encapsulated Types"
+  @spec required(inner :: Zoi.Type.t()) :: Zoi.Type.t()
   defdelegate required(inner), to: Zoi.Types.Required, as: :new
 
   @doc """
@@ -602,7 +624,23 @@ defmodule Zoi do
       {:ok, "hello"}
   """
   @doc group: "Encapsulated Types"
+  @spec nullable(inner :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
   defdelegate nullable(inner, opts \\ []), to: Zoi.Types.Nullable, as: :new
+
+  @doc """
+  Makes the schema optional and nullable for the `Zoi.object/2` and `Zoi.keyword/2` types.
+
+  ## Example
+      iex> schema = Zoi.object(%{name: Zoi.string() |> Zoi.nullish()})
+      iex> Zoi.parse(schema, %{})
+      {:ok, %{}}
+      iex> Zoi.parse(schema, %{name: nil})
+      {:ok, %{name: nil}}
+  """
+  @doc group: "Encapsulated Types"
+  @doc since: "0.7.5"
+  @spec nullish(inner :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  defdelegate nullish(inner, opts \\ []), to: Zoi.Types.Nullish, as: :new
 
   @doc """
   Creates a default value for the schema.
@@ -616,6 +654,7 @@ defmodule Zoi do
 
   """
   @doc group: "Encapsulated Types"
+  @spec default(inner :: Zoi.Type.t(), value :: input(), opts :: options()) :: Zoi.Type.t()
   defdelegate default(inner, value, opts \\ []), to: Zoi.Types.Default, as: :new
 
   @doc """
@@ -654,6 +693,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "too small: must be at least 3"}]}
   """
   @doc group: "Encapsulated Types"
+  @spec union(fields :: [Zoi.Type.t()], opts :: options()) :: Zoi.Type.t()
   defdelegate union(fields, opts \\ []), to: Zoi.Types.Union, as: :new
 
   @doc """
@@ -684,6 +724,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "too small: must have at least 3 characters"}]}
   """
   @doc group: "Encapsulated Types"
+  @spec intersection(fields :: [Zoi.Type.t()], opts :: options()) :: Zoi.Type.t()
   defdelegate intersection(fields, opts \\ []), to: Zoi.Types.Intersection, as: :new
 
   @doc """
@@ -768,6 +809,7 @@ defmodule Zoi do
       {:ok, %{name: "default value"}}
   """
   @doc group: "Complex Types"
+  @spec object(fields :: map(), opts :: options()) :: Zoi.Type.t()
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
 
   @doc """
@@ -792,6 +834,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
   """
   @doc group: "Complex Types"
+  @spec keyword(fields :: keyword(), opts :: options()) :: Zoi.Type.t()
   defdelegate keyword(fields, opts \\ []), to: Zoi.Types.Keyword, as: :new
 
   @doc """
@@ -839,6 +882,7 @@ defmodule Zoi do
 
   """
   @doc group: "Complex Types"
+  @spec struct(module :: module(), fields :: map(), opts :: options()) :: Zoi.Type.t()
   defdelegate struct(module, fields, opts \\ []), to: Zoi.Types.Struct, as: :new
 
   @doc """
@@ -853,6 +897,8 @@ defmodule Zoi do
       {:ok, %{name: "Alice", role: :admin}}
   """
   @doc group: "Complex Types"
+  @spec extend(schema1 :: Zoi.Type.t(), schema2 :: Zoi.Type.t(), opts :: options()) ::
+          Zoi.Type.t()
   defdelegate extend(schema1, schema2, opts \\ []), to: Zoi.Types.Extend, as: :new
 
   @doc """
@@ -866,6 +912,8 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "invalid type: must be an integer", path: ["a"]}]}
   """
   @doc group: "Complex Types"
+  @spec map(key :: Zoi.Type.t(), type :: Zoi.Type.t(), opts :: options()) ::
+          Zoi.Type.t()
   defdelegate map(key, type, opts \\ []), to: Zoi.Types.Map, as: :new
 
   @doc """
@@ -875,6 +923,7 @@ defmodule Zoi do
       Zoi.map(Zoi.any(), Zoi.any())
   """
   @doc group: "Complex Types"
+  @spec map(opts :: options()) :: Zoi.Type.t()
   defdelegate map(opts \\ []), to: Zoi.Types.Map, as: :new
 
   @doc """
@@ -889,6 +938,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "invalid type: must be an integer", path: [1]}]}
   """
   @doc group: "Complex Types"
+  @spec tuple(fields :: tuple(), opts :: options()) :: Zoi.Type.t()
   defdelegate tuple(fields, opts \\ []), to: Zoi.Types.Tuple, as: :new
 
   @doc """
@@ -913,6 +963,7 @@ defmodule Zoi do
       Zoi.length(5)
   """
   @doc group: "Complex Types"
+  @spec array(elements :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
   def array(elements \\ Zoi.any(), opts \\ []) do
     Zoi.Types.Array.new(elements, opts)
   end
@@ -921,6 +972,7 @@ defmodule Zoi do
   alias for `Zoi.array/2`
   """
   @doc group: "Complex Types"
+  @spec list(elements :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
   defdelegate list(elements, opts \\ []), to: Zoi.Types.Array, as: :new
 
   @doc """
@@ -975,6 +1027,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
   """
   @doc group: "Complex Types"
+  @spec enum(values :: [input()] | keyword(), opts :: options()) :: Zoi.Type.t()
   defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
 
   @doc """
@@ -999,6 +1052,7 @@ defmodule Zoi do
 
   """
   @doc group: "Structured Types"
+  @spec date(opts :: options()) :: Zoi.Type.t()
   defdelegate date(opts \\ []), to: Zoi.Types.Date, as: :new
 
   @doc """
@@ -1020,6 +1074,7 @@ defmodule Zoi do
       {:ok, ~T[12:34:56]}
   """
   @doc group: "Structured Types"
+  @spec time(opts :: options()) :: Zoi.Type.t()
   defdelegate time(opts \\ []), to: Zoi.Types.Time, as: :new
 
   @doc """
@@ -1042,6 +1097,7 @@ defmodule Zoi do
       {:ok, ~U[2016-05-24 13:26:08Z]}
   """
   @doc group: "Structured Types"
+  @spec datetime(opts :: options()) :: Zoi.Type.t()
   defdelegate datetime(opts \\ []), to: Zoi.Types.DateTime, as: :new
 
   @doc """
@@ -1065,6 +1121,7 @@ defmodule Zoi do
       {:ok, ~N[0000-01-01 00:00:01]}
   """
   @doc group: "Structured Types"
+  @spec naive_datetime(opts :: options()) :: Zoi.Type.t()
   defdelegate naive_datetime(opts \\ []), to: Zoi.Types.NaiveDateTime, as: :new
 
   if Code.ensure_loaded?(Decimal) do
@@ -1090,6 +1147,7 @@ defmodule Zoi do
         {:ok, Decimal.new("123")}
     """
     @doc group: "Structured Types"
+    @spec decimal(opts :: options()) :: Zoi.Type.t()
     defdelegate decimal(opts \\ []), to: Zoi.Types.Decimal, as: :new
   else
     def decimal(_opts \\ []) do
@@ -1178,6 +1236,7 @@ defmodule Zoi do
 
   """
   @doc group: "Formats"
+  @spec url() :: Zoi.Type.t()
   def url() do
     Zoi.string()
     |> regex(Regexes.url(),
@@ -1195,6 +1254,7 @@ defmodule Zoi do
       {:ok, "127.0.0.1"}
   """
   @doc group: "Formats"
+  @spec ipv4() :: Zoi.Type.t()
   def ipv4() do
     Zoi.string()
     |> regex(Regexes.ipv4(),
@@ -1214,6 +1274,7 @@ defmodule Zoi do
       {:error, [%Zoi.Error{message: "invalid IPv6 address"}]}
   """
   @doc group: "Formats"
+  @spec ipv6() :: Zoi.Type.t()
   def ipv6() do
     Zoi.string()
     |> regex(Regexes.ipv6(),
