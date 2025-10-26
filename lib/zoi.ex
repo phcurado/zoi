@@ -163,6 +163,22 @@ defmodule Zoi do
   end
 
   @doc """
+  Retrieves the description associated with the schema.
+  It's often useful to store additional information about the schema, describing its purpose or usage.
+
+  ## Example
+
+      iex> schema = Zoi.string(description: "Defines the name of the user")
+      iex> Zoi.description(schema)
+      "Defines the name of the user"
+  """
+  @doc group: "Parsing"
+  @spec description(schema :: Zoi.Type.t()) :: binary() | nil
+  def description(schema) do
+    schema.meta.description
+  end
+
+  @doc """
   Retrieves an example value from the schema. If no example is defined, it returns `nil`.
 
   ## Example
@@ -211,11 +227,11 @@ defmodule Zoi do
 
   ## Example
 
-      iex> schema = Zoi.string(metadata: [id: "1", description: "A simple string"])
+      iex> schema = Zoi.string(metadata: [identifier: "string/1", for: "username"])
       iex> Zoi.metadata(schema)
-      [id: "1", description: "A simple string"]
+      [identifier: "string/1", for: "username"]
 
-  You can also add an example helper that can be used on your tests and documentation:
+  You can also add an example helper that can be used on own elixir docs:
 
       defmodule MyApp.UserSchema do
         @schema Zoi.object(
@@ -224,7 +240,6 @@ defmodule Zoi do
                     age: Zoi.integer() |> Zoi.optional()
                   },
                   metadata: [
-                    example: %{name: "Alice", age: 30},
                     doc: "A user schema with name and optional age",
                     moduledoc: "Schema representing a user with name and optional age"
                   ]
@@ -239,15 +254,7 @@ defmodule Zoi do
         def schema, do: @schema
       end
 
-      defmodule MyApp.UserSchemaTest do
-        use ExUnit.Case
-        alias MyApp.UserSchema
-
-        test "example matches schema" do
-          example = Zoi.metadata(UserSchema.schema())[:example]
-          assert {:ok, example} == Zoi.parse(UserSchema.schema(), example)
-        end
-      end
+  The metadata is flexible, allowing you to store any key-value pairs that suit your needs.
   """
   @doc group: "Parsing"
   @spec metadata(schema :: Zoi.Type.t()) :: keyword()

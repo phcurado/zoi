@@ -4,8 +4,9 @@ defmodule Zoi.Types.Meta do
   @type t :: %__MODULE__{
           refinements: [Zoi.refinement()],
           transforms: [Zoi.transform()],
-          error: nil | binary(),
+          error: binary() | nil,
           required: boolean(),
+          description: binary() | nil,
           example: Zoi.input(),
           metadata: [keyword()]
         }
@@ -16,6 +17,7 @@ defmodule Zoi.Types.Meta do
     metadata: [],
     required: nil,
     error: nil,
+    description: nil,
     example: nil
   ]
   @struct_keys Keyword.keys(@struct_fields)
