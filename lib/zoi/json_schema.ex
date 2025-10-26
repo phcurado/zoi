@@ -44,14 +44,10 @@ defmodule Zoi.JSONSchema do
     - `Zoi.time/0` and `Zoi.ISO.time/0`
 
   ## Metadata
-  `Zoi.to_json_schema/1` will attempt to parse metadata defined on types. For more information, check the `Zoi.metadata/1` documentation.
-  The following metadata will be parsed on JSON Schema conversion:
-
-    - `:description` - Adds a `description` field to the JSON Schema.
-    - `:example` - Adds an `example` field to the JSON Schema.
+  `Zoi.to_json_schema/1` can also incorporate `description` and `example` metadata into the resulting JSON Schema:
 
   ```elixir
-  iex> schema = Zoi.string(metadata: [description: "A simple string", example: "Hello, World!"])
+  iex> schema = Zoi.string(description: "A simple string", example: "Hello, World!")
   iex> Zoi.to_json_schema(schema)
   %{
     "$schema": "https://json-schema.org/draft/2020-12/schema",
