@@ -150,12 +150,22 @@ iex> Zoi.parse(schema, :hi)
 
 ### Metadata
 
-You can attach metadata to schemas using the `:metadata` option. This metadata can be useful for documentation, testing, or other any purpose your application may require.
+`Zoi` supports 3 types of metadata:
+
+- `description`: Description of the schema.
+- `example`: An example value that conforms to the schema.
+- `metadata`: A keyword list of arbitrary metadata.
+
+You can use in all types, for example:
 
 ```elixir
-iex> schema = Zoi.string(metadata: [id: "1", description: "A simple string"])
+iex> schema = Zoi.string(description: "Hello", example: "World!", metadata: [identifier: "string"])
+iex> Zoi.description(schema)
+"Hello"
+iex> Zoi.example(schema)
+"World!"
 iex> Zoi.metadata(schema)
-[id: "1", description: "A simple string"]
+[identifier: "string"]
 ```
 
 You can use this feature to create self-documenting schemas, with example and tests. For example:
@@ -167,10 +177,11 @@ defmodule MyApp.UserSchema do
               name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
               age: Zoi.integer() |> Zoi.optional()
             },
+            description: "A user schema with name and optional age",
+            example: %{name: "Alice", age: 30},
             metadata: [
-              example: %{name: "Alice", age: 30},
-              doc: "A user schema with name and optional age",
-              moduledoc: "Schema representing a user with name and optional age"
+              doc: "schema function representing the user schema",
+              moduledoc: "This module represents a schema of a user"
             ]
           )
 
@@ -189,17 +200,20 @@ defmodule MyApp.UserSchemaTest do
   alias MyApp.UserSchema
 
   test "example matches schema" do
-    example = Zoi.metadata(UserSchema.schema())[:example]
+    example = Zoi.example(UserSchema.schema())
     assert {:ok, example} == Zoi.parse(UserSchema.schema(), example)
   end
 end
 ```
+
+`description`, `example` are also used when generating OpenAPI specs. See the [Using Zoi to generate OpenAPI specs](https://hexdocs.pm/zoi/using_zoi_to_generate_openapi_specs.html) guide for more details.
 
 ## Guides
 
 Check the official guides for more examples and use cases:
 
 - [Quickstart Guide](https://hexdocs.pm/zoi/quickstart_guide.html)
+- [Main API Reference](https://hexdocs.pm/zoi/Zoi.html)
 - [Using Zoi to generate OpenAPI specs](https://hexdocs.pm/zoi/using_zoi_to_generate_openapi_specs.html)
 - [Validating controller parameters](https://hexdocs.pm/zoi/validating_controller_parameters.html)
 - [Converting Keys From Object](https://hexdocs.pm/zoi/converting_keys_from_object.html)

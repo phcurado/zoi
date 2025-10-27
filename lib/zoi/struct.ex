@@ -7,16 +7,34 @@ defmodule Zoi.Struct do
   ## Examples
       defmodule MyApp.SomeModule do
         @schema Zoi.struct(__MODULE__, %{
-          name: Zoi.string()
-          age: Zoi.integer() |> Zoi.default(0) |> Zoi.optional(),
-          email: Zoi.string()
-        })
+                  name: Zoi.string() |> Zoi.nullable(),
+                  age: Zoi.integer() |> Zoi.default(0) |> Zoi.optional(),
+                  email: Zoi.string()
+                })
 
-        @enforce_keys Zoi.Struct.enforce_keys(schema) # [:name]
-        defstruct Zoi.Struct.struct_fields(schema) # [:name, :email, {:age, 0}]
+        @type t :: unquote(Zoi.type_spec(@schema))
+        @enforce_keys Zoi.Struct.enforce_keys(@schema) # [:name, :email]
+        defstruct Zoi.Struct.struct_fields(@schema) # [:name, :email, {:age, 0}]
       end
-  """
 
+  As shown in the example above, you can define a Zoi schema which will be used to generate a struct definition and especification.
+  By default, `Zoi.struct/3` makes all fields required unless they are marked as optional, and you can leverage the schema definition to
+  automatically generate the struct fields, type and enforce keys.
+
+  The example above is the same as the following definition:
+
+      defmodule MyApp.SomeModule do
+        @type t :: %MyApp.SomeModule{
+                name: binary() | nil,
+                age: integer(),
+                email: binary()
+              }
+        @enforce_keys [:name, :email]
+        defstruct [:name, :email, age: 0]
+      end
+
+  The advantage of using `Zoi.struct/3` is that you can leverage Zoi's schema capabilities to define complex types, default values, validations, etc, and have those reflected in your Elixir struct definitions automatically.
+  """
   alias Zoi.Types.Meta
 
   @doc """
