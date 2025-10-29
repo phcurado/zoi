@@ -31,7 +31,8 @@ defmodule Zoi.Docs do
 
   * `:debug` (`t:boolean/0`) - Enable debug mode.
 
-  All `Zoi` types are supported, and you can leverate the type specifications and documentation metadata to produce comprehensive docs for your schemas. 
+  All `Zoi` types are supported, and you can leverage the type specifications and documentation metadata to produce comprehensive docs for your schemas. 
+
   A common use case is documenting `opts` parameters for functions that accept keyword lists, where you can define the expected options using `Zoi.keyword/2` and generate the corresponding documentation automatically, for example:
 
       @list_user_opts Zoi.keyword([
@@ -71,6 +72,16 @@ defmodule Zoi.Docs do
       def list_users(opts \\\\ []) do
         # ...
       end
+
+  The same pattern will work for `Zoi.object/2` schemas as well, since you may also use them to define a structured map input.
+
+      schema = Zoi.object(%{name: Zoi.email(), role: Zoi.enum(admin: "Admin", user: "User")})
+      Zoi.docs(schema)
+
+  Which would produce:
+
+  * `:name` (`t:String.t/0`) - Required. The email address.
+  * `:role` (one of `"Admin"`, `"User"`) - Required. The role of the user.
   """
 
   alias Zoi.Types.Meta
@@ -133,7 +144,7 @@ defmodule Zoi.Docs do
   end
 
   defp parse_enum_spec(value) when is_atom(value), do: "`:#{value}`"
-  defp parse_enum_spec(value), do: "#{value}"
+  defp parse_enum_spec(value), do: "`#{inspect(value)}`"
 
   defp parse_value(schema) do
     prefix = " - "

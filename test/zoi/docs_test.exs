@@ -113,7 +113,7 @@ defmodule Zoi.DocsTest do
 
       * `:decimal` (`t:Decimal.t/0`)
 
-      * `:enum` (one of A, B)
+      * `:enum` (one of `"A"`, `"B"`)
 
       * `:enum_atom` (one of `:a`, `:b`)
 
