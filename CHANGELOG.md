@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.8.1 - Unreleased
+
+### Added
+
+- `Zoi.non_negative/1` refinement for numbers to accept values from 0 and above
+
 ## 0.8.0 - 2025-10-26
 
 ### Added

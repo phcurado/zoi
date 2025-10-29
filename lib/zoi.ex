@@ -1457,6 +1457,23 @@ defmodule Zoi do
   end
 
   @doc """
+  Validates that the input is a non-negative number (greater than or equal to 0).
+  This can be used for integers, floats and numbers.
+  ## Example
+      iex> schema = Zoi.integer() |> Zoi.non_negative()
+      iex> Zoi.parse(schema, 0)
+      {:ok, 0}
+      iex> Zoi.parse(schema, -5)
+      {:error, [%Zoi.Error{message: "too small: must be at least 0"}]}
+  """
+  @doc group: "Refinements"
+  @spec non_negative(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  def non_negative(schema, opts \\ []) do
+    schema
+    |> refine({Zoi.Refinements, :refine, [[gte: 0], opts]})
+  end
+
+  @doc """
   Validates that the input matches a given regex pattern.
 
   ## Example
