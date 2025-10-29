@@ -42,9 +42,6 @@ defmodule Zoi.Types.Keyword do
           {:error, err} ->
             error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
             {parsed, Zoi.Errors.merge(errors, error), path}
-
-          {obj_parsed, obj_errors, _path} ->
-            {[{key, obj_parsed} | parsed], Zoi.Errors.merge(errors, obj_errors), path}
         end)
       end)
       |> then(fn {parsed, errors, _path} ->
@@ -151,22 +148,26 @@ defmodule Zoi.Types.Keyword do
       |> Map.fetch(key)
     end
 
-    def type_spec(%Zoi.Types.Keyword{fields: fields}, opts) do
+    def type_spec(%Zoi.Types.Keyword{fields: fields}, opts) when is_list(fields) do
       fields
       |> Enum.map(fn {key, type} ->
         quote do
           {unquote(key), unquote(Zoi.Type.type_spec(type, opts))}
         end
       end)
-      |> Enum.reverse()
       |> then(fn list ->
         if list == [] do
           quote(do: keyword())
         else
           list
-          |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
         end
       end)
+    end
+
+    def type_spec(%Zoi.Types.Keyword{fields: schema}, opts) do
+      quote do
+        [{atom(), unquote(Zoi.Type.type_spec(schema, opts))}]
+      end
     end
   end
 end

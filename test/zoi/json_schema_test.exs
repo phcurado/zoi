@@ -2,12 +2,11 @@ defmodule Zoi.JSONSchemaTest do
   use ExUnit.Case, async: true
   # doctest Zoi.JSONSchema
 
-  alias Zoi.JSONSchema
   alias Zoi.Regexes
 
   @draft "https://json-schema.org/draft/2020-12/schema"
 
-  describe "encode/1" do
+  describe "Zoi.to_json_schema/1" do
     @base_schemas [
       {"string", Zoi.string(), %{type: :string}},
       {"integer", Zoi.integer(), %{type: :integer}},
@@ -35,7 +34,7 @@ defmodule Zoi.JSONSchemaTest do
       @expected expected
       test "encoding #{test_ref}" do
         expected = Map.put(@expected, :"$schema", @draft)
-        assert JSONSchema.encode(@schema) == expected
+        assert Zoi.to_json_schema(@schema) == expected
       end
     end
 
@@ -52,7 +51,7 @@ defmodule Zoi.JSONSchemaTest do
                },
                required: required_properties,
                additionalProperties: false
-             } = JSONSchema.encode(schema)
+             } = Zoi.to_json_schema(schema)
 
       assert :name in required_properties
       assert :age in required_properties
@@ -62,7 +61,7 @@ defmodule Zoi.JSONSchemaTest do
       assert_raise RuntimeError,
                    "Encoding not implemented for schema: %Zoi.Types.Atom{meta: nil}",
                    fn ->
-                     JSONSchema.encode(%Zoi.Types.Atom{})
+                     Zoi.to_json_schema(%Zoi.Types.Atom{})
                    end
     end
 
@@ -91,7 +90,7 @@ defmodule Zoi.JSONSchemaTest do
       @expected expected
       test "encoding #{test_ref} pattern" do
         expected = Map.put(@expected, :"$schema", @draft)
-        assert JSONSchema.encode(@schema) == expected
+        assert Zoi.to_json_schema(@schema) == expected
       end
     end
 
@@ -110,7 +109,7 @@ defmodule Zoi.JSONSchemaTest do
       @expected expected
       test "encoding #{test_ref} range" do
         expected = Map.put(@expected, :"$schema", @draft)
-        assert JSONSchema.encode(@schema) == expected
+        assert Zoi.to_json_schema(@schema) == expected
       end
     end
 
@@ -142,7 +141,7 @@ defmodule Zoi.JSONSchemaTest do
       @expected expected
       test "encoding #{test_ref} length" do
         expected = Map.put(@expected, :"$schema", @draft)
-        assert JSONSchema.encode(@schema) == expected
+        assert Zoi.to_json_schema(@schema) == expected
       end
     end
 
@@ -161,14 +160,14 @@ defmodule Zoi.JSONSchemaTest do
       @expected expected
       test "encoding #{test_ref} schema" do
         expected = Map.put(@expected, :"$schema", @draft)
-        assert JSONSchema.encode(@schema) == expected
+        assert Zoi.to_json_schema(@schema) == expected
       end
     end
 
     test "length in map type have no effect" do
       schema = Zoi.map() |> Zoi.length(3)
       expected = %{type: :object}
-      assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
 
     test "parse schema description and example" do
@@ -184,7 +183,7 @@ defmodule Zoi.JSONSchemaTest do
         example: "Hello World"
       }
 
-      assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
 
     test "parse schema metadata" do
@@ -203,7 +202,7 @@ defmodule Zoi.JSONSchemaTest do
         example: "Hello World"
       }
 
-      assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
 
     test "prioritize direct options over metadata" do
@@ -223,7 +222,7 @@ defmodule Zoi.JSONSchemaTest do
         example: "Direct example"
       }
 
-      assert JSONSchema.encode(schema) == Map.put(expected, :"$schema", @draft)
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
   end
 

@@ -1,9 +1,4 @@
 defmodule Zoi.Docs do
-  @example Zoi.keyword(
-             host: Zoi.string(doc: "The host of the server.") |> Zoi.required(),
-             port: Zoi.integer(doc: "The port of the server.") |> Zoi.default(8080),
-             debug: Zoi.boolean(doc: "Enable debug mode.")
-           )
   @moduledoc """
   Module for generating documentation for `Zoi` types.
   Using `Zoi` metadata, you can produce documentation that can be used in HexDocs.
@@ -26,7 +21,6 @@ defmodule Zoi.Docs do
 
         \#{Zoi.docs(@schema)}
         \"""
-
       end
 
   The generated documentation will look like this:
@@ -36,10 +30,52 @@ defmodule Zoi.Docs do
   * `:port` (`t:integer/0`) - Required. The port of the server. The default value is `8080`.
 
   * `:debug` (`t:boolean/0`) - Enable debug mode.
+
+  All `Zoi` types are supported, and you can leverate the type specifications and documentation metadata to produce comprehensive docs for your schemas. 
+  A common use case is documenting `opts` parameters for functions that accept keyword lists, where you can define the expected options using `Zoi.keyword/2` and generate the corresponding documentation automatically, for example:
+
+      @list_user_opts Zoi.keyword([
+        active: Zoi.boolean(doc: "Whether the feature is active.") |> Zoi.default(true),
+        group: Zoi.string(doc: "The group name.")
+      ])
+      @type list_user_opts :: unquote(Zoi.type_spec(@list_user_opts))
+
+      @doc \"""
+      List  users.
+
+      Options:
+      \#{Zoi.docs(@list_user_opts)}
+      \"""
+      @spec list_users(opts :: list_user_opts()) :: [User.t()]
+      def list_users(opts \\\\ []) do
+        opts = Zoi.parse!(@list_user_opts, opts)
+
+        User
+        |> where(active: opts[:active])
+        |> where(group: opts[:group])
+        |> Repo.all()
+      end
+
+
+  Which would be translated to:
+      @type list_user_opts :: [active: boolean(), group: binaryt()]
+
+      @doc \"""
+      List  users.
+
+      Options:
+      * `:active` (`t:boolean/0`) - The feature is active. The default value is `true`.
+      * `:group` (`t:String.t/0`) - The group name.
+      \"""
+      @spec list_users(opts :: list_user_opts()) :: [User.t()]
+      def list_users(opts \\\\ []) do
+        # ...
+      end
   """
 
   alias Zoi.Types.Meta
 
+  @doc false
   @spec generate(Zoi.Type.t()) :: binary()
   def generate(%Zoi.Types.Keyword{fields: fields}) do
     Enum.map_join(fields, "\n\n", &parse_field/1) <> "\n"

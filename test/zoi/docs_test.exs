@@ -82,6 +82,7 @@ defmodule Zoi.DocsTest do
           enum_atom: Zoi.enum([:a, :b]),
           float: Zoi.float(),
           integer: Zoi.integer(),
+          intersection: Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
           keyword: Zoi.keyword(Zoi.string()),
           literal: Zoi.literal(42),
           map: Zoi.map(),
@@ -119,6 +120,8 @@ defmodule Zoi.DocsTest do
       * `:float` (`t:float/0`)
 
       * `:integer` (`t:integer/0`)
+
+      * `:intersection` (`t:String.t/0` and `"fixed"`)
 
       * `:keyword` (`t:keyword/0`)
 

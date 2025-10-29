@@ -2475,9 +2475,12 @@ defmodule ZoiTest do
 
     test "keyword typespec" do
       schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
-      assert Zoi.type_spec(schema) == quote(do: {:name, binary()} | {:age, integer()})
+      assert Zoi.type_spec(schema) == quote(do: [name: binary(), age: integer()])
       schema = Zoi.keyword([])
       assert Zoi.type_spec(schema) == quote(do: keyword())
+
+      schema = Zoi.keyword(Zoi.string())
+      assert Zoi.type_spec(schema) == quote(do: [{atom(), binary()}])
     end
 
     test "object typespec" do
