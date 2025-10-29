@@ -9,7 +9,7 @@ Add `zoi` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:zoi, "~> 0.7"}
+    {:zoi, "~> 0.8"}
   ]
 end
 ```
@@ -68,4 +68,4 @@ You can use `Zoi` in various scenarios, such as:
 - Integrating with external systems and validating responses
 - And more!
 
-Checkout our [guides](https://hexdocs.pm/zoi/readme.html) for more detailed examples and use cases.
+Check out the other guides and the documentation for more advanced usage and features!
