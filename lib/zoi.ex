@@ -165,6 +165,8 @@ defmodule Zoi do
   @doc """
   Retrieves the description associated with the schema.
   It's often useful to store additional information about the schema, describing its purpose or usage.
+  Currently the `:description` is used generating a description for json schema.
+  Check the `Zoi.JSONSchema` module for more details.
 
   ## Example
 
@@ -176,6 +178,23 @@ defmodule Zoi do
   @spec description(schema :: Zoi.Type.t()) :: binary() | nil
   def description(schema) do
     schema.meta.description
+  end
+
+  @doc """
+  Retrieves the documentation string associated with the schema. 
+  The `:doc` should be used for internal documentation purposes.
+  Check the `Zoi.Docs` module for more details
+
+  ## Example
+
+      iex> schema = Zoi.string(doc: "This schema represents a username string.")
+      iex> Zoi.doc(schema)
+      "This schema represents a username string."
+  """
+  @doc group: "Parsing"
+  @spec doc(schema :: Zoi.Type.t()) :: binary() | nil
+  def doc(schema) do
+    schema.meta.doc
   end
 
   @doc """
@@ -370,6 +389,13 @@ defmodule Zoi do
   @doc group: "Parsing"
   @spec to_json_schema(schema :: Zoi.Type.t()) :: map()
   defdelegate to_json_schema(schema), to: Zoi.JSONSchema, as: :encode
+
+  @doc """
+  See `Zoi.Docs`
+  """
+  @doc group: "Parsing"
+  @spec docs(schema :: Zoi.Type.t()) :: binary()
+  defdelegate docs(schema), to: Zoi.Docs, as: :generate
 
   # Types
 
@@ -838,6 +864,14 @@ defmodule Zoi do
       iex> schema = Zoi.keyword([name: Zoi.string() |> Zoi.required()])
       iex> Zoi.parse(schema, [])
       {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
+
+  ## Flexible keys and values
+
+  You can also define a keyword schema that accepts non structured keys, by just declaring the value type:
+    
+      iex> schema = Zoi.keyword(Zoi.string())
+      iex> Zoi.parse(schema, [a: "hello", b: "world"])
+      {:ok, [a: "hello", b: "world"]}
   """
   @doc group: "Complex Types"
   @spec keyword(fields :: keyword(), opts :: options()) :: Zoi.Type.t()

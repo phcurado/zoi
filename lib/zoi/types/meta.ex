@@ -7,6 +7,7 @@ defmodule Zoi.Types.Meta do
           error: binary() | nil,
           required: boolean(),
           description: binary() | nil,
+          doc: binary() | nil,
           example: Zoi.input(),
           metadata: [keyword()]
         }
@@ -18,6 +19,7 @@ defmodule Zoi.Types.Meta do
     required: nil,
     error: nil,
     description: nil,
+    doc: nil,
     example: nil
   ]
   @struct_keys Keyword.keys(@struct_fields)

@@ -849,6 +849,26 @@ defmodule ZoiTest do
                %Zoi.Error{message: "unrecognized key: 'age'", path: []}
              ]
     end
+
+    test "keyword with flexible keys" do
+      schema = Zoi.keyword(Zoi.string())
+      assert {:ok, []} == Zoi.parse(schema, [])
+
+      assert {:ok, [key1: "value1", key2: "value2"]} ==
+               Zoi.parse(schema, key1: "value1", key2: "value2")
+    end
+
+    test "keyword with flexible keys and incorrect value" do
+      schema = Zoi.keyword(Zoi.array(Zoi.string()))
+
+      assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
+               Zoi.parse(schema, key1: "not an array", key2: ["valid"], key3: [123])
+
+      assert Exception.message(error1) == "invalid type: must be an array"
+      assert error1.path == [:key1]
+      assert Exception.message(error2) == "invalid type: must be a string"
+      assert error2.path == [:key3, 0]
+    end
   end
 
   describe "struct/3" do
@@ -2455,9 +2475,12 @@ defmodule ZoiTest do
 
     test "keyword typespec" do
       schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
-      assert Zoi.type_spec(schema) == quote(do: {:name, binary()} | {:age, integer()})
+      assert Zoi.type_spec(schema) == quote(do: [name: binary(), age: integer()])
       schema = Zoi.keyword([])
       assert Zoi.type_spec(schema) == quote(do: keyword())
+
+      schema = Zoi.keyword(Zoi.string())
+      assert Zoi.type_spec(schema) == quote(do: [{atom(), binary()}])
     end
 
     test "object typespec" do

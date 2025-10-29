@@ -3,7 +3,7 @@ defmodule Zoi.Types.Keyword do
 
   use Zoi.Type.Def, fields: [:fields, :strict, :coerce]
 
-  def new(fields, opts) when is_list(fields) do
+  def new(fields, opts) when is_list(fields) or is_struct(fields) do
     opts =
       Keyword.merge(
         [error: "invalid type: must be a keyword list", strict: false, coerce: false],
@@ -18,11 +18,35 @@ defmodule Zoi.Types.Keyword do
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Keyword{} = type, input, opts) when is_list(input) do
+    def parse(%Zoi.Types.Keyword{fields: fields} = type, input, opts)
+        when is_list(fields) and is_list(input) do
       do_parse(type, input, opts, [], [])
       |> then(fn {parsed, errors, _path} ->
         if errors == [] do
           {:ok, parsed}
+        else
+          {:error, errors}
+        end
+      end)
+    end
+
+    def parse(%Zoi.Types.Keyword{fields: schema_type}, input, _opts) when is_list(input) do
+      Enum.reduce(input, {[], [], []}, fn {key, value}, {parsed, errors, path} ->
+        ctx = Zoi.Context.new(schema_type, value) |> Zoi.Context.add_path(path)
+
+        Zoi.parse(schema_type, value, ctx: ctx)
+        |> then(fn
+          {:ok, val} ->
+            {[{key, val} | parsed], errors, path}
+
+          {:error, err} ->
+            error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
+            {parsed, Zoi.Errors.merge(errors, error), path}
+        end)
+      end)
+      |> then(fn {parsed, errors, _path} ->
+        if errors == [] do
+          {:ok, Enum.reverse(parsed)}
         else
           {:error, errors}
         end
@@ -124,22 +148,26 @@ defmodule Zoi.Types.Keyword do
       |> Map.fetch(key)
     end
 
-    def type_spec(%Zoi.Types.Keyword{fields: fields}, opts) do
+    def type_spec(%Zoi.Types.Keyword{fields: fields}, opts) when is_list(fields) do
       fields
       |> Enum.map(fn {key, type} ->
         quote do
           {unquote(key), unquote(Zoi.Type.type_spec(type, opts))}
         end
       end)
-      |> Enum.reverse()
       |> then(fn list ->
         if list == [] do
           quote(do: keyword())
         else
           list
-          |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
         end
       end)
+    end
+
+    def type_spec(%Zoi.Types.Keyword{fields: schema}, opts) do
+      quote do
+        [{atom(), unquote(Zoi.Type.type_spec(schema, opts))}]
+      end
     end
   end
 end
