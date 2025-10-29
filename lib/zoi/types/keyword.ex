@@ -3,7 +3,7 @@ defmodule Zoi.Types.Keyword do
 
   use Zoi.Type.Def, fields: [:fields, :strict, :coerce]
 
-  def new(fields, opts) when is_list(fields) do
+  def new(fields, opts) when is_list(fields) or is_struct(fields) do
     opts =
       Keyword.merge(
         [error: "invalid type: must be a keyword list", strict: false, coerce: false],
@@ -18,11 +18,38 @@ defmodule Zoi.Types.Keyword do
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Keyword{} = type, input, opts) when is_list(input) do
+    def parse(%Zoi.Types.Keyword{fields: fields} = type, input, opts)
+        when is_list(fields) and is_list(input) do
       do_parse(type, input, opts, [], [])
       |> then(fn {parsed, errors, _path} ->
         if errors == [] do
           {:ok, parsed}
+        else
+          {:error, errors}
+        end
+      end)
+    end
+
+    def parse(%Zoi.Types.Keyword{fields: schema_type}, input, _opts) when is_list(input) do
+      Enum.reduce(input, {[], [], []}, fn {key, value}, {parsed, errors, path} ->
+        ctx = Zoi.Context.new(schema_type, value) |> Zoi.Context.add_path(path)
+
+        Zoi.parse(schema_type, value, ctx: ctx)
+        |> then(fn
+          {:ok, val} ->
+            {[{key, val} | parsed], errors, path}
+
+          {:error, err} ->
+            error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
+            {parsed, Zoi.Errors.merge(errors, error), path}
+
+          {obj_parsed, obj_errors, _path} ->
+            {[{key, obj_parsed} | parsed], Zoi.Errors.merge(errors, obj_errors), path}
+        end)
+      end)
+      |> then(fn {parsed, errors, _path} ->
+        if errors == [] do
+          {:ok, Enum.reverse(parsed)}
         else
           {:error, errors}
         end
