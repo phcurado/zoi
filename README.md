@@ -64,7 +64,7 @@ iex> Zoi.parse(schema, %{email: "invalid-email"})
 ]}
 ```
 
-and arrays:
+or arrays:
 
 ```elixir
 # Validate an array of integers
@@ -73,6 +73,17 @@ iex> Zoi.parse(schema, [1, 2, 3])
 {:ok, [1, 2, 3]}
 iex> Zoi.parse(schema, [1, "2"])
 {:error, [%Zoi.Error{path: [1], message: "invalid type: must be an integer"}]}
+```
+
+keywords:
+
+```elixir
+# Validate a keyword list
+iex> schema = Zoi.keyword(email: Zoi.email(), allow?: Zoi.boolean())
+iex> Zoi.parse(schema, [email: "john@email.com", allow?: true])
+{:ok, [email: "john@email.com", allow?: true]}
+iex> Zoi.parse(schema, [allow?: "yes"])
+{:error, [%Zoi.Error{message: "invalid type: must be a boolean", path: [:allow?]}]}
 ```
 
 And many more possibilities, including nested schemas, custom validations and data transformations. Check the official [docs](https://hexdocs.pm/zoi) for more details.
