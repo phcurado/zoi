@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.8.1 - Unreleased
+## 0.8.2 - 2025-10-30
 
 ### Added
 
@@ -13,6 +13,12 @@ All notable changes to this project will be documented in this file.
 
 - `Zoi.keyword/2` now can accept a schema in the first argument to validate the values of the keyword list
 - `Zoi.keyword/2` type_spec now reflects correctly the keyword list definition
+
+## 0.8.1 - 2025-10-27
+
+### Changed
+
+- Update readme with new metadata examples and reference to main api
 
 ## 0.8.0 - 2025-10-26
 
