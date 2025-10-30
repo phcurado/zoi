@@ -43,4 +43,10 @@ defmodule Zoi.Types.Time do
       quote(do: Time.t())
     end
   end
+
+  defimpl Inspect do
+    def inspect(type, opts) do
+      Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
 end

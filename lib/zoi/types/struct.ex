@@ -63,4 +63,25 @@ defmodule Zoi.Types.Struct do
       |> then(&quote(do: %unquote(module){unquote_splicing(&1)}))
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(type, opts) do
+      fields_docs =
+        case type.fields do
+          fields when is_list(fields) ->
+            container_doc("%{", fields, "}", %{limit: 10}, fn
+              {key, schema}, _opts -> concat("#{key}: ", Zoi.Inspect.inspect_type(schema, opts))
+            end)
+
+          schema_type ->
+            Zoi.Inspect.inspect_type(schema_type, opts)
+        end
+
+      opts = Map.put(opts, :extra_fields, fields: fields_docs, struct: type.module)
+
+      Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
 end

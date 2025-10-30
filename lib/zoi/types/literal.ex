@@ -28,4 +28,13 @@ defmodule Zoi.Types.Literal do
       end
     end
   end
+
+  defimpl Inspect do
+    def inspect(type, opts) do
+      opts =
+        Map.put(opts, :extra_fields, value: type.value)
+
+      Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
 end

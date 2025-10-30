@@ -63,4 +63,20 @@ defmodule Zoi.Types.Tuple do
       {:{}, [], field_specs}
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(type, opts) do
+      fields_docs =
+        container_doc("{", type.fields, "}", %{limit: 10}, fn
+          field, _opts ->
+            Zoi.Inspect.inspect_type(field, opts)
+        end)
+
+      opts = Map.put(opts, :extra_fields, fields: fields_docs)
+
+      Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
 end
