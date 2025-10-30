@@ -42,4 +42,20 @@ defmodule Zoi.Types.Intersection do
       |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(type, opts) do
+      result =
+        container_doc("[", type.schemas, "]", %{limit: 5}, fn
+          schema, _opts -> Zoi.Inspect.inspect_type(schema, opts)
+        end)
+
+      opts =
+        Map.put(opts, :extra_fields, schemas: result)
+
+      Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
 end

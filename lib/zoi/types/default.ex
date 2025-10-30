@@ -29,4 +29,11 @@ defmodule Zoi.Types.Default do
       Zoi.Type.type_spec(schema, opts)
     end
   end
+
+  defimpl Inspect do
+    def inspect(type, opts) do
+      opts = Map.put(opts, :extra_fields, default: type.value)
+      Zoi.Inspect.inspect_type(type.inner, opts)
+    end
+  end
 end

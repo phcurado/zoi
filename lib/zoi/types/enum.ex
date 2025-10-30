@@ -79,22 +79,22 @@ defmodule Zoi.Types.Enum do
       |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
     end
   end
-end
 
-defimpl Inspect, for: Zoi.Types.Enum do
-  import Inspect.Algebra
+  defimpl Inspect do
+    def inspect(type, opts) do
+      symetric_enum? = Enum.all?(type.values, fn {key, value} -> key == value end)
 
-  def inspect(enum, opts) do
-    enum_values =
-      Enum.map_join(enum.values, ", ", fn
-        {key, value} -> "#{to_string(key)}: #{inspect(value)}"
-        value -> "#{inspect(value)}"
-      end)
+      opts =
+        if symetric_enum? do
+          # since key equals value, we can just show the values
+          Map.put(opts, :extra_fields,
+            values: Enum.map(type.values, fn {_key, value} -> value end)
+          )
+        else
+          Map.put(opts, :extra_fields, values: type.values)
+        end
 
-    concat([
-      "#Zoi.#{Zoi.Inspect.inspect_name(enum)}<",
-      "values: #{enum_values}",
-      ">"
-    ])
+      Zoi.Inspect.inspect_type(type, opts)
+    end
   end
 end

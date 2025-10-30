@@ -39,4 +39,10 @@ defmodule Zoi.Types.Integer do
       quote(do: integer())
     end
   end
+
+    defimpl Inspect do
+      def inspect(type, opts) do
+        Zoi.Inspect.inspect_type(type, opts)
+      end
+    end
 end

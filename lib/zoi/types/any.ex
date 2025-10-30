@@ -13,10 +13,10 @@ defmodule Zoi.Types.Any do
       quote(do: any())
     end
   end
-end
 
-defimpl Inspect, for: Zoi.Types.Any do
-  def inspect(type, opts) do
-    Zoi.Inspect.inspect_type(type, opts)
+  defimpl Inspect do
+    def inspect(type, opts) do
+      Zoi.Inspect.inspect_type(type, opts)
+    end
   end
 end
