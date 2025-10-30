@@ -7,8 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `Zoi.non_negative/2` refinement for numbers to accept values from 0 and above
-- `Zoi.doc/1` returns the `:doc` metadata from a type
-- `Zoi.docs/1` returns a structured documentation for keyword and object types
+- `Zoi.describe/1` returns a structured documentation for keyword and object types
 
 ### Changed
 

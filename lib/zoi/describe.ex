@@ -1,25 +1,25 @@
-defmodule Zoi.Docs do
+defmodule Zoi.Describe do
   @moduledoc """
-  Module for generating documentation for `Zoi` types.
-  Using `Zoi` metadata, you can produce documentation that can be used in HexDocs.
+  `Zoi.describe/1` introspect schemas, finding it's `:description` metadata and type specifications to generate documentation strings.
+  This documentation that can be used in HexDocs or other places where you want to describe the options your schema accepts.
 
   This module was inspired by [NimbleOptions](https://hexdocs.pm/nimble_options/NimbleOptions.html), which can also generate documentation for options.
 
   ## Usage
 
-  To generate docs, you just need to call `Zoi.docs/1` for the `Zoi.keyword/2` or `Zoi.object/2` schema.
+  To generate descriptions, you just need to call `Zoi.describe/1` for the `Zoi.keyword/2` or `Zoi.object/2` schema.
 
       defmodule MyApp.Config do
         @schema Zoi.keyword([
-          host: Zoi.string(doc: "The host of the server.") |> Zoi.required(),
-          port: Zoi.integer(doc: "The port of the server.") |> Zoi.default(8080),
-          debug: Zoi.boolean(doc: "Enable debug mode.")
+          host: Zoi.string(description: "The host of the server.") |> Zoi.required(),
+          port: Zoi.integer(description: "The port of the server.") |> Zoi.default(8080),
+          debug: Zoi.boolean(description: "Enable debug mode.")
         ])
 
         @moduledoc \"""
         Configuration for MyApp.
 
-        \#{Zoi.docs(@schema)}
+        \#{Zoi.describe(@schema)}
         \"""
       end
 
@@ -36,8 +36,8 @@ defmodule Zoi.Docs do
   A common use case is documenting `opts` parameters for functions that accept keyword lists, where you can define the expected options using `Zoi.keyword/2` and generate the corresponding documentation automatically, for example:
 
       @list_user_opts Zoi.keyword([
-        active: Zoi.boolean(doc: "Whether the feature is active.") |> Zoi.default(true),
-        group: Zoi.string(doc: "The group name.")
+        active: Zoi.boolean(description: "Whether the feature is active.") |> Zoi.default(true),
+        group: Zoi.string(description: "The group name.")
       ])
       @type list_user_opts :: unquote(Zoi.type_spec(@list_user_opts))
 
@@ -45,7 +45,7 @@ defmodule Zoi.Docs do
       List  users.
 
       Options:
-      \#{Zoi.docs(@list_user_opts)}
+      \#{Zoi.describe(@list_user_opts)}
       \"""
       @spec list_users(opts :: list_user_opts()) :: [User.t()]
       def list_users(opts \\\\ []) do
@@ -75,8 +75,11 @@ defmodule Zoi.Docs do
 
   The same pattern will work for `Zoi.object/2` schemas as well, since you may also use them to define a structured map input.
 
-      schema = Zoi.object(%{name: Zoi.email(), role: Zoi.enum(admin: "Admin", user: "User")})
-      Zoi.docs(schema)
+      schema = Zoi.object(%{
+        name: Zoi.email(description: "The email address."), 
+        role: Zoi.enum([admin: "Admin", user: "User"], description: "The role of the user." )
+      })
+      Zoi.describe(schema)
 
   Which would produce:
 
@@ -149,15 +152,15 @@ defmodule Zoi.Docs do
   defp parse_value(schema) do
     prefix = " - "
 
-    doc =
+    description =
       schema
       |> check_required()
-      |> check_doc(schema)
+      |> check_description(schema)
 
-    if doc == "" do
-      doc
+    if description == "" do
+      description
     else
-      prefix <> doc
+      prefix <> description
     end
   end
 
@@ -169,14 +172,14 @@ defmodule Zoi.Docs do
     end
   end
 
-  defp check_doc(str, %Zoi.Types.Default{inner: inner, value: value}) do
-    check_doc(str, inner) <> " The default value is `#{inspect(value)}`."
+  defp check_description(str, %Zoi.Types.Default{inner: inner, value: value}) do
+    check_description(str, inner) <> " The default value is `#{inspect(value)}`."
   end
 
-  defp check_doc(str, schema) do
-    case Zoi.doc(schema) do
+  defp check_description(str, schema) do
+    case Zoi.description(schema) do
       nil -> str
-      doc -> str <> doc
+      description -> str <> description
     end
   end
 end

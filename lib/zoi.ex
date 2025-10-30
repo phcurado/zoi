@@ -181,23 +181,6 @@ defmodule Zoi do
   end
 
   @doc """
-  Retrieves the documentation string associated with the schema. 
-  The `:doc` should be used for internal documentation purposes.
-  Check the `Zoi.Docs` module for more details
-
-  ## Example
-
-      iex> schema = Zoi.string(doc: "This schema represents a username string.")
-      iex> Zoi.doc(schema)
-      "This schema represents a username string."
-  """
-  @doc group: "Parsing"
-  @spec doc(schema :: Zoi.Type.t()) :: binary() | nil
-  def doc(schema) do
-    schema.meta.doc
-  end
-
-  @doc """
   Retrieves an example value from the schema. If no example is defined, it returns `nil`.
 
   ## Example
@@ -391,11 +374,11 @@ defmodule Zoi do
   defdelegate to_json_schema(schema), to: Zoi.JSONSchema, as: :encode
 
   @doc """
-  See `Zoi.Docs`
+  See `Zoi.Describe`
   """
   @doc group: "Parsing"
-  @spec docs(schema :: Zoi.Type.t()) :: binary()
-  defdelegate docs(schema), to: Zoi.Docs, as: :generate
+  @spec describe(schema :: Zoi.Type.t()) :: binary()
+  defdelegate describe(schema), to: Zoi.Describe, as: :generate
 
   # Types
 

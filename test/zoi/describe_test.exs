@@ -1,17 +1,18 @@
-defmodule Zoi.DocsTest do
+defmodule Zoi.DescribeTest do
   use ExUnit.Case, async: true
 
   @schema Zoi.keyword(
-            type: Zoi.atom(doc: "The type of the option item.") |> Zoi.required(),
+            type: Zoi.atom(description: "The type of the option item.") |> Zoi.required(),
             required:
-              Zoi.boolean(doc: "Defines if the option item is required.") |> Zoi.default(false),
-            keys: Zoi.keyword(Zoi.any(), doc: "Defines which set of keys are accepted."),
-            default: Zoi.any(doc: "The default.")
+              Zoi.boolean(description: "Defines if the option item is required.")
+              |> Zoi.default(false),
+            keys: Zoi.keyword(Zoi.any(), description: "Defines which set of keys are accepted."),
+            default: Zoi.any(description: "The default.")
           )
 
-  describe "Zoi.docs/1" do
+  describe "Zoi.describe/1" do
     test "simple docs for a keyword schema" do
-      docs = """
+      formatted_description = """
       * `:type` (`t:atom/0`) - Required. The type of the option item.
 
       * `:required` (`t:boolean/0`) - Defines if the option item is required. The default value is `false`.
@@ -21,18 +22,18 @@ defmodule Zoi.DocsTest do
       * `:default` (`t:term/0`) - The default.
       """
 
-      assert Zoi.docs(@schema) == docs
+      assert Zoi.describe(@schema) == formatted_description
     end
 
     test "simple docs for a object schema" do
       schema =
         Zoi.object(
-          name: Zoi.string(doc: "The name of the person."),
-          age: Zoi.integer(doc: "The age of the person.") |> Zoi.default(0),
-          email: Zoi.string(doc: "The email address.") |> Zoi.optional()
+          name: Zoi.string(description: "The name of the person."),
+          age: Zoi.integer(description: "The age of the person.") |> Zoi.default(0),
+          email: Zoi.string(description: "The email address.") |> Zoi.optional()
         )
 
-      docs = """
+      formatted_description = """
       * `:name` (`t:String.t/0`) - Required. The name of the person.
 
       * `:age` (`t:integer/0`) - Required. The age of the person. The default value is `0`.
@@ -40,32 +41,32 @@ defmodule Zoi.DocsTest do
       * `:email` (`t:String.t/0`) - The email address.
       """
 
-      assert Zoi.docs(schema) == docs
+      assert Zoi.describe(schema) == formatted_description
     end
 
-    test "docs for nested schemas" do
+    test "describe for nested schemas" do
       schema =
         Zoi.object(%{
           user:
             Zoi.object(
               %{
-                id: Zoi.integer(doc: "The user ID."),
+                id: Zoi.integer(description: "The user ID."),
                 profile:
                   Zoi.object(
-                    bio: Zoi.string(doc: "The user bio.") |> Zoi.optional(),
-                    website: Zoi.string(doc: "The user website.") |> Zoi.optional()
+                    bio: Zoi.string(description: "The user bio.") |> Zoi.optional(),
+                    website: Zoi.string(description: "The user website.") |> Zoi.optional()
                   )
               },
-              doc: "The user information."
+              description: "The user information."
             )
         })
 
       # For now nesting is not implemented
-      docs = """
+      formatted_description = """
       * `:user` (`t:map/0`) - Required. The user information.
       """
 
-      assert Zoi.docs(schema) == docs
+      assert Zoi.describe(schema) == formatted_description
     end
 
     test "all types" do
@@ -98,7 +99,7 @@ defmodule Zoi.DocsTest do
           union: Zoi.union([Zoi.integer(), Zoi.string()])
         )
 
-      docs = """
+      formatted_description = """
       * `:any` (`t:term/0`)
 
       * `:array` (list of `t:integer/0`)
@@ -150,7 +151,7 @@ defmodule Zoi.DocsTest do
       * `:union` (`t:integer/0` or `t:String.t/0`)
       """
 
-      assert Zoi.docs(schema) == docs
+      assert Zoi.describe(schema) == formatted_description
     end
   end
 end

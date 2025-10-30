@@ -185,13 +185,12 @@ You can use this feature to create self-documenting schemas, with example and te
 defmodule MyApp.UserSchema do
   @schema Zoi.object(
             %{
-              name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
-              age: Zoi.integer() |> Zoi.optional()
+            name: Zoi.string(description: "The user first name") |> Zoi.min(2) |> Zoi.max(100),
+            age: Zoi.integer(description: "The user age") |> Zoi.optional()
             },
             description: "A user schema with name and optional age",
             example: %{name: "Alice", age: 30},
             metadata: [
-              doc: "schema function representing the user schema",
               moduledoc: "This module represents a schema of a user"
             ]
           )
@@ -201,7 +200,11 @@ defmodule MyApp.UserSchema do
   """
 
   @doc """
-  #{Zoi.metadata(@schema)[:doc]}
+  #{Zoi.description(@schema)}
+
+  Options:
+
+  #{Zoi.describe(@schema)}
   """
   def schema, do: @schema
 end
