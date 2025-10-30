@@ -79,7 +79,7 @@ defmodule Zoi.Types.Struct do
             Zoi.Inspect.inspect_type(schema_type, opts)
         end
 
-      opts = Map.put(opts, :extra_fields, fields: fields_docs, struct: type.module)
+      opts = Map.put(opts, :extra_fields, fields: fields_docs, module: type.module)
 
       Zoi.Inspect.inspect_type(type, opts)
     end

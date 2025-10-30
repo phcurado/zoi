@@ -1,5 +1,6 @@
 defmodule Zoi.Inspect do
   @moduledoc false
+
   import Inspect.Algebra
 
   def inspect_type(type, opts) do
@@ -33,6 +34,11 @@ defmodule Zoi.Inspect do
   end
 
   defp inspect_name(type) do
-    type.__struct__ |> Module.split() |> List.last() |> Macro.underscore()
+    modules = type.__struct__ |> Module.split()
+
+    case modules do
+      ["Zoi", "ISO", name] -> "ISO." <> Macro.underscore(name)
+      list -> List.last(list) |> Macro.underscore()
+    end
   end
 end

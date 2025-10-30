@@ -66,6 +66,8 @@ defmodule Zoi.Types.Object do
       fields_docs =
         case type.fields do
           fields when is_list(fields) ->
+            # TODO: This is not accepting nestesd types, need to implement some generics 
+            # in the inspect module for all types most probably
             container_doc("%{", fields, "}", %Inspect.Opts{limit: 10}, fn
               {key, schema}, _opts -> concat("#{key}: ", Zoi.Inspect.inspect_type(schema, opts))
             end)
