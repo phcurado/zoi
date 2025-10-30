@@ -37,7 +37,7 @@ defmodule Zoi.Types.Intersection do
 
     # There is no direct representation of a intersection in Elixir types, so we use union `|`
     def type_spec(%Zoi.Types.Intersection{schemas: schemas}, opts) do
-      Enum.map(schemas, &Zoi.Type.type_spec(&1, opts))
+      Enum.map(schemas, &Zoi.type_spec(&1, opts))
       |> Enum.reverse()
       |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
     end
@@ -48,7 +48,7 @@ defmodule Zoi.Types.Intersection do
 
     def inspect(type, opts) do
       schemas_docs =
-        container_doc("[", type.schemas, "]", %{limit: 5}, fn
+        container_doc("[", type.schemas, "]", %Inspect.Opts{limit: 5}, fn
           schema, _opts -> Zoi.Inspect.inspect_type(schema, opts)
         end)
 

@@ -66,7 +66,7 @@ defmodule Zoi.Types.Object do
       fields_docs =
         case type.fields do
           fields when is_list(fields) ->
-            container_doc("%{", fields, "}", %{limit: 10}, fn
+            container_doc("%{", fields, "}", %Inspect.Opts{limit: 10}, fn
               {key, schema}, _opts -> concat("#{key}: ", Zoi.Inspect.inspect_type(schema, opts))
             end)
 

@@ -7,7 +7,7 @@ defmodule Zoi.Inspect do
 
     list = meta_field_list(type) ++ type_common_fields(type) ++ Map.get(opts, :extra_fields, [])
 
-    container_doc("#Zoi.#{name}<", list, ">", %{limit: 8}, fn
+    container_doc("#Zoi.#{name}<", list, ">", %Inspect.Opts{limit: 8}, fn
       {key, {:doc_group, _, _} = doc}, _opts ->
         # tuple means it was already been converted to doc
         # this usually happens when parsing nested types

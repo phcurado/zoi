@@ -69,7 +69,7 @@ defmodule Zoi.Types.Tuple do
 
     def inspect(type, opts) do
       fields_docs =
-        container_doc("{", type.fields, "}", %{limit: 10}, fn
+        container_doc("{", type.fields, "}", %Inspect.Opts{limit: 10}, fn
           field, _opts ->
             Zoi.Inspect.inspect_type(field, opts)
         end)

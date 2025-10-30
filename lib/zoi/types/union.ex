@@ -47,7 +47,7 @@ defmodule Zoi.Types.Union do
 
     def inspect(type, opts) do
       result =
-        container_doc("[", type.schemas, "]", %{limit: 5}, fn
+        container_doc("[", type.schemas, "]", %Inspect.Opts{limit: 5}, fn
           schema, _opts -> Zoi.Inspect.inspect_type(schema, opts)
         end)
 
