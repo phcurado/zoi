@@ -3,143 +3,146 @@ defmodule Zoi.Inspect do
 
   import Inspect.Algebra
 
-  def inspect_type(%Zoi.Types.Array{} = type, opts) do
-    opts = Map.put(opts, :extra_fields, inner: inspect_type(type.inner, opts))
-    do_inspect_type(type, opts)
+  @spec inspect_type(Zoi.Type.t(), Inspect.Opts.t(), map()) :: Inspect.Algebra.doc()
+  def inspect_type(type, inspect_opts, opts \\ [])
+
+  def inspect_type(%Zoi.Types.Array{} = type, inspect_opts, opts) do
+    opts = add_extra(opts, inner: inspect_type(type.inner, inspect_opts))
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.Default{} = type, opts) do
-    opts = Map.put(opts, :extra_fields, default: type.value)
-    do_inspect_type(type.inner, opts)
+  def inspect_type(%Zoi.Types.Default{} = type, inspect_opts, opts) do
+    opts = add_extra(opts, default: type.value)
+    inspect_type(type.inner, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.Enum{} = type, opts) do
+  def inspect_type(%Zoi.Types.Enum{} = type, inspect_opts, opts) do
     symetric_enum? = Enum.all?(type.values, fn {key, value} -> key == value end)
 
     opts =
       if symetric_enum? do
         # since key equals value, we can just show the values
-        Map.put(opts, :extra_fields, values: Enum.map(type.values, fn {_key, value} -> value end))
+        add_extra(opts,
+          values: Enum.map(type.values, fn {_key, value} -> value end)
+        )
       else
-        Map.put(opts, :extra_fields, values: type.values)
+        add_extra(opts, values: type.values)
       end
 
-    do_inspect_type(type, opts)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.Intersection{} = type, opts) do
+  def inspect_type(%Zoi.Types.Intersection{} = type, inspect_opts, opts) do
     schemas_docs =
       container_doc("[", type.schemas, "]", %Inspect.Opts{limit: 5}, fn
-        schema, _opts -> inspect_type(schema, opts)
+        schema, _opts -> inspect_type(schema, inspect_opts)
       end)
 
     opts =
-      Map.put(opts, :extra_fields, schemas: schemas_docs)
+      add_extra(opts, schemas: schemas_docs)
 
-    do_inspect_type(type, opts)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.Literal{} = type, opts) do
+  def inspect_type(%Zoi.Types.Literal{} = type, inspect_opts, opts) do
     opts =
-      Map.put(opts, :extra_fields, value: type.value)
+      add_extra(opts, value: type.value)
 
-    do_inspect_type(type, opts)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.Map{} = type, opts) do
+  def inspect_type(%Zoi.Types.Map{} = type, inspect_opts, opts) do
     opts =
-      Map.put(
-        opts,
-        :extra_fields,
-        key: Zoi.Inspect.inspect_type(type.key_type, opts),
-        value: Zoi.Inspect.inspect_type(type.value_type, opts)
+      add_extra(opts,
+        key: inspect_type(type.key_type, inspect_opts),
+        value: inspect_type(type.value_type, inspect_opts)
       )
 
-    do_inspect_type(type, opts)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.Object{} = type, opts) do
+  def inspect_type(%Zoi.Types.Object{} = type, inspect_opts, opts) do
     fields_docs =
       container_doc("%{", type.fields, "}", %Inspect.Opts{limit: 10}, fn
-        {key, schema}, _opts -> concat("#{key}: ", inspect_type(schema, opts))
+        {key, schema}, _opts -> concat("#{key}: ", inspect_type(schema, inspect_opts))
       end)
 
-    opts = Map.put(opts, :extra_fields, fields: fields_docs)
+    opts = add_extra(opts, fields: fields_docs)
 
-    do_inspect_type(type, opts)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.Keyword{} = type, opts) do
+  def inspect_type(%Zoi.Types.Keyword{} = type, inspect_opts, opts) do
     fields_docs =
       case type.fields do
         fields when is_list(fields) ->
           container_doc("[", fields, "]", %Inspect.Opts{limit: 10}, fn
-            {key, schema}, _opts -> concat("#{key}: ", inspect_type(schema, opts))
+            {key, schema}, _opts -> concat("#{key}: ", inspect_type(schema, inspect_opts))
           end)
 
         schema_type ->
-          inspect_type(schema_type, opts)
+          inspect_type(schema_type, inspect_opts)
       end
 
-    opts = Map.put(opts, :extra_fields, fields: fields_docs)
+    opts = add_extra(opts, fields: fields_docs)
 
-    do_inspect_type(type, opts)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.StringBoolean{} = type, opts) do
+  def inspect_type(%Zoi.Types.StringBoolean{} = type, inspect_opts, opts) do
     extra_fields =
       Enum.map([:case, :truthy, :falsy], fn field ->
         {field, Map.get(type, field)}
       end)
 
-    opts = Map.put(opts, :extra_fields, extra_fields)
-    do_inspect_type(type, opts)
+    opts = add_extra(opts, extra_fields)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.Struct{} = type, opts) do
+  def inspect_type(%Zoi.Types.Struct{} = type, inspect_opts, opts) do
     fields_docs =
       container_doc("%{", type.fields, "}", %Inspect.Opts{limit: 10}, fn
-        {key, schema}, _opts -> concat("#{key}: ", inspect_type(schema, opts))
+        {key, schema}, _opts -> concat("#{key}: ", inspect_type(schema, inspect_opts))
       end)
 
-    opts = Map.put(opts, :extra_fields, fields: fields_docs, module: type.module)
+    opts = add_extra(opts, fields: fields_docs, module: type.module)
 
-    do_inspect_type(type, opts)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.Tuple{} = type, opts) do
+  def inspect_type(%Zoi.Types.Tuple{} = type, inspect_opts, opts) do
     fields_docs =
       container_doc("{", type.fields, "}", %Inspect.Opts{limit: 10}, fn
-        field, _opts ->
-          inspect_type(field, opts)
+        field, _opts -> inspect_type(field, inspect_opts)
       end)
 
-    opts = Map.put(opts, :extra_fields, fields: fields_docs)
+    opts = add_extra(opts, fields: fields_docs)
 
-    do_inspect_type(type, opts)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(%Zoi.Types.Union{} = type, opts) do
+  def inspect_type(%Zoi.Types.Union{} = type, inspect_opts, opts) do
     result =
       container_doc("[", type.schemas, "]", %Inspect.Opts{limit: 5}, fn
-        schema, _opts -> inspect_type(schema, opts)
+        schema, _opts -> inspect_type(schema, inspect_opts)
       end)
 
     opts =
-      Map.put(opts, :extra_fields, schemas: result)
+      add_extra(opts, schemas: result)
 
-    do_inspect_type(type, opts)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  def inspect_type(type, opts) do
+  def inspect_type(type, inspect_opts, opts) do
     # Default to other types
-    do_inspect_type(type, opts)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
-  defp do_inspect_type(type, opts) do
+  defp do_inspect_type(type, inspect_opts, opts) do
     name = inspect_name(type)
 
-    list = meta_field_list(type) ++ type_common_fields(type) ++ Map.get(opts, :extra_fields, [])
+    list =
+      meta_field_list(type) ++ type_common_fields(type) ++ Keyword.get(opts, :extra_fields, [])
 
     container_doc("#Zoi.#{name}<", list, ">", %Inspect.Opts{limit: 8}, fn
       {key, {:doc_group, _, _} = doc}, _opts ->
@@ -151,7 +154,7 @@ defmodule Zoi.Inspect do
         if value == nil do
           empty()
         else
-          concat("#{key}: ", to_doc(value, opts))
+          concat("#{key}: ", to_doc(value, inspect_opts))
         end
     end)
   end
@@ -171,5 +174,11 @@ defmodule Zoi.Inspect do
       ["Zoi", "ISO", name] -> "ISO." <> Macro.underscore(name)
       list -> List.last(list) |> Macro.underscore()
     end
+  end
+
+  defp add_extra(opts, opts_to_add) do
+    Keyword.update(opts, :extra_fields, opts_to_add, fn existing ->
+      existing ++ opts_to_add
+    end)
   end
 end
