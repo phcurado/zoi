@@ -57,7 +57,7 @@ jobs:
               elixir: 1.18.4
               otp: 28.1
           - pair:
-              elixir: 1.19.0
+              elixir: 1.19.1
               otp: 28.1
             lint: lint
 

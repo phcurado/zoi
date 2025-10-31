@@ -4,7 +4,7 @@ defmodule Zoi.Type.Def do
     fields = Keyword.get(opts, :fields, [])
 
     quote do
-      defstruct unquote(fields) ++ [meta: nil]
+      defstruct unquote(fields) ++ [meta: %Zoi.Types.Meta{}]
 
       def apply_type(opts \\ []) do
         {meta, opts} = Zoi.Types.Meta.create_meta(opts)

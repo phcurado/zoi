@@ -59,9 +59,9 @@ defmodule Zoi.JSONSchemaTest do
 
     test "raise if schema is not supported" do
       assert_raise RuntimeError,
-                   "Encoding not implemented for schema: %Zoi.Types.Atom{meta: nil}",
+                   "Encoding not implemented for schema: #Zoi.atom<>",
                    fn ->
-                     Zoi.to_json_schema(%Zoi.Types.Atom{})
+                     Zoi.to_json_schema(Zoi.atom())
                    end
     end
 

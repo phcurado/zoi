@@ -20,4 +20,10 @@ defmodule Zoi.Types.Atom do
       quote(do: atom())
     end
   end
+
+  defimpl Inspect do
+    def inspect(type, opts) do
+      Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
 end

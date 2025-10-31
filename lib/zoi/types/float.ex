@@ -39,4 +39,10 @@ defmodule Zoi.Types.Float do
       quote(do: float())
     end
   end
+
+  defimpl Inspect do
+    def inspect(type, opts) do
+      Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
 end

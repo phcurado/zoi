@@ -58,4 +58,10 @@ defmodule Zoi.Types.Object do
       |> then(&quote(do: %{unquote_splicing(&1)}))
     end
   end
+
+  defimpl Inspect do
+    def inspect(type, opts) do
+      Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
 end

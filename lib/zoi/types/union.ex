@@ -41,4 +41,10 @@ defmodule Zoi.Types.Union do
       |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
     end
   end
+
+  defimpl Inspect do
+    def inspect(type, opts) do
+      Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
 end

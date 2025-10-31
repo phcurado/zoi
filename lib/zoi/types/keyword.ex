@@ -170,4 +170,10 @@ defmodule Zoi.Types.Keyword do
       end
     end
   end
+
+  defimpl Inspect do
+    def inspect(type, opts) do
+      Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
 end
