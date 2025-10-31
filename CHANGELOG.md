@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.8.3 - 2025-10-31
+
+### Added
+
+- All types now implements the `Inspect` protocol. This should improve the ergonomics when working with Zoi types in IEx or when inspecting/debugging it's types.
+
 ## 0.8.2 - 2025-10-30
 
 ### Added
