@@ -66,7 +66,7 @@ defmodule Zoi.InspectTest do
 
     expected =
       "#Zoi.object<coerce: false, strict: false, fields: %{" <>
-        "nest: #Zoi.object<coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>" <>
+        "nest: #Zoi.object<required: true, coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>" <>
         "}>"
 
     assert inspect(type) == expected

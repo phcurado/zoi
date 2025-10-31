@@ -56,14 +56,6 @@ defmodule Zoi.Types.Map do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      opts =
-        Map.put(
-          opts,
-          :extra_fields,
-          key: Zoi.Inspect.inspect_type(type.key_type, opts),
-          value: Zoi.Inspect.inspect_type(type.value_type, opts)
-        )
-
       Zoi.Inspect.inspect_type(type, opts)
     end
   end

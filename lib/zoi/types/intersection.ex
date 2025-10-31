@@ -44,17 +44,7 @@ defmodule Zoi.Types.Intersection do
   end
 
   defimpl Inspect do
-    import Inspect.Algebra
-
     def inspect(type, opts) do
-      schemas_docs =
-        container_doc("[", type.schemas, "]", %Inspect.Opts{limit: 5}, fn
-          schema, _opts -> Zoi.Inspect.inspect_type(schema, opts)
-        end)
-
-      opts =
-        Map.put(opts, :extra_fields, schemas: schemas_docs)
-
       Zoi.Inspect.inspect_type(type, opts)
     end
   end

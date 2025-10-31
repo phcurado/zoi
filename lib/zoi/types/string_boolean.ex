@@ -59,13 +59,6 @@ defmodule Zoi.Types.StringBoolean do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      extra_fields =
-        Enum.map([:case, :truthy, :falsy], fn field ->
-          {field, Map.get(type, field)}
-        end)
-
-      opts = Map.put(opts, :extra_fields, extra_fields)
-
       Zoi.Inspect.inspect_type(type, opts)
     end
   end

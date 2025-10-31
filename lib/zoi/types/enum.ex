@@ -82,18 +82,6 @@ defmodule Zoi.Types.Enum do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      symetric_enum? = Enum.all?(type.values, fn {key, value} -> key == value end)
-
-      opts =
-        if symetric_enum? do
-          # since key equals value, we can just show the values
-          Map.put(opts, :extra_fields,
-            values: Enum.map(type.values, fn {_key, value} -> value end)
-          )
-        else
-          Map.put(opts, :extra_fields, values: type.values)
-        end
-
       Zoi.Inspect.inspect_type(type, opts)
     end
   end
