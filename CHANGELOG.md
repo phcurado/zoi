@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Fix nested `Zoi.keyword/2` error when parsing invalid values
+- Fix `Zoi.Describe` when dealing with `Decimal` optional dependency
 
 ## 0.8.3 - 2025-10-31
 

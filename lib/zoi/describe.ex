@@ -109,7 +109,11 @@ defmodule Zoi.Describe do
   defp parse_type_spec(%Zoi.Types.Boolean{}), do: "`t:boolean/0`"
   defp parse_type_spec(%Zoi.Types.Date{}), do: "`t:Date.t/0`"
   defp parse_type_spec(%Zoi.Types.DateTime{}), do: "`t:DateTime.t/0`"
-  defp parse_type_spec(%Zoi.Types.Decimal{}), do: "`t:Decimal.t/0`"
+
+  if Code.ensure_loaded?(Decimal) do
+    defp parse_type_spec(%Zoi.Types.Decimal{}), do: "`t:Decimal.t/0`"
+  end
+
   defp parse_type_spec(%Zoi.Types.Default{inner: inner}), do: parse_type_spec(inner)
 
   defp parse_type_spec(%Zoi.Types.Enum{values: values}),
