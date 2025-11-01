@@ -63,7 +63,8 @@ defmodule Zoi.Types.Keyword do
            opts,
            path,
            errs
-         ) do
+         )
+         when is_list(input) do
       unknown_fields_errors =
         if strict do
           unknown_fields(fields, input)

@@ -822,6 +822,20 @@ defmodule ZoiTest do
       assert error.path == [:user, :age]
     end
 
+    test "nested keyword with nil value returns type error, not crash" do
+      schema =
+        Zoi.keyword(
+          user: Zoi.keyword(name: Zoi.string(), age: Zoi.required(Zoi.integer())),
+          active: Zoi.boolean()
+        )
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, user: nil, active: true)
+
+      assert Exception.message(error) == "invalid type: must be a keyword list"
+      assert error.path == [:user]
+    end
+
     test "keyword with strict keys" do
       schema =
         Zoi.keyword(
