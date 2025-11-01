@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.8.4 - Unreleased
+
+### Changed
+
+- Fix nested `Zoi.keyword/2` error when parsing invalid values
+
 ## 0.8.3 - 2025-10-31
 
 ### Added
