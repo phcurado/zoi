@@ -41,4 +41,22 @@ defmodule Zoi.Errors.Message do
   @invalid_regex []
 
   # range errors (length, min, max, etc)
+
+  ## Error codes
+  @error_codes [
+    # Suggested set (atoms, stable):
+    :invalid_type,
+    :invalid_literal,
+    :unrecognized_keys,
+    :invalid_union,
+    :invalid_union_discriminator,
+    :invalid_enum_value,
+    :invalid_arguments,
+    :invalid_return_type,
+    :invalid_date,
+    :invalid_string,
+    :too_small,
+    :too_big,
+    :custom
+  ]
 end
