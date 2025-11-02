@@ -34,7 +34,7 @@ defmodule ZoiTest do
 
     test "parse! with incorrect value" do
       assert_raise Zoi.ParseError,
-                   "Parsing error:\n\ninvalid type: must be a string\n",
+                   "Parsing error:\n\ninvalid type: expected string\n",
                    fn ->
                      Zoi.parse!(Zoi.string(), 123)
                    end
@@ -64,7 +64,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.string(), :not_a_string)
 
-      assert Exception.message(error) == "invalid type: must be a string"
+      assert Exception.message(error) == "invalid type: expected string"
     end
 
     test "string type spec" do
@@ -319,12 +319,12 @@ defmodule ZoiTest do
 
     test "optional should fail if send `nil` value" do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.optional(Zoi.string()), nil)
-      assert Exception.message(error) == "invalid type: must be a string"
+      assert Exception.message(error) == "invalid type: expected string"
     end
 
     test "optional with incorrect type" do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.optional(Zoi.string()), 123)
-      assert Exception.message(error) == "invalid type: must be a string"
+      assert Exception.message(error) == "invalid type: expected string"
     end
 
     test "optional with nullable" do
@@ -357,7 +357,7 @@ defmodule ZoiTest do
     test "nullable with incorrect type" do
       schema = Zoi.nullable(Zoi.string())
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 123)
-      assert Exception.message(error) == "invalid type: must be a string"
+      assert Exception.message(error) == "invalid type: expected string"
     end
 
     test "nullable with transform" do
@@ -371,9 +371,9 @@ defmodule ZoiTest do
       assert {:ok, nil} == Zoi.parse(schema, nil)
       assert {:ok, ["hello", nil, "world"]} == Zoi.parse(schema, ["hello", nil, "world"])
       assert {:error, [error_1, error_2]} = Zoi.parse(schema, ["1", 2, nil, 4])
-      assert Exception.message(error_1) == "invalid type: must be a string"
+      assert Exception.message(error_1) == "invalid type: expected string"
       assert error_1.path == [1]
-      assert Exception.message(error_2) == "invalid type: must be a string"
+      assert Exception.message(error_2) == "invalid type: expected string"
       assert error_2.path == [3]
     end
   end
@@ -395,7 +395,7 @@ defmodule ZoiTest do
     test "nullish with incorrect type" do
       schema = Zoi.nullish(Zoi.string())
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 123)
-      assert Exception.message(error) == "invalid type: must be a string"
+      assert Exception.message(error) == "invalid type: expected string"
     end
 
     test "nullish with transform" do
@@ -880,7 +880,7 @@ defmodule ZoiTest do
 
       assert Exception.message(error1) == "invalid type: must be an array"
       assert error1.path == [:key1]
-      assert Exception.message(error2) == "invalid type: must be a string"
+      assert Exception.message(error2) == "invalid type: expected string"
       assert error2.path == [:key3, 0]
     end
   end
@@ -1036,7 +1036,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{:key_1 => 1, "key2" => 2})
 
-      assert Exception.message(error) == "invalid type: must be a string"
+      assert Exception.message(error) == "invalid type: expected string"
       assert error.path == [:key_1]
     end
 
@@ -1682,7 +1682,7 @@ defmodule ZoiTest do
       end
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, nil)
-      assert Exception.message(error) == "invalid type: must be a string"
+      assert Exception.message(error) == "invalid type: expected string"
     end
   end
 

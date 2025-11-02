@@ -5,7 +5,7 @@ defmodule Zoi.Error do
   ## Fields
 
     - `code`: Error code
-    - `issue`: A tuple with the message and a map with error variables.
+    - `issue`: A tuple with the message and keyword with error variables.
     - `message`: Description of the error, formed from the issue message and variables.
     - `path`: A list representing the path to the location of the error.
 
@@ -30,7 +30,7 @@ defmodule Zoi.Error do
 
       %Zoi.Error{
         code: :invalid_type,
-        issue: {"invalid type: expected %{expected}", %{expected: "string"}},
+        issue: {"invalid type: expected %{expected}", [expected: "string"]},
         message: "invalid type: expected string",
         path: [:user, :name]
       }
@@ -48,11 +48,19 @@ defmodule Zoi.Error do
   """
   @type t :: %__MODULE__{
           code: atom(),
-          issue: {binary(), map()},
+          issue: {binary(), keyword()} | nil,
           message: binary(),
           path: path()
         }
   defexception [:code, :issue, :message, path: []]
+
+  @spec new(keyword()) :: t()
+  def new(opts \\ []) when is_list(opts) do
+    Keyword.validate!(opts, [:code, :issue])
+    message = render_message_from_issue(opts[:issue])
+
+    struct!(__MODULE__, [{:message, message} | opts])
+  end
 
   @impl true
   def exception(opts) do
@@ -66,6 +74,36 @@ defmodule Zoi.Error do
 
   def message(%__MODULE__{message: message}) do
     message
+  end
+
+  defp render_message_from_issue({message, opts}) do
+    opts =
+      Enum.map(opts, fn {k, v} ->
+        {to_string(k), v}
+      end)
+      |> Enum.into(%{})
+
+    Regex.replace(~r"%{(\w+)}", message, fn _, key ->
+      Map.get(opts, key) |> to_string()
+    end)
+  end
+
+  ## Error types
+
+  @spec invalid_type(binary()) :: t()
+  def invalid_type(expected) do
+    new(
+      code: :invalid_type,
+      issue: {"invalid type: expected %{expected}", [expected: expected]}
+    )
+  end
+
+  @spec custom_error(binary()) :: t()
+  def custom_error(message) do
+    new(
+      code: :custom,
+      issue: {message, []}
+    )
   end
 end
 

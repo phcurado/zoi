@@ -3,7 +3,7 @@ defmodule Zoi.Types.String do
   use Zoi.Type.Def, fields: [coerce: false]
 
   def new(opts) do
-    opts = Keyword.merge([error: "invalid type: must be a string", coerce: false], opts)
+    opts = Keyword.merge([coerce: false], opts)
     apply_type(opts)
   end
 
@@ -19,7 +19,15 @@ defmodule Zoi.Types.String do
           {:ok, to_string(input)}
 
         true ->
-          {:error, schema.meta.error}
+          {:error, error(schema)}
+      end
+    end
+
+    defp error(schema) do
+      if schema.meta.error do
+        Zoi.Error.custom_error(schema.meta.error)
+      else
+        Zoi.Error.invalid_type("string")
       end
     end
 
