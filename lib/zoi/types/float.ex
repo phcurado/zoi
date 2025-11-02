@@ -4,7 +4,7 @@ defmodule Zoi.Types.Float do
   use Zoi.Type.Def, fields: [coerce: false]
 
   def new(opts \\ []) do
-    opts = Keyword.merge([error: "invalid type: must be a float", coerce: false], opts)
+    opts = Keyword.merge([coerce: false], opts)
     apply_type(opts)
   end
 
@@ -20,19 +20,19 @@ defmodule Zoi.Types.Float do
           coerce_integer(schema, input)
 
         true ->
-          error(schema)
+          {:error, error(schema)}
       end
     end
 
     defp coerce_integer(schema, input) do
       case Float.parse(input) do
         {float, ""} -> {:ok, float}
-        _error -> error(schema)
+        _error -> {:error, error(schema)}
       end
     end
 
     defp error(schema) do
-      {:error, schema.meta.error}
+      Zoi.Error.invalid_type("float", custom_message: schema.meta.error)
     end
 
     def type_spec(_schema, _opts) do

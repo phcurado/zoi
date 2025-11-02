@@ -24,11 +24,7 @@ defmodule Zoi.Types.String do
     end
 
     defp error(schema) do
-      if error = schema.meta.error do
-        Zoi.Error.custom_error(error)
-      else
-        Zoi.Error.invalid_type("string")
-      end
+      Zoi.Error.invalid_type("string", custom_message: schema.meta.error)
     end
 
     def type_spec(_schema, _opts) do

@@ -91,11 +91,15 @@ defmodule Zoi.Error do
   ## Error types
 
   @spec invalid_type(binary()) :: t()
-  def invalid_type(expected) do
-    new(
-      code: :invalid_type,
-      issue: {"invalid type: expected %{expected}", [expected: expected]}
-    )
+  def invalid_type(expected, opts \\ []) do
+    if msg = opts[:custom_message] do
+      custom_error(msg)
+    else
+      new(
+        code: :invalid_type,
+        issue: {"invalid type: expected %{expected}", [expected: expected]}
+      )
+    end
   end
 
   @spec custom_error(binary()) :: t()

@@ -64,6 +64,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.string(), :not_a_string)
 
+      assert error.code == :invalid_type
       assert Exception.message(error) == "invalid type: expected string"
     end
 
@@ -113,7 +114,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.float(), value)
-        assert Exception.message(error) == "invalid type: must be a float"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected float"
       end
     end
 
@@ -127,7 +129,8 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.float(), "not_float", coerce: true)
 
-      assert Exception.message(error) == "invalid type: must be a float"
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected float"
     end
   end
 

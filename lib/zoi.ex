@@ -21,7 +21,15 @@ defmodule Zoi do
 
   By default, `Zoi` will not attempt to infer input data to match the expected type. For example, if you define a schema that expects a string, passing an integer will result in an error.
       iex> Zoi.string() |> Zoi.parse(123)
-      {:error, [%Zoi.Error{message: "invalid type: must be a string"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected string",
+           issue: {"invalid type: expected %{expected}", [expected: "string"]},
+           path: []
+         }
+       ]}
 
   If you need coercion, you can enable it by passing the `:coerce` option:
 
@@ -391,7 +399,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, :world)
-      {:error, [%Zoi.Error{message: "invalid type: must be a string"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected string",
+           issue: {"invalid type: expected %{expected}", [expected: "string"]},
+           path: []
+         }
+       ]}
 
   Zoi provides built-in validations for strings, such as:
 
@@ -973,7 +989,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ["hello", "world"])
       {:ok, ["hello", "world"]}
       iex> Zoi.parse(schema, ["hello", 123])
-      {:error, [%Zoi.Error{message: "invalid type: must be a string", path: [1]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected string",
+           issue: {"invalid type: expected %{expected}", [expected: "string"]},
+           path: [1]
+         }
+       ]}
 
   Built-in validations for integers include:
 
