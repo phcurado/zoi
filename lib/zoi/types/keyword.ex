@@ -40,7 +40,7 @@ defmodule Zoi.Types.Keyword do
             {[{key, val} | parsed], errors, path}
 
           {:error, err} ->
-            error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
+            error = Enum.map(err, &Zoi.Error.prepend_path(&1, path ++ [key]))
             {parsed, Zoi.Errors.merge(errors, error), path}
         end)
       end)
@@ -71,7 +71,7 @@ defmodule Zoi.Types.Keyword do
         else
           []
         end
-        |> Enum.map(&Zoi.Error.add_path(&1, path))
+        |> Enum.map(&Zoi.Error.prepend_path(&1, path))
 
       Enum.reduce(fields, {[], errs, path}, fn {key, type}, {parsed, errors, path} ->
         case keyword_fetch(input, key, coerce) do
@@ -99,7 +99,7 @@ defmodule Zoi.Types.Keyword do
                 {[{key, val} | parsed], errors, path}
 
               {:error, err} ->
-                error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
+                error = Enum.map(err, &Zoi.Error.prepend_path(&1, path ++ [key]))
                 {parsed, Zoi.Errors.merge(errors, error), path}
 
               {obj_parsed, obj_errors, _path} ->

@@ -20,7 +20,7 @@ defmodule Zoi.Types.Map do
           {Map.put(input, key_parsed, value_parsed), errors}
         else
           {:error, err} ->
-            error = Enum.map(err, &Zoi.Error.add_path(&1, [key]))
+            error = Enum.map(err, &Zoi.Error.prepend_path(&1, [key]))
             {input, Zoi.Errors.merge(errors, error)}
         end
       end)

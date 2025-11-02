@@ -48,15 +48,14 @@ defmodule Zoi.Errors.Message do
     :invalid_type,
     :invalid_literal,
     :unrecognized_keys,
-    :invalid_union,
-    :invalid_union_discriminator,
     :invalid_enum_value,
-    :invalid_arguments,
-    :invalid_return_type,
     :invalid_date,
     :invalid_string,
-    :too_small,
-    :too_big,
+    :greater_than,
+    :less_than,
+    :greater_than_or_equal_to,
+    :less_than_or_equal_to,
+    :invalid_format,
     :custom
   ]
 end

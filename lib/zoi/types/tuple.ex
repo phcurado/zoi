@@ -37,7 +37,7 @@ defmodule Zoi.Types.Tuple do
             {[value | parsed], errors}
 
           {:error, err} ->
-            error = Enum.map(err, &Zoi.Error.add_path(&1, [index]))
+            error = Enum.map(err, &Zoi.Error.prepend_path(&1, [index]))
             {parsed, Zoi.Errors.merge(errors, error)}
         end
       end)
