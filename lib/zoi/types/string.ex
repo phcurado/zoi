@@ -24,8 +24,8 @@ defmodule Zoi.Types.String do
     end
 
     defp error(schema) do
-      if schema.meta.error do
-        Zoi.Error.custom_error(schema.meta.error)
+      if error = schema.meta.error do
+        Zoi.Error.custom_error(error)
       else
         Zoi.Error.invalid_type("string")
       end
