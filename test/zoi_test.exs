@@ -724,6 +724,40 @@ defmodule ZoiTest do
           active: Zoi.boolean()
         })
 
+      assert {:error, errors} = Zoi.parse(schema, %{})
+
+      assert errors == [
+               %Zoi.Error{
+                 code: :required,
+                 message: "is required",
+                 issue: {"is required", [key: :active]},
+                 path: [:active]
+               },
+               %Zoi.Error{
+                 code: :required,
+                 message: "is required",
+                 issue: {"is required", [key: :user]},
+                 path: [:user]
+               }
+             ]
+
+      assert {:error, errors} = Zoi.parse(schema, %{user: %{}, active: true})
+
+      assert errors == [
+               %Zoi.Error{
+                 code: :required,
+                 message: "is required",
+                 issue: {"is required", [key: :name]},
+                 path: [:user, :name]
+               },
+               %Zoi.Error{
+                 code: :required,
+                 message: "is required",
+                 issue: {"is required", [key: :age]},
+                 path: [:user, :age]
+               }
+             ]
+
       assert {:ok, %{user: %{name: "Alice", age: 25}, active: true}} ==
                Zoi.parse(schema, %{
                  user: %{name: "Alice", age: 25},
