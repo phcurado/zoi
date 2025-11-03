@@ -102,6 +102,32 @@ defmodule Zoi.Error do
     end
   end
 
+  @spec invalid_literal(any()) :: t()
+  def invalid_literal(value, opts \\ []) do
+    if msg = opts[:custom_message] do
+      custom_error(msg)
+    else
+      new(
+        code: :invalid_literal,
+        issue: {"invalid literal: expected %{expected}", [expected: value]}
+      )
+    end
+  end
+
+  @spec invalid_enum_value([tuple()]) :: t()
+  def invalid_enum_value(enum, opts \\ []) when is_list(enum) do
+    if msg = opts[:custom_message] do
+      custom_error(msg)
+    else
+      expected = Enum.map_join(enum, ", ", fn {_key, value} -> value end)
+
+      new(
+        code: :invalid_enum_value,
+        issue: {"invalid enum value: expected one of %{expected}", [expected: expected]}
+      )
+    end
+  end
+
   @spec custom_error(binary()) :: t()
   def custom_error(message) do
     new(

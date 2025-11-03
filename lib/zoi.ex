@@ -566,7 +566,15 @@ defmodule Zoi do
 
       iex> schema = Zoi.string_boolean(case: "sensitive")
       iex> Zoi.parse(schema, "True")
-      {:error, [%Zoi.Error{message: "invalid type: must be a string boolean"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected string boolean",
+           issue: {"invalid type: expected %{expected}", [expected: "string boolean"]},
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, "true")
       {:ok, true}
   """
@@ -624,12 +632,28 @@ defmodule Zoi do
       iex> Zoi.parse(schema, true)
       {:ok, true}
       iex> Zoi.parse(schema, :other_value)
-      {:error, [%Zoi.Error{message: "invalid type: does not match literal"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_literal,
+           message: "invalid literal: expected true",
+           issue: {"invalid literal: expected %{expected}", [expected: true]},
+           path: []
+         }
+       ]}
       iex> schema = Zoi.literal(42)
       iex> Zoi.parse(schema, 42)
       {:ok, 42}
       iex> Zoi.parse(schema, 43)
-      {:error, [%Zoi.Error{message: "invalid type: does not match literal"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_literal,
+           message: "invalid literal: expected 42",
+           issue: {"invalid literal: expected %{expected}", [expected: 42]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   @spec literal(value :: input(), opts :: options()) :: Zoi.Type.t()
@@ -644,7 +668,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, nil)
       {:ok, nil}
       iex> Zoi.parse(schema, "not_nil")
-      {:error, [%Zoi.Error{message: "invalid type: must be nil"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected nil",
+           issue: {"invalid type: expected %{expected}", [expected: "nil"]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   @spec null(opts :: options()) :: Zoi.Type.t()
@@ -1095,36 +1127,75 @@ defmodule Zoi do
       iex> Zoi.parse(schema, :red)
       {:ok, :red}
       iex> Zoi.parse(schema, :yellow)
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: red, green, blue"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of red, green, blue",
+           issue: {"invalid enum value: expected one of %{expected}", [expected: "red, green, blue"]},
+           path: []
+         }
+       ]}
 
   You can also specify enum as strings:
       iex> schema = Zoi.enum(["red", "green", "blue"])
       iex> Zoi.parse(schema, "red")
       {:ok, "red"}
       iex> Zoi.parse(schema, "yellow")
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: red, green, blue"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of red, green, blue",
+           issue: {"invalid enum value: expected one of %{expected}", [expected: "red, green, blue"]},
+           path: []
+         }
+       ]}
 
   or with key-value pairs:
       iex> schema = Zoi.enum([red: "Red", green: "Green", blue: "Blue"])
       iex> Zoi.parse(schema, "Red")
       {:ok, :red}
       iex> Zoi.parse(schema, "Yellow")
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: Red, Green, Blue"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of Red, Green, Blue",
+           issue: {"invalid enum value: expected one of %{expected}", [expected: "Red, Green, Blue"]},
+           path: []
+         }
+       ]}
 
   Integer values can also be used:
       iex> schema = Zoi.enum([1, 2, 3])
       iex> Zoi.parse(schema, 1)
       {:ok, 1}
       iex> Zoi.parse(schema, 4)
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of 1, 2, 3",
+           issue: {"invalid enum value: expected one of %{expected}", [expected: "1, 2, 3"]},
+           path: []
+         }
+       ]}
 
   And Integers with key-value pairs also is allowed:
       iex> schema = Zoi.enum([one: 1, two: 2, three: 3])
       iex> Zoi.parse(schema, 1)
       {:ok, :one}
       iex> Zoi.parse(schema, 4)
-      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of 1, 2, 3",
+           issue: {"invalid enum value: expected one of %{expected}", [expected: "1, 2, 3"]},
+           path: []
+         }
+       ]}
 
   You can also specify the `:coerce` option to allow coercion for both key and value of the enum:
       iex> schema = Zoi.enum([one: 1, two: 2, three: 3], coerce: true)
@@ -1133,9 +1204,25 @@ defmodule Zoi do
       iex> Zoi.parse(schema, :one)
       {:ok, :one}
       iex> Zoi.parse(schema, "1")
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of 1, 2, 3",
+           issue: {"invalid enum value: expected one of %{expected}", [expected: "1, 2, 3"]},
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, "one")
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of 1, 2, 3",
+           issue: {"invalid enum value: expected one of %{expected}", [expected: "1, 2, 3"]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Complex Types"
   @spec enum(values :: [input()] | keyword(), opts :: options()) :: Zoi.Type.t()

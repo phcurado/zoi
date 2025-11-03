@@ -232,7 +232,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.string_boolean(), value)
-        assert Exception.message(error) == "invalid type: must be a string boolean"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected string boolean"
       end
     end
 
@@ -240,7 +241,8 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.string_boolean(case: "sensitive"), "True")
 
-      assert Exception.message(error) == "invalid type: must be a string boolean"
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected string boolean"
     end
   end
 
@@ -288,16 +290,19 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.literal("hello"), "not_hello")
 
-      assert Exception.message(error) == "invalid type: does not match literal"
+      assert error.code == :invalid_literal
+      assert Exception.message(error) == "invalid literal: expected hello"
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.literal(123), 456)
-      assert Exception.message(error) == "invalid type: does not match literal"
+      assert error.code == :invalid_literal
+      assert Exception.message(error) == "invalid literal: expected 123"
     end
 
     test "literal with custom error" do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.literal("hello", error: "custom literal error"), "not_hello")
 
+      assert error.code == :custom
       assert Exception.message(error) == "custom literal error"
     end
   end
@@ -312,7 +317,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.null(), value)
-        assert Exception.message(error) == "invalid type: must be nil"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected nil"
       end
     end
 
@@ -320,6 +326,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.null(error: "custom null error"), "not nil")
 
+      assert error.code == :custom
       assert Exception.message(error) == "custom null error"
     end
   end
@@ -945,7 +952,8 @@ defmodule ZoiTest do
       schema = Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()}, coerce: true)
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
-      assert Exception.message(error) == "invalid type: must be a struct"
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected struct"
     end
 
     test "struct with optional field" do
@@ -1332,13 +1340,19 @@ defmodule ZoiTest do
     test "enum with incorrect value" do
       schema = Zoi.enum([:apple, :banana, :cherry])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, :orange)
-      assert Exception.message(error) == "invalid option, must be one of: apple, banana, cherry"
+      assert error.code == :invalid_enum_value
+
+      assert Exception.message(error) ==
+               "invalid enum value: expected one of apple, banana, cherry"
     end
 
     test "enum parse with incorrect type" do
       schema = Zoi.enum([:apple, :banana, :cherry])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "banana")
-      assert Exception.message(error) == "invalid option, must be one of: apple, banana, cherry"
+      assert error.code == :invalid_enum_value
+
+      assert Exception.message(error) ==
+               "invalid enum value: expected one of apple, banana, cherry"
     end
 
     test "enum with incorrect type" do

@@ -26,7 +26,7 @@ defmodule Zoi.Types.Struct do
     end
 
     opts =
-      Keyword.merge([error: "invalid type: must be a struct", strict: false, coerce: false], opts)
+      Keyword.merge([strict: false, coerce: false], opts)
 
     apply_type(opts ++ [module: module, fields: fields, keys: keys, inner: inner])
   end
@@ -49,7 +49,7 @@ defmodule Zoi.Types.Struct do
     end
 
     def parse(schema, _, _) do
-      {:error, schema.meta.error}
+      {:error, Zoi.Error.invalid_type("struct", custom_message: schema.meta.error)}
     end
 
     def type_spec(%Zoi.Types.Struct{module: module, fields: fields}, opts) do

@@ -11,7 +11,6 @@ defmodule Zoi.Types.StringBoolean do
       Keyword.merge(
         [
           case: "insensitive",
-          error: "invalid type: must be a string boolean",
           truthy: truthy,
           falsy: falsy
         ],
@@ -49,7 +48,7 @@ defmodule Zoi.Types.StringBoolean do
     defp modify_input_case(input, "insensitive"), do: String.downcase(input)
 
     defp error(schema) do
-      {:error, schema.meta.error || "invalid type: must be a string boolean"}
+      {:error, Zoi.Error.invalid_type("string boolean", custom_message: schema.meta.error)}
     end
 
     def type_spec(_schema, _opts) do

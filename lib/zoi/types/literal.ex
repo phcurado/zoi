@@ -4,7 +4,6 @@ defmodule Zoi.Types.Literal do
   use Zoi.Type.Def, fields: [:value]
 
   def new(value, opts) do
-    opts = Keyword.merge([error: "invalid type: does not match literal"], opts)
     apply_type(opts ++ [value: value])
   end
 
@@ -13,7 +12,7 @@ defmodule Zoi.Types.Literal do
       if input === value do
         {:ok, input}
       else
-        {:error, schema.meta.error}
+        {:error, Zoi.Error.invalid_literal(value, custom_message: schema.meta.error)}
       end
     end
 
