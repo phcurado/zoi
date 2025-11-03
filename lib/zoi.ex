@@ -38,7 +38,7 @@ defmodule Zoi do
 
   ## Custom errors
 
-  You can customize parsing error messages the primitive types by passing the `error` option:
+  You can customize error messages for all types by passing the `error` option:
 
       iex> schema = Zoi.integer(error: "must be a number")
       iex> Zoi.parse(schema, "a")
@@ -51,6 +51,22 @@ defmodule Zoi do
            path: []
          }
        ]}
+
+  This also works for refinements:
+      iex> schema = Zoi.number() |> Zoi.gte(10, error: "please provide a number bigger than %{count}")
+      iex> Zoi.parse(schema, 5)
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           message: "please provide a number bigger than 10",
+           issue: {"please provide a number bigger than %{count}", [count: 10]},
+           path: []
+          }
+       ]}
+
+  `Zoi` automatically interpolates values in the error messages using the `issue` tuple. In the above example, `%{count}` is replaced with `10`.
+  For more information on what values are available for interpolation, check the documentation of each validation function.
   """
 
   alias Zoi.Regexes
