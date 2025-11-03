@@ -40,7 +40,7 @@ defmodule Zoi.Types.Date do
     end
 
     defp error(schema) do
-      {:error, Zoi.Error.invalid_type("date", custom_message: schema.meta.error)}
+      {:error, Zoi.Error.invalid_type(:date, custom_message: schema.meta.error)}
     end
 
     def type_spec(_schema, _opts) do

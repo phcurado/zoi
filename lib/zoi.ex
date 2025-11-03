@@ -26,7 +26,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected string",
-           issue: {"invalid type: expected %{expected}", [expected: "string"]},
+           issue: {"invalid type: expected string", [expected: :string]},
            path: []
          }
        ]}
@@ -412,7 +412,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected string",
-           issue: {"invalid type: expected %{expected}", [expected: "string"]},
+           issue: {"invalid type: expected string", [expected: :string]},
            path: []
          }
        ]}
@@ -458,7 +458,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected integer",
-           issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+           issue: {"invalid type: expected integer", [expected: :integer]},
            path: []
          }
        ]}
@@ -509,7 +509,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected number",
-           issue: {"invalid type: expected %{expected}", [expected: "number"]},
+           issue: {"invalid type: expected number", [expected: :number]},
            path: []
          }
        ]}
@@ -571,7 +571,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected string boolean",
-           issue: {"invalid type: expected %{expected}", [expected: "string boolean"]},
+           issue: {"invalid type: expected string boolean", [expected: :string_boolean]},
            path: []
          }
        ]}
@@ -614,7 +614,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected atom",
-           issue: {"invalid type: expected %{expected}", [expected: "atom"]},
+           issue: {"invalid type: expected atom", [expected: :atom]},
            path: []
          }
        ]}
@@ -673,7 +673,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected nil",
-           issue: {"invalid type: expected %{expected}", [expected: "nil"]},
+           issue: {"invalid type: expected nil", [expected: "nil"]},
            path: []
          }
        ]}
@@ -702,7 +702,15 @@ defmodule Zoi do
 
       iex> schema = Zoi.keyword([name: Zoi.string() |> Zoi.required()])
       iex> Zoi.parse(schema, [])
-      {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: :name]},
+           path: [:name]
+         }
+       ]}
   """
   @doc group: "Encapsulated Types"
   @spec required(inner :: Zoi.Type.t()) :: Zoi.Type.t()
@@ -768,7 +776,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected integer",
-           issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+           issue: {"invalid type: expected integer", [expected: :integer]},
            path: []
          }
        ]}
@@ -785,7 +793,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected integer",
-           issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+           issue: {"invalid type: expected integer", [expected: :integer]},
            path: []
          }
        ]}
@@ -883,7 +891,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, %{"name" => "Alice"})
       {:ok, %{"name" => "Alice"}}
       iex> Zoi.parse(schema, %{name: "Alice"})
-      {:error, [%Zoi.Error{message: "is required", path: ["name"]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: "name"]},
+           path: ["name"]
+         }
+       ]}
 
   It's possible coerce the keys to atoms using the `:coerce` option:
 
@@ -903,7 +919,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, %{name: "Alice", age: nil})
       {:ok, %{name: "Alice", age: nil}}
       iex> Zoi.parse(schema, %{name: "Alice"})
-      {:error, [%Zoi.Error{message: "is required", path: [:age]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: :age]},
+           path: [:age]
+         }
+       ]}
 
   ## Optional vs Default fields
 
@@ -943,7 +967,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected keyword list",
-           issue: {"invalid type: expected %{expected}", [expected: "keyword list"]},
+           issue: {"invalid type: expected keyword list", [expected: :keyword]},
            path: []
          }
        ]}
@@ -966,7 +990,15 @@ defmodule Zoi do
 
       iex> schema = Zoi.keyword([name: Zoi.string() |> Zoi.required()])
       iex> Zoi.parse(schema, [])
-      {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: :name]},
+           path: [:name]
+         }
+       ]}
 
   ## Flexible keys and values
 
@@ -1057,7 +1089,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected integer",
-           issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+           issue: {"invalid type: expected integer", [expected: :integer]},
            path: ["a"]
          }
        ]}
@@ -1091,7 +1123,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected integer",
-           issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+           issue: {"invalid type: expected integer", [expected: :integer]},
            path: [1]
          }
        ]}
@@ -1114,7 +1146,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected string",
-           issue: {"invalid type: expected %{expected}", [expected: "string"]},
+           issue: {"invalid type: expected string", [expected: :string]},
            path: [1]
          }
        ]}
@@ -1268,7 +1300,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected date",
-           issue: {"invalid type: expected %{expected}", [expected: "date"]},
+           issue: {"invalid type: expected date", [expected: :date]},
            path: []
          }
        ]}
@@ -1301,7 +1333,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected time",
-           issue: {"invalid type: expected %{expected}", [expected: "time"]},
+           issue: {"invalid type: expected time", [expected: :time]},
            path: []
          }
        ]}
@@ -1330,7 +1362,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected datetime",
-           issue: {"invalid type: expected %{expected}", [expected: "datetime"]},
+           issue: {"invalid type: expected datetime", [expected: :datetime]},
            path: []
          }
        ]}
@@ -1362,7 +1394,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected naive datetime",
-           issue: {"invalid type: expected %{expected}", [expected: "naive datetime"]},
+           issue: {"invalid type: expected naive datetime", [expected: :naive_datetime]},
            path: []
          }
        ]}
@@ -1396,7 +1428,7 @@ defmodule Zoi do
            %Zoi.Error{
              code: :invalid_type,
              message: "invalid type: expected decimal",
-             issue: {"invalid type: expected %{expected}", [expected: "decimal"]},
+             issue: {"invalid type: expected decimal", [expected: :decimal]},
              path: []
            }
          ]}

@@ -6,7 +6,7 @@ defmodule Zoi.Types.Keyword do
   def new(fields, opts) when is_list(fields) or is_struct(fields) do
     opts =
       Keyword.merge(
-        [error: "invalid type: must be a keyword list", strict: false, coerce: false],
+        [strict: false, coerce: false],
         opts
       )
 
@@ -54,7 +54,11 @@ defmodule Zoi.Types.Keyword do
     end
 
     def parse(schema, _, _) do
-      {:error, Zoi.Error.invalid_type("keyword list", custom_error: schema.meta.error)}
+      {:error,
+       Zoi.Error.invalid_type(:keyword,
+         issue: "invalid type: expected keyword list",
+         custom_message: schema.meta.error
+       )}
     end
 
     defp do_parse(
@@ -89,7 +93,7 @@ defmodule Zoi.Types.Keyword do
                 {parsed,
                  Zoi.Errors.add_error(
                    errors,
-                   Zoi.Error.exception(message: "is required", path: path ++ [key])
+                   Zoi.Error.required(key, path: path ++ [key])
                  ), path}
             end
 

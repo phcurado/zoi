@@ -33,7 +33,7 @@ defmodule Zoi.Types.Array do
     end
 
     def parse(schema, _, _) do
-      {:error, Zoi.Error.invalid_type("array", custom_message: schema.meta.error)}
+      {:error, Zoi.Error.invalid_type(:array, custom_message: schema.meta.error)}
     end
 
     def type_spec(%Zoi.Types.Array{inner: inner}, opts) do

@@ -32,7 +32,7 @@ defmodule Zoi.Types.Integer do
     end
 
     defp error(schema) do
-      {:error, Zoi.Error.invalid_type("integer", custom_message: schema.meta.error)}
+      {:error, Zoi.Error.invalid_type(:integer, custom_message: schema.meta.error)}
     end
 
     def type_spec(_schema, _opts) do

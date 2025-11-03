@@ -1201,19 +1201,19 @@ defmodule ZoiTest do
                %Zoi.Error{
                  code: :invalid_type,
                  message: "invalid type: expected integer",
-                 issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+                 issue: {"invalid type: expected integer", [expected: :integer]},
                  path: [0, 1]
                },
                %Zoi.Error{
                  code: :invalid_type,
                  message: "invalid type: expected boolean",
-                 issue: {"invalid type: expected %{expected}", [expected: "boolean"]},
+                 issue: {"invalid type: expected boolean", [expected: :boolean]},
                  path: [1, 0]
                },
                %Zoi.Error{
                  code: :invalid_type,
                  message: "invalid type: expected integer",
-                 issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+                 issue: {"invalid type: expected integer", [expected: :integer]},
                  path: [1, 1, 2]
                }
              ]
