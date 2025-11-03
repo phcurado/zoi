@@ -20,7 +20,7 @@ defmodule Zoi.Errors do
   end
 
   def add_error(errors, message) when is_binary(message) do
-    error = Error.custom_error(message)
+    error = Error.custom_error(issue: {message, []})
     add_error(errors, error)
   end
 

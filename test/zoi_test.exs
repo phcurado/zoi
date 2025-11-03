@@ -2574,7 +2574,12 @@ defmodule ZoiTest do
           ctx
           |> Zoi.Context.add_error(%{message: "context error", path: [:hello]})
           |> Zoi.Context.add_error("another error")
-          |> Zoi.Context.add_error(Zoi.Error.custom_error("custom context error", path: [:world]))
+          |> Zoi.Context.add_error(
+            Zoi.Error.custom_error(
+              issue: {"custom context error with val %{val}", [val: 2]},
+              path: [:world]
+            )
+          )
         end)
 
       assert {:error, errors} = Zoi.parse(schema, "hello")
@@ -2595,9 +2600,9 @@ defmodule ZoiTest do
                },
                %Zoi.Error{
                  code: :custom,
-                 issue: {"custom context error", [path: [:world]]},
-                 message: "custom context error",
-                 path: []
+                 issue: {"custom context error with val %{val}", [val: 2]},
+                 message: "custom context error with val 2",
+                 path: [:world]
                }
              ]
     end

@@ -37,7 +37,7 @@ defmodule Zoi.Types.Union do
 
     defp error(schema, type_error) do
       if error = schema.meta.error do
-        {:error, Zoi.Error.custom_error(error)}
+        {:error, Zoi.Error.custom_error(issue: {error, []})}
       else
         {:error, type_error}
       end

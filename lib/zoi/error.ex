@@ -42,10 +42,19 @@ defmodule Zoi.Error do
   This allows for dynamic error messages that provide context about the validation failure and possibility for
   localization using `Gettext` or similar libraries. Usually the `issue` and `message` will share the same content,
   but the `issue` retains the original template and variables for further processing if needed.
+
+  This module is mostly used internally, but can be useful if need to use the built-in error types or create custom errors.
   """
 
   @typedoc "The path to the location of the error."
   @type path :: [atom() | binary() | integer()]
+
+  @type error_opts :: [
+          code: atom(),
+          issue: {binary(), keyword()} | nil,
+          message: binary(),
+          path: path()
+        ]
 
   @typedoc """
   Error struct containing detailed information about a validation error.
@@ -58,7 +67,10 @@ defmodule Zoi.Error do
         }
   defexception [:code, :issue, :message, path: []]
 
-  @spec new(keyword() | map()) :: t()
+  @doc """
+  Creates a new `Zoi.Error` struct.
+  """
+  @spec new(error_opts() | map()) :: t()
   def new(opts \\ [])
 
   def new(opts) when is_map(opts) do
@@ -71,7 +83,7 @@ defmodule Zoi.Error do
     {msg, opts} = Keyword.pop(opts, :message)
 
     if msg do
-      custom_error(msg)
+      custom_error(issue: {msg, []})
       |> prepend_path(Keyword.get(opts, :path, []))
     else
       {issue, opts} = Keyword.pop(opts, :issue)
@@ -86,12 +98,24 @@ defmodule Zoi.Error do
     struct!(__MODULE__, opts)
   end
 
-  def prepend_path(%__MODULE__{} = error, path) when is_list(path) do
-    %{error | path: path ++ error.path}
-  end
-
+  @impl true
   def message(%__MODULE__{message: message}) do
     message
+  end
+
+  @doc """
+  Prepends a path to the error's existing path.
+
+  ## Example
+
+      iex> error = Zoi.Error.invalid_type(:string, path: [:name])
+      iex> error = Zoi.Error.prepend_path(error, [:user])
+      iex> error.path
+      [:user, :name]
+  """
+  @spec prepend_path(t(), path()) :: t()
+  def prepend_path(%__MODULE__{} = error, path) when is_list(path) do
+    %{error | path: path ++ error.path}
   end
 
   defp render_message_from_issue({issue, opts}) do
@@ -119,12 +143,23 @@ defmodule Zoi.Error do
 
   ## Error types
 
-  @spec invalid_type(binary()) :: t()
+  @doc """
+  Creates an invalid type error for the expected type.
+
+  ## Example
+      iex> Zoi.Error.invalid_type(:string)
+      %Zoi.Error{
+        code: :invalid_type,
+        issue: {"invalid type: expected string", [type: :string]},
+        message: "invalid type: expected string"
+      }
+  """
+  @spec invalid_type(atom()) :: t()
   def invalid_type(type, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg, type: type)
+      custom_error(issue: {msg, [type: type]})
     else
       {issue, opts} = Keyword.pop(opts, :issue)
 
@@ -141,12 +176,23 @@ defmodule Zoi.Error do
     end
   end
 
+  @doc """
+  Creates an invalid literal error for the expected value.
+
+  ## Example
+      iex> Zoi.Error.invalid_literal(42)
+      %Zoi.Error{
+        code: :invalid_literal,
+        issue: {"invalid literal: expected %{expected}", [expected: 42]},
+        message: "invalid literal: expected 42"
+      }
+  """
   @spec invalid_literal(any()) :: t()
   def invalid_literal(value, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg, expected: value)
+      custom_error(issue: {msg, [expected: value]})
     else
       new([
         {:code, :invalid_literal},
@@ -155,6 +201,17 @@ defmodule Zoi.Error do
     end
   end
 
+  @doc """
+  Creates an invalid enum value error for the given enum values.
+
+  ## Example
+      iex> Zoi.Error.invalid_enum_value([{:a, "apple"}, {:b, "banana"}, {:c, "cherry"}])
+      %Zoi.Error{
+        code: :invalid_enum_value,
+        issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "apple, banana, cherry"]},
+        message: "invalid enum value: expected one of apple, banana, cherry"
+      }
+  """
   @spec invalid_enum_value([tuple()]) :: t()
   def invalid_enum_value(enum, opts \\ []) when is_list(enum) do
     {msg, _opts} = Keyword.pop(opts, :error)
@@ -162,7 +219,7 @@ defmodule Zoi.Error do
     expected = Enum.map_join(enum, ", ", fn {_key, value} -> value end)
 
     if msg do
-      custom_error(msg, expected: expected)
+      custom_error(issue: {msg, [expected: expected]})
     else
       new(
         code: :invalid_enum_value,
@@ -171,25 +228,48 @@ defmodule Zoi.Error do
     end
   end
 
+  @doc """
+  Creates an invalid tuple error for the expected and actual lengths.
+  ## Example
+      iex> Zoi.Error.invalid_tuple(3, 5)
+      %Zoi.Error{
+        code: :invalid_tuple,
+        issue: {"invalid tuple: expected length %{expected_length}, got %{actual_length}", [expected_length: 3, actual_length: 5]},
+        message: "invalid tuple: expected length 3, got 5"
+      }
+  """
   @spec invalid_tuple(non_neg_integer(), non_neg_integer(), keyword()) :: t()
   def invalid_tuple(expected_length, actual_length, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
+    default_opts = [expected_length: expected_length, actual_length: actual_length]
+
     if msg do
-      custom_error(msg, expected_length: expected_length, actual_length: actual_length)
+      custom_error(issue: {msg, default_opts})
     else
       new([
         {:code, :invalid_tuple},
         {:issue,
          {
            "invalid tuple: expected length %{expected_length}, got %{actual_length}",
-           [expected_length: expected_length, actual_length: actual_length]
+           default_opts
          }}
         | opts
       ])
     end
   end
 
+  @doc """
+  Creates an unrecognized key error for the given key.
+
+  ## Example
+      iex> Zoi.Error.unrecognized_key(:foo)
+      %Zoi.Error{
+        code: :unrecognized_key,
+        issue: {"unrecognized key: '%{key}'", [key: :foo]},
+        message: "unrecognized key: 'foo'"
+      }
+  """
   @spec unrecognized_key(atom() | binary() | integer()) :: t()
   def unrecognized_key(key) do
     new(
@@ -198,6 +278,16 @@ defmodule Zoi.Error do
     )
   end
 
+  @doc """
+  Creates a required error for the given key.
+  ## Example
+      iex> Zoi.Error.required(:name)
+      %Zoi.Error{
+        code: :required,
+        issue: {"is required", [key: :name]},
+        message: "is required"
+      }
+  """
   @spec required(atom() | binary() | integer()) :: t()
   def required(key, opts \\ []) do
     new([
@@ -206,12 +296,23 @@ defmodule Zoi.Error do
     ])
   end
 
-  @spec less_than_or_equal_to(atom(), any(), keyword()) :: t()
+  @doc """
+  Creates a less than or equal to error for the given type and maximum value.
+
+  ## Example
+      iex> Zoi.Error.less_than_or_equal_to(:string, 10)
+      %Zoi.Error{
+        code: :less_than_or_equal_to,
+        issue: {"too big: must have at most %{count} character(s)", [count: 10]},
+        message: "too big: must have at most 10 character(s)"
+      }
+  """
+  @spec less_than_or_equal_to(:string | :array | :number | :date, any(), keyword()) :: t()
   def less_than_or_equal_to(type, max, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg, count: max)
+      custom_error(issue: {msg, [count: max]})
     else
       message =
         case type do
@@ -234,12 +335,23 @@ defmodule Zoi.Error do
     end
   end
 
-  @spec greater_than_or_equal_to(atom(), any(), keyword()) :: t()
+  @doc """
+  Creates a greater than or equal to error for the given type and minimum value.
+
+  ## Example
+      iex> Zoi.Error.greater_than_or_equal_to(:string, 3)
+      %Zoi.Error{
+        code: :greater_than_or_equal_to,
+        issue: {"too small: must have at least %{count} character(s)", [count: 3]},
+        message: "too small: must have at least 3 character(s)"
+      }
+  """
+  @spec greater_than_or_equal_to(:string | :array | :number | :date, any(), keyword()) :: t()
   def greater_than_or_equal_to(type, min, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg, count: min)
+      custom_error(issue: {msg, [count: min]})
     else
       message =
         case type do
@@ -262,12 +374,23 @@ defmodule Zoi.Error do
     end
   end
 
-  @spec greater_than(atom(), any(), keyword()) :: t()
+  @doc """
+  Creates a greater than error for the given type and minimum value.
+
+  ## Example
+      iex> Zoi.Error.greater_than(:number, 5)
+      %Zoi.Error{
+        code: :greater_than,
+        issue: {"too small: must be greater than %{count}", [count: 5]},
+        message: "too small: must be greater than 5"
+      }
+  """
+  @spec greater_than(:array | :number | :date, any(), keyword()) :: t()
   def greater_than(type, min, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg, count: min)
+      custom_error(issue: {msg, [count: min]})
     else
       message =
         case type do
@@ -289,12 +412,23 @@ defmodule Zoi.Error do
     end
   end
 
-  @spec less_than(atom(), any(), keyword()) :: t()
+  @doc """
+  Creates a less than error for the given type and maximum value.
+
+  ## Example
+      iex> Zoi.Error.less_than(:number, 10)
+      %Zoi.Error{
+        code: :less_than,
+        issue: {"too big: must be less than %{count}", [count: 10]},
+        message: "too big: must be less than 10"
+      }
+  """
+  @spec less_than(:array | :number | :date, any(), keyword()) :: t()
   def less_than(type, max, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg, count: max)
+      custom_error(issue: {msg, [count: max]})
     else
       message =
         case type do
@@ -316,12 +450,22 @@ defmodule Zoi.Error do
     end
   end
 
-  @spec invalid_length(atom(), non_neg_integer(), keyword()) :: t()
+  @doc """
+  Creates an invalid length error for the given type and length.
+  ## Example
+      iex> Zoi.Error.invalid_length(:string, 5)
+      %Zoi.Error{
+        code: :invalid_length,
+        issue: {"invalid length: must have %{count} character(s)", [count: 5]},
+        message: "invalid length: must have 5 character(s)"
+      }
+  """
+  @spec invalid_length(:string | :array, non_neg_integer(), keyword()) :: t()
   def invalid_length(type, length, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg, count: length)
+      custom_error(issue: {msg, [count: length]})
     else
       message =
         case type do
@@ -342,12 +486,22 @@ defmodule Zoi.Error do
     end
   end
 
-  @spec invalid_ending_string(binary(), keyword()) :: t()
+  @doc """
+  Creates an invalid format error for the given starting string.
+  ## Example
+      iex> Zoi.Error.invalid_starting_string("http")
+      %Zoi.Error{
+        code: :invalid_format,
+        issue: {"invalid format: must start with '%{value}'", [value: "http"]},
+        message: "invalid format: must start with 'http'"
+      }
+  """
+  @spec invalid_starting_string(binary(), keyword()) :: t()
   def invalid_starting_string(prefix, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg, prefix: prefix)
+      custom_error(issue: {msg, [value: prefix]})
     else
       opts =
         Keyword.merge(
@@ -366,12 +520,23 @@ defmodule Zoi.Error do
     end
   end
 
+  @doc """
+  Creates an invalid format error for the given ending string.
+
+  ## Example
+      iex> Zoi.Error.invalid_ending_string(".com")
+      %Zoi.Error{
+        code: :invalid_format,
+        issue: {"invalid format: must end with '%{value}'", [value: ".com"]},
+        message: "invalid format: must end with '.com'"
+      }
+  """
   @spec invalid_ending_string(binary(), keyword()) :: t()
   def invalid_ending_string(suffix, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg, suffix: suffix)
+      custom_error(issue: {msg, [value: suffix]})
     else
       opts =
         Keyword.merge(
@@ -390,6 +555,23 @@ defmodule Zoi.Error do
     end
   end
 
+  @doc ~S"""
+  Creates an invalid format error for the given regex pattern.
+  ## Example
+
+      iex> %Zoi.Error{} = error = Zoi.Error.invalid_format(~r/^[^a-z]*$/, format: :upcase)
+      iex> error.code
+      :invalid_format
+      iex> {msg, opts} = error.issue
+      iex> msg
+      "invalid format: must match pattern %{pattern}"
+      iex> opts[:pattern]
+      "^[^a-z]*$"
+      iex> opts[:format]
+      :upcase
+      iex> error.message
+      "invalid format: must match pattern ^[^a-z]*$"
+  """
   @spec invalid_format(Regex.t(), keyword()) :: t()
   def invalid_format(pattern, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
@@ -397,7 +579,7 @@ defmodule Zoi.Error do
     default_issue_opts = [pattern: Regex.source(pattern), regex: pattern]
 
     if msg do
-      custom_error(msg, default_issue_opts)
+      custom_error(issue: {msg, default_issue_opts})
     else
       {message, opts} =
         Keyword.pop(opts, :internal_message, "invalid format: must match pattern %{pattern}")
@@ -421,12 +603,22 @@ defmodule Zoi.Error do
     end
   end
 
-  @spec custom_error(binary(), keyword()) :: t()
-  def custom_error(message, opts \\ []) do
-    new(
-      code: :custom,
-      issue: {message, opts}
-    )
+  @doc """
+  Creates a custom error with the given options.
+
+  ## Example
+
+      iex> Zoi.Error.custom_error(issue: {"error %{num}", [num: 404]})
+      %Zoi.Error{
+        code: :custom,
+        issue: {"error %{num}", [num: 404]},
+        message: "error 404",
+        path: []
+      }
+  """
+  @spec custom_error(opts :: error_opts()) :: t()
+  def custom_error(opts \\ []) do
+    new([{:code, :custom} | opts])
   end
 end
 
