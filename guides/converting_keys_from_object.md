@@ -47,9 +47,9 @@ end
 Now, when you validate data against this schema, the keys will be transformed to snake_case:
 
 ```elixir
-iex> schema = MyApp.User.schema()
-iex> Zoi.parse(schema, %{"firstName" => "John", "lastName" => "Doe", "address" => %{"streetAddress" => "21 2nd Street", "city" => "New York"}})
-{:ok, %{"first_name" => "John", "last_name" => "Doe", "address" => %{"street_address" => "21 2nd Street", "city" => "New York"}}}
+schema = MyApp.User.schema()
+Zoi.parse(schema, %{"firstName" => "John", "lastName" => "Doe", "address" => %{"streetAddress" => "21 2nd Street", "city" => "New York"}})
+#=> {:ok, %{"first_name" => "John", "last_name" => "Doe", "address" => %{"street_address" => "21 2nd Street", "city" => "New York"}}}
 ```
 
 You can also apply key transformation, for example if the data to be validated doesn't really have consistent keys, or if you want to normalize keys before validation.
@@ -85,14 +85,22 @@ end
 Now when you validate data against this schema, the keys will be transformed to the desired format:
 
 ```elixir
-iex> schema = MyApp.User.schema()
-iex> Zoi.parse(schema, %{"@name" => "John", "__last_name__" => "Doe"})
-{:ok, %{name: "John", last_name: "Doe"}}
+schema = MyApp.User.schema()
+Zoi.parse(schema, %{"@name" => "John", "__last_name__" => "Doe"})
+#=> {:ok, %{name: "John", last_name: "Doe"}}
 ```
 
 And the error messages will reflect the parameter keys before transformation:
 
 ```elixir
-iex> Zoi.parse(schema, %{"@name" => "John"})
-{:error, [%Zoi.Error{message: "is required", path: ["__last_name__"]}]}
+Zoi.parse(schema, %{"@name" => "John"})
+#=> {:error,
+#=>  [
+#=>    %Zoi.Error{
+#=>      code: :required,
+#=>      issue: {"is required", [key: "__last_name__"]},
+#=>      message: "is required",
+#=>      path: ["__last_name__"]
+#=>    }
+#=>  ]}
 ```

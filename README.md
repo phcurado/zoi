@@ -40,7 +40,15 @@ iex> schema = Zoi.string() |> Zoi.min(3)
 iex> Zoi.parse(schema, "hello")
 {:ok, "hello"}
 iex> Zoi.parse(schema, "hi")
-{:error, [%Zoi.Error{message: "too small: must have at least 3 characters"}]}
+{:error,
+ [
+   %Zoi.Error{
+     code: :greater_than_or_equal_to,
+     issue: {"too small: must have at least %{count} character(s)", [count: 3]},
+     message: "too small: must have at least 3 character(s)",
+     path: []
+   }
+ ]}
 
 
 # Add transforms to a schema
@@ -56,12 +64,9 @@ You can also validate structured maps:
 iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
 iex> Zoi.parse(schema, %{name: "John", age: 30, email: "john@email.com"})
 {:ok, %{name: "John", age: 30, email: "john@email.com"}}
-iex> Zoi.parse(schema, %{email: "invalid-email"})
-{:error, [
-    %Zoi.Error{path: [:name], message: "is required"},
-    %Zoi.Error{path: [:age], message: "is required"},
-    %Zoi.Error{path: [:email], message: "invalid email format"}
-]}
+iex> {:error, errors} = Zoi.parse(schema, %{email: "invalid-email"})
+iex> Zoi.treefy_errors(errors)
+%{name: ["is required"], email: ["invalid email format"], age: ["is required"]}
 ```
 
 or arrays:
@@ -72,7 +77,15 @@ iex> schema = Zoi.array(Zoi.integer() |> Zoi.min(0)) |> Zoi.min(2)
 iex> Zoi.parse(schema, [1, 2, 3])
 {:ok, [1, 2, 3]}
 iex> Zoi.parse(schema, [1, "2"])
-{:error, [%Zoi.Error{path: [1], message: "invalid type: must be an integer"}]}
+{:error,
+ [
+   %Zoi.Error{
+     code: :invalid_type,
+     issue: {"invalid type: expected integer", [type: :integer]},
+     message: "invalid type: expected integer",
+     path: [1]
+   }
+ ]}
 ```
 
 keywords:
@@ -83,7 +96,15 @@ iex> schema = Zoi.keyword(email: Zoi.email(), allow?: Zoi.boolean())
 iex> Zoi.parse(schema, [email: "john@email.com", allow?: true])
 {:ok, [email: "john@email.com", allow?: true]}
 iex> Zoi.parse(schema, [allow?: "yes"])
-{:error, [%Zoi.Error{message: "invalid type: must be a boolean", path: [:allow?]}]}
+{:error,
+ [
+   %Zoi.Error{
+     code: :invalid_type,
+     issue: {"invalid type: expected boolean", [type: :boolean]},
+     message: "invalid type: expected boolean",
+     path: [:allow?]
+   }
+ ]}
 ```
 
 And many more possibilities, including nested schemas, custom validations and data transformations. Check the official [docs](https://hexdocs.pm/zoi) for more details.
@@ -135,19 +156,33 @@ When validation fails, `Zoi` returns a list of errors, each containing a message
 ```elixir
 iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
 iex> Zoi.parse(schema, %{name: 123, age: "thirty"})
-{:error, [
-    %Zoi.Error{path: [:name], message: "invalid type: must be a string"},
-    %Zoi.Error{path: [:age], message: "invalid type: must be an integer"}
-]}
+{:error,
+ [
+   %Zoi.Error{
+     code: :invalid_type,
+     issue: {"invalid type: expected string", [type: :string]},
+     message: "invalid type: expected string",
+     path: [:name]
+   },
+   %Zoi.Error{
+     code: :invalid_type,
+     issue: {"invalid type: expected integer", [type: :integer]},
+     message: "invalid type: expected integer",
+     path: [:age]
+   }
+ ]}
 ```
 
 You can view the error in a map format using the `Zoi.treefy_errors/1` function:
 
 ```elixir
+
+iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+iex> {:error, errors} = Zoi.parse(schema, %{name: 123, age: "thirty"})
 iex> Zoi.treefy_errors(errors)
 %{
-  name: ["invalid type: must be a string"],
-  age: ["invalid type: must be an integer"]
+  name: ["invalid type: expected string"],
+  age: ["invalid type: expected integer"]
 }
 ```
 
@@ -156,7 +191,15 @@ You can also customize error messages:
 ```elixir
 iex> schema = Zoi.string(error: "not a string")
 iex> Zoi.parse(schema, :hi)
-{:error, [%Zoi.Error{message: "not a string"}]}
+{:error,
+ [
+   %Zoi.Error{
+     code: :custom,
+     issue: {"not a string", [type: :string]},
+     message: "not a string",
+     path: []
+   }
+ ]}
 ```
 
 ### Metadata
