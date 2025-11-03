@@ -1,5 +1,5 @@
 defmodule Zoi.InspectTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest Zoi.ISO
 
   test "inspect all types" do

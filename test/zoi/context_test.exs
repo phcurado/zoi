@@ -1,5 +1,5 @@
 defmodule Zoi.ContextTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest Zoi.Context
 
   alias Zoi.Context

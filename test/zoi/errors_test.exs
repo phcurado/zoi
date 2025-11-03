@@ -1,5 +1,6 @@
 defmodule Zoi.ErrorsTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+  doctest Zoi.Errors
 
   describe "Errors" do
     test "add_error/2" do

@@ -1,5 +1,5 @@
 defmodule Zoi.ISO.Test do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest Zoi.ISO
 
   describe "time/1" do
