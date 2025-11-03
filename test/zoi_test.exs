@@ -548,6 +548,7 @@ defmodule ZoiTest do
         Zoi.union([Zoi.string(), Zoi.integer()], error: "custom union error")
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
+      assert error.code == :custom
       assert Exception.message(error) == "custom union error"
     end
   end
@@ -641,6 +642,7 @@ defmodule ZoiTest do
         Zoi.intersection([Zoi.string(), Zoi.integer()], error: "custom intersection error")
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
+      assert error.code == :custom
       assert Exception.message(error) == "custom intersection error"
     end
   end
@@ -734,6 +736,7 @@ defmodule ZoiTest do
                  active: true
                })
 
+      assert error.code == :required
       assert Exception.message(error) == "is required"
       assert error.path == [:user, :age]
     end
@@ -785,6 +788,7 @@ defmodule ZoiTest do
                Zoi.parse(schema, %{name: "John", age: 30})
 
       for error <- errors do
+        assert error.code == :required
         assert Exception.message(error) == "is required"
       end
     end
@@ -815,6 +819,7 @@ defmodule ZoiTest do
       schema = Zoi.keyword(name: Zoi.string(), age: Zoi.required(Zoi.integer()))
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, name: "John")
+      assert error.code == :required
       assert Exception.message(error) == "is required"
       assert error.path == [:age]
     end
@@ -825,6 +830,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, name: "John", age: "not an integer")
 
+      assert error.code == :invalid_type
       assert Exception.message(error) == "invalid type: expected integer"
       assert error.path == [:age]
     end
@@ -955,6 +961,7 @@ defmodule ZoiTest do
                  name: "John"
                })
 
+      assert error.code == :required
       assert Exception.message(error) == "is required"
       assert error.path == [:age]
     end
@@ -1046,6 +1053,7 @@ defmodule ZoiTest do
                  age: "not an integer"
                })
 
+      assert error.code == :invalid_type
       assert Exception.message(error) == "invalid type: expected integer"
       assert error.path == [:age]
     end
@@ -1081,6 +1089,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{:key_1 => 1, "key2" => 2})
 
+      assert error.code == :invalid_type
       assert Exception.message(error) == "invalid type: expected string"
       assert error.path == [:key_1]
     end
@@ -1091,6 +1100,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{"key1" => "not an integer", "key2" => 2})
 
+      assert error.code == :invalid_type
       assert Exception.message(error) == "invalid type: expected integer"
       assert error.path == ["key1"]
     end
@@ -1117,8 +1127,11 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
                Zoi.parse(schema, %{"name" => "John", "age" => 30})
 
+      assert error1.code == :invalid_type
       assert Exception.message(error1) == "invalid type: expected atom"
       assert error1.path == ["age"]
+
+      assert error2.code == :invalid_type
       assert Exception.message(error2) == "invalid type: expected atom"
       assert error2.path == ["name"]
     end
@@ -1140,8 +1153,11 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
                Zoi.parse(schema, %{1 => 123, "age" => :atom})
 
+      assert error1.code == :custom
       assert Exception.message(error1) == "invalid type: must be an atom or a string"
       assert error1.path == [1]
+
+      assert error2.code == :invalid_type
       assert Exception.message(error2) == "invalid type: expected integer"
       assert error2.path == ["age"]
     end
@@ -1302,9 +1318,11 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error_1, %Zoi.Error{} = error_2]} =
                Zoi.parse(schema, [[[1], ["not an integer"]], [[3], [4, "not an integer"]]])
 
+      assert error_1.code == :invalid_type
       assert Exception.message(error_1) == "invalid type: expected integer"
       assert error_1.path == [0, 1, 0]
 
+      assert error_2.code == :invalid_type
       assert Exception.message(error_2) == "invalid type: expected integer"
       assert error_2.path == [1, 1, 1]
     end
@@ -1322,6 +1340,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, [[1, 2], [2, 0]])
 
+      assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must be at least 1"
       assert error.path == [1, 1]
     end
@@ -1726,6 +1745,7 @@ defmodule ZoiTest do
         schema = Zoi.uuid(version: @version)
         assert {:ok, _uuid} = Zoi.parse(schema, @uuid)
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, @invalid_uuid)
+        assert error.code == :invalid_format
         assert Exception.message(error) == "invalid UUID format"
       end
     end
@@ -1741,6 +1761,7 @@ defmodule ZoiTest do
     test "invalid URL" do
       schema = Zoi.url()
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a url")
+      assert error.code == :invalid_format
       assert Exception.message(error) == "invalid URL"
     end
   end
@@ -1761,6 +1782,7 @@ defmodule ZoiTest do
 
       for address <- invalid_addresses do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, address)
+        assert error.code == :invalid_format
         assert Exception.message(error) == "invalid IPv4 address"
       end
     end
@@ -1782,6 +1804,7 @@ defmodule ZoiTest do
 
       for address <- invalid_addresses do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, address)
+        assert error.code == :invalid_format
         assert Exception.message(error) == "invalid IPv6 address"
       end
     end
@@ -1800,10 +1823,12 @@ defmodule ZoiTest do
 
       for hex <- invalid_hex do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, hex)
+        assert error.code == :invalid_format
         assert Exception.message(error) == "invalid hex format"
       end
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, nil)
+      assert error.code == :invalid_type
       assert Exception.message(error) == "invalid type: expected string"
     end
   end
@@ -1862,6 +1887,7 @@ defmodule ZoiTest do
       assert {:ok, 15} == Zoi.parse(schema, 15)
       assert {:ok, 10} == Zoi.parse(schema, 10)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 5)
+      assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must be at least 10"
     end
 
@@ -1870,6 +1896,7 @@ defmodule ZoiTest do
       assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
       assert {:ok, 10.5} == Zoi.parse(schema, 10.5)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 9.99)
+      assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must be at least 10.5"
     end
 
@@ -1878,6 +1905,7 @@ defmodule ZoiTest do
       assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
       assert {:ok, 10.5} == Zoi.parse(schema, 10.5)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 9.99)
+      assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must be at least 10.5"
     end
 
@@ -1886,6 +1914,7 @@ defmodule ZoiTest do
       assert {:ok, Decimal.new("12.34")} == Zoi.parse(schema, "12.34", coerce: true)
       assert {:ok, Decimal.new("10.5")} == Zoi.parse(schema, Decimal.new("10.5"))
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "9.99", coerce: true)
+      assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must be at least 10.5"
     end
 
@@ -1893,6 +1922,7 @@ defmodule ZoiTest do
       schema = Zoi.array(Zoi.integer()) |> Zoi.gte(3)
       assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1])
+      assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must have at least 3 item(s)"
     end
 
@@ -1901,6 +1931,7 @@ defmodule ZoiTest do
       assert {:ok, ~T[12:00:00]} == Zoi.parse(schema, ~T[12:00:00])
       assert {:ok, ~T[13:00:00]} == Zoi.parse(schema, ~T[13:00:00])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~T[11:59:59])
+      assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must be at least 12:00:00"
     end
 
@@ -1909,6 +1940,7 @@ defmodule ZoiTest do
       assert {:ok, ~D[2023-01-01]} == Zoi.parse(schema, ~D[2023-01-01])
       assert {:ok, ~D[2023-02-01]} == Zoi.parse(schema, ~D[2023-02-01])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~D[2022-12-31])
+      assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must be at least 2023-01-01"
     end
 
@@ -1917,6 +1949,7 @@ defmodule ZoiTest do
       assert {:ok, ~U[2023-01-01 00:00:00Z]} == Zoi.parse(schema, ~U[2023-01-01 00:00:00Z])
       assert {:ok, ~U[2023-02-01 12:34:56Z]} == Zoi.parse(schema, ~U[2023-02-01 12:34:56Z])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~U[2022-12-31 23:59:59Z])
+      assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must be at least 2023-01-01 00:00:00Z"
     end
 
@@ -1925,12 +1958,14 @@ defmodule ZoiTest do
       assert {:ok, ~N[2023-01-01 00:00:00]} == Zoi.parse(schema, ~N[2023-01-01 00:00:00])
       assert {:ok, ~N[2023-02-01 12:34:56]} == Zoi.parse(schema, ~N[2023-02-01 12:34:56])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~N[2022-12-31 23:59:59])
+      assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must be at least 2023-01-01 00:00:00"
     end
 
     test "custom message" do
       schema = Zoi.integer() |> Zoi.gte(10, error: "must be >= %{count}")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 5)
+      assert error.code == :custom
       assert Exception.message(error) == "must be >= 10"
     end
   end
@@ -1940,6 +1975,7 @@ defmodule ZoiTest do
       schema = Zoi.integer() |> Zoi.gt(10)
       assert {:ok, 15} == Zoi.parse(schema, 15)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10)
+      assert error.code == :greater_than
       assert Exception.message(error) == "too small: must be greater than 10"
     end
 
@@ -1947,6 +1983,7 @@ defmodule ZoiTest do
       schema = Zoi.float() |> Zoi.gt(10.5)
       assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10.5)
+      assert error.code == :greater_than
       assert Exception.message(error) == "too small: must be greater than 10.5"
     end
 
@@ -1954,6 +1991,7 @@ defmodule ZoiTest do
       schema = Zoi.number() |> Zoi.gt(10.5)
       assert {:ok, 12.34} == Zoi.parse(schema, 12.34)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10.5)
+      assert error.code == :greater_than
       assert Exception.message(error) == "too small: must be greater than 10.5"
     end
 
@@ -1961,6 +1999,7 @@ defmodule ZoiTest do
       schema = Zoi.decimal() |> Zoi.gt(Decimal.new("10.5"))
       assert {:ok, Decimal.new("12.34")} == Zoi.parse(schema, "12.34", coerce: true)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "10.5", coerce: true)
+      assert error.code == :greater_than
       assert Exception.message(error) == "too small: must be greater than 10.5"
     end
 
@@ -1977,6 +2016,7 @@ defmodule ZoiTest do
       schema = Zoi.time() |> Zoi.gt(~T[12:00:00])
       assert {:ok, ~T[12:30:00]} == Zoi.parse(schema, ~T[12:30:00])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~T[11:59:59])
+      assert error.code == :greater_than
       assert Exception.message(error) == "too small: must be greater than 12:00:00"
     end
 
@@ -1984,6 +2024,7 @@ defmodule ZoiTest do
       schema = Zoi.date() |> Zoi.gt(~D[2023-01-01])
       assert {:ok, ~D[2023-01-02]} == Zoi.parse(schema, ~D[2023-01-02])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~D[2023-01-01])
+      assert error.code == :greater_than
       assert Exception.message(error) == "too small: must be greater than 2023-01-01"
     end
 
@@ -1991,6 +2032,7 @@ defmodule ZoiTest do
       schema = Zoi.datetime() |> Zoi.gt(~U[2023-01-01 00:00:00Z])
       assert {:ok, ~U[2023-01-01 12:34:56Z]} == Zoi.parse(schema, ~U[2023-01-01 12:34:56Z])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~U[2023-01-01 00:00:00Z])
+      assert error.code == :greater_than
       assert Exception.message(error) == "too small: must be greater than 2023-01-01 00:00:00Z"
     end
 
@@ -1998,12 +2040,14 @@ defmodule ZoiTest do
       schema = Zoi.naive_datetime() |> Zoi.gt(~N[2023-01-01 00:00:00])
       assert {:ok, ~N[2023-01-01 12:34:56]} == Zoi.parse(schema, ~N[2023-01-01 12:34:56])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~N[2023-01-01 00:00:00])
+      assert error.code == :greater_than
       assert Exception.message(error) == "too small: must be greater than 2023-01-01 00:00:00"
     end
 
     test "custom message" do
       schema = Zoi.integer() |> Zoi.gt(10, error: "must be > %{count}")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10)
+      assert error.code == :custom
       assert Exception.message(error) == "must be > 10"
     end
   end
@@ -2022,6 +2066,7 @@ defmodule ZoiTest do
       schema = Zoi.integer() |> Zoi.max(10)
       assert {:ok, 5} == Zoi.parse(schema, 5)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 15)
+      assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must be at most 10"
     end
 
@@ -2029,6 +2074,7 @@ defmodule ZoiTest do
       schema = Zoi.float() |> Zoi.max(10.5)
       assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
+      assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must be at most 10.5"
     end
 
@@ -2036,6 +2082,7 @@ defmodule ZoiTest do
       schema = Zoi.number() |> Zoi.max(10.5)
       assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
+      assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must be at most 10.5"
     end
 
@@ -2043,6 +2090,7 @@ defmodule ZoiTest do
       schema = Zoi.decimal() |> Zoi.max(Decimal.new("10.5"))
       assert {:ok, Decimal.new("9.99")} == Zoi.parse(schema, "9.99", coerce: true)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, Decimal.new("12.34"))
+      assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must be at most 10.5"
     end
 
@@ -2050,12 +2098,14 @@ defmodule ZoiTest do
       schema = Zoi.array(Zoi.integer()) |> Zoi.max(3)
       assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3, 4])
+      assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must have at most 3 item(s)"
     end
 
     test "custom message" do
       schema = Zoi.integer() |> Zoi.max(10, error: "must be <= %{count}")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 15)
+      assert error.code == :custom
       assert Exception.message(error) == "must be <= 10"
     end
   end
@@ -2156,6 +2206,7 @@ defmodule ZoiTest do
     test "custom message" do
       schema = Zoi.integer() |> Zoi.lte(10, error: "must be <= %{count}")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 15)
+      assert error.code == :custom
       assert Exception.message(error) == "must be <= 10"
     end
   end
@@ -2165,6 +2216,7 @@ defmodule ZoiTest do
       schema = Zoi.integer() |> Zoi.lt(10)
       assert {:ok, 5} == Zoi.parse(schema, 5)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10)
+      assert error.code == :less_than
       assert Exception.message(error) == "too big: must be less than 10"
     end
 
@@ -2172,6 +2224,7 @@ defmodule ZoiTest do
       schema = Zoi.float() |> Zoi.lt(10.5)
       assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10.5)
+      assert error.code == :less_than
       assert Exception.message(error) == "too big: must be less than 10.5"
     end
 
@@ -2179,6 +2232,7 @@ defmodule ZoiTest do
       schema = Zoi.number() |> Zoi.lt(10.5)
       assert {:ok, 9.99} == Zoi.parse(schema, 9.99)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10.5)
+      assert error.code == :less_than
       assert Exception.message(error) == "too big: must be less than 10.5"
     end
 
@@ -2193,6 +2247,7 @@ defmodule ZoiTest do
       schema = Zoi.array(Zoi.integer()) |> Zoi.lt(3)
       assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3])
+      assert error.code == :less_than
       assert Exception.message(error) == "too big: must be less than 3 item(s)"
       assert error.issue == {"too big: must be less than %{count} item(s)", [count: 3]}
     end
@@ -2201,6 +2256,7 @@ defmodule ZoiTest do
       schema = Zoi.time() |> Zoi.lt(~T[12:00:00])
       assert {:ok, ~T[11:59:59]} == Zoi.parse(schema, ~T[11:59:59])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~T[12:00:00])
+      assert error.code == :less_than
       assert Exception.message(error) == "too big: must be less than 12:00:00"
     end
 
@@ -2208,6 +2264,7 @@ defmodule ZoiTest do
       schema = Zoi.date() |> Zoi.lt(~D[2023-01-01])
       assert {:ok, ~D[2022-12-31]} == Zoi.parse(schema, ~D[2022-12-31])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~D[2023-01-01])
+      assert error.code == :less_than
       assert Exception.message(error) == "too big: must be less than 2023-01-01"
     end
 
@@ -2215,6 +2272,7 @@ defmodule ZoiTest do
       schema = Zoi.datetime() |> Zoi.lt(~U[2023-01-01 00:00:00Z])
       assert {:ok, ~U[2022-12-31 23:59:59Z]} == Zoi.parse(schema, ~U[2022-12-31 23:59:59Z])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~U[2023-01-01 00:00:00Z])
+      assert error.code == :less_than
       assert Exception.message(error) == "too big: must be less than 2023-01-01 00:00:00Z"
     end
 
@@ -2222,12 +2280,14 @@ defmodule ZoiTest do
       schema = Zoi.naive_datetime() |> Zoi.lt(~N[2023-01-01 00:00:00])
       assert {:ok, ~N[2022-12-31 23:59:59]} == Zoi.parse(schema, ~N[2022-12-31 23:59:59])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~N[2023-01-01 00:00:00])
+      assert error.code == :less_than
       assert Exception.message(error) == "too big: must be less than 2023-01-01 00:00:00"
     end
 
     test "custom message" do
       schema = Zoi.integer() |> Zoi.lt(10, error: "must be < %{count}")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10)
+      assert error.code == :custom
       assert Exception.message(error) == "must be < 10"
     end
   end
@@ -2427,6 +2487,7 @@ defmodule ZoiTest do
     test "struct conversion with missing fields" do
       schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{name: "Alice"})
+      assert error.code == :required
       assert Exception.message(error) == "is required"
     end
 
@@ -2463,6 +2524,7 @@ defmodule ZoiTest do
         end)
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
+      assert error.code == :custom
       assert Exception.message(error) == "must be longer than 3 characters"
     end
 
@@ -2475,12 +2537,35 @@ defmodule ZoiTest do
       schema =
         Zoi.string()
         |> Zoi.refine(fn _value, ctx ->
-          Zoi.Context.add_error(ctx, %{message: "context error", path: [:hello]})
+          ctx
+          |> Zoi.Context.add_error(%{message: "context error", path: [:hello]})
+          |> Zoi.Context.add_error("another error")
+          |> Zoi.Context.add_error(Zoi.Error.custom_error("custom context error", path: [:world]))
         end)
 
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
-      assert Exception.message(error) == "context error"
-      assert error.path == [:hello]
+      assert {:error, errors} = Zoi.parse(schema, "hello")
+      assert length(errors) == 3
+
+      assert errors == [
+               %Zoi.Error{
+                 code: :custom,
+                 issue: {"context error", []},
+                 message: "context error",
+                 path: [:hello]
+               },
+               %Zoi.Error{
+                 code: :custom,
+                 issue: {"another error", []},
+                 message: "another error",
+                 path: []
+               },
+               %Zoi.Error{
+                 code: :custom,
+                 issue: {"custom context error", [path: [:world]]},
+                 message: "custom context error",
+                 path: []
+               }
+             ]
     end
   end
 
@@ -2499,6 +2584,7 @@ defmodule ZoiTest do
         |> Zoi.transform(fn _schema, _value -> {:error, "transform error"} end)
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
+      assert error.code == :custom
       assert Exception.message(error) == "transform error"
     end
 
@@ -2515,6 +2601,7 @@ defmodule ZoiTest do
         end)
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
+      assert error.code == :custom
       assert Exception.message(error) == "context error"
       assert error.path == [:hello]
     end

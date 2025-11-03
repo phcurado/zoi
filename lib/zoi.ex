@@ -2046,7 +2046,15 @@ defmodule Zoi do
       ...>   if String.length(value) > 5, do: :ok, else: {:error, "must be longer than 5 characters"}
       ...> end)
       iex> Zoi.parse(schema, "hello")
-      {:error, [%Zoi.Error{message: "must be longer than 5 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           issue: {"must be longer than 5 characters", []},
+           message: "must be longer than 5 characters",
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
 
@@ -2061,10 +2069,21 @@ defmodule Zoi do
       ...>   end
       ...> end)
       iex> Zoi.parse(schema, "hi")
-      {:error, [
-        %Zoi.Error{message: "must be longer than 5 characters"},
-        %Zoi.Error{message: "must be shorter than 10 characters"}
-      ]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           issue: {"must be longer than 5 characters", []},
+           message: "must be longer than 5 characters",
+           path: []
+         },
+         %Zoi.Error{
+           code: :custom,
+           issue: {"must be shorter than 10 characters", []},
+           message: "must be shorter than 10 characters",
+           path: []
+         }
+       ]}
 
   ## mfa 
 
@@ -2157,10 +2176,21 @@ defmodule Zoi do
       ...>   end
       ...> end)
       iex> Zoi.parse(schema, "hi")
-      {:error, [
-        %Zoi.Error{message: "must be longer than 5 characters"},
-        %Zoi.Error{message: "must be shorter than 10 characters"}
-      ]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           issue: {"must be longer than 5 characters", []},
+           message: "must be longer than 5 characters",
+           path: []
+         },
+         %Zoi.Error{
+           code: :custom,
+           issue: {"must be shorter than 10 characters", []},
+           message: "must be shorter than 10 characters",
+           path: []
+         }
+       ]}
 
   The `ctx` is a `Zoi.Context` struct that contains information about the current parsing context, including the path, options, and any errors that have been added so far.
   """

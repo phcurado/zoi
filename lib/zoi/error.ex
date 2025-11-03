@@ -58,12 +58,27 @@ defmodule Zoi.Error do
         }
   defexception [:code, :issue, :message, path: []]
 
-  @spec new(keyword()) :: t()
-  def new(opts \\ []) when is_list(opts) do
-    Keyword.validate!(opts, [:code, :issue, :path])
-    message = render_message_from_issue(opts[:issue])
+  @spec new(keyword() | map()) :: t()
+  def new(opts \\ [])
 
-    struct!(__MODULE__, [{:message, message} | opts])
+  def new(opts) when is_map(opts) do
+    opts = Map.to_list(opts)
+    new(opts)
+  end
+
+  def new(opts) when is_list(opts) do
+    Keyword.validate!(opts, [:code, :issue, :path, :message])
+    {msg, opts} = Keyword.pop(opts, :message)
+
+    if msg do
+      custom_error(msg)
+      |> prepend_path(Keyword.get(opts, :path, []))
+    else
+      {issue, opts} = Keyword.pop(opts, :issue)
+      {message, issue} = render_message_from_issue(issue)
+
+      struct!(__MODULE__, [{:message, message}, {:issue, issue} | opts])
+    end
   end
 
   @impl true
@@ -79,16 +94,27 @@ defmodule Zoi.Error do
     message
   end
 
-  defp render_message_from_issue({message, opts}) do
-    opts =
+  defp render_message_from_issue({issue, opts}) do
+    parsed_opts =
       Enum.map(opts, fn {k, v} ->
         {to_string(k), v}
       end)
       |> Enum.into(%{})
 
-    Regex.replace(~r"%{(\w+)}", message, fn _, key ->
-      Map.get(opts, key) |> to_string()
-    end)
+    message =
+      Regex.replace(~r"%{(\w+)}", issue, fn _, key ->
+        Map.get(parsed_opts, key) |> to_string()
+      end)
+
+    {message, {issue, opts}}
+  end
+
+  defp render_message_from_issue(nil) do
+    {nil, {nil, []}}
+  end
+
+  defp render_message_from_issue(issue) do
+    render_message_from_issue({issue, []})
   end
 
   ## Error types

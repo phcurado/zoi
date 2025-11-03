@@ -30,7 +30,8 @@ And it's also possible to have errors with dynamic messages:
 
 This will give more flexibility when handling errors programmatically, and better support with tools such as `Gettext` for localization.
 
-- Removed `Zoi.gt/3` and `Zoi.lte/3` refinements for strings. Use `Zoi.min/3` and `Zoi.max/3` instead.
+- Removed `Zoi.gt/3` and `Zoi.lt/3` refinements for strings. Use `Zoi.min/3` and `Zoi.max/3` instead.
+- Allow all refinements to accept custom error messages.
 
 ## 0.8.4 - 2025-11-01
 

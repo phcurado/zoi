@@ -38,11 +38,19 @@ defmodule Zoi.Context do
       ...>   if String.length(input) > 5 do
       ...>     :ok
       ...>   else
-      ...>     Zoi.Context.add_error(ctx, %Zoi.Error{message: "Input too long"})
+      ...>     Zoi.Context.add_error(ctx, "Input too long")
       ...>   end
       ...> end)
       ...> Zoi.parse(schema, "s")
-      {:error, [%Zoi.Error{message: "Input too long"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           issue: {"Input too long", []},
+           message: "Input too long",
+           path: []
+         }
+       ]}
   """
   @spec add_error(t(), error()) :: t()
   def add_error(%__MODULE__{errors: errors} = context, error) do

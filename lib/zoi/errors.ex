@@ -20,12 +20,12 @@ defmodule Zoi.Errors do
   end
 
   def add_error(errors, message) when is_binary(message) do
-    error = Error.exception(message: message)
+    error = Error.custom_error(message)
     add_error(errors, error)
   end
 
   def add_error(errors, error) when is_map(error) do
-    error = Error.exception(error)
+    error = Error.new(error)
     add_error(errors, error)
   end
 
