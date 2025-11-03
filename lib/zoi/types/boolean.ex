@@ -19,16 +19,16 @@ defmodule Zoi.Types.Boolean do
       if coerce and input in ["true", "false"] do
         {:ok, input == "true"}
       else
-        {:error, error(schema)}
+        error(schema)
       end
     end
 
     def parse(schema, _input, _opts) do
-      {:error, error(schema)}
+      error(schema)
     end
 
     defp error(schema) do
-      Zoi.Error.invalid_type("boolean", custom_message: schema.meta.error)
+      {:error, Zoi.Error.invalid_type("boolean", custom_message: schema.meta.error)}
     end
 
     def type_spec(_schema, _opts) do

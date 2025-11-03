@@ -3,7 +3,6 @@ defmodule Zoi.Types.Atom do
   use Zoi.Type.Def, fields: []
 
   def new(opts \\ []) do
-    opts = Keyword.merge([error: "invalid type: must be an atom"], opts)
     apply_type(opts)
   end
 
@@ -12,8 +11,8 @@ defmodule Zoi.Types.Atom do
       {:ok, input}
     end
 
-    def parse(schema, _input, _opts) do
-      {:error, schema.meta.error}
+    def parse(schema, _, _) do
+      {:error, Zoi.Error.invalid_type("atom", custom_message: schema.meta.error)}
     end
 
     def type_spec(_schema, _opts) do

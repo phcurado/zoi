@@ -19,7 +19,7 @@ defmodule Zoi.Types.Number do
           coerce_number(schema, input)
 
         true ->
-          {:error, error(schema)}
+          error(schema)
       end
     end
 
@@ -31,16 +31,16 @@ defmodule Zoi.Types.Number do
         {_number, _rest} ->
           case Float.parse(input) do
             {float, ""} -> {:ok, float}
-            _error -> {:error, error(schema)}
+            _error -> error(schema)
           end
 
         _error ->
-          {:error, error(schema)}
+          error(schema)
       end
     end
 
     defp error(schema) do
-      Zoi.Error.invalid_type("number", custom_message: schema.meta.error)
+      {:error, Zoi.Error.invalid_type("number", custom_message: schema.meta.error)}
     end
 
     def type_spec(_schema, _opts) do

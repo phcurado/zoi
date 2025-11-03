@@ -16,7 +16,15 @@ defmodule Zoi.ISO do
       iex> Zoi.parse(schema, "12:34:56")
       {:ok, "12:34:56"}
       iex> Zoi.parse(schema, "25:00:00")
-      {:error, [%Zoi.Error{message: "invalid type: must be an ISO time"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected ISO time",
+           issue: {"invalid type: expected %{expected}", [expected: "ISO time"]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   defdelegate time(opts \\ []), to: Zoi.ISO.Time, as: :new
@@ -30,7 +38,15 @@ defmodule Zoi.ISO do
       iex> Zoi.parse(schema, "2025-08-07")
       {:ok, "2025-08-07"}
       iex> Zoi.parse(schema, "2025-02-30")
-      {:error, [%Zoi.Error{message: "invalid type: must be an ISO date"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected ISO date",
+           issue: {"invalid type: expected %{expected}", [expected: "ISO date"]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   defdelegate date(opts \\ []), to: Zoi.ISO.Date, as: :new
@@ -46,7 +62,15 @@ defmodule Zoi.ISO do
 
       iex> schema = Zoi.ISO.datetime()
       iex> Zoi.parse(schema, 1754646043)
-      {:error, [%Zoi.Error{message: "invalid type: must be an ISO datetime"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected ISO datetime",
+           issue: {"invalid type: expected %{expected}", [expected: "ISO datetime"]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   defdelegate datetime(opts \\ []), to: Zoi.ISO.DateTime, as: :new
@@ -62,7 +86,15 @@ defmodule Zoi.ISO do
 
       iex> schema = Zoi.ISO.naive_datetime()
       iex> Zoi.parse(schema, 1754646043)
-      {:error, [%Zoi.Error{message: "invalid type: must be an ISO naive datetime"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected ISO naive datetime",
+           issue: {"invalid type: expected %{expected}", [expected: "ISO naive datetime"]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   defdelegate naive_datetime(opts \\ []), to: Zoi.ISO.NaiveDateTime, as: :new

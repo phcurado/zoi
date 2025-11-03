@@ -268,7 +268,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.atom(), value)
-        assert Exception.message(error) == "invalid type: must be an atom"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected atom"
       end
     end
   end
@@ -889,7 +890,8 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
                Zoi.parse(schema, key1: "not an array", key2: ["valid"], key3: [123])
 
-      assert Exception.message(error1) == "invalid type: must be an array"
+      assert error1.code == :invalid_type
+      assert Exception.message(error1) == "invalid type: expected array"
       assert error1.path == [:key1]
       assert Exception.message(error2) == "invalid type: expected string"
       assert error2.path == [:key3, 0]
@@ -1082,9 +1084,9 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
                Zoi.parse(schema, %{"name" => "John", "age" => 30})
 
-      assert Exception.message(error1) == "invalid type: must be an atom"
+      assert Exception.message(error1) == "invalid type: expected atom"
       assert error1.path == ["age"]
-      assert Exception.message(error2) == "invalid type: must be an atom"
+      assert Exception.message(error2) == "invalid type: expected atom"
       assert error2.path == ["name"]
     end
 
@@ -1218,7 +1220,9 @@ defmodule ZoiTest do
       schema = Zoi.array(Zoi.string())
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not an array")
-      assert Exception.message(error) == "invalid type: must be an array"
+
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected array"
     end
 
     test "array with nested arrays" do
@@ -1362,7 +1366,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.time(), value)
-        assert Exception.message(error) == "invalid type: must be a time"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected time"
       end
     end
 
@@ -1376,7 +1381,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.time(coerce: true), value)
-        assert Exception.message(error) == "invalid type: must be a time"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected time"
       end
     end
 
@@ -1384,6 +1390,7 @@ defmodule ZoiTest do
       schema = Zoi.time(error: "custom time error")
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a time")
+      assert error.code == :custom
       assert Exception.message(error) == "custom time error"
     end
   end
@@ -1400,7 +1407,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.date(), value)
-        assert Exception.message(error) == "invalid type: must be a date"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected date"
       end
     end
 
@@ -1414,7 +1422,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.date(coerce: true), value)
-        assert Exception.message(error) == "invalid type: must be a date"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected date"
       end
     end
 
@@ -1422,6 +1431,7 @@ defmodule ZoiTest do
       schema = Zoi.date(error: "custom date error")
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a date")
+      assert error.code == :custom
       assert Exception.message(error) == "custom date error"
     end
   end
@@ -1438,7 +1448,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.datetime(), value)
-        assert Exception.message(error) == "invalid type: must be a datetime"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected datetime"
       end
     end
 
@@ -1455,7 +1466,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.datetime(coerce: true), value)
-        assert Exception.message(error) == "invalid type: must be a datetime"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected datetime"
       end
     end
 
@@ -1463,6 +1475,7 @@ defmodule ZoiTest do
       schema = Zoi.datetime(error: "custom datetime error")
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a datetime")
+      assert error.code == :custom
       assert Exception.message(error) == "custom datetime error"
     end
   end
@@ -1479,7 +1492,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.naive_datetime(), value)
-        assert Exception.message(error) == "invalid type: must be a naive datetime"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected naive datetime"
       end
     end
 
@@ -1498,7 +1512,8 @@ defmodule ZoiTest do
         assert {:error, [%Zoi.Error{} = error]} =
                  Zoi.parse(Zoi.naive_datetime(coerce: true), value)
 
-        assert Exception.message(error) == "invalid type: must be a naive datetime"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected naive datetime"
       end
     end
 
@@ -1506,6 +1521,7 @@ defmodule ZoiTest do
       schema = Zoi.naive_datetime(error: "custom naive datetime error")
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a naive datetime")
+      assert error.code == :custom
       assert Exception.message(error) == "custom naive datetime error"
     end
   end
@@ -1522,7 +1538,8 @@ defmodule ZoiTest do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.decimal(), value)
-        assert Exception.message(error) == "invalid type: must be a decimal"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected decimal"
       end
     end
 
@@ -1536,13 +1553,15 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(Zoi.decimal(), "not_decimal", coerce: true)
 
-      assert Exception.message(error) == "invalid type: must be a decimal"
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected decimal"
     end
 
     test "decimal with custom error" do
       schema = Zoi.decimal(error: "custom decimal error")
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a decimal")
+      assert error.code == :custom
       assert Exception.message(error) == "custom decimal error"
     end
   end

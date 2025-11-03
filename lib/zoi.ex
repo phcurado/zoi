@@ -601,7 +601,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, :atom)
       {:ok, :atom}
       iex> Zoi.parse(schema, "not_an_atom")
-      {:error, [%Zoi.Error{message: "invalid type: must be an atom"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected atom",
+           issue: {"invalid type: expected %{expected}", [expected: "atom"]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   @spec atom(opts :: options()) :: Zoi.Type.t()
@@ -1144,7 +1152,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ~D[2000-01-01])
       {:ok, ~D[2000-01-01]}
       iex> Zoi.parse(schema, "2000-01-01")
-      {:error, [%Zoi.Error{message: "invalid type: must be a date"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected date",
+           issue: {"invalid type: expected %{expected}", [expected: "date"]},
+           path: []
+         }
+       ]}
 
   You can also specify the `:coerce` option to allow coercion from strings or integers:
       iex> schema = Zoi.date(coerce: true)
@@ -1169,7 +1185,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ~T[12:34:56])
       {:ok, ~T[12:34:56]}
       iex> Zoi.parse(schema, "12:34:56")
-      {:error, [%Zoi.Error{message: "invalid type: must be a time"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected time",
+           issue: {"invalid type: expected %{expected}", [expected: "time"]},
+           path: []
+         }
+       ]}
 
   You can also specify the `:coerce` option to allow coercion from strings:
       iex> schema = Zoi.time(coerce: true)
@@ -1190,7 +1214,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ~U[2000-01-01 12:34:56Z])
       {:ok, ~U[2000-01-01 12:34:56Z]}
       iex> Zoi.parse(schema, "2000-01-01T12:34:56Z")
-      {:error, [%Zoi.Error{message: "invalid type: must be a datetime"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected datetime",
+           issue: {"invalid type: expected %{expected}", [expected: "datetime"]},
+           path: []
+         }
+       ]}
 
   You can also specify the `:coerce` option to allow coercion from strings or integers:
       iex> schema = Zoi.datetime(coerce: true)
@@ -1214,7 +1246,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ~N[2000-01-01 23:00:07])
       {:ok, ~N[2000-01-01 23:00:07]}
       iex> Zoi.parse(schema, "2000-01-01T12:34:56")
-      {:error, [%Zoi.Error{message: "invalid type: must be a naive datetime"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected naive datetime",
+           issue: {"invalid type: expected %{expected}", [expected: "naive datetime"]},
+           path: []
+         }
+       ]}
 
   You can also specify the `:coerce` option to allow coercion from strings or integers:
       iex> schema = Zoi.naive_datetime(coerce: true)
@@ -1240,7 +1280,15 @@ defmodule Zoi do
         iex> Zoi.parse(schema, Decimal.new("123.45"))
         {:ok, Decimal.new("123.45")}
         iex> Zoi.parse(schema, "invalid-decimal")
-        {:error, [%Zoi.Error{message: "invalid type: must be a decimal"}]}
+        {:error,
+         [
+           %Zoi.Error{
+             code: :invalid_type,
+             message: "invalid type: expected decimal",
+             issue: {"invalid type: expected %{expected}", [expected: "decimal"]},
+             path: []
+           }
+         ]}
 
     You can also specify the `:coerce` option to allow coercion from strings or integers:
         iex> schema = Zoi.decimal(coerce: true)

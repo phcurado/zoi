@@ -14,7 +14,8 @@ defmodule Zoi.ISO.Test do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.ISO.time(), value)
-        assert Exception.message(error) == "invalid type: must be an ISO time"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected ISO time"
       end
     end
   end
@@ -30,7 +31,8 @@ defmodule Zoi.ISO.Test do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.ISO.date(), value)
-        assert Exception.message(error) == "invalid type: must be an ISO date"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected ISO date"
       end
     end
   end
@@ -52,7 +54,8 @@ defmodule Zoi.ISO.Test do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.ISO.datetime(), value)
-        assert Exception.message(error) == "invalid type: must be an ISO datetime"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected ISO datetime"
       end
     end
   end
@@ -74,7 +77,8 @@ defmodule Zoi.ISO.Test do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.ISO.naive_datetime(), value)
-        assert Exception.message(error) == "invalid type: must be an ISO naive datetime"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected ISO naive datetime"
       end
     end
   end
@@ -95,7 +99,8 @@ defmodule Zoi.ISO.Test do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, value)
-        assert Exception.message(error) == "invalid type: must be an ISO time"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected ISO time"
       end
     end
   end
@@ -115,7 +120,8 @@ defmodule Zoi.ISO.Test do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, value)
-        assert Exception.message(error) == "invalid type: must be an ISO date"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected ISO date"
       end
     end
   end
@@ -138,7 +144,8 @@ defmodule Zoi.ISO.Test do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, value)
-        assert Exception.message(error) == "invalid type: must be an ISO datetime"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected ISO datetime"
       end
     end
   end
@@ -158,7 +165,8 @@ defmodule Zoi.ISO.Test do
 
       for value <- wrong_values do
         assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, value)
-        assert Exception.message(error) == "invalid type: must be an ISO naive datetime"
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected ISO naive datetime"
       end
     end
   end
