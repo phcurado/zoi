@@ -54,7 +54,7 @@ defmodule Zoi.Types.Keyword do
     end
 
     def parse(schema, _, _) do
-      {:error, schema.meta.error}
+      {:error, Zoi.Error.invalid_type("keyword list", custom_error: schema.meta.error)}
     end
 
     defp do_parse(
@@ -132,7 +132,7 @@ defmodule Zoi.Types.Keyword do
       |> Enum.map(fn {k, _v} -> k end)
       |> Enum.reject(&(&1 in schema_keys))
       |> Enum.map(fn key ->
-        Zoi.Error.exception(message: "unrecognized key: '#{key}'")
+        Zoi.Error.unrecognized_key(key)
       end)
     end
 

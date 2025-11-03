@@ -710,7 +710,8 @@ defmodule ZoiTest do
       schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
-      assert Exception.message(error) == "invalid type: must be a map"
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected object"
     end
 
     test "object with nested object" do
@@ -761,8 +762,18 @@ defmodule ZoiTest do
                )
 
       assert ^errors = [
-               %Zoi.Error{message: "unrecognized key: 'wrong key'", path: [:phone]},
-               %Zoi.Error{message: "unrecognized key: 'age'", path: []}
+               %Zoi.Error{
+                 code: :unrecognized_key,
+                 message: "unrecognized key: 'wrong key'",
+                 issue: {"unrecognized key: '%{key}'", [key: "wrong key"]},
+                 path: [:phone]
+               },
+               %Zoi.Error{
+                 code: :unrecognized_key,
+                 message: "unrecognized key: 'age'",
+                 issue: {"unrecognized key: '%{key}'", [key: :age]},
+                 path: []
+               }
              ]
     end
 
@@ -821,7 +832,8 @@ defmodule ZoiTest do
       schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{})
-      assert Exception.message(error) == "invalid type: must be a keyword list"
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected keyword list"
     end
 
     test "keyword with nested keyword" do
@@ -851,7 +863,8 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, user: nil, active: true)
 
-      assert Exception.message(error) == "invalid type: must be a keyword list"
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected keyword list"
       assert error.path == [:user]
     end
 
@@ -878,8 +891,18 @@ defmodule ZoiTest do
                )
 
       assert ^errors = [
-               %Zoi.Error{message: "unrecognized key: 'wrong_key'", path: [:phone]},
-               %Zoi.Error{message: "unrecognized key: 'age'", path: []}
+               %Zoi.Error{
+                 code: :unrecognized_key,
+                 message: "unrecognized key: 'wrong_key'",
+                 issue: {"unrecognized key: '%{key}'", [key: :wrong_key]},
+                 path: [:phone]
+               },
+               %Zoi.Error{
+                 code: :unrecognized_key,
+                 message: "unrecognized key: 'age'",
+                 issue: {"unrecognized key: '%{key}'", [key: :age]},
+                 path: []
+               }
              ]
     end
 
@@ -1082,7 +1105,8 @@ defmodule ZoiTest do
       schema = Zoi.map(Zoi.string(), Zoi.integer())
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
-      assert Exception.message(error) == "invalid type: must be a map"
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected map"
     end
 
     test "map with atom keys" do
@@ -1149,13 +1173,15 @@ defmodule ZoiTest do
       schema = Zoi.tuple({Zoi.string(), Zoi.integer()})
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a tuple")
-      assert Exception.message(error) == "invalid type: must be a tuple with 2 elements"
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected tuple"
     end
 
     test "typle length difference" do
       schema = Zoi.tuple({Zoi.string(), Zoi.integer()})
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, {"hello", "world", 10})
-      assert Exception.message(error) == "invalid type: must be a tuple with 2 elements"
+      assert error.code == :invalid_tuple
+      assert Exception.message(error) == "invalid tuple: expected length 2, got 3"
     end
 
     test "tuple with nested tuples" do

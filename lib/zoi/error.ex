@@ -15,7 +15,8 @@ defmodule Zoi.Error do
   The following error codes are defined:
     - `:invalid_type`
     - `:invalid_literal`
-    - `:unrecognized_keys`
+    - `:invalid_tuple`,
+    - `:unrecognized_key`
     - `:invalid_enum_value`
     - `:less_than`
     - `:greater_than`
@@ -67,7 +68,6 @@ defmodule Zoi.Error do
     struct!(__MODULE__, opts)
   end
 
-  # @spec prepend_path(t(), path()) :: t()
   def prepend_path(%__MODULE__{} = error, path) when is_list(path) do
     %{error | path: path ++ error.path}
   end
@@ -126,6 +126,29 @@ defmodule Zoi.Error do
         issue: {"invalid enum value: expected one of %{expected}", [expected: expected]}
       )
     end
+  end
+
+  @spec invalid_tuple(non_neg_integer(), non_neg_integer(), keyword()) :: t()
+  def invalid_tuple(expected_length, actual_length, opts \\ []) do
+    if msg = opts[:custom_message] do
+      custom_error(msg)
+    else
+      new(
+        code: :invalid_tuple,
+        issue: {
+          "invalid tuple: expected length %{expected_length}, got %{actual_length}",
+          [expected_length: expected_length, actual_length: actual_length]
+        }
+      )
+    end
+  end
+
+  @spec unrecognized_key(atom() | binary() | integer()) :: t()
+  def unrecognized_key(key) do
+    new(
+      code: :unrecognized_key,
+      issue: {"unrecognized key: '%{key}'", [key: key]}
+    )
   end
 
   @spec custom_error(binary()) :: t()

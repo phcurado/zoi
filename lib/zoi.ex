@@ -865,7 +865,15 @@ defmodule Zoi do
 
       iex> schema = Zoi.object(%{name: Zoi.string()}, strict: true)
       iex> Zoi.parse(schema, %{name: "Alice", age: 30})
-      {:error, [%Zoi.Error{message: "unrecognized key: 'age'"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :unrecognized_key,
+           message: "unrecognized key: 'age'",
+           issue: {"unrecognized key: '%{key}'", [key: :age]},
+           path: []
+         }
+       ]}
 
   ## String keys and Atom keys
 
@@ -930,13 +938,29 @@ defmodule Zoi do
       iex> Zoi.parse(schema, [name: "Alice", age: 30])
       {:ok, [name: "Alice", age: 30]}
       iex> Zoi.parse(schema, %{name: "Alice", age: 30})
-      {:error, [%Zoi.Error{message: "invalid type: must be a keyword list"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected keyword list",
+           issue: {"invalid type: expected %{expected}", [expected: "keyword list"]},
+           path: []
+         }
+       ]}
 
   By default, unrecognized keys will be removed from the parsed data. If you want to not allow unrecognized keys, use the `:strict` option:
 
       iex> schema = Zoi.keyword([name: Zoi.string()], strict: true)
       iex> Zoi.parse(schema, [name: "Alice", age: 30])
-      {:error, [%Zoi.Error{message: "unrecognized key: 'age'"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :unrecognized_key,
+           message: "unrecognized key: 'age'",
+           issue: {"unrecognized key: '%{key}'", [key: :age]},
+           path: []
+         }
+       ]}
 
   All fields are optional by default in keyword lists, but you can make them required by using `Zoi.required/1`:
 
