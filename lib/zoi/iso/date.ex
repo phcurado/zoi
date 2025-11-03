@@ -25,7 +25,7 @@ defmodule Zoi.ISO.Date do
       {:error,
        Zoi.Error.invalid_type(:iso_date,
          issue: "invalid type: expected ISO date",
-         custom_message: schema.meta.error
+         error: schema.meta.error
        )}
     end
 

@@ -51,7 +51,7 @@ defmodule Zoi.Types.StringBoolean do
       {:error,
        Zoi.Error.invalid_type(:string_boolean,
          issue: "invalid type: expected string boolean",
-         custom_message: schema.meta.error
+         error: schema.meta.error
        )}
     end
 

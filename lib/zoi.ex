@@ -26,7 +26,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected string",
-           issue: {"invalid type: expected string", [expected: :string]},
+           issue: {"invalid type: expected string", [type: :string]},
            path: []
          }
        ]}
@@ -47,7 +47,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :custom,
            message: "must be a number",
-           issue: {"must be a number", []},
+           issue: {"must be a number", [type: :integer]},
            path: []
          }
        ]}
@@ -87,7 +87,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "h")
-      {:error, [%Zoi.Error{message: "too small: must have at least 2 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must have at least 2 character(s)",
+           issue: {"too small: must have at least %{count} character(s)", [count: 2]},
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, 123, coerce: true)
       {:ok, "123"}
   """
@@ -412,22 +420,18 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected string",
-           issue: {"invalid type: expected string", [expected: :string]},
+           issue: {"invalid type: expected string", [type: :string]},
            path: []
          }
        ]}
 
   Zoi provides built-in validations for strings, such as:
 
-      Zoi.gt(100)
-      Zoi.gte(100)
-      Zoi.lt(2)
-      Zoi.lte(2)
-      Zoi.min(2) # alias for `Zoi.gte(2)`
-      Zoi.max(100) # alias for `Zoi.lte(100)`
+      Zoi.min(2)
+      Zoi.max(100)
+      Zoi.length(5)
       Zoi.starts_with("hello")
       Zoi.ends_with("world")
-      Zoi.length(5)
       Zoi.regex(~r/^[a-zA-Z]+$/)
 
   Additionally it can perform data transformation:
@@ -458,7 +462,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected integer",
-           issue: {"invalid type: expected integer", [expected: :integer]},
+           issue: {"invalid type: expected integer", [type: :integer]},
            path: []
          }
        ]}
@@ -509,7 +513,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected number",
-           issue: {"invalid type: expected number", [expected: :number]},
+           issue: {"invalid type: expected number", [type: :number]},
            path: []
          }
        ]}
@@ -571,7 +575,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected string boolean",
-           issue: {"invalid type: expected string boolean", [expected: :string_boolean]},
+           issue: {"invalid type: expected string boolean", [type: :string_boolean]},
            path: []
          }
        ]}
@@ -614,7 +618,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected atom",
-           issue: {"invalid type: expected atom", [expected: :atom]},
+           issue: {"invalid type: expected atom", [type: :atom]},
            path: []
          }
        ]}
@@ -673,7 +677,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected nil",
-           issue: {"invalid type: expected nil", [expected: "nil"]},
+           issue: {"invalid type: expected nil", [type: nil]},
            path: []
          }
        ]}
@@ -776,7 +780,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected integer",
-           issue: {"invalid type: expected integer", [expected: :integer]},
+           issue: {"invalid type: expected integer", [type: :integer]},
            path: []
          }
        ]}
@@ -793,12 +797,20 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected integer",
-           issue: {"invalid type: expected integer", [expected: :integer]},
+           issue: {"invalid type: expected integer", [type: :integer]},
            path: []
          }
        ]}
       iex> Zoi.parse(schema, -1)
-      {:error, [%Zoi.Error{message: "too small: must be at least 0"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must be at least 0",
+           issue: {"too small: must be at least %{count}", [count: 0]},
+           path: []
+         }
+       ]}
 
   If you define the validation on the union itself, it will apply to all types in the union:
 
@@ -809,7 +821,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, 2)
-      {:error, [%Zoi.Error{message: "too small: must be at least 3"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must be at least 3",
+           issue: {"too small: must be at least %{count}", [count: 3]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Encapsulated Types"
   @spec union(fields :: [Zoi.Type.t()], opts :: options()) :: Zoi.Type.t()
@@ -827,7 +847,15 @@ defmodule Zoi do
       ...>   Zoi.string() |> Zoi.max(5)
       ...> ])
       iex> Zoi.parse(schema, "helloworld")
-      {:error, [%Zoi.Error{message: "too big: must have at most 5 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :less_than_or_equal_to,
+           message: "too big: must have at most 5 character(s)",
+           issue: {"too big: must have at most %{count} character(s)", [count: 5]},
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, "hi")
       {:ok, "hi"}
 
@@ -840,7 +868,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "115")
       {:ok, 115}
       iex> Zoi.parse(schema, "2")
-      {:error, [%Zoi.Error{message: "too small: must have at least 3 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must have at least 3 character(s)",
+           issue: {"too small: must have at least %{count} character(s)", [count: 3]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Encapsulated Types"
   @spec intersection(fields :: [Zoi.Type.t()], opts :: options()) :: Zoi.Type.t()
@@ -967,7 +1003,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected keyword list",
-           issue: {"invalid type: expected keyword list", [expected: :keyword]},
+           issue: {"invalid type: expected keyword list", [type: :keyword]},
            path: []
          }
        ]}
@@ -1089,7 +1125,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected integer",
-           issue: {"invalid type: expected integer", [expected: :integer]},
+           issue: {"invalid type: expected integer", [type: :integer]},
            path: ["a"]
          }
        ]}
@@ -1123,7 +1159,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected integer",
-           issue: {"invalid type: expected integer", [expected: :integer]},
+           issue: {"invalid type: expected integer", [type: :integer]},
            path: [1]
          }
        ]}
@@ -1146,7 +1182,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected string",
-           issue: {"invalid type: expected string", [expected: :string]},
+           issue: {"invalid type: expected string", [type: :string]},
            path: [1]
          }
        ]}
@@ -1188,7 +1224,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of red, green, blue",
-           issue: {"invalid enum value: expected one of %{expected}", [expected: "red, green, blue"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "red, green, blue"]},
            path: []
          }
        ]}
@@ -1203,7 +1239,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of red, green, blue",
-           issue: {"invalid enum value: expected one of %{expected}", [expected: "red, green, blue"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "red, green, blue"]},
            path: []
          }
        ]}
@@ -1218,7 +1254,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of Red, Green, Blue",
-           issue: {"invalid enum value: expected one of %{expected}", [expected: "Red, Green, Blue"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "Red, Green, Blue"]},
            path: []
          }
        ]}
@@ -1233,7 +1269,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of 1, 2, 3",
-           issue: {"invalid enum value: expected one of %{expected}", [expected: "1, 2, 3"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
            path: []
          }
        ]}
@@ -1248,7 +1284,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of 1, 2, 3",
-           issue: {"invalid enum value: expected one of %{expected}", [expected: "1, 2, 3"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
            path: []
          }
        ]}
@@ -1265,7 +1301,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of 1, 2, 3",
-           issue: {"invalid enum value: expected one of %{expected}", [expected: "1, 2, 3"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
            path: []
          }
        ]}
@@ -1275,7 +1311,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of 1, 2, 3",
-           issue: {"invalid enum value: expected one of %{expected}", [expected: "1, 2, 3"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
            path: []
          }
        ]}
@@ -1300,7 +1336,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected date",
-           issue: {"invalid type: expected date", [expected: :date]},
+           issue: {"invalid type: expected date", [type: :date]},
            path: []
          }
        ]}
@@ -1333,7 +1369,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected time",
-           issue: {"invalid type: expected time", [expected: :time]},
+           issue: {"invalid type: expected time", [type: :time]},
            path: []
          }
        ]}
@@ -1362,7 +1398,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected datetime",
-           issue: {"invalid type: expected datetime", [expected: :datetime]},
+           issue: {"invalid type: expected datetime", [type: :datetime]},
            path: []
          }
        ]}
@@ -1394,7 +1430,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected naive datetime",
-           issue: {"invalid type: expected naive datetime", [expected: :naive_datetime]},
+           issue: {"invalid type: expected naive datetime", [type: :naive_datetime]},
            path: []
          }
        ]}
@@ -1428,7 +1464,7 @@ defmodule Zoi do
            %Zoi.Error{
              code: :invalid_type,
              message: "invalid type: expected decimal",
-             issue: {"invalid type: expected decimal", [expected: :decimal]},
+             issue: {"invalid type: expected decimal", [type: :decimal]},
              path: []
            }
          ]}
@@ -1456,8 +1492,10 @@ defmodule Zoi do
       iex> schema = Zoi.email()
       iex> Zoi.parse(schema, "test@test.com")
       {:ok, "test@test.com"}
-      iex> Zoi.parse(schema, "invalid-email")
-      {:error, [%Zoi.Error{message: "invalid email format"}]}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-email")
+      iex> error.message
+      "invalid email format"
+      
 
   It uses a regex pattern to validate the email format, which checks for a standard email structure including local part, domain, and top-level domain:
       ~r/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i
@@ -1488,7 +1526,8 @@ defmodule Zoi do
     Zoi.string()
     |> regex(regex,
       format: :email,
-      message: "invalid email format"
+      error: opts[:error],
+      internal_message: "invalid email format"
     )
   end
 
@@ -1501,8 +1540,9 @@ defmodule Zoi do
       iex> schema = Zoi.uuid()
       iex> Zoi.parse(schema, "550e8400-e29b-41d4-a716-446655440000")
       {:ok, "550e8400-e29b-41d4-a716-446655440000"}
-      iex> Zoi.parse(schema, "invalid-uuid")
-      {:error, [%Zoi.Error{message: "invalid UUID format"}]}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-uuid")
+      iex> error.message
+      "invalid UUID format"
 
       iex> schema = Zoi.uuid(version: "v8")
       iex> Zoi.parse(schema, "6d084cef-a067-8e9e-be6d-7c5aefdfd9b4")
@@ -1513,11 +1553,12 @@ defmodule Zoi do
   def uuid(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.uuid(opts),
-      message: "invalid UUID format"
+      error: opts[:error],
+      internal_message: "invalid UUID format"
     )
   end
 
-  @doc """
+  @doc ~S"""
   Defines a URL format validation.
 
   ## Example
@@ -1525,16 +1566,17 @@ defmodule Zoi do
       iex> schema = Zoi.url()
       iex> Zoi.parse(schema, "https://example.com")
       {:ok, "https://example.com"}
-      iex> Zoi.parse(schema, "invalid-url")
-      {:error, [%Zoi.Error{message: "invalid URL"}]}
-
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-url")
+      iex> error.message
+      "invalid URL"
   """
   @doc group: "Formats"
-  @spec url() :: Zoi.Type.t()
-  def url() do
+  @spec url(opts :: options()) :: Zoi.Type.t()
+  def url(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.url(),
-      message: "invalid URL"
+      error: opts[:error],
+      internal_message: "invalid URL"
     )
   end
 
@@ -1548,11 +1590,12 @@ defmodule Zoi do
       {:ok, "127.0.0.1"}
   """
   @doc group: "Formats"
-  @spec ipv4() :: Zoi.Type.t()
-  def ipv4() do
+  @spec ipv4(opts :: options()) :: Zoi.Type.t()
+  def ipv4(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.ipv4(),
-      message: "invalid IPv4 address"
+      error: opts[:error],
+      internal_message: "invalid IPv4 address"
     )
   end
 
@@ -1564,15 +1607,14 @@ defmodule Zoi do
       iex> schema = Zoi.ipv6()
       iex> Zoi.parse(schema, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")
       {:ok, "2001:0db8:85a3:0000:0000:8a2e:0370:7334"}
-      iex> Zoi.parse(schema, "invalid-ipv6")
-      {:error, [%Zoi.Error{message: "invalid IPv6 address"}]}
   """
   @doc group: "Formats"
-  @spec ipv6() :: Zoi.Type.t()
-  def ipv6() do
+  @spec ipv6(opts :: options()) :: Zoi.Type.t()
+  def ipv6(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.ipv6(),
-      message: "invalid IPv6 address"
+      error: opts[:error],
+      internal_message: "invalid IPv6 address"
     )
   end
 
@@ -1584,14 +1626,14 @@ defmodule Zoi do
       iex> schema = Zoi.hex()
       iex> Zoi.parse(schema, "a3c113")
       {:ok, "a3c113"}
-      iex> Zoi.parse(schema, "invalid-hex")
-      {:error, [%Zoi.Error{message: "invalid hex format"}]}
   """
   @doc group: "Formats"
-  def hex() do
+  @spec hex(opts :: options()) :: Zoi.Type.t()
+  def hex(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.hex(),
-      message: "invalid hex format"
+      error: opts[:error],
+      internal_message: "invalid hex format"
     )
   end
 
@@ -1605,7 +1647,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hi")
-      {:error, [%Zoi.Error{message: "invalid length: must have 5 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_length,
+            message: "invalid length: must have 5 character(s)",
+           issue: {"invalid length: must have %{count} character(s)", [count: 5]},
+           path: []
+         }
+       ]}
   """
 
   @doc group: "Refinements"
@@ -1635,7 +1685,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hi")
-      {:error, [%Zoi.Error{message: "too small: must have at least 3 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must have at least 3 character(s)",
+           issue: {"too small: must have at least %{count} character(s)", [count: 3]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec gte(schema :: Zoi.Type.t(), min :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
@@ -1654,7 +1712,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 3)
       {:ok, 3}
       iex> Zoi.parse(schema, 2)
-      {:error, [%Zoi.Error{message: "too small: must be greater than 2"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than,
+           message: "too small: must be greater than 2",
+           issue: {"too small: must be greater than %{count}", [count: 2]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec gt(schema :: Zoi.Type.t(), gt :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
@@ -1682,7 +1748,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hello world")
-      {:error, [%Zoi.Error{message: "too big: must have at most 5 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :less_than_or_equal_to,
+           message: "too big: must have at most 5 character(s)",
+           issue: {"too big: must have at most %{count} character(s)", [count: 5]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec lte(schema :: Zoi.Type.t(), lte :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
@@ -1701,7 +1775,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 5)
       {:ok, 5}
       iex> Zoi.parse(schema, 10)
-      {:error, [%Zoi.Error{message: "too big: must be less than 10"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :less_than,
+           message: "too big: must be less than 10",
+           issue: {"too big: must be less than %{count}", [count: 10]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec lt(schema :: Zoi.Type.t(), lt :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
@@ -1718,7 +1800,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 5)
       {:ok, 5}
       iex> Zoi.parse(schema, 0)
-      {:error, [%Zoi.Error{message: "too small: must be greater than 0"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than,
+           message: "too small: must be greater than 0",
+           issue: {"too small: must be greater than %{count}", [count: 0]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec positive(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
@@ -1735,7 +1825,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, -5)
       {:ok, -5}
       iex> Zoi.parse(schema, 0)
-      {:error, [%Zoi.Error{message: "too big: must be less than 0"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :less_than,
+           message: "too big: must be less than 0",
+           issue: {"too big: must be less than %{count}", [count: 0]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec negative(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
@@ -1752,7 +1850,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 0)
       {:ok, 0}
       iex> Zoi.parse(schema, -5)
-      {:error, [%Zoi.Error{message: "too small: must be at least 0"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must be at least 0",
+           issue: {"too small: must be at least %{count}", [count: 0]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec non_negative(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
@@ -1784,8 +1890,9 @@ defmodule Zoi do
       iex> schema = Zoi.string() |> Zoi.starts_with("hello")
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
-      iex> Zoi.parse(schema, "world hello")
-      {:error, [%Zoi.Error{message: "invalid string: must start with 'hello'"}]}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "world hello")
+      iex> error.message
+      "invalid format: must start with 'hello'"
   """
   @doc group: "Refinements"
   @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary(), opts :: options()) :: Zoi.Type.t()
@@ -1802,7 +1909,9 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
       iex> Zoi.parse(schema, "hello")
-      {:error, [%Zoi.Error{message: "invalid string: must end with 'world'"}]}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
+      iex> error.message
+      "invalid format: must end with 'world'"
   """
   @doc group: "Refinements"
   @spec ends_with(schema :: Zoi.Type.t(), suffix :: binary(), opts :: options()) :: Zoi.Type.t()
@@ -1819,15 +1928,17 @@ defmodule Zoi do
       iex> schema = Zoi.string() |> Zoi.downcase()
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
-      iex> Zoi.parse(schema, "Hello World")
-      {:error, [%Zoi.Error{message: "invalid string: must be lowercase"}]}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "Hello World")
+      iex> error.message
+      "invalid format: must be lowercase"
   """
   @doc group: "Refinements"
-  @spec downcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
-  def downcase(schema) do
+  @spec downcase(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  def downcase(schema, opts \\ []) do
     schema
     |> regex(Regexes.downcase(),
-      message: "invalid string: must be lowercase"
+      error: opts[:error],
+      internal_message: "invalid format: must be lowercase"
     )
   end
 
@@ -1839,16 +1950,17 @@ defmodule Zoi do
       iex> schema = Zoi.string() |> Zoi.upcase()
       iex> Zoi.parse(schema, "HELLO")
       {:ok, "HELLO"}
-      iex> Zoi.parse(schema, "Hello")
-      {:error, [%Zoi.Error{message: "invalid string: must be uppercase"}]}
-
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "Hello")
+      iex> error.message
+      "invalid format: must be uppercase"
   """
   @doc group: "Refinements"
-  @spec upcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
-  def upcase(schema) do
+  @spec upcase(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  def upcase(schema, opts \\ []) do
     schema
     |> regex(Regexes.upcase(),
-      message: "invalid string: must be uppercase"
+      error: opts[:error],
+      internal_message: "invalid format: must be uppercase"
     )
   end
 

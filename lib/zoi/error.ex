@@ -23,6 +23,7 @@ defmodule Zoi.Error do
     - `:greater_than`
     - `:less_than_or_equal_to`
     - `:greater_than_or_equal_to`
+    - `:invalid_length`
     - `:invalid_format`
     - `:custom`
 
@@ -32,7 +33,7 @@ defmodule Zoi.Error do
 
       %Zoi.Error{
         code: :invalid_type,
-        issue: {"invalid type: expected string", [expected: :string]},
+        issue: {"invalid type: expected string", [type: :string]},
         message: "invalid type: expected string",
         path: [:user, :name]
       }
@@ -93,11 +94,11 @@ defmodule Zoi.Error do
   ## Error types
 
   @spec invalid_type(binary()) :: t()
-  def invalid_type(expected, opts \\ []) do
-    {msg, opts} = Keyword.pop(opts, :custom_message)
+  def invalid_type(type, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg)
+      custom_error(msg, type: type)
     else
       {issue, opts} = Keyword.pop(opts, :issue)
 
@@ -105,7 +106,7 @@ defmodule Zoi.Error do
         Keyword.merge(
           [
             {:code, :invalid_type},
-            {:issue, {issue || "invalid type: expected #{expected}", [expected: expected]}}
+            {:issue, {issue || "invalid type: expected #{type || "nil"}", [type: type]}}
           ],
           opts
         )
@@ -116,10 +117,10 @@ defmodule Zoi.Error do
 
   @spec invalid_literal(any()) :: t()
   def invalid_literal(value, opts \\ []) do
-    {msg, opts} = Keyword.pop(opts, :custom_message)
+    {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg)
+      custom_error(msg, expected: value)
     else
       new([
         {:code, :invalid_literal},
@@ -130,24 +131,26 @@ defmodule Zoi.Error do
 
   @spec invalid_enum_value([tuple()]) :: t()
   def invalid_enum_value(enum, opts \\ []) when is_list(enum) do
-    if msg = opts[:custom_message] do
-      custom_error(msg)
-    else
-      expected = Enum.map_join(enum, ", ", fn {_key, value} -> value end)
+    {msg, _opts} = Keyword.pop(opts, :error)
 
+    expected = Enum.map_join(enum, ", ", fn {_key, value} -> value end)
+
+    if msg do
+      custom_error(msg, expected: expected)
+    else
       new(
         code: :invalid_enum_value,
-        issue: {"invalid enum value: expected one of %{expected}", [expected: expected]}
+        issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: expected]}
       )
     end
   end
 
   @spec invalid_tuple(non_neg_integer(), non_neg_integer(), keyword()) :: t()
   def invalid_tuple(expected_length, actual_length, opts \\ []) do
-    {msg, opts} = Keyword.pop(opts, :custom_message)
+    {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(msg)
+      custom_error(msg, expected_length: expected_length, actual_length: actual_length)
     else
       new([
         {:code, :invalid_tuple},
@@ -177,11 +180,226 @@ defmodule Zoi.Error do
     ])
   end
 
-  @spec custom_error(binary()) :: t()
-  def custom_error(message) do
+  @spec less_than_or_equal_to(atom(), any(), keyword()) :: t()
+  def less_than_or_equal_to(type, max, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(msg, count: max)
+    else
+      message =
+        case type do
+          :string -> "too big: must have at most %{count} character(s)"
+          :array -> "too big: must have at most %{count} item(s)"
+          :number -> "too big: must be at most %{count}"
+          :date -> "too big: must be at most %{count}"
+        end
+
+      opts =
+        Keyword.merge(
+          [
+            {:code, :less_than_or_equal_to},
+            {:issue, {message, [count: max]}}
+          ],
+          opts
+        )
+
+      new(opts)
+    end
+  end
+
+  @spec greater_than_or_equal_to(atom(), any(), keyword()) :: t()
+  def greater_than_or_equal_to(type, min, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(msg, count: min)
+    else
+      message =
+        case type do
+          :string -> "too small: must have at least %{count} character(s)"
+          :array -> "too small: must have at least %{count} item(s)"
+          :number -> "too small: must be at least %{count}"
+          :date -> "too small: must be at least %{count}"
+        end
+
+      opts =
+        Keyword.merge(
+          [
+            {:code, :greater_than_or_equal_to},
+            {:issue, {message, [count: min]}}
+          ],
+          opts
+        )
+
+      new(opts)
+    end
+  end
+
+  @spec greater_than(atom(), any(), keyword()) :: t()
+  def greater_than(type, min, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(msg, count: min)
+    else
+      message =
+        case type do
+          :array -> "too small: must be greater than %{count} item(s)"
+          :number -> "too small: must be greater than %{count}"
+          :date -> "too small: must be greater than %{count}"
+        end
+
+      opts =
+        Keyword.merge(
+          [
+            {:code, :greater_than},
+            {:issue, {message, [count: min]}}
+          ],
+          opts
+        )
+
+      new(opts)
+    end
+  end
+
+  @spec less_than(atom(), any(), keyword()) :: t()
+  def less_than(type, max, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(msg, count: max)
+    else
+      message =
+        case type do
+          :array -> "too big: must be less than %{count} item(s)"
+          :number -> "too big: must be less than %{count}"
+          :date -> "too big: must be less than %{count}"
+        end
+
+      opts =
+        Keyword.merge(
+          [
+            {:code, :less_than},
+            {:issue, {message, [count: max]}}
+          ],
+          opts
+        )
+
+      new(opts)
+    end
+  end
+
+  @spec invalid_length(atom(), non_neg_integer(), keyword()) :: t()
+  def invalid_length(type, length, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(msg, count: length)
+    else
+      message =
+        case type do
+          :string -> "invalid length: must have %{count} character(s)"
+          :array -> "invalid length: must have %{count} item(s)"
+        end
+
+      opts =
+        Keyword.merge(
+          [
+            {:code, :invalid_length},
+            {:issue, {message, [count: length]}}
+          ],
+          opts
+        )
+
+      new(opts)
+    end
+  end
+
+  @spec invalid_ending_string(binary(), keyword()) :: t()
+  def invalid_starting_string(prefix, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(msg, prefix: prefix)
+    else
+      opts =
+        Keyword.merge(
+          [
+            {:code, :invalid_format},
+            {:issue,
+             {
+               "invalid format: must start with '%{value}'",
+               [value: prefix]
+             }}
+          ],
+          opts
+        )
+
+      new(opts)
+    end
+  end
+
+  @spec invalid_ending_string(binary(), keyword()) :: t()
+  def invalid_ending_string(suffix, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(msg, suffix: suffix)
+    else
+      opts =
+        Keyword.merge(
+          [
+            {:code, :invalid_format},
+            {:issue,
+             {
+               "invalid format: must end with '%{value}'",
+               [value: suffix]
+             }}
+          ],
+          opts
+        )
+
+      new(opts)
+    end
+  end
+
+  @spec invalid_format(Regex.t(), keyword()) :: t()
+  def invalid_format(pattern, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+    {format, opts} = Keyword.pop(opts, :format)
+    default_issue_opts = [pattern: Regex.source(pattern), regex: pattern]
+
+    if msg do
+      custom_error(msg, default_issue_opts)
+    else
+      {message, opts} =
+        Keyword.pop(opts, :internal_message, "invalid format: must match pattern %{pattern}")
+
+      issue_opts =
+        case format do
+          nil -> default_issue_opts
+          _format -> [{:format, format} | default_issue_opts]
+        end
+
+      opts =
+        Keyword.merge(
+          [
+            {:code, :invalid_format},
+            {:issue, {message, issue_opts}}
+          ],
+          opts
+        )
+
+      new(opts)
+    end
+  end
+
+  @spec custom_error(binary(), keyword()) :: t()
+  def custom_error(message, opts \\ []) do
     new(
       code: :custom,
-      issue: {message, []}
+      issue: {message, opts}
     )
   end
 end

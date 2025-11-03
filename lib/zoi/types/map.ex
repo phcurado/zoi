@@ -33,7 +33,7 @@ defmodule Zoi.Types.Map do
     end
 
     def parse(schema, _, _) do
-      {:error, Zoi.Error.invalid_type(:map, custom_message: schema.meta.error)}
+      {:error, Zoi.Error.invalid_type(:map, error: schema.meta.error)}
     end
 
     def type_spec(%Zoi.Types.Map{key_type: key_type, value_type: value_type}, opts) do

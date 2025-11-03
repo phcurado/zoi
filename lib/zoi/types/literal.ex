@@ -12,7 +12,7 @@ defmodule Zoi.Types.Literal do
       if input === value do
         {:ok, input}
       else
-        {:error, Zoi.Error.invalid_literal(value, custom_message: schema.meta.error)}
+        {:error, Zoi.Error.invalid_literal(value, error: schema.meta.error)}
       end
     end
 

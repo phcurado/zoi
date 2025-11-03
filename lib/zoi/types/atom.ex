@@ -12,7 +12,7 @@ defmodule Zoi.Types.Atom do
     end
 
     def parse(schema, _, _) do
-      {:error, Zoi.Error.invalid_type(:atom, custom_message: schema.meta.error)}
+      {:error, Zoi.Error.invalid_type(:atom, error: schema.meta.error)}
     end
 
     def type_spec(_schema, _opts) do

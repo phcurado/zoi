@@ -41,7 +41,7 @@ defmodule Zoi.Types.Object do
     end
 
     def parse(schema, _, _) do
-      {:error, Zoi.Error.invalid_type(:object, custom_message: schema.meta.error)}
+      {:error, Zoi.Error.invalid_type(:object, error: schema.meta.error)}
     end
 
     def type_spec(%Zoi.Types.Object{fields: fields}, opts) do

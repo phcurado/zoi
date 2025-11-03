@@ -17,15 +17,14 @@ defmodule Zoi.Types.Tuple do
       input_length = length(input)
 
       if input_length != schema.length do
-        {:error,
-         Zoi.Error.invalid_tuple(schema.length, input_length, custom_message: schema.meta.error)}
+        {:error, Zoi.Error.invalid_tuple(schema.length, input_length, error: schema.meta.error)}
       else
         parse_fields(schema, input, opts)
       end
     end
 
     def parse(schema, _, _) do
-      {:error, Zoi.Error.invalid_type(:tuple, custom_message: schema.meta.error)}
+      {:error, Zoi.Error.invalid_type(:tuple, error: schema.meta.error)}
     end
 
     defp parse_fields(schema, input, opts) do

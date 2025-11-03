@@ -49,7 +49,7 @@ defmodule Zoi.Types.Struct do
     end
 
     def parse(schema, _, _) do
-      {:error, Zoi.Error.invalid_type(:struct, custom_message: schema.meta.error)}
+      {:error, Zoi.Error.invalid_type(:struct, error: schema.meta.error)}
     end
 
     def type_spec(%Zoi.Types.Struct{module: module, fields: fields}, opts) do

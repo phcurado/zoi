@@ -25,7 +25,7 @@ defmodule Zoi.ISO.NaiveDateTime do
       {:error,
        Zoi.Error.invalid_type(:iso_naive_datetime,
          issue: "invalid type: expected ISO naive datetime",
-         custom_message: schema.meta.error
+         error: schema.meta.error
        )}
     end
 

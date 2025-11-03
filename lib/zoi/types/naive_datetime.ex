@@ -43,7 +43,7 @@ defmodule Zoi.Types.NaiveDateTime do
       {:error,
        Zoi.Error.invalid_type(:naive_datetime,
          issue: "invalid type: expected naive datetime",
-         custom_message: schema.meta.error
+         error: schema.meta.error
        )}
     end
 

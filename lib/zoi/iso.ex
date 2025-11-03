@@ -21,7 +21,7 @@ defmodule Zoi.ISO do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected ISO time",
-           issue: {"invalid type: expected ISO time", [expected: :iso_time]},
+           issue: {"invalid type: expected ISO time", [type: :iso_time]},
            path: []
          }
        ]}
@@ -43,7 +43,7 @@ defmodule Zoi.ISO do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected ISO date",
-           issue: {"invalid type: expected ISO date", [expected: :iso_date]},
+           issue: {"invalid type: expected ISO date", [type: :iso_date]},
            path: []
          }
        ]}
@@ -67,7 +67,7 @@ defmodule Zoi.ISO do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected ISO datetime",
-           issue: {"invalid type: expected ISO datetime", [expected: :iso_datetime]},
+           issue: {"invalid type: expected ISO datetime", [type: :iso_datetime]},
            path: []
          }
        ]}
@@ -91,7 +91,7 @@ defmodule Zoi.ISO do
          %Zoi.Error{
            code: :invalid_type,
            message: "invalid type: expected ISO naive datetime",
-           issue: {"invalid type: expected ISO naive datetime", [expected: :iso_naive_datetime]},
+           issue: {"invalid type: expected ISO naive datetime", [type: :iso_naive_datetime]},
            path: []
          }
        ]}

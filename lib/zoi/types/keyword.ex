@@ -57,7 +57,7 @@ defmodule Zoi.Types.Keyword do
       {:error,
        Zoi.Error.invalid_type(:keyword,
          issue: "invalid type: expected keyword list",
-         custom_message: schema.meta.error
+         error: schema.meta.error
        )}
     end
 

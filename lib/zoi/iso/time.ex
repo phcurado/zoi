@@ -25,7 +25,7 @@ defmodule Zoi.ISO.Time do
       {:error,
        Zoi.Error.invalid_type(:iso_time,
          issue: "invalid type: expected ISO time",
-         custom_message: schema.meta.error
+         error: schema.meta.error
        )}
     end
 
