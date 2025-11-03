@@ -4,7 +4,7 @@ defmodule Zoi.Types.Boolean do
   use Zoi.Type.Def, fields: [coerce: false]
 
   def new(opts \\ []) do
-    opts = Keyword.merge([error: "invalid type: must be a boolean", coerce: false], opts)
+    opts = Keyword.merge([coerce: false], opts)
     apply_type(opts)
   end
 
@@ -19,16 +19,16 @@ defmodule Zoi.Types.Boolean do
       if coerce and input in ["true", "false"] do
         {:ok, input == "true"}
       else
-        error(schema)
+        {:error, error(schema)}
       end
     end
 
     def parse(schema, _input, _opts) do
-      error(schema)
+      {:error, error(schema)}
     end
 
     defp error(schema) do
-      {:error, schema.meta.error}
+      Zoi.Error.invalid_type("boolean", custom_message: schema.meta.error)
     end
 
     def type_spec(_schema, _opts) do

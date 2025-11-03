@@ -42,7 +42,15 @@ defmodule Zoi do
 
       iex> schema = Zoi.integer(error: "must be a number")
       iex> Zoi.parse(schema, "a")
-      {:error, [%Zoi.Error{message: "must be a number"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           message: "must be a number",
+           issue: {"must be a number", []},
+           path: []
+         }
+       ]}
   """
 
   alias Zoi.Regexes
@@ -445,7 +453,15 @@ defmodule Zoi do
       iex> Zoi.parse(shema, 42)
       {:ok, 42}
       iex> Zoi.parse(shema, "42")
-      {:error, [%Zoi.Error{message: "invalid type: must be an integer"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+           path: []
+         }
+       ]}
 
   For coercion, you can pass the `:coerce` option:
       iex> Zoi.integer(coerce: true) |> Zoi.parse("42")
@@ -488,7 +504,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 3.14)
       {:ok, 3.14}
       iex> Zoi.parse(schema, "42")
-      {:error, [%Zoi.Error{message: "invalid type: must be a number"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected number",
+           issue: {"invalid type: expected %{expected}", [expected: "number"]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   @spec number(opts :: options()) :: Zoi.Type.t()
@@ -699,7 +723,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 42)
       {:ok, 42}
       iex> Zoi.parse(schema, true)
-      {:error, [%Zoi.Error{message: "invalid type: must be an integer"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+           path: []
+         }
+       ]}
 
   This type also allows to define validations for each type in the union:
 
@@ -708,7 +740,15 @@ defmodule Zoi do
       ...>   Zoi.integer() |> Zoi.min(0)
       ...> ])
       iex> Zoi.parse(schema, "h") # fails on string and try to parse as integer
-      {:error, [%Zoi.Error{message: "invalid type: must be an integer"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, -1)
       {:error, [%Zoi.Error{message: "too small: must be at least 0"}]}
 
@@ -948,7 +988,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, %{"a" => 1, "b" => 2})
       {:ok, %{"a" => 1, "b" => 2}}
       iex> Zoi.parse(schema, %{"a" => "1", "b" => 2})
-      {:error, [%Zoi.Error{message: "invalid type: must be an integer", path: ["a"]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+           path: ["a"]
+         }
+       ]}
   """
   @doc group: "Complex Types"
   @spec map(key :: Zoi.Type.t(), type :: Zoi.Type.t(), opts :: options()) ::
@@ -974,7 +1022,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, {"hello", 42})
       {:ok, {"hello", 42}}
       iex> Zoi.parse(schema, {"hello", "world"})
-      {:error, [%Zoi.Error{message: "invalid type: must be an integer", path: [1]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected %{expected}", [expected: "integer"]},
+           path: [1]
+         }
+       ]}
   """
   @doc group: "Complex Types"
   @spec tuple(fields :: tuple(), opts :: options()) :: Zoi.Type.t()

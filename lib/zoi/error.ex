@@ -67,7 +67,7 @@ defmodule Zoi.Error do
     struct!(__MODULE__, opts)
   end
 
-  @spec prepend_path(t(), path()) :: t()
+  # @spec prepend_path(t(), path()) :: t()
   def prepend_path(%__MODULE__{} = error, path) when is_list(path) do
     %{error | path: path ++ error.path}
   end
