@@ -83,8 +83,7 @@ defmodule Zoi.Error do
     {msg, opts} = Keyword.pop(opts, :message)
 
     if msg do
-      custom_error(issue: {msg, []})
-      |> prepend_path(Keyword.get(opts, :path, []))
+      custom_error([{:issue, {msg, []}} | opts])
     else
       {issue, opts} = Keyword.pop(opts, :issue)
       {message, issue} = render_message_from_issue(issue)
@@ -113,7 +112,7 @@ defmodule Zoi.Error do
       iex> error.path
       [:user, :name]
   """
-  @spec prepend_path(t(), path()) :: t()
+  @spec prepend_path(t(), any()) :: t()
   def prepend_path(%__MODULE__{} = error, path) when is_list(path) do
     %{error | path: path ++ error.path}
   end
