@@ -726,7 +726,7 @@ defmodule ZoiTest do
 
       assert {:error, errors} = Zoi.parse(schema, %{})
 
-      assert errors == [
+      assert Enum.sort(errors) == [
                %Zoi.Error{
                  code: :required,
                  message: "is required",
@@ -743,18 +743,18 @@ defmodule ZoiTest do
 
       assert {:error, errors} = Zoi.parse(schema, %{user: %{}, active: true})
 
-      assert errors == [
-               %Zoi.Error{
-                 code: :required,
-                 message: "is required",
-                 issue: {"is required", [key: :name]},
-                 path: [:user, :name]
-               },
+      assert Enum.sort(errors) == [
                %Zoi.Error{
                  code: :required,
                  message: "is required",
                  issue: {"is required", [key: :age]},
                  path: [:user, :age]
+               },
+               %Zoi.Error{
+                 code: :required,
+                 message: "is required",
+                 issue: {"is required", [key: :name]},
+                 path: [:user, :name]
                }
              ]
 
