@@ -1789,14 +1789,30 @@ defmodule ZoiTest do
     test "valid URL" do
       schema = Zoi.url()
       assert {:ok, "https://example.com"} == Zoi.parse(schema, "https://example.com")
+      assert {:ok, "https://example.com"} == Zoi.parse(schema, "https://example.com")
       assert {:ok, "http://localhost"} == Zoi.parse(schema, "http://localhost")
+
+      assert {:ok, "https://google.com/Foo%20Bar"} ==
+               Zoi.parse(schema, "https://google.com/Foo%20Bar")
     end
 
     test "invalid URL" do
       schema = Zoi.url()
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a url")
-      assert error.code == :invalid_format
-      assert Exception.message(error) == "invalid URL"
+
+      invalid_urls = [
+        "htp://invalid-protocol.com",
+        "://missing-protocol.com",
+        "http//missing-colon.com",
+        "http:/one-slash.com",
+        "/?foo[bar]=baz"
+      ]
+
+      for url <- invalid_urls do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, url)
+        assert error.code == :invalid_format
+        assert Exception.message(error) == "invalid format: must be a valid URL"
+        assert {"invalid format: must be a valid URL", [value: ^url]} = error.issue
+      end
     end
   end
 

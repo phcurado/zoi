@@ -564,6 +564,29 @@ defmodule Zoi.Error do
     end
   end
 
+  def invalid_url(url, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(issue: {msg, [value: url]})
+    else
+      opts =
+        Keyword.merge(
+          [
+            {:code, :invalid_format},
+            {:issue,
+             {
+               "invalid format: must be a valid URL",
+               [value: url]
+             }}
+          ],
+          opts
+        )
+
+      new(opts)
+    end
+  end
+
   @doc ~S"""
   Creates an invalid format error for the given regex pattern.
   ## Example

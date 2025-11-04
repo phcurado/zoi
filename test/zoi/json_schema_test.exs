@@ -77,7 +77,7 @@ defmodule Zoi.JSONSchemaTest do
       {"exact length", Zoi.string() |> Zoi.length(5),
        %{type: :string, minLength: 5, maxLength: 5}},
       {"uuid", Zoi.uuid(), %{type: :string, pattern: Regexes.uuid().source}},
-      {"url", Zoi.url(), %{type: :string, pattern: Regexes.url().source}},
+      {"url", Zoi.url(), %{type: :string, format: :uri}},
       {"lt gt", Zoi.string() |> Zoi.lt(10) |> Zoi.gt(3),
        %{type: :string, maxLength: 9, minLength: 4}},
       {"starts_with have no effect", Zoi.string() |> Zoi.starts_with("prefix"), %{type: :string}},

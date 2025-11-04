@@ -63,13 +63,6 @@ defmodule Zoi.Regexes do
   end
 
   @doc """
-  Regex pattern to match a valid URL.
-  """
-  def url() do
-    ~r/^(https?|mailto):\/\/(([\w-]+\.)+[\w-]+|localhost|127(?:\.\d{1,3}){3})(:\d+)?(\/[\w\-._~:\/?#[\]@!$&'()*+,;=]*)?$/i
-  end
-
-  @doc """
   Regex pattern to match a valid IPv4 address.
 
   from https://stackoverflow.com/questions/5284147/validating-ipv4-addresses-with-regexp
