@@ -1641,16 +1641,13 @@ defmodule Zoi do
       {:ok, "https://example.com"}
       iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-url")
       iex> error.message
-      "invalid URL"
+      "invalid format: must be a valid URL"
   """
   @doc group: "Formats"
   @spec url(opts :: options()) :: Zoi.Type.t()
   def url(opts \\ []) do
     Zoi.string()
-    |> regex(Regexes.url(),
-      error: opts[:error],
-      internal_message: "invalid URL"
-    )
+    |> refine({Zoi.Refinements, :refine, [[:url], opts]})
   end
 
   @doc """

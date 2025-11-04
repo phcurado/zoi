@@ -6,6 +6,16 @@ defmodule Zoi.Refinements do
   end
 
   # String
+  defp do_refine(%Zoi.Types.String{}, input, [:url], opts) do
+    uri = URI.parse(input)
+
+    if uri.scheme in ["http", "https", nil] and uri.host != nil do
+      :ok
+    else
+      {:error, Zoi.Error.invalid_url(input, opts)}
+    end
+  end
+
   defp do_refine(%Zoi.Types.String{}, input, [gte: min], opts) do
     if String.length(input) >= min do
       :ok

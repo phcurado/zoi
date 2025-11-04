@@ -252,7 +252,7 @@ defmodule Zoi.JSONSchema do
       end)
 
     encoded_schema
-    |> encode_length_refinements(other_refinements)
+    |> encode_non_regex_refinements(other_refinements)
     |> encode_regex_refinements(regex_refinements)
   end
 
@@ -281,22 +281,22 @@ defmodule Zoi.JSONSchema do
     Map.put(json_schema, :allOf, Enum.map(patterns, fn pattern -> %{pattern: pattern} end))
   end
 
-  defp encode_length_refinements(json_schema, []), do: json_schema
+  defp encode_non_regex_refinements(json_schema, []), do: json_schema
 
-  defp encode_length_refinements(json_schema, refinements) do
+  defp encode_non_regex_refinements(json_schema, refinements) do
     Enum.reduce(refinements, json_schema, fn
       {_module, :refine, [func_param, _opts]}, acc ->
-        length_to_json_schema(acc, func_param)
+        refinements_to_json_schema(acc, func_param)
 
       _, acc ->
         acc
     end)
   end
 
-  defp length_to_json_schema(json_schema, param) do
+  defp refinements_to_json_schema(json_schema, param) do
     case json_schema do
       %{type: :string} ->
-        string_length_to_json_schema(json_schema, param)
+        string_refinements_to_json_schema(json_schema, param)
 
       %{type: :number} ->
         numeric_length_to_json_schema(json_schema, param)
@@ -309,7 +309,7 @@ defmodule Zoi.JSONSchema do
     end
   end
 
-  defp string_length_to_json_schema(json_schema, param) do
+  defp string_refinements_to_json_schema(json_schema, param) do
     case param do
       [gt: gt] ->
         Map.put(json_schema, :minLength, gt + 1)
@@ -327,6 +327,9 @@ defmodule Zoi.JSONSchema do
         json_schema
         |> Map.put(:minLength, length)
         |> Map.put(:maxLength, length)
+
+      [:url] ->
+        Map.put(json_schema, :format, :uri)
 
       _ ->
         json_schema
