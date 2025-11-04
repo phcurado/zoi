@@ -1789,7 +1789,7 @@ defmodule ZoiTest do
     test "valid URL" do
       schema = Zoi.url()
       assert {:ok, "https://example.com"} == Zoi.parse(schema, "https://example.com")
-      assert {:ok, "example.com"} == Zoi.parse(schema, "example.com")
+      assert {:ok, "https://example.com"} == Zoi.parse(schema, "https://example.com")
       assert {:ok, "http://localhost"} == Zoi.parse(schema, "http://localhost")
 
       assert {:ok, "https://google.com/Foo%20Bar"} ==

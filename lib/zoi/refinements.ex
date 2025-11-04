@@ -9,7 +9,7 @@ defmodule Zoi.Refinements do
   defp do_refine(%Zoi.Types.String{}, input, [:url], opts) do
     uri = URI.parse(input)
 
-    if uri.scheme in ["http", "https", nil] and uri.host != nil do
+    if uri.scheme in ["http", "https"] and uri.host != nil do
       :ok
     else
       {:error, Zoi.Error.invalid_url(input, opts)}
