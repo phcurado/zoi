@@ -5,17 +5,21 @@ defmodule Zoi.Context do
   The context is passed around during the parsing process to keep track of the current state of parsing.
   It contains the schema being parsed, the input data, the parsed data, the path of the current error and any errors that have occurred during parsing.
   """
+
+  alias Zoi.Types.Meta
+
   @type t :: %__MODULE__{
           schema: Zoi.Type.t(),
           input: Zoi.input(),
           parsed: Zoi.input(),
           path: Zoi.Error.path(),
+          valid?: boolean() | nil,
           errors: list(Zoi.Error.t())
         }
 
   @type error :: Zoi.Error.t() | binary() | list(Zoi.Error.t())
 
-  defstruct [:schema, :input, :parsed, :path, :errors]
+  defstruct [:schema, :input, :parsed, :path, valid?: false, errors: []]
 
   @doc false
   @spec new(Zoi.Type.t(), Zoi.input()) :: t()
@@ -24,9 +28,25 @@ defmodule Zoi.Context do
       schema: schema,
       input: input,
       parsed: nil,
+      valid?: false,
       path: [],
       errors: []
     }
+  end
+
+  @doc false
+  @spec parse(t(), opts :: Zoi.options()) :: t()
+  def parse(%__MODULE__{} = ctx, opts \\ []) do
+    with {:ok, result} <- Zoi.Type.parse(ctx.schema, ctx.input, opts),
+         ctx = add_parsed(ctx, result),
+         {:ok, result} <- Meta.run_transforms(ctx),
+         ctx = Zoi.Context.add_parsed(ctx, result),
+         {:ok, _refined_result} <- Meta.run_refinements(ctx) do
+      %{ctx | valid?: true}
+    else
+      {:error, error} ->
+        Zoi.Context.add_error(ctx, error)
+    end
   end
 
   @doc """
@@ -55,7 +75,7 @@ defmodule Zoi.Context do
   @spec add_error(t(), error()) :: t()
   def add_error(%__MODULE__{errors: errors} = context, error) do
     error = Zoi.Errors.add_error(errors, error)
-    %{context | errors: error}
+    %{context | valid?: false, errors: error}
   end
 
   @doc false

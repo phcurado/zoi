@@ -127,7 +127,6 @@ defmodule Zoi do
   """
 
   alias Zoi.Regexes
-  alias Zoi.Types.Meta
 
   @typedoc "The input data to be validated against a schema."
   @type input :: any()
@@ -173,21 +172,17 @@ defmodule Zoi do
       {:ok, "123"}
   """
   @doc group: "Parsing"
-  @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: result()
+  @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options()) :: result()
   def parse(schema, input, opts \\ []) do
-    ctx = Keyword.get(opts, :ctx, Zoi.Context.new(schema, input))
+    ctx = Zoi.Context.new(schema, input)
     opts = Keyword.put_new(opts, :ctx, ctx)
 
-    with {:ok, result} <- Zoi.Type.parse(schema, input, opts),
-         ctx = Zoi.Context.add_parsed(ctx, result),
-         {:ok, result} <- Meta.run_transforms(schema, ctx),
-         ctx = Zoi.Context.add_parsed(ctx, result),
-         {:ok, _refined_result} <- Meta.run_refinements(schema, ctx) do
-      {:ok, result}
-    else
-      {:error, error} ->
-        ctx = Zoi.Context.add_error(ctx, error)
-        {:error, ctx.errors}
+    case Zoi.Context.parse(ctx, opts) do
+      %Zoi.Context{valid?: true, parsed: parsed} ->
+        {:ok, parsed}
+
+      %Zoi.Context{valid?: false, errors: errors} ->
+        {:error, errors}
     end
   end
 
@@ -204,7 +199,7 @@ defmodule Zoi do
       # too small: must have at least 2 characters
   """
   @doc group: "Parsing"
-  @spec parse!(schema :: Zoi.Type.t(), input :: input(), opts :: options) :: any()
+  @spec parse!(schema :: Zoi.Type.t(), input :: input(), opts :: options()) :: any()
   def parse!(schema, input, opts \\ []) do
     case parse(schema, input, opts) do
       {:ok, result} ->
@@ -254,7 +249,7 @@ defmodule Zoi do
   All the types provided by `Zoi` supports the type spec generation.
   """
   @doc group: "Parsing"
-  @spec type_spec(schema :: Zoi.Type.t(), opts :: options) :: Macro.t()
+  @spec type_spec(schema :: Zoi.Type.t(), opts :: options()) :: Macro.t()
   def type_spec(schema, opts \\ []) do
     Zoi.Type.type_spec(schema, opts)
   end
