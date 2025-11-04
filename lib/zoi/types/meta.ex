@@ -40,9 +40,8 @@ defmodule Zoi.Types.Meta do
     end)
   end
 
-  @spec run_refinements(schema :: Zoi.Type.t(), ctx :: Zoi.Context.t()) ::
-          {:ok, Zoi.input()} | {:error, [Zoi.Errors.t()]}
-  def run_refinements(schema, %Zoi.Context{parsed: input} = ctx) do
+  @spec run_refinements(ctx :: Zoi.Context.t()) :: {:ok, Zoi.input()} | {:error, [Zoi.Errors.t()]}
+  def run_refinements(%Zoi.Context{schema: schema, parsed: input} = ctx) do
     schema.meta.refinements
     |> Enum.reduce({{:ok, input}, []}, fn
       {mod, func, args}, {{:ok, input}, errors} ->
@@ -85,9 +84,8 @@ defmodule Zoi.Types.Meta do
     end)
   end
 
-  @spec run_transforms(schema :: Zoi.Type.t(), ctx :: Zoi.Context.t()) ::
-          {:ok, Zoi.input()} | {:error, [Zoi.Errors.t()]}
-  def run_transforms(schema, %Zoi.Context{parsed: input} = ctx) do
+  @spec run_transforms(ctx :: Zoi.Context.t()) :: {:ok, Zoi.input()} | {:error, [Zoi.Errors.t()]}
+  def run_transforms(%Zoi.Context{schema: schema, parsed: input} = ctx) do
     schema.meta.transforms
     |> Enum.reduce({{:ok, input}, []}, fn
       {mod, func, args}, {{:ok, input}, errors} ->
@@ -105,13 +103,13 @@ defmodule Zoi.Types.Meta do
             {{:ok, value}, errors}
         end
 
-      refine_func, {{:ok, input}, errors} ->
+      transform_func, {{:ok, input}, errors} ->
         cond do
-          is_function(refine_func, 1) ->
-            refine_func.(input)
+          is_function(transform_func, 1) ->
+            transform_func.(input)
 
-          is_function(refine_func, 2) ->
-            refine_func.(input, ctx)
+          is_function(transform_func, 2) ->
+            transform_func.(input, ctx)
         end
         |> case do
           {:ok, value} ->

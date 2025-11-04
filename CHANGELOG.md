@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.9.0-rc.1 - 2025-11-04
+
+### Added
+
+- `Zoi.object/2` and `Zoi.keyword/2` now accept `:empty_values` option to define which values are considered empty when parsing objects and keyword lists. By default, this option is set to `[]`, meaning no values are considered empty. You can customize this option to include values like `nil`, empty strings (`""`), or any other value you want to treat as empty and it will return a `:required` error when those values are encountered for required fields.
+
 ## 0.9.0-rc.0 - 2025-11-04
 
 ### Changed

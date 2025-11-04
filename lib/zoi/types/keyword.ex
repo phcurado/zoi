@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Keyword do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:fields, :strict, :coerce]
+  use Zoi.Type.Def, fields: [:fields, :strict, :coerce, empty_values: []]
 
   def new(fields, opts) when is_list(fields) or is_struct(fields) do
     opts =
@@ -62,7 +62,12 @@ defmodule Zoi.Types.Keyword do
     end
 
     defp do_parse(
-           %Zoi.Types.Keyword{fields: fields, strict: strict, coerce: coerce},
+           %Zoi.Types.Keyword{
+             fields: fields,
+             strict: strict,
+             coerce: coerce,
+             empty_values: empty_values
+           },
            input,
            opts,
            path,
@@ -80,34 +85,23 @@ defmodule Zoi.Types.Keyword do
       Enum.reduce(fields, {[], errs, path}, fn {key, type}, {parsed, errors, path} ->
         case keyword_fetch(input, key, coerce) do
           :error ->
-            cond do
-              optional?(type) ->
-                # If the field is optional, we skip it and do not add it to parsed
-                {parsed, errors, path}
-
-              default?(type) ->
-                # If the field has a default value, we add it to parsed
-                {[{key, type.value} | parsed], errors, path}
-
-              true ->
-                {parsed,
-                 Zoi.Errors.add_error(
-                   errors,
-                   Zoi.Error.required(key, path: path ++ [key])
-                 ), path}
-            end
+            handle_missing_value(type, parsed, errors, key, path)
 
           {:ok, value} ->
-            case do_parse(type, value, opts, path ++ [key], errors) do
-              {:ok, val} ->
-                {[{key, val} | parsed], errors, path}
+            if value in empty_values do
+              handle_missing_value(type, parsed, errors, key, path)
+            else
+              case do_parse(type, value, opts, path ++ [key], errors) do
+                {:ok, val} ->
+                  {[{key, val} | parsed], errors, path}
 
-              {:error, err} ->
-                error = Enum.map(err, &Zoi.Error.prepend_path(&1, path ++ [key]))
-                {parsed, Zoi.Errors.merge(errors, error), path}
+                {:error, err} ->
+                  error = Enum.map(err, &Zoi.Error.prepend_path(&1, path ++ [key]))
+                  {parsed, Zoi.Errors.merge(errors, error), path}
 
-              {obj_parsed, obj_errors, _path} ->
-                {[{key, obj_parsed} | parsed], Zoi.Errors.merge(errors, obj_errors), path}
+                {obj_parsed, obj_errors, _path} ->
+                  {[{key, obj_parsed} | parsed], Zoi.Errors.merge(errors, obj_errors), path}
+              end
             end
         end
       end)
@@ -120,6 +114,25 @@ defmodule Zoi.Types.Keyword do
     defp do_parse(type, value, _opts, path, _errors) do
       ctx = Zoi.Context.new(type, value) |> Zoi.Context.add_path(path)
       Zoi.parse(type, value, ctx: ctx)
+    end
+
+    defp handle_missing_value(type, parsed, errors, key, path) do
+      cond do
+        optional?(type) ->
+          # If the field is optional, we skip it and do not add it to parsed
+          {parsed, errors, path}
+
+        default?(type) ->
+          # If the field has a default value, we add it to parsed
+          {[{key, type.value} | parsed], errors, path}
+
+        true ->
+          {parsed,
+           Zoi.Errors.add_error(
+             errors,
+             Zoi.Error.required(key, path: path ++ [key])
+           ), path}
+      end
     end
 
     defp optional?(type) do
