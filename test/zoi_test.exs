@@ -1866,6 +1866,14 @@ defmodule ZoiTest do
         assert {"invalid format: must be a valid URL", [value: ^url]} = error.issue
       end
     end
+
+    test "invalid url with custom eror" do
+      schema = Zoi.url(error: "something went wrong with the url")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "htt://google/com")
+      assert error.code == :custom
+      assert Exception.message(error) == "something went wrong with the url"
+      assert {"something went wrong with the url", [value: "htt://google/com"]} = error.issue
+    end
   end
 
   describe "ipv4/0" do
