@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.9.0 - Unreleased
+## 0.9.0-rc.0 - 2025-11-04
 
 ### Changed
 
@@ -32,6 +32,7 @@ This will give more flexibility when handling errors programmatically, and bette
 
 - Removed `Zoi.gt/3` and `Zoi.lt/3` refinements for strings. Use `Zoi.min/3` and `Zoi.max/3` instead.
 - Allow all refinements to accept custom error messages.
+- `Zoi.url/2` now uses elixir's built-in `URI.parse/1` for URL validation.
 
 ## 0.8.4 - 2025-11-01
 
