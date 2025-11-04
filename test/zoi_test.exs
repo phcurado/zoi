@@ -833,6 +833,35 @@ defmodule ZoiTest do
       assert {:ok, %{"age" => 30, "name" => "John"}} ==
                Zoi.parse(schema, %{name: "John", age: 30})
     end
+
+    test "object with empty_values set" do
+      schema =
+        Zoi.object(
+          %{
+            name: Zoi.string(),
+            age: Zoi.integer()
+          },
+          empty_values: ["", nil]
+        )
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{
+                 name: "",
+                 age: 30
+               })
+
+      assert Exception.message(error) == "is required"
+      assert error.path == [:name]
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{
+                 name: "John",
+                 age: nil
+               })
+
+      assert Exception.message(error) == "is required"
+      assert error.path == [:age]
+    end
   end
 
   describe "keyword/2" do
@@ -966,6 +995,29 @@ defmodule ZoiTest do
       assert error1.path == [:key1]
       assert Exception.message(error2) == "invalid type: expected string"
       assert error2.path == [:key3, 0]
+    end
+
+    test "keyword with empty_values set" do
+      schema =
+        Zoi.keyword(
+          [
+            name: Zoi.string() |> Zoi.required(),
+            age: Zoi.integer() |> Zoi.required()
+          ],
+          empty_values: ["", nil]
+        )
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, name: "", age: 30)
+
+      assert Exception.message(error) == "is required"
+      assert error.path == [:name]
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, name: "John", age: nil)
+
+      assert Exception.message(error) == "is required"
+      assert error.path == [:age]
     end
   end
 

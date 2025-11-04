@@ -1059,6 +1059,23 @@ defmodule Zoi do
       {:ok, %{}}
       iex> Zoi.parse(schema, %{name: nil})
       {:ok, %{name: "default value"}}
+
+  ## Required definition
+
+  By default, all fields are required and if the field is absent in the input data, a validation error will be raised.
+  You can customize absent values in your object definition, defining what values should be considered absent using the `:empty_values` option:
+
+      iex> schema = Zoi.object(%{name: Zoi.string()}, empty_values: [nil, ""])
+      iex> Zoi.parse(schema, %{name: ""})
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: :name]},
+           path: [:name]
+         }
+       ]}
   """
   @doc group: "Complex Types"
   @spec object(fields :: map(), opts :: options()) :: Zoi.Type.t()

@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Object do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:fields, :keys, :inner, :strict, :coerce]
+  use Zoi.Type.Def, fields: [:fields, :keys, :inner, :strict, :coerce, empty_values: []]
 
   def new(fields, opts) when is_map(fields) or is_list(fields) do
     fields =
