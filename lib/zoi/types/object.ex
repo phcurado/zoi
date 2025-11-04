@@ -31,6 +31,17 @@ defmodule Zoi.Types.Object do
     raise ArgumentError, "object must receive a map"
   end
 
+  def add_opts(%__MODULE__{inner: inner} = obj, opts) do
+    inner =
+      Enum.reduce(opts, inner, fn {key, value}, acc ->
+        Map.put(acc, key, value)
+      end)
+
+    Enum.reduce(opts, %{obj | inner: inner}, fn {key, value}, acc ->
+      Map.put(acc, key, value)
+    end)
+  end
+
   def __transform__(value, _opts) do
     Enum.into(value, %{})
   end
