@@ -17,11 +17,11 @@ defprotocol Zoi.Type do
 
         defimpl Zoi.Type do
           # This function is called to parse the input according to the schema.
-          def parse(schema, input, opts) when is_binary(input) do
+          def parse(_schema, input, _opts) when is_binary(input) do
             {:ok, input}
           end
 
-          def parse(schema, input, opts) when is_boolean(input) do
+          def parse(_schema, input, _opts) when is_boolean(input) do
             {:ok, input}
           end
 
@@ -41,10 +41,27 @@ defprotocol Zoi.Type do
       iex> schema = StringBoolean.string_bool()
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
-      iex> Zoi.Type.parse(schema, true)
+      iex> Zoi.parse(schema, true)
       {:ok, true}
-      iex> Zoi.Type.parse(schema, 123)
-      {:error, %Zoi.Error{message: "invalid string or boolean type"}}
+      iex> Zoi.parse(schema, 123)
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           issue: {"invalid string or boolean type", []},
+           message: "invalid string or boolean type",
+           path: []
+         }
+       ]}
+
+  In general, you will not need to implement this protocol directly. `Zoi` provides a functional API with a good set of built-in types that cover most use cases.
+  For example, you can implement the `string_bool/1` function above using `Zoi.union/2` with `Zoi.string/1` and `Zoi.boolean/1` types.
+      iex> schema = Zoi.union([Zoi.string(), Zoi.boolean()])
+      iex> Zoi.parse(schema, "hello world")
+      {:ok, "hello world"}
+      iex> Zoi.parse(schema, true)
+
+  Or use the `Zoi.string_boolean/1` function, which already covers this and more complex use cases.
   """
 
   def parse(schema, input, opts)

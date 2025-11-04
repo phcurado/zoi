@@ -36,6 +36,63 @@ defmodule Zoi do
       iex> Zoi.string(coerce: true) |> Zoi.parse(123)
       {:ok, "123"}
 
+  ## Refinements
+
+  Refinements are custom validation functions that you can attach to any schema. They allow you to define complex validation logic that goes beyond the built-in validations provided by `Zoi`.
+
+      iex> schema = Zoi.integer() |> Zoi.refine(fn value ->
+      ...>   if value > 0 do
+      ...>     :ok
+      ...>   else
+      ...>     {:error, "must be a positive number"}
+      ...>   end
+      ...> end)
+      iex> Zoi.parse(schema, 4)
+      {:ok, 4}
+      iex> Zoi.parse(schema, -1)
+      {:error,
+        [
+          %Zoi.Error{
+            code: :custom,
+            message: "must be a positive number",
+            issue: {"must be a positive number", []},
+            path: []
+          }
+        ]}
+
+  `Zoi` also have built-in refinements for common validations, check the `Refinements` section for more details. The example above can be rewritten using the built-in `Zoi.positive/2` refinement:
+
+      iex> schema = Zoi.integer() |> Zoi.positive()
+      iex> Zoi.parse(schema, 4)
+      {:ok, 4}
+      iex> Zoi.parse(schema, -1)
+      {:error,
+        [
+          %Zoi.Error{
+            code: :greater_than,
+            message: "too small: must be greater than 0",
+            issue: {"too small: must be greater than %{count}", [count: 0]},
+            path: []
+          }
+        ]}
+
+
+  ## Transforms
+
+  Transforms are functions that modify the input data before it is returned as the final parsed value. They can be used to format, normalize, or otherwise change the data as needed.
+
+      iex> schema = Zoi.string() |> Zoi.transform(fn value ->
+      ...>   String.upcase(value)
+      ...> end)
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "HELLO"}
+
+  `Zoi` also provides built-in transformations. Check the `Transforms` section for more details. The example above can be rewritten using the built-in `Zoi.to_upcase/1` transform:
+
+      iex> schema = Zoi.string() |> Zoi.to_upcase()
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "HELLO"}
+
   ## Custom errors
 
   You can customize error messages for all types by passing the `error` option:

@@ -126,7 +126,9 @@ defmodule Zoi.Error do
 
     message =
       Regex.replace(~r"%{(\w+)}", issue, fn _, key ->
-        Map.get(parsed_opts, key) |> to_string()
+        parsed_opts
+        |> Map.get(key)
+        |> parse_message_type()
       end)
 
     {message, {issue, opts}}
@@ -138,6 +140,14 @@ defmodule Zoi.Error do
 
   defp render_message_from_issue(issue) do
     render_message_from_issue({issue, []})
+  end
+
+  defp parse_message_type(%Regex{} = regex) do
+    Regex.source(regex)
+  end
+
+  defp parse_message_type(message) do
+    to_string(message)
   end
 
   ## Error types
@@ -564,7 +574,7 @@ defmodule Zoi.Error do
       iex> {msg, opts} = error.issue
       iex> msg
       "invalid format: must match pattern %{pattern}"
-      iex> opts[:pattern]
+      iex> Regex.source(opts[:pattern])
       "^[^a-z]*$"
       iex> opts[:format]
       :upcase
@@ -575,7 +585,7 @@ defmodule Zoi.Error do
   def invalid_format(pattern, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
     {format, opts} = Keyword.pop(opts, :format)
-    default_issue_opts = [pattern: Regex.source(pattern), regex: pattern]
+    default_issue_opts = [pattern: pattern]
 
     if msg do
       custom_error(issue: {msg, default_issue_opts})

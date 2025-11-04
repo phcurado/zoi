@@ -1693,10 +1693,10 @@ defmodule ZoiTest do
       assert error.code == :invalid_format
       assert Exception.message(error) == "invalid email format"
 
-      assert {"invalid email format", [format: :email, pattern: pattern, regex: _regex]} =
+      assert {"invalid email format", [format: :email, pattern: pattern]} =
                error.issue
 
-      assert pattern == Regex.source(Zoi.Regexes.email())
+      assert Regex.source(pattern) == Regex.source(Zoi.Regexes.email())
     end
 
     test "regex pattern: html5_email" do
@@ -2429,8 +2429,8 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "Hello")
       assert error.code == :invalid_format
       assert Exception.message(error) == "invalid format: must be lowercase"
-      assert {"invalid format: must be lowercase", pattern: pattern, regex: _regex} = error.issue
-      assert pattern == Regex.source(Zoi.Regexes.downcase())
+      assert {"invalid format: must be lowercase", pattern: pattern} = error.issue
+      assert Regex.source(pattern) == Regex.source(Zoi.Regexes.downcase())
     end
 
     test "custom message" do
@@ -2452,8 +2452,8 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "Hello")
       assert error.code == :invalid_format
       assert Exception.message(error) == "invalid format: must be uppercase"
-      assert {"invalid format: must be uppercase", pattern: pattern, regex: _regex} = error.issue
-      assert pattern == Regex.source(Zoi.Regexes.upcase())
+      assert {"invalid format: must be uppercase", pattern: pattern} = error.issue
+      assert Regex.source(pattern) == Regex.source(Zoi.Regexes.upcase())
     end
 
     test "custom message" do

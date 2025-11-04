@@ -39,6 +39,7 @@ defmodule Zoi.Struct do
 
   @doc """
   Returns a list of keys that are required for the struct based on the schema.
+
   This is useful for defining `@enforce_keys` in Elixir structs.
   """
   def enforce_keys(%Zoi.Types.Struct{fields: fields}) do
@@ -54,6 +55,7 @@ defmodule Zoi.Struct do
   @doc """
   Returns a list of fields for the struct, where fields with default values are represented as tuples
   of the form `{key, default_value}`.
+
   This is useful for defining the fields of an Elixir struct.
   """
   def struct_fields(%Zoi.Types.Struct{fields: fields}) do

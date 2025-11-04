@@ -5,6 +5,9 @@ defmodule Zoi.ISO do
 
   It includes built-in transformations to convert ISO time, date, and datetime
   strings into `%Time{}`, `%Date{}`, and `%DateTime{}` structs.
+
+  `Zoi` main API have `Zoi.datetime/1`, `Zoi.date/1`, `Zoi.naive_datetime/1` and `Zoi.time/1` functions. These functions validates if the input
+  strings comply with the `Elixir` date formats. Use the `Zoi.ISO` module when you just want to validate ISO strings without the need to convert them to native types.
   """
 
   @doc """
