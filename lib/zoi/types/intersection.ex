@@ -30,9 +30,17 @@ defmodule Zoi.Types.Intersection do
             {:cont, {:ok, result}}
 
           {:error, reason} ->
-            {:halt, {:error, intersection.meta.error || reason}}
+            {:halt, error(intersection, reason)}
         end
       end)
+    end
+
+    defp error(schema, type_error) do
+      if error = schema.meta.error do
+        {:error, Zoi.Error.custom_error(issue: {error, []})}
+      else
+        {:error, type_error}
+      end
     end
 
     # There is no direct representation of a intersection in Elixir types, so we use union `|`

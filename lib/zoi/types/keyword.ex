@@ -6,7 +6,7 @@ defmodule Zoi.Types.Keyword do
   def new(fields, opts) when is_list(fields) or is_struct(fields) do
     opts =
       Keyword.merge(
-        [error: "invalid type: must be a keyword list", strict: false, coerce: false],
+        [strict: false, coerce: false],
         opts
       )
 
@@ -40,7 +40,7 @@ defmodule Zoi.Types.Keyword do
             {[{key, val} | parsed], errors, path}
 
           {:error, err} ->
-            error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
+            error = Enum.map(err, &Zoi.Error.prepend_path(&1, path ++ [key]))
             {parsed, Zoi.Errors.merge(errors, error), path}
         end)
       end)
@@ -54,7 +54,11 @@ defmodule Zoi.Types.Keyword do
     end
 
     def parse(schema, _, _) do
-      {:error, schema.meta.error}
+      {:error,
+       Zoi.Error.invalid_type(:keyword,
+         issue: "invalid type: expected keyword list",
+         error: schema.meta.error
+       )}
     end
 
     defp do_parse(
@@ -71,7 +75,7 @@ defmodule Zoi.Types.Keyword do
         else
           []
         end
-        |> Enum.map(&Zoi.Error.add_path(&1, path))
+        |> Enum.map(&Zoi.Error.prepend_path(&1, path))
 
       Enum.reduce(fields, {[], errs, path}, fn {key, type}, {parsed, errors, path} ->
         case keyword_fetch(input, key, coerce) do
@@ -89,7 +93,7 @@ defmodule Zoi.Types.Keyword do
                 {parsed,
                  Zoi.Errors.add_error(
                    errors,
-                   Zoi.Error.exception(message: "is required", path: path ++ [key])
+                   Zoi.Error.required(key, path: path ++ [key])
                  ), path}
             end
 
@@ -99,7 +103,7 @@ defmodule Zoi.Types.Keyword do
                 {[{key, val} | parsed], errors, path}
 
               {:error, err} ->
-                error = Enum.map(err, &Zoi.Error.add_path(&1, path ++ [key]))
+                error = Enum.map(err, &Zoi.Error.prepend_path(&1, path ++ [key]))
                 {parsed, Zoi.Errors.merge(errors, error), path}
 
               {obj_parsed, obj_errors, _path} ->
@@ -132,7 +136,7 @@ defmodule Zoi.Types.Keyword do
       |> Enum.map(fn {k, _v} -> k end)
       |> Enum.reject(&(&1 in schema_keys))
       |> Enum.map(fn key ->
-        Zoi.Error.exception(message: "unrecognized key: '#{key}'")
+        Zoi.Error.unrecognized_key(key)
       end)
     end
 

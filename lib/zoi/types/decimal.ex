@@ -5,7 +5,7 @@ if Code.ensure_loaded?(Decimal) do
     use Zoi.Type.Def, fields: [coerce: false]
 
     def new(opts) do
-      opts = Keyword.merge([error: "invalid type: must be a decimal", coerce: false], opts)
+      opts = Keyword.merge([coerce: false], opts)
       apply_type(opts)
     end
 
@@ -31,7 +31,7 @@ if Code.ensure_loaded?(Decimal) do
       end
 
       defp error(schema) do
-        {:error, schema.meta.error}
+        {:error, Zoi.Error.invalid_type(:decimal, error: schema.meta.error)}
       end
 
       def type_spec(_schema, _opts) do

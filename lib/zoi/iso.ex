@@ -5,6 +5,9 @@ defmodule Zoi.ISO do
 
   It includes built-in transformations to convert ISO time, date, and datetime
   strings into `%Time{}`, `%Date{}`, and `%DateTime{}` structs.
+
+  `Zoi` main API have `Zoi.datetime/1`, `Zoi.date/1`, `Zoi.naive_datetime/1` and `Zoi.time/1` functions. These functions validates if the input
+  strings comply with the `Elixir` date formats. Use the `Zoi.ISO` module when you just want to validate ISO strings without the need to convert them to native types.
   """
 
   @doc """
@@ -16,7 +19,15 @@ defmodule Zoi.ISO do
       iex> Zoi.parse(schema, "12:34:56")
       {:ok, "12:34:56"}
       iex> Zoi.parse(schema, "25:00:00")
-      {:error, [%Zoi.Error{message: "invalid type: must be an ISO time"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected ISO time",
+           issue: {"invalid type: expected ISO time", [type: :iso_time]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   defdelegate time(opts \\ []), to: Zoi.ISO.Time, as: :new
@@ -30,7 +41,15 @@ defmodule Zoi.ISO do
       iex> Zoi.parse(schema, "2025-08-07")
       {:ok, "2025-08-07"}
       iex> Zoi.parse(schema, "2025-02-30")
-      {:error, [%Zoi.Error{message: "invalid type: must be an ISO date"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected ISO date",
+           issue: {"invalid type: expected ISO date", [type: :iso_date]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   defdelegate date(opts \\ []), to: Zoi.ISO.Date, as: :new
@@ -46,7 +65,15 @@ defmodule Zoi.ISO do
 
       iex> schema = Zoi.ISO.datetime()
       iex> Zoi.parse(schema, 1754646043)
-      {:error, [%Zoi.Error{message: "invalid type: must be an ISO datetime"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected ISO datetime",
+           issue: {"invalid type: expected ISO datetime", [type: :iso_datetime]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   defdelegate datetime(opts \\ []), to: Zoi.ISO.DateTime, as: :new
@@ -62,7 +89,15 @@ defmodule Zoi.ISO do
 
       iex> schema = Zoi.ISO.naive_datetime()
       iex> Zoi.parse(schema, 1754646043)
-      {:error, [%Zoi.Error{message: "invalid type: must be an ISO naive datetime"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected ISO naive datetime",
+           issue: {"invalid type: expected ISO naive datetime", [type: :iso_naive_datetime]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   defdelegate naive_datetime(opts \\ []), to: Zoi.ISO.NaiveDateTime, as: :new

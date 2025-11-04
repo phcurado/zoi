@@ -14,10 +14,6 @@ defmodule Zoi.Types.Enum do
           {value, value}
       end)
 
-    options = stringify_enum(mapping)
-
-    opts = Keyword.merge([error: "invalid option, must be one of: #{options}"], opts)
-
     apply_type(opts ++ [values: mapping, enum_type: type])
   end
 
@@ -45,10 +41,6 @@ defmodule Zoi.Types.Enum do
     raise ArgumentError, "Invalid enum values"
   end
 
-  defp stringify_enum(values) do
-    Enum.map_join(values, ", ", fn {_key, value} -> value end)
-  end
-
   defimpl Zoi.Type do
     def parse(%Zoi.Types.Enum{} = schema, input, opts) do
       coerce = Keyword.get(opts, :coerce, schema.coerce)
@@ -70,7 +62,7 @@ defmodule Zoi.Types.Enum do
     end
 
     defp error(schema) do
-      {:error, schema.meta.error}
+      {:error, Zoi.Error.invalid_enum_value(schema.values, error: schema.meta.error)}
     end
 
     def type_spec(%Zoi.Types.Enum{values: values} = _schema, _opts) do

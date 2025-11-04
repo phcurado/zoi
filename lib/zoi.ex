@@ -21,20 +21,109 @@ defmodule Zoi do
 
   By default, `Zoi` will not attempt to infer input data to match the expected type. For example, if you define a schema that expects a string, passing an integer will result in an error.
       iex> Zoi.string() |> Zoi.parse(123)
-      {:error, [%Zoi.Error{message: "invalid type: must be a string"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected string",
+           issue: {"invalid type: expected string", [type: :string]},
+           path: []
+         }
+       ]}
 
   If you need coercion, you can enable it by passing the `:coerce` option:
 
       iex> Zoi.string(coerce: true) |> Zoi.parse(123)
       {:ok, "123"}
 
+  ## Refinements
+
+  Refinements are custom validation functions that you can attach to any schema. They allow you to define complex validation logic that goes beyond the built-in validations provided by `Zoi`.
+
+      iex> schema = Zoi.integer() |> Zoi.refine(fn value ->
+      ...>   if value > 0 do
+      ...>     :ok
+      ...>   else
+      ...>     {:error, "must be a positive number"}
+      ...>   end
+      ...> end)
+      iex> Zoi.parse(schema, 4)
+      {:ok, 4}
+      iex> Zoi.parse(schema, -1)
+      {:error,
+        [
+          %Zoi.Error{
+            code: :custom,
+            message: "must be a positive number",
+            issue: {"must be a positive number", []},
+            path: []
+          }
+        ]}
+
+  `Zoi` also have built-in refinements for common validations, check the `Refinements` section for more details. The example above can be rewritten using the built-in `Zoi.positive/2` refinement:
+
+      iex> schema = Zoi.integer() |> Zoi.positive()
+      iex> Zoi.parse(schema, 4)
+      {:ok, 4}
+      iex> Zoi.parse(schema, -1)
+      {:error,
+        [
+          %Zoi.Error{
+            code: :greater_than,
+            message: "too small: must be greater than 0",
+            issue: {"too small: must be greater than %{count}", [count: 0]},
+            path: []
+          }
+        ]}
+
+
+  ## Transforms
+
+  Transforms are functions that modify the input data before it is returned as the final parsed value. They can be used to format, normalize, or otherwise change the data as needed.
+
+      iex> schema = Zoi.string() |> Zoi.transform(fn value ->
+      ...>   String.upcase(value)
+      ...> end)
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "HELLO"}
+
+  `Zoi` also provides built-in transformations. Check the `Transforms` section for more details. The example above can be rewritten using the built-in `Zoi.to_upcase/1` transform:
+
+      iex> schema = Zoi.string() |> Zoi.to_upcase()
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "HELLO"}
+
   ## Custom errors
 
-  You can customize parsing error messages the primitive types by passing the `error` option:
+  You can customize error messages for all types by passing the `error` option:
 
       iex> schema = Zoi.integer(error: "must be a number")
       iex> Zoi.parse(schema, "a")
-      {:error, [%Zoi.Error{message: "must be a number"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           message: "must be a number",
+           issue: {"must be a number", [type: :integer]},
+           path: []
+         }
+       ]}
+
+  This also works for refinements:
+      iex> schema = Zoi.number() |> Zoi.gte(10, error: "please provide a number bigger than %{count}")
+      iex> Zoi.parse(schema, 5)
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           message: "please provide a number bigger than 10",
+           issue: {"please provide a number bigger than %{count}", [count: 10]},
+           path: []
+          }
+       ]}
+
+  `Zoi` automatically interpolates values in the error messages using the `issue` tuple. In the above example, `%{count}` is replaced with `10`.
+  For more information on what values are available for interpolation, check the documentation of each validation function.
   """
 
   alias Zoi.Regexes
@@ -71,7 +160,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "h")
-      {:error, [%Zoi.Error{message: "too small: must have at least 2 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must have at least 2 character(s)",
+           issue: {"too small: must have at least %{count} character(s)", [count: 2]},
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, 123, coerce: true)
       {:ok, "123"}
   """
@@ -391,19 +488,23 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, :world)
-      {:error, [%Zoi.Error{message: "invalid type: must be a string"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected string",
+           issue: {"invalid type: expected string", [type: :string]},
+           path: []
+         }
+       ]}
 
   Zoi provides built-in validations for strings, such as:
 
-      Zoi.gt(100)
-      Zoi.gte(100)
-      Zoi.lt(2)
-      Zoi.lte(2)
-      Zoi.min(2) # alias for `Zoi.gte(2)`
-      Zoi.max(100) # alias for `Zoi.lte(100)`
+      Zoi.min(2)
+      Zoi.max(100)
+      Zoi.length(5)
       Zoi.starts_with("hello")
       Zoi.ends_with("world")
-      Zoi.length(5)
       Zoi.regex(~r/^[a-zA-Z]+$/)
 
   Additionally it can perform data transformation:
@@ -429,7 +530,15 @@ defmodule Zoi do
       iex> Zoi.parse(shema, 42)
       {:ok, 42}
       iex> Zoi.parse(shema, "42")
-      {:error, [%Zoi.Error{message: "invalid type: must be an integer"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected integer", [type: :integer]},
+           path: []
+         }
+       ]}
 
   For coercion, you can pass the `:coerce` option:
       iex> Zoi.integer(coerce: true) |> Zoi.parse("42")
@@ -472,7 +581,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 3.14)
       {:ok, 3.14}
       iex> Zoi.parse(schema, "42")
-      {:error, [%Zoi.Error{message: "invalid type: must be a number"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected number",
+           issue: {"invalid type: expected number", [type: :number]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   @spec number(opts :: options()) :: Zoi.Type.t()
@@ -526,7 +643,15 @@ defmodule Zoi do
 
       iex> schema = Zoi.string_boolean(case: "sensitive")
       iex> Zoi.parse(schema, "True")
-      {:error, [%Zoi.Error{message: "invalid type: must be a string boolean"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected string boolean",
+           issue: {"invalid type: expected string boolean", [type: :string_boolean]},
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, "true")
       {:ok, true}
   """
@@ -561,7 +686,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, :atom)
       {:ok, :atom}
       iex> Zoi.parse(schema, "not_an_atom")
-      {:error, [%Zoi.Error{message: "invalid type: must be an atom"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected atom",
+           issue: {"invalid type: expected atom", [type: :atom]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   @spec atom(opts :: options()) :: Zoi.Type.t()
@@ -576,12 +709,28 @@ defmodule Zoi do
       iex> Zoi.parse(schema, true)
       {:ok, true}
       iex> Zoi.parse(schema, :other_value)
-      {:error, [%Zoi.Error{message: "invalid type: does not match literal"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_literal,
+           message: "invalid literal: expected true",
+           issue: {"invalid literal: expected %{expected}", [expected: true]},
+           path: []
+         }
+       ]}
       iex> schema = Zoi.literal(42)
       iex> Zoi.parse(schema, 42)
       {:ok, 42}
       iex> Zoi.parse(schema, 43)
-      {:error, [%Zoi.Error{message: "invalid type: does not match literal"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_literal,
+           message: "invalid literal: expected 42",
+           issue: {"invalid literal: expected %{expected}", [expected: 42]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   @spec literal(value :: input(), opts :: options()) :: Zoi.Type.t()
@@ -596,7 +745,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, nil)
       {:ok, nil}
       iex> Zoi.parse(schema, "not_nil")
-      {:error, [%Zoi.Error{message: "invalid type: must be nil"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected nil",
+           issue: {"invalid type: expected nil", [type: nil]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Basic Types"
   @spec null(opts :: options()) :: Zoi.Type.t()
@@ -622,7 +779,15 @@ defmodule Zoi do
 
       iex> schema = Zoi.keyword([name: Zoi.string() |> Zoi.required()])
       iex> Zoi.parse(schema, [])
-      {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: :name]},
+           path: [:name]
+         }
+       ]}
   """
   @doc group: "Encapsulated Types"
   @spec required(inner :: Zoi.Type.t()) :: Zoi.Type.t()
@@ -683,7 +848,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 42)
       {:ok, 42}
       iex> Zoi.parse(schema, true)
-      {:error, [%Zoi.Error{message: "invalid type: must be an integer"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected integer", [type: :integer]},
+           path: []
+         }
+       ]}
 
   This type also allows to define validations for each type in the union:
 
@@ -692,9 +865,25 @@ defmodule Zoi do
       ...>   Zoi.integer() |> Zoi.min(0)
       ...> ])
       iex> Zoi.parse(schema, "h") # fails on string and try to parse as integer
-      {:error, [%Zoi.Error{message: "invalid type: must be an integer"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected integer", [type: :integer]},
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, -1)
-      {:error, [%Zoi.Error{message: "too small: must be at least 0"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must be at least 0",
+           issue: {"too small: must be at least %{count}", [count: 0]},
+           path: []
+         }
+       ]}
 
   If you define the validation on the union itself, it will apply to all types in the union:
 
@@ -705,7 +894,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, 2)
-      {:error, [%Zoi.Error{message: "too small: must be at least 3"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must be at least 3",
+           issue: {"too small: must be at least %{count}", [count: 3]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Encapsulated Types"
   @spec union(fields :: [Zoi.Type.t()], opts :: options()) :: Zoi.Type.t()
@@ -723,7 +920,15 @@ defmodule Zoi do
       ...>   Zoi.string() |> Zoi.max(5)
       ...> ])
       iex> Zoi.parse(schema, "helloworld")
-      {:error, [%Zoi.Error{message: "too big: must have at most 5 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :less_than_or_equal_to,
+           message: "too big: must have at most 5 character(s)",
+           issue: {"too big: must have at most %{count} character(s)", [count: 5]},
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, "hi")
       {:ok, "hi"}
 
@@ -736,7 +941,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "115")
       {:ok, 115}
       iex> Zoi.parse(schema, "2")
-      {:error, [%Zoi.Error{message: "too small: must have at least 3 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must have at least 3 character(s)",
+           issue: {"too small: must have at least %{count} character(s)", [count: 3]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Encapsulated Types"
   @spec intersection(fields :: [Zoi.Type.t()], opts :: options()) :: Zoi.Type.t()
@@ -769,7 +982,15 @@ defmodule Zoi do
 
       iex> schema = Zoi.object(%{name: Zoi.string()}, strict: true)
       iex> Zoi.parse(schema, %{name: "Alice", age: 30})
-      {:error, [%Zoi.Error{message: "unrecognized key: 'age'"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :unrecognized_key,
+           message: "unrecognized key: 'age'",
+           issue: {"unrecognized key: '%{key}'", [key: :age]},
+           path: []
+         }
+       ]}
 
   ## String keys and Atom keys
 
@@ -779,7 +1000,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, %{"name" => "Alice"})
       {:ok, %{"name" => "Alice"}}
       iex> Zoi.parse(schema, %{name: "Alice"})
-      {:error, [%Zoi.Error{message: "is required", path: ["name"]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: "name"]},
+           path: ["name"]
+         }
+       ]}
 
   It's possible coerce the keys to atoms using the `:coerce` option:
 
@@ -799,7 +1028,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, %{name: "Alice", age: nil})
       {:ok, %{name: "Alice", age: nil}}
       iex> Zoi.parse(schema, %{name: "Alice"})
-      {:error, [%Zoi.Error{message: "is required", path: [:age]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: :age]},
+           path: [:age]
+         }
+       ]}
 
   ## Optional vs Default fields
 
@@ -834,19 +1071,43 @@ defmodule Zoi do
       iex> Zoi.parse(schema, [name: "Alice", age: 30])
       {:ok, [name: "Alice", age: 30]}
       iex> Zoi.parse(schema, %{name: "Alice", age: 30})
-      {:error, [%Zoi.Error{message: "invalid type: must be a keyword list"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected keyword list",
+           issue: {"invalid type: expected keyword list", [type: :keyword]},
+           path: []
+         }
+       ]}
 
   By default, unrecognized keys will be removed from the parsed data. If you want to not allow unrecognized keys, use the `:strict` option:
 
       iex> schema = Zoi.keyword([name: Zoi.string()], strict: true)
       iex> Zoi.parse(schema, [name: "Alice", age: 30])
-      {:error, [%Zoi.Error{message: "unrecognized key: 'age'"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :unrecognized_key,
+           message: "unrecognized key: 'age'",
+           issue: {"unrecognized key: '%{key}'", [key: :age]},
+           path: []
+         }
+       ]}
 
   All fields are optional by default in keyword lists, but you can make them required by using `Zoi.required/1`:
 
       iex> schema = Zoi.keyword([name: Zoi.string() |> Zoi.required()])
       iex> Zoi.parse(schema, [])
-      {:error, [%Zoi.Error{message: "is required", path: [:name]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: :name]},
+           path: [:name]
+         }
+       ]}
 
   ## Flexible keys and values
 
@@ -932,7 +1193,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, %{"a" => 1, "b" => 2})
       {:ok, %{"a" => 1, "b" => 2}}
       iex> Zoi.parse(schema, %{"a" => "1", "b" => 2})
-      {:error, [%Zoi.Error{message: "invalid type: must be an integer", path: ["a"]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected integer", [type: :integer]},
+           path: ["a"]
+         }
+       ]}
   """
   @doc group: "Complex Types"
   @spec map(key :: Zoi.Type.t(), type :: Zoi.Type.t(), opts :: options()) ::
@@ -958,7 +1227,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, {"hello", 42})
       {:ok, {"hello", 42}}
       iex> Zoi.parse(schema, {"hello", "world"})
-      {:error, [%Zoi.Error{message: "invalid type: must be an integer", path: [1]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected integer", [type: :integer]},
+           path: [1]
+         }
+       ]}
   """
   @doc group: "Complex Types"
   @spec tuple(fields :: tuple(), opts :: options()) :: Zoi.Type.t()
@@ -973,7 +1250,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ["hello", "world"])
       {:ok, ["hello", "world"]}
       iex> Zoi.parse(schema, ["hello", 123])
-      {:error, [%Zoi.Error{message: "invalid type: must be a string", path: [1]}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected string",
+           issue: {"invalid type: expected string", [type: :string]},
+           path: [1]
+         }
+       ]}
 
   Built-in validations for integers include:
 
@@ -1007,36 +1292,75 @@ defmodule Zoi do
       iex> Zoi.parse(schema, :red)
       {:ok, :red}
       iex> Zoi.parse(schema, :yellow)
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: red, green, blue"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of red, green, blue",
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "red, green, blue"]},
+           path: []
+         }
+       ]}
 
   You can also specify enum as strings:
       iex> schema = Zoi.enum(["red", "green", "blue"])
       iex> Zoi.parse(schema, "red")
       {:ok, "red"}
       iex> Zoi.parse(schema, "yellow")
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: red, green, blue"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of red, green, blue",
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "red, green, blue"]},
+           path: []
+         }
+       ]}
 
   or with key-value pairs:
       iex> schema = Zoi.enum([red: "Red", green: "Green", blue: "Blue"])
       iex> Zoi.parse(schema, "Red")
       {:ok, :red}
       iex> Zoi.parse(schema, "Yellow")
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: Red, Green, Blue"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of Red, Green, Blue",
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "Red, Green, Blue"]},
+           path: []
+         }
+       ]}
 
   Integer values can also be used:
       iex> schema = Zoi.enum([1, 2, 3])
       iex> Zoi.parse(schema, 1)
       {:ok, 1}
       iex> Zoi.parse(schema, 4)
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of 1, 2, 3",
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
+           path: []
+         }
+       ]}
 
   And Integers with key-value pairs also is allowed:
       iex> schema = Zoi.enum([one: 1, two: 2, three: 3])
       iex> Zoi.parse(schema, 1)
       {:ok, :one}
       iex> Zoi.parse(schema, 4)
-      {:error, [%Zoi.Error{message: "invalid value for enum"}]}
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of 1, 2, 3",
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
+           path: []
+         }
+       ]}
 
   You can also specify the `:coerce` option to allow coercion for both key and value of the enum:
       iex> schema = Zoi.enum([one: 1, two: 2, three: 3], coerce: true)
@@ -1045,9 +1369,25 @@ defmodule Zoi do
       iex> Zoi.parse(schema, :one)
       {:ok, :one}
       iex> Zoi.parse(schema, "1")
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of 1, 2, 3",
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, "one")
-      {:error, [%Zoi.Error{message: "invalid option, must be one of: 1, 2, 3"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_enum_value,
+           message: "invalid enum value: expected one of 1, 2, 3",
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Complex Types"
   @spec enum(values :: [input()] | keyword(), opts :: options()) :: Zoi.Type.t()
@@ -1064,7 +1404,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ~D[2000-01-01])
       {:ok, ~D[2000-01-01]}
       iex> Zoi.parse(schema, "2000-01-01")
-      {:error, [%Zoi.Error{message: "invalid type: must be a date"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected date",
+           issue: {"invalid type: expected date", [type: :date]},
+           path: []
+         }
+       ]}
 
   You can also specify the `:coerce` option to allow coercion from strings or integers:
       iex> schema = Zoi.date(coerce: true)
@@ -1089,7 +1437,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ~T[12:34:56])
       {:ok, ~T[12:34:56]}
       iex> Zoi.parse(schema, "12:34:56")
-      {:error, [%Zoi.Error{message: "invalid type: must be a time"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected time",
+           issue: {"invalid type: expected time", [type: :time]},
+           path: []
+         }
+       ]}
 
   You can also specify the `:coerce` option to allow coercion from strings:
       iex> schema = Zoi.time(coerce: true)
@@ -1110,7 +1466,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ~U[2000-01-01 12:34:56Z])
       {:ok, ~U[2000-01-01 12:34:56Z]}
       iex> Zoi.parse(schema, "2000-01-01T12:34:56Z")
-      {:error, [%Zoi.Error{message: "invalid type: must be a datetime"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected datetime",
+           issue: {"invalid type: expected datetime", [type: :datetime]},
+           path: []
+         }
+       ]}
 
   You can also specify the `:coerce` option to allow coercion from strings or integers:
       iex> schema = Zoi.datetime(coerce: true)
@@ -1134,7 +1498,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, ~N[2000-01-01 23:00:07])
       {:ok, ~N[2000-01-01 23:00:07]}
       iex> Zoi.parse(schema, "2000-01-01T12:34:56")
-      {:error, [%Zoi.Error{message: "invalid type: must be a naive datetime"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected naive datetime",
+           issue: {"invalid type: expected naive datetime", [type: :naive_datetime]},
+           path: []
+         }
+       ]}
 
   You can also specify the `:coerce` option to allow coercion from strings or integers:
       iex> schema = Zoi.naive_datetime(coerce: true)
@@ -1160,7 +1532,15 @@ defmodule Zoi do
         iex> Zoi.parse(schema, Decimal.new("123.45"))
         {:ok, Decimal.new("123.45")}
         iex> Zoi.parse(schema, "invalid-decimal")
-        {:error, [%Zoi.Error{message: "invalid type: must be a decimal"}]}
+        {:error,
+         [
+           %Zoi.Error{
+             code: :invalid_type,
+             message: "invalid type: expected decimal",
+             issue: {"invalid type: expected decimal", [type: :decimal]},
+             path: []
+           }
+         ]}
 
     You can also specify the `:coerce` option to allow coercion from strings or integers:
         iex> schema = Zoi.decimal(coerce: true)
@@ -1185,8 +1565,10 @@ defmodule Zoi do
       iex> schema = Zoi.email()
       iex> Zoi.parse(schema, "test@test.com")
       {:ok, "test@test.com"}
-      iex> Zoi.parse(schema, "invalid-email")
-      {:error, [%Zoi.Error{message: "invalid email format"}]}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-email")
+      iex> error.message
+      "invalid email format"
+      
 
   It uses a regex pattern to validate the email format, which checks for a standard email structure including local part, domain, and top-level domain:
       ~r/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i
@@ -1217,7 +1599,8 @@ defmodule Zoi do
     Zoi.string()
     |> regex(regex,
       format: :email,
-      message: "invalid email format"
+      error: opts[:error],
+      internal_message: "invalid email format"
     )
   end
 
@@ -1230,8 +1613,9 @@ defmodule Zoi do
       iex> schema = Zoi.uuid()
       iex> Zoi.parse(schema, "550e8400-e29b-41d4-a716-446655440000")
       {:ok, "550e8400-e29b-41d4-a716-446655440000"}
-      iex> Zoi.parse(schema, "invalid-uuid")
-      {:error, [%Zoi.Error{message: "invalid UUID format"}]}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-uuid")
+      iex> error.message
+      "invalid UUID format"
 
       iex> schema = Zoi.uuid(version: "v8")
       iex> Zoi.parse(schema, "6d084cef-a067-8e9e-be6d-7c5aefdfd9b4")
@@ -1242,11 +1626,12 @@ defmodule Zoi do
   def uuid(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.uuid(opts),
-      message: "invalid UUID format"
+      error: opts[:error],
+      internal_message: "invalid UUID format"
     )
   end
 
-  @doc """
+  @doc ~S"""
   Defines a URL format validation.
 
   ## Example
@@ -1254,16 +1639,17 @@ defmodule Zoi do
       iex> schema = Zoi.url()
       iex> Zoi.parse(schema, "https://example.com")
       {:ok, "https://example.com"}
-      iex> Zoi.parse(schema, "invalid-url")
-      {:error, [%Zoi.Error{message: "invalid URL"}]}
-
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-url")
+      iex> error.message
+      "invalid URL"
   """
   @doc group: "Formats"
-  @spec url() :: Zoi.Type.t()
-  def url() do
+  @spec url(opts :: options()) :: Zoi.Type.t()
+  def url(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.url(),
-      message: "invalid URL"
+      error: opts[:error],
+      internal_message: "invalid URL"
     )
   end
 
@@ -1277,11 +1663,12 @@ defmodule Zoi do
       {:ok, "127.0.0.1"}
   """
   @doc group: "Formats"
-  @spec ipv4() :: Zoi.Type.t()
-  def ipv4() do
+  @spec ipv4(opts :: options()) :: Zoi.Type.t()
+  def ipv4(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.ipv4(),
-      message: "invalid IPv4 address"
+      error: opts[:error],
+      internal_message: "invalid IPv4 address"
     )
   end
 
@@ -1293,15 +1680,14 @@ defmodule Zoi do
       iex> schema = Zoi.ipv6()
       iex> Zoi.parse(schema, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")
       {:ok, "2001:0db8:85a3:0000:0000:8a2e:0370:7334"}
-      iex> Zoi.parse(schema, "invalid-ipv6")
-      {:error, [%Zoi.Error{message: "invalid IPv6 address"}]}
   """
   @doc group: "Formats"
-  @spec ipv6() :: Zoi.Type.t()
-  def ipv6() do
+  @spec ipv6(opts :: options()) :: Zoi.Type.t()
+  def ipv6(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.ipv6(),
-      message: "invalid IPv6 address"
+      error: opts[:error],
+      internal_message: "invalid IPv6 address"
     )
   end
 
@@ -1313,14 +1699,14 @@ defmodule Zoi do
       iex> schema = Zoi.hex()
       iex> Zoi.parse(schema, "a3c113")
       {:ok, "a3c113"}
-      iex> Zoi.parse(schema, "invalid-hex")
-      {:error, [%Zoi.Error{message: "invalid hex format"}]}
   """
   @doc group: "Formats"
-  def hex() do
+  @spec hex(opts :: options()) :: Zoi.Type.t()
+  def hex(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.hex(),
-      message: "invalid hex format"
+      error: opts[:error],
+      internal_message: "invalid hex format"
     )
   end
 
@@ -1334,7 +1720,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hi")
-      {:error, [%Zoi.Error{message: "invalid length: must have 5 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_length,
+            message: "invalid length: must have 5 character(s)",
+           issue: {"invalid length: must have %{count} character(s)", [count: 5]},
+           path: []
+         }
+       ]}
   """
 
   @doc group: "Refinements"
@@ -1364,7 +1758,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hi")
-      {:error, [%Zoi.Error{message: "too small: must have at least 3 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must have at least 3 character(s)",
+           issue: {"too small: must have at least %{count} character(s)", [count: 3]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec gte(schema :: Zoi.Type.t(), min :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
@@ -1383,7 +1785,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 3)
       {:ok, 3}
       iex> Zoi.parse(schema, 2)
-      {:error, [%Zoi.Error{message: "too small: must be greater than 2"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than,
+           message: "too small: must be greater than 2",
+           issue: {"too small: must be greater than %{count}", [count: 2]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec gt(schema :: Zoi.Type.t(), gt :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
@@ -1411,7 +1821,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello")
       {:ok, "hello"}
       iex> Zoi.parse(schema, "hello world")
-      {:error, [%Zoi.Error{message: "too big: must have at most 5 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :less_than_or_equal_to,
+           message: "too big: must have at most 5 character(s)",
+           issue: {"too big: must have at most %{count} character(s)", [count: 5]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec lte(schema :: Zoi.Type.t(), lte :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
@@ -1430,7 +1848,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 5)
       {:ok, 5}
       iex> Zoi.parse(schema, 10)
-      {:error, [%Zoi.Error{message: "too big: must be less than 10"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :less_than,
+           message: "too big: must be less than 10",
+           issue: {"too big: must be less than %{count}", [count: 10]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec lt(schema :: Zoi.Type.t(), lt :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
@@ -1447,7 +1873,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 5)
       {:ok, 5}
       iex> Zoi.parse(schema, 0)
-      {:error, [%Zoi.Error{message: "too small: must be greater than 0"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than,
+           message: "too small: must be greater than 0",
+           issue: {"too small: must be greater than %{count}", [count: 0]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec positive(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
@@ -1464,7 +1898,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, -5)
       {:ok, -5}
       iex> Zoi.parse(schema, 0)
-      {:error, [%Zoi.Error{message: "too big: must be less than 0"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :less_than,
+           message: "too big: must be less than 0",
+           issue: {"too big: must be less than %{count}", [count: 0]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec negative(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
@@ -1481,7 +1923,15 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 0)
       {:ok, 0}
       iex> Zoi.parse(schema, -5)
-      {:error, [%Zoi.Error{message: "too small: must be at least 0"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           message: "too small: must be at least 0",
+           issue: {"too small: must be at least %{count}", [count: 0]},
+           path: []
+         }
+       ]}
   """
   @doc group: "Refinements"
   @spec non_negative(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
@@ -1513,8 +1963,9 @@ defmodule Zoi do
       iex> schema = Zoi.string() |> Zoi.starts_with("hello")
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
-      iex> Zoi.parse(schema, "world hello")
-      {:error, [%Zoi.Error{message: "invalid string: must start with 'hello'"}]}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "world hello")
+      iex> error.message
+      "invalid format: must start with 'hello'"
   """
   @doc group: "Refinements"
   @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary(), opts :: options()) :: Zoi.Type.t()
@@ -1531,7 +1982,9 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
       iex> Zoi.parse(schema, "hello")
-      {:error, [%Zoi.Error{message: "invalid string: must end with 'world'"}]}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
+      iex> error.message
+      "invalid format: must end with 'world'"
   """
   @doc group: "Refinements"
   @spec ends_with(schema :: Zoi.Type.t(), suffix :: binary(), opts :: options()) :: Zoi.Type.t()
@@ -1548,15 +2001,17 @@ defmodule Zoi do
       iex> schema = Zoi.string() |> Zoi.downcase()
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
-      iex> Zoi.parse(schema, "Hello World")
-      {:error, [%Zoi.Error{message: "invalid string: must be lowercase"}]}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "Hello World")
+      iex> error.message
+      "invalid format: must be lowercase"
   """
   @doc group: "Refinements"
-  @spec downcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
-  def downcase(schema) do
+  @spec downcase(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  def downcase(schema, opts \\ []) do
     schema
     |> regex(Regexes.downcase(),
-      message: "invalid string: must be lowercase"
+      error: opts[:error],
+      internal_message: "invalid format: must be lowercase"
     )
   end
 
@@ -1568,16 +2023,17 @@ defmodule Zoi do
       iex> schema = Zoi.string() |> Zoi.upcase()
       iex> Zoi.parse(schema, "HELLO")
       {:ok, "HELLO"}
-      iex> Zoi.parse(schema, "Hello")
-      {:error, [%Zoi.Error{message: "invalid string: must be uppercase"}]}
-
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "Hello")
+      iex> error.message
+      "invalid format: must be uppercase"
   """
   @doc group: "Refinements"
-  @spec upcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
-  def upcase(schema) do
+  @spec upcase(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  def upcase(schema, opts \\ []) do
     schema
     |> regex(Regexes.upcase(),
-      message: "invalid string: must be uppercase"
+      error: opts[:error],
+      internal_message: "invalid format: must be uppercase"
     )
   end
 
@@ -1663,7 +2119,15 @@ defmodule Zoi do
       ...>   if String.length(value) > 5, do: :ok, else: {:error, "must be longer than 5 characters"}
       ...> end)
       iex> Zoi.parse(schema, "hello")
-      {:error, [%Zoi.Error{message: "must be longer than 5 characters"}]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           issue: {"must be longer than 5 characters", []},
+           message: "must be longer than 5 characters",
+           path: []
+         }
+       ]}
       iex> Zoi.parse(schema, "hello world")
       {:ok, "hello world"}
 
@@ -1678,10 +2142,21 @@ defmodule Zoi do
       ...>   end
       ...> end)
       iex> Zoi.parse(schema, "hi")
-      {:error, [
-        %Zoi.Error{message: "must be longer than 5 characters"},
-        %Zoi.Error{message: "must be shorter than 10 characters"}
-      ]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           issue: {"must be longer than 5 characters", []},
+           message: "must be longer than 5 characters",
+           path: []
+         },
+         %Zoi.Error{
+           code: :custom,
+           issue: {"must be shorter than 10 characters", []},
+           message: "must be shorter than 10 characters",
+           path: []
+         }
+       ]}
 
   ## mfa 
 
@@ -1774,10 +2249,21 @@ defmodule Zoi do
       ...>   end
       ...> end)
       iex> Zoi.parse(schema, "hi")
-      {:error, [
-        %Zoi.Error{message: "must be longer than 5 characters"},
-        %Zoi.Error{message: "must be shorter than 10 characters"}
-      ]}
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           issue: {"must be longer than 5 characters", []},
+           message: "must be longer than 5 characters",
+           path: []
+         },
+         %Zoi.Error{
+           code: :custom,
+           issue: {"must be shorter than 10 characters", []},
+           message: "must be shorter than 10 characters",
+           path: []
+         }
+       ]}
 
   The `ctx` is a `Zoi.Context` struct that contains information about the current parsing context, including the path, options, and any errors that have been added so far.
   """

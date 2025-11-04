@@ -30,9 +30,17 @@ defmodule Zoi.Types.Union do
             {:halt, {:ok, result}}
 
           {:error, reason} ->
-            {:cont, {:error, union.meta.error || reason}}
+            {:cont, error(union, reason)}
         end
       end)
+    end
+
+    defp error(schema, type_error) do
+      if error = schema.meta.error do
+        {:error, Zoi.Error.custom_error(issue: {error, []})}
+      else
+        {:error, type_error}
+      end
     end
 
     def type_spec(%Zoi.Types.Union{schemas: schemas}, opts) do

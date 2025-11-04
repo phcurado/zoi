@@ -4,7 +4,6 @@ defmodule Zoi.Types.Null do
   use Zoi.Type.Def
 
   def new(opts \\ []) do
-    opts = Keyword.merge([error: "invalid type: must be nil"], opts)
     apply_type(opts)
   end
 
@@ -14,7 +13,7 @@ defmodule Zoi.Types.Null do
     end
 
     def parse(schema, _input, _opts) do
-      {:error, schema.meta.error}
+      {:error, Zoi.Error.invalid_type(nil, error: schema.meta.error)}
     end
 
     def type_spec(_schema, _opts) do

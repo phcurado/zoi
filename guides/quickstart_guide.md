@@ -40,21 +40,20 @@ schema = Zoi.array(Zoi.integer() |> Zoi.min(0)) |> Zoi.min(2)
 You can validate data against your defined schemas using the `Zoi.parse/2` function:
 
 ```elixir
-schema = Zoi.object(%{
-  name: Zoi.string() |> Zoi.regex(~r/^[a-zA-Z ]+$/),
-  age: Zoi.integer() |> Zoi.min(0),
-  email: Zoi.email()
-})
-
-Zoi.parse(schema, %{name: "John Doe", age: 30, email: "john@email.com"})
-# {:ok, %{name: "John Doe", age: 30, email: "john@email.com"}}
-
-Zoi.parse(schema, %{name: "John123", age: -5, email: "invalid-email"})
-# {:error, [
-#   %Zoi.Error{path: [:name], message: "invalid string: must match a pattern ~r/^[a-zA-Z ]+$/"},
-#   %Zoi.Error{path: [:age], message: "too small: must be at least 0"},
-#   %Zoi.Error{path: [:email], message: "invalid email format"}
-# ]}
+iex> schema = Zoi.object(%{
+...>   name: Zoi.string() |> Zoi.regex(~r/^[a-zA-Z ]+$/),
+...>   age: Zoi.integer() |> Zoi.min(0),
+...>   email: Zoi.email()
+...> })
+iex> Zoi.parse(schema, %{name: "John Doe", age: 30, email: "john@email.com"})
+{:ok, %{name: "John Doe", age: 30, email: "john@email.com"}}
+iex> {:error, errors} = Zoi.parse(schema, %{name: "John123", age: -5, email: "invalid-email"})
+iex> Zoi.treefy_errors(errors)
+%{
+  name: ["invalid format: must match pattern ^[a-zA-Z ]+$"],
+  age: ["too small: must be at least 0"],
+  email: ["invalid email format"]
+}
 ```
 
 ## Use Cases

@@ -22,7 +22,7 @@ defmodule Zoi.Types.Object do
     keys = Enum.map(fields, fn {key, _type} -> key end)
 
     opts =
-      Keyword.merge([error: "invalid type: must be a map", strict: false, coerce: false], opts)
+      Keyword.merge([strict: false, coerce: false], opts)
 
     apply_type(opts ++ [fields: fields, keys: keys, inner: inner])
   end
@@ -41,7 +41,7 @@ defmodule Zoi.Types.Object do
     end
 
     def parse(schema, _, _) do
-      {:error, schema.meta.error}
+      {:error, Zoi.Error.invalid_type(:object, error: schema.meta.error)}
     end
 
     def type_spec(%Zoi.Types.Object{fields: fields}, opts) do

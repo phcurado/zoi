@@ -4,7 +4,6 @@ defmodule Zoi.Types.Array do
   use Zoi.Type.Def, fields: [:inner]
 
   def new(inner, opts) do
-    opts = Keyword.merge([error: "invalid type: must be an array"], opts)
     apply_type(opts ++ [inner: inner])
   end
 
@@ -20,7 +19,7 @@ defmodule Zoi.Types.Array do
             {[value | parsed], errors}
 
           {:error, err} ->
-            error = Enum.map(err, &Zoi.Error.add_path(&1, [index]))
+            error = Enum.map(err, &Zoi.Error.prepend_path(&1, [index]))
             {parsed, Zoi.Errors.merge(errors, error)}
         end
       end)
@@ -34,7 +33,7 @@ defmodule Zoi.Types.Array do
     end
 
     def parse(schema, _, _) do
-      {:error, schema.meta.error}
+      {:error, Zoi.Error.invalid_type(:array, error: schema.meta.error)}
     end
 
     def type_spec(%Zoi.Types.Array{inner: inner}, opts) do

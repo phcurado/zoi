@@ -10,15 +10,7 @@ defmodule Zoi.Refinements do
     if String.length(input) >= min do
       :ok
     else
-      {:error, message(opts, "too small: must have at least #{min} characters")}
-    end
-  end
-
-  defp do_refine(%Zoi.Types.String{}, input, [gt: gt], opts) do
-    if String.length(input) > gt do
-      :ok
-    else
-      {:error, message(opts, "too small: must have more than #{gt} characters")}
+      {:error, Zoi.Error.greater_than_or_equal_to(:string, min, opts)}
     end
   end
 
@@ -26,15 +18,7 @@ defmodule Zoi.Refinements do
     if String.length(input) <= max do
       :ok
     else
-      {:error, message(opts, "too big: must have at most #{max} characters")}
-    end
-  end
-
-  defp do_refine(%Zoi.Types.String{}, input, [lt: lt], opts) do
-    if String.length(input) < lt do
-      :ok
-    else
-      {:error, message(opts, "too big: must have less than #{lt} characters")}
+      {:error, Zoi.Error.less_than_or_equal_to(:string, max, opts)}
     end
   end
 
@@ -42,7 +26,7 @@ defmodule Zoi.Refinements do
     if String.length(input) == length do
       :ok
     else
-      {:error, message(opts, "invalid length: must have #{length} characters")}
+      {:error, Zoi.Error.invalid_length(:string, length, opts)}
     end
   end
 
@@ -53,7 +37,7 @@ defmodule Zoi.Refinements do
     if String.match?(input, regex) do
       :ok
     else
-      {:error, message(opts, "invalid string: must match a pattern #{inspect(regex)}")}
+      {:error, Zoi.Error.invalid_format(regex, opts)}
     end
   end
 
@@ -61,7 +45,7 @@ defmodule Zoi.Refinements do
     if String.starts_with?(input, prefix) do
       :ok
     else
-      {:error, message(opts, "invalid string: must start with '#{prefix}'")}
+      {:error, Zoi.Error.invalid_starting_string(prefix, opts)}
     end
   end
 
@@ -69,7 +53,7 @@ defmodule Zoi.Refinements do
     if String.ends_with?(input, suffix) do
       :ok
     else
-      {:error, message(opts, "invalid string: must end with '#{suffix}'")}
+      {:error, Zoi.Error.invalid_ending_string(suffix, opts)}
     end
   end
 
@@ -78,7 +62,7 @@ defmodule Zoi.Refinements do
     if length(input) >= min do
       :ok
     else
-      {:error, message(opts, "too small: must have at least #{min} items")}
+      {:error, Zoi.Error.greater_than_or_equal_to(:array, min, opts)}
     end
   end
 
@@ -86,7 +70,7 @@ defmodule Zoi.Refinements do
     if length(input) > gt do
       :ok
     else
-      {:error, message(opts, "too small: must have more than #{gt} items")}
+      {:error, Zoi.Error.greater_than(:array, gt, opts)}
     end
   end
 
@@ -94,7 +78,7 @@ defmodule Zoi.Refinements do
     if length(input) < lt do
       :ok
     else
-      {:error, message(opts, "too big: must have less than #{lt} items")}
+      {:error, Zoi.Error.less_than(:array, lt, opts)}
     end
   end
 
@@ -102,7 +86,7 @@ defmodule Zoi.Refinements do
     if length(input) <= max do
       :ok
     else
-      {:error, message(opts, "too big: must have at most #{max} items")}
+      {:error, Zoi.Error.less_than_or_equal_to(:array, max, opts)}
     end
   end
 
@@ -110,7 +94,7 @@ defmodule Zoi.Refinements do
     if length(input) == length do
       :ok
     else
-      {:error, message(opts, "invalid length: must have #{length} items")}
+      {:error, Zoi.Error.invalid_length(:array, length, opts)}
     end
   end
 
@@ -122,7 +106,7 @@ defmodule Zoi.Refinements do
       if input >= min do
         :ok
       else
-        {:error, message(opts, "too small: must be at least #{min}")}
+        {:error, Zoi.Error.greater_than_or_equal_to(:number, min, opts)}
       end
     end
 
@@ -130,7 +114,7 @@ defmodule Zoi.Refinements do
       if input > gt do
         :ok
       else
-        {:error, message(opts, "too small: must be greater than #{gt}")}
+        {:error, Zoi.Error.greater_than(:number, gt, opts)}
       end
     end
 
@@ -138,7 +122,7 @@ defmodule Zoi.Refinements do
       if input <= max do
         :ok
       else
-        {:error, message(opts, "too big: must be at most #{max}")}
+        {:error, Zoi.Error.less_than_or_equal_to(:number, max, opts)}
       end
     end
 
@@ -146,7 +130,7 @@ defmodule Zoi.Refinements do
       if input < lt do
         :ok
       else
-        {:error, message(opts, "too big: must be less than #{lt}")}
+        {:error, Zoi.Error.less_than(:number, lt, opts)}
       end
     end
   end
@@ -160,14 +144,14 @@ defmodule Zoi.Refinements do
       case @date_module.compare(input, min) do
         :gt -> :ok
         :eq -> :ok
-        :lt -> {:error, message(opts, "too small: must be at least #{min}")}
+        :lt -> {:error, Zoi.Error.greater_than_or_equal_to(:date, min, opts)}
       end
     end
 
     defp do_refine(%@module{}, input, [gt: gt], opts) do
       case @date_module.compare(input, gt) do
         :gt -> :ok
-        _ -> {:error, message(opts, "too small: must be greater than #{gt}")}
+        _ -> {:error, Zoi.Error.greater_than(:date, gt, opts)}
       end
     end
 
@@ -175,14 +159,14 @@ defmodule Zoi.Refinements do
       case @date_module.compare(input, max) do
         :lt -> :ok
         :eq -> :ok
-        :gt -> {:error, message(opts, "too big: must be at most #{max}")}
+        :gt -> {:error, Zoi.Error.less_than_or_equal_to(:date, max, opts)}
       end
     end
 
     defp do_refine(%@module{}, input, [lt: lt], opts) do
       case @date_module.compare(input, lt) do
         :lt -> :ok
-        _ -> {:error, message(opts, "too big: must be less than #{lt}")}
+        _ -> {:error, Zoi.Error.less_than(:date, lt, opts)}
       end
     end
   end
@@ -193,7 +177,7 @@ defmodule Zoi.Refinements do
       if Decimal.gte?(input, min) do
         :ok
       else
-        {:error, message(opts, "too small: must be at least #{min}")}
+        {:error, Zoi.Error.greater_than_or_equal_to(:number, min, opts)}
       end
     end
 
@@ -201,7 +185,7 @@ defmodule Zoi.Refinements do
       if Decimal.gt?(input, gt) do
         :ok
       else
-        {:error, message(opts, "too small: must be greater than #{gt}")}
+        {:error, Zoi.Error.greater_than(:number, gt, opts)}
       end
     end
 
@@ -209,7 +193,7 @@ defmodule Zoi.Refinements do
       if Decimal.lt?(input, lt) do
         :ok
       else
-        {:error, message(opts, "too big: must be less than #{lt}")}
+        {:error, Zoi.Error.less_than(:number, lt, opts)}
       end
     end
 
@@ -217,7 +201,7 @@ defmodule Zoi.Refinements do
       if Decimal.lte?(input, max) do
         :ok
       else
-        {:error, message(opts, "too big: must be at most #{max}")}
+        {:error, Zoi.Error.less_than_or_equal_to(:number, max, opts)}
       end
     end
   end
@@ -225,9 +209,5 @@ defmodule Zoi.Refinements do
   defp do_refine(_schema, _input, _args, _opts) do
     # Default to :ok if there is no type pattern match
     :ok
-  end
-
-  defp message(opts, default_message) do
-    Keyword.get(opts, :message, default_message)
   end
 end

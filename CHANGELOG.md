@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.9.0 - Unreleased
+
+### Changed
+
+- All errors have been reworked to include more context on the error `code` and `issue`. Now errors will have the following structure (example):
+
+```elixir
+%Zoi.Error{
+  code: :invalid_type,
+  issue: {"invalid type: expected string", [expected: :string]},
+  message: "invalid type: expected string",
+  path: [:user, :name]
+}
+```
+
+And it's also possible to have errors with dynamic messages:
+
+```elixir
+%Zoi.Error{
+  code: :invalid_literal,
+  message: "invalid literal: expected true",
+  issue: {"invalid literal: expected %{expected}", [expected: true]},
+  path: []
+}
+```
+
+This will give more flexibility when handling errors programmatically, and better support with tools such as `Gettext` for localization.
+
+- Removed `Zoi.gt/3` and `Zoi.lt/3` refinements for strings. Use `Zoi.min/3` and `Zoi.max/3` instead.
+- Allow all refinements to accept custom error messages.
+
 ## 0.8.4 - 2025-11-01
 
 ### Changed

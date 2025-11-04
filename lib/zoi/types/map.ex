@@ -4,7 +4,6 @@ defmodule Zoi.Types.Map do
   use Zoi.Type.Def, fields: [:key_type, :value_type]
 
   def new(key_type, value_type, opts) do
-    opts = Keyword.merge([error: "invalid type: must be a map"], opts)
     apply_type(Keyword.merge(opts, key_type: key_type, value_type: value_type))
   end
 
@@ -20,7 +19,7 @@ defmodule Zoi.Types.Map do
           {Map.put(input, key_parsed, value_parsed), errors}
         else
           {:error, err} ->
-            error = Enum.map(err, &Zoi.Error.add_path(&1, [key]))
+            error = Enum.map(err, &Zoi.Error.prepend_path(&1, [key]))
             {input, Zoi.Errors.merge(errors, error)}
         end
       end)
@@ -34,7 +33,7 @@ defmodule Zoi.Types.Map do
     end
 
     def parse(schema, _, _) do
-      {:error, schema.meta.error}
+      {:error, Zoi.Error.invalid_type(:map, error: schema.meta.error)}
     end
 
     def type_spec(%Zoi.Types.Map{key_type: key_type, value_type: value_type}, opts) do
