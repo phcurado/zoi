@@ -1,9 +1,10 @@
 defmodule Zoi.Types.Array do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:inner]
+  use Zoi.Type.Def, fields: [:inner, :coerce]
 
   def new(inner, opts) do
+    opts = Keyword.merge([coerce: false], opts)
     apply_type(opts ++ [inner: inner])
   end
 
@@ -12,7 +13,7 @@ defmodule Zoi.Types.Array do
       inputs
       |> Enum.with_index()
       |> Enum.reduce({[], []}, fn {input, index}, {parsed, errors} ->
-        ctx = Zoi.Context.new(inner, input) |> Zoi.Context.add_path(index)
+        ctx = Zoi.Context.new(inner, input) |> Zoi.Context.add_path([index])
 
         case Zoi.parse(inner, input, ctx: ctx) do
           {:ok, value} ->
@@ -30,6 +31,21 @@ defmodule Zoi.Types.Array do
           {:error, errors}
         end
       end)
+    end
+
+    def parse(%Zoi.Types.Array{coerce: true} = schema, inputs, opts) when is_map(inputs) do
+      ## For cases where the list is a map with integer keys (e.g., form data)
+      inputs
+      |> Map.to_list()
+      |> Enum.sort_by(fn {k, _v} -> k end)
+      |> Enum.map(fn {_k, v} -> v end)
+      |> then(fn list -> parse(schema, list, opts) end)
+    end
+
+    def parse(%Zoi.Types.Array{} = schema, input, opts) when is_tuple(input) do
+      input
+      |> Tuple.to_list()
+      |> then(fn list -> parse(schema, list, opts) end)
     end
 
     def parse(schema, _, _) do
