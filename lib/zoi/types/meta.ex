@@ -141,4 +141,9 @@ defmodule Zoi.Types.Meta do
       val -> val
     end
   end
+
+  @spec optional?(t()) :: boolean()
+  def optional?(%__MODULE__{} = meta) do
+    not required?(meta)
+  end
 end

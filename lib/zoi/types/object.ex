@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Object do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:fields, :keys, :inner, :strict, :coerce, empty_values: []]
+  use Zoi.Type.Def, fields: [:fields, :strict, :coerce, empty_values: []]
 
   def new(fields, opts) when is_map(fields) or is_list(fields) do
     fields =
@@ -14,41 +14,22 @@ defmodule Zoi.Types.Object do
         end
       end)
 
-    inner =
-      fields
-      |> Zoi.keyword(opts)
-      |> Zoi.transform({__MODULE__, :__transform__, []})
-
-    keys = Enum.map(fields, fn {key, _type} -> key end)
-
     opts =
-      Keyword.merge([strict: false, coerce: false], opts)
+      Keyword.merge(
+        [strict: false, coerce: false],
+        opts
+      )
 
-    apply_type(opts ++ [fields: fields, keys: keys, inner: inner])
+    apply_type(opts ++ [fields: fields])
   end
 
   def new(_fields, _opts) do
     raise ArgumentError, "object must receive a map"
   end
 
-  def add_opts(%__MODULE__{inner: inner} = obj, opts) do
-    inner =
-      Enum.reduce(opts, inner, fn {key, value}, acc ->
-        Map.put(acc, key, value)
-      end)
-
-    Enum.reduce(opts, %{obj | inner: inner}, fn {key, value}, acc ->
-      Map.put(acc, key, value)
-    end)
-  end
-
-  def __transform__(value, _opts) do
-    Enum.into(value, %{})
-  end
-
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Object{inner: inner}, input, opts) when is_map(input) do
-      Zoi.parse(inner, Map.to_list(input), opts)
+    def parse(%Zoi.Types.Object{} = obj, input, opts) when is_map(input) do
+      Zoi.Types.KeyValue.parse(obj, input, opts)
     end
 
     def parse(schema, _, _) do
