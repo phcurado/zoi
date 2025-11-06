@@ -1350,12 +1350,25 @@ defmodule ZoiTest do
                Zoi.parse(schema, [1, "two", 3.0, true, nil, %{}, []])
     end
 
+    test "array with coercion" do
+      schema = Zoi.array(Zoi.string(), coerce: true)
+      assert {:ok, ["hello", "world"]} == Zoi.parse(schema, %{"0" => "hello", "1" => "world"})
+      assert {:ok, ["1", "2", "3"]} == Zoi.parse(schema, ["1", "2", "3"])
+      assert {:ok, ["hello", "world"]} == Zoi.parse(schema, %{a: "hello", b: "world"})
+      assert {:ok, ["1", "2"]} == Zoi.parse(schema, {"1", "2"})
+    end
+
     test "array with incorrect value" do
       schema = Zoi.array(Zoi.integer())
 
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, "not an integer", 3])
-      assert Exception.message(error) == "invalid type: expected integer"
-      assert error.path == [1]
+      assert {:error, [error1, error2]} = Zoi.parse(schema, [1, "not an integer", 3, 4, 5, "55"])
+      assert error1.code == :invalid_type
+      assert Exception.message(error1) == "invalid type: expected integer"
+      assert error1.path == [1]
+
+      assert error2.code == :invalid_type
+      assert Exception.message(error2) == "invalid type: expected integer"
+      assert error2.path == [5]
     end
 
     test "array with empty array" do
@@ -2928,6 +2941,16 @@ defmodule ZoiTest do
 
       schema = Zoi.object(%{})
       assert Zoi.type_spec(schema) == quote(do: %{})
+    end
+
+    test "object with string keys typespec should return generic map" do
+      schema =
+        Zoi.object(%{
+          "name" => Zoi.string(),
+          "age" => Zoi.integer()
+        })
+
+      assert Zoi.type_spec(schema) == quote(do: map())
     end
 
     test "struct typespec" do

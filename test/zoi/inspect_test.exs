@@ -5,7 +5,7 @@ defmodule Zoi.InspectTest do
   test "inspect all types" do
     types = [
       {Zoi.any(), "#Zoi.any<>"},
-      {Zoi.array(Zoi.string()), "#Zoi.array<inner: #Zoi.string<coerce: false>>"},
+      {Zoi.array(Zoi.string()), "#Zoi.array<coerce: false, inner: #Zoi.string<coerce: false>>"},
       {Zoi.atom(), "#Zoi.atom<>"},
       {Zoi.boolean(), "#Zoi.boolean<coerce: false>"},
       {Zoi.date(), "#Zoi.date<coerce: false>"},

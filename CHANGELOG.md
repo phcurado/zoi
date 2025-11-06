@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.9.0 - 2025-11-06
+
+### Added
+
+- `Zoi.array/2` now accepts `:coerce` option to force `Map` and `Tuple` types into an array.
+
+### Changed
+
+- `Zoi.type_spec/1` for object with string keys now returns generic `map()` type spec due to how Elixir handles this type internally.
+
 ## 0.9.0-rc.1 - 2025-11-04
 
 ### Added

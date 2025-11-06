@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Object do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:fields, :keys, :inner, :strict, :coerce, empty_values: []]
+  use Zoi.Type.Def, fields: [:fields, :strict, :coerce, empty_values: []]
 
   def new(fields, opts) when is_map(fields) or is_list(fields) do
     fields =
@@ -14,34 +14,31 @@ defmodule Zoi.Types.Object do
         end
       end)
 
-    inner =
-      fields
-      |> Zoi.keyword(opts)
-      |> Zoi.transform({__MODULE__, :__transform__, []})
-
-    keys = Enum.map(fields, fn {key, _type} -> key end)
-
     opts =
-      Keyword.merge([strict: false, coerce: false], opts)
+      Keyword.merge(
+        [strict: false, coerce: false],
+        opts
+      )
 
-    apply_type(opts ++ [fields: fields, keys: keys, inner: inner])
+    apply_type(opts ++ [fields: fields])
   end
 
   def new(_fields, _opts) do
     raise ArgumentError, "object must receive a map"
   end
 
-  def __transform__(value, _opts) do
-    Enum.into(value, %{})
-  end
-
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Object{inner: inner}, input, opts) when is_map(input) do
-      Zoi.parse(inner, Map.to_list(input), opts)
+    def parse(%Zoi.Types.Object{} = obj, input, opts) when is_map(input) do
+      Zoi.Types.KeyValue.parse(obj, input, opts)
     end
 
     def parse(schema, _, _) do
       {:error, Zoi.Error.invalid_type(:object, error: schema.meta.error)}
+    end
+
+    def type_spec(%Zoi.Types.Object{fields: [{key, _val} | _rest]}, _opts) when is_binary(key) do
+      # If the keys are strings, there isn't a good way to represent that in typespecs
+      quote do: map()
     end
 
     def type_spec(%Zoi.Types.Object{fields: fields}, opts) do

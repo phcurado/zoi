@@ -1281,6 +1281,13 @@ defmodule Zoi do
       Zoi.min(2) # alias for `Zoi.gte/1`
       Zoi.max(5) # alias for `Zoi.lte/1`
       Zoi.length(5)
+
+  for coercion, you can pass the `:coerce` option and `Zoi` will coerce maps and tuples into the array type:
+      iex> schema = Zoi.array(Zoi.integer(), coerce: true)
+      iex> Zoi.parse(schema, %{0 => 1, 1 => 2, 2 => 3})
+      {:ok, [1, 2, 3]}
+      iex> Zoi.parse(schema, {1, 2, 3})
+      {:ok, [1, 2, 3]}
   """
   @doc group: "Complex Types"
   @spec array(elements :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()

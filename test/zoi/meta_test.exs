@@ -221,4 +221,21 @@ defmodule Zoi.MetaTest do
       assert Meta.required?(meta) == false
     end
   end
+
+  describe "optional?/1" do
+    test "returns true if the meta is marked as optional" do
+      meta = %Meta{required: false}
+      assert Meta.optional?(meta) == true
+    end
+
+    test "returns false if the meta is marked as required" do
+      meta = %Meta{required: true}
+      assert Meta.optional?(meta) == false
+    end
+
+    test "returns true if the meta's required field is nil" do
+      meta = %Meta{required: nil}
+      assert Meta.optional?(meta) == true
+    end
+  end
 end
