@@ -21,7 +21,7 @@
 ```elixir
 def deps do
   [
-    {:zoi, "~> 0.8"}
+    {:zoi, "~> 0.9"}
   ]
 end
 ```
