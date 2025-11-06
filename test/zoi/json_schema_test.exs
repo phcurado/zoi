@@ -12,6 +12,7 @@ defmodule Zoi.JSONSchemaTest do
       {"integer", Zoi.integer(), %{type: :integer}},
       {"float", Zoi.float(), %{type: :number}},
       {"number", Zoi.number(), %{type: :number}},
+      {"decimal", Zoi.decimal(), %{type: :number}},
       {"boolean", Zoi.boolean(), %{type: :boolean}},
       {"literal", Zoi.literal("fixed"), %{const: "fixed"}},
       {"null", Zoi.null(), %{type: :null}},
@@ -105,6 +106,21 @@ defmodule Zoi.JSONSchemaTest do
        %{type: :number, exclusiveMinimum: 3.5, exclusiveMaximum: 10.5}}
     ]
     for {test_ref, schema, expected} <- @number_ranges do
+      @schema schema
+      @expected expected
+      test "encoding #{test_ref} range" do
+        expected = Map.put(@expected, :"$schema", @draft)
+        assert Zoi.to_json_schema(@schema) == expected
+      end
+    end
+
+    @decimal_ranges [
+      {"decimal min max", Zoi.decimal() |> Zoi.min(3.5) |> Zoi.max(10.5),
+       %{type: :number, minimum: 3.5, maximum: 10.5}},
+      {"decimal exclusive min max", Zoi.decimal() |> Zoi.gt(3.5) |> Zoi.lt(10.5),
+       %{type: :number, exclusiveMinimum: 3.5, exclusiveMaximum: 10.5}}
+    ]
+    for {test_ref, schema, expected} <- @decimal_ranges do
       @schema schema
       @expected expected
       test "encoding #{test_ref} range" do

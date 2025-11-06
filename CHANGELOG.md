@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.9.1 - Unreleased
+
+### Added
+
+- `Zoi.JSONSchema` now accepts `Zoi.decimal/1`, converting it to `type: "number"`.
+
 ## 0.9.0 - 2025-11-06
 
 ### Added
