@@ -44,6 +44,7 @@ defmodule Zoi.JSONSchemaTest do
         Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), valid: Zoi.optional(Zoi.boolean())})
 
       assert %{
+               "$schema": "https://json-schema.org/draft/2020-12/schema",
                type: :object,
                properties: %{
                  name: %{type: :string},
@@ -56,6 +57,82 @@ defmodule Zoi.JSONSchemaTest do
 
       assert :name in required_properties
       assert :age in required_properties
+    end
+
+    test "encoding nested object" do
+      schema =
+        Zoi.object(%{
+          user: Zoi.object(%{id: Zoi.integer(), email: Zoi.string()}),
+          address:
+            Zoi.object(%{
+              street: Zoi.string(),
+              city: Zoi.string(),
+              zip: Zoi.string()
+            }),
+          tags:
+            Zoi.array(
+              Zoi.object(%{
+                name: Zoi.string(),
+                value: Zoi.string()
+              })
+            )
+        })
+
+      assert %{
+               "$schema": "https://json-schema.org/draft/2020-12/schema",
+               type: :object,
+               properties: %{
+                 user: %{
+                   type: :object,
+                   properties: %{
+                     id: %{type: :integer},
+                     email: %{type: :string}
+                   },
+                   required: required_user_properties,
+                   additionalProperties: false
+                 },
+                 address: %{
+                   type: :object,
+                   properties: %{
+                     street: %{type: :string},
+                     city: %{type: :string},
+                     zip: %{type: :string}
+                   },
+                   required: required_address_properties,
+                   additionalProperties: false
+                 },
+                 tags: %{
+                   type: :array,
+                   items: %{
+                     type: :object,
+                     properties: %{
+                       name: %{type: :string},
+                       value: %{type: :string}
+                     },
+                     required: required_tag_properties,
+                     additionalProperties: false
+                   }
+                 }
+               },
+               required: required_schema_properties,
+               additionalProperties: false
+             } = Zoi.to_json_schema(schema)
+
+      Enum.each([:id, :email], fn prop ->
+        assert prop in required_user_properties
+      end)
+
+      Enum.each([:street, :city, :zip], fn prop ->
+        assert prop in required_address_properties
+      end)
+
+      Enum.each([:name, :value], fn prop ->
+        assert prop in required_tag_properties
+      end)
+
+      Enum.each([:user, :address, :tags], fn prop ->
+        assert prop in required_schema_properties
+      end)
     end
 
     test "raise if schema is not supported" do

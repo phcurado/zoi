@@ -3,6 +3,8 @@ defmodule Zoi.Types.Object do
 
   use Zoi.Type.Def, fields: [:fields, :strict, :coerce, empty_values: []]
 
+  alias Zoi.Types.Meta
+
   def new(fields, opts) when is_map(fields) or is_list(fields) do
     fields =
       fields
@@ -47,7 +49,7 @@ defmodule Zoi.Types.Object do
         {key, Zoi.Type.type_spec(type, opts), type}
       end)
       |> Enum.map(fn {key, type_spec, type} ->
-        case type.meta.required do
+        case Meta.required?(type.meta) do
           true -> quote do: {required(unquote(key)), unquote(type_spec)}
           _ -> quote do: {optional(unquote(key)), unquote(type_spec)}
         end

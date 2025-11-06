@@ -185,8 +185,13 @@ defmodule Zoi.JSONSchema do
           {key, encode_schema(value)}
         end),
       required:
-        Enum.filter(schema.fields, fn {_k, v} -> Meta.required?(v.meta) end)
-        |> Enum.map(fn {k, _v} -> k end),
+        Enum.flat_map(schema.fields, fn {k, v} ->
+          if Meta.required?(v.meta) do
+            [k]
+          else
+            []
+          end
+        end),
       additionalProperties: false
     }
     |> encode_metadata(schema)
