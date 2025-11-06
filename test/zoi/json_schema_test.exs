@@ -114,7 +114,7 @@ defmodule Zoi.JSONSchemaTest do
                    }
                  }
                },
-               required: [:user, :address, :tags],
+               required: required_schema_properties,
                additionalProperties: false
              } = Zoi.to_json_schema(schema)
 
@@ -128,6 +128,10 @@ defmodule Zoi.JSONSchemaTest do
 
       Enum.each([:name, :value], fn prop ->
         assert prop in required_tag_properties
+      end)
+
+      Enum.each([:user, :address, :tags], fn prop ->
+        assert prop in required_schema_properties
       end)
     end
 
