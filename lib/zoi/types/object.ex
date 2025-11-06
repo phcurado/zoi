@@ -36,6 +36,11 @@ defmodule Zoi.Types.Object do
       {:error, Zoi.Error.invalid_type(:object, error: schema.meta.error)}
     end
 
+    def type_spec(%Zoi.Types.Object{fields: [{key, _val} | _rest]}, _opts) when is_binary(key) do
+      # If the keys are strings, there isn't a good way to represent that in typespecs
+      quote do: map()
+    end
+
     def type_spec(%Zoi.Types.Object{fields: fields}, opts) do
       fields
       |> Enum.map(fn {key, type} ->

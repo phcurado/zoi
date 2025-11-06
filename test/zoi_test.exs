@@ -2943,6 +2943,16 @@ defmodule ZoiTest do
       assert Zoi.type_spec(schema) == quote(do: %{})
     end
 
+    test "object with string keys typespec should return generic map" do
+      schema =
+        Zoi.object(%{
+          "name" => Zoi.string(),
+          "age" => Zoi.integer()
+        })
+
+      assert Zoi.type_spec(schema) == quote(do: map())
+    end
+
     test "struct typespec" do
       schema =
         Zoi.struct(User, %{
