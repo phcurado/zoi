@@ -27,6 +27,7 @@ defmodule Zoi.JSONSchema do
     - `Zoi.integer/0`
     - `Zoi.float/0`
     - `Zoi.number/0`
+    - `Zoi.decimal/0` - (converted to JSON Schema `number`)
     - `Zoi.boolean/0`
     - `Zoi.literal/1`
     - `Zoi.null/0`
@@ -106,6 +107,14 @@ defmodule Zoi.JSONSchema do
     %{type: :number}
     |> encode_metadata(schema)
     |> encode_refinements(schema.meta)
+  end
+
+  if Code.ensure_loaded?(Decimal) do
+    defp encode_schema(%Zoi.Types.Decimal{} = schema) do
+      %{type: :number}
+      |> encode_metadata(schema)
+      |> encode_refinements(schema.meta)
+    end
   end
 
   defp encode_schema(%Zoi.Types.Boolean{} = schema) do
