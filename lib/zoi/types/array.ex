@@ -25,10 +25,12 @@ defmodule Zoi.Types.Array do
         end
       end)
       |> then(fn {parsed, errors} ->
+        parsed = Enum.reverse(parsed)
+
         if errors == [] do
-          {:ok, Enum.reverse(parsed)}
+          {:ok, parsed}
         else
-          {:error, errors}
+          {:error, errors, parsed}
         end
       end)
     end

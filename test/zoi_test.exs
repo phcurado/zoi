@@ -997,6 +997,27 @@ defmodule ZoiTest do
       assert error2.path == [:key3, 0]
     end
 
+    test "keyword value schema keeps previously parsed entries when another fails" do
+      schema =
+        Zoi.keyword(
+          Zoi.object(%{
+            label: Zoi.string(),
+            priority: Zoi.integer(coerce: true)
+          })
+        )
+
+      context =
+        schema
+        |> Zoi.Context.new(
+          good: %{label: "ok", priority: "1"},
+          bad: %{label: "no", priority: "oops"}
+        )
+        |> Zoi.Context.parse()
+
+      refute context.valid?
+      assert context.parsed == [good: %{label: "ok", priority: 1}]
+    end
+
     test "keyword with empty_values set" do
       schema =
         Zoi.keyword(

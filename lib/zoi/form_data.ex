@@ -2,7 +2,7 @@ if Code.ensure_loaded?(Phoenix.HTML) do
   defimpl Phoenix.HTML.FormData, for: Zoi.Context do
     @impl true
     def to_form(%Zoi.Context{} = context, opts) do
-      %{input: input} = context
+      %{input: input, parsed: parsed} = context
 
       {name, context, opts} = name_params_and_opts(context, opts)
       {action, opts} = Keyword.pop(opts, :action, nil)
@@ -19,7 +19,7 @@ if Code.ensure_loaded?(Phoenix.HTML) do
         action: action,
         name: name,
         errors: form_for_errors(context, action),
-        data: input || %{},
+        data: parsed || input || %{},
         params: input || %{},
         options: opts
       }
@@ -169,7 +169,6 @@ if Code.ensure_loaded?(Phoenix.HTML) do
       end
     end
 
-    defp form_for_errors(_context, nil), do: []
     defp form_for_errors(_context, :ignore), do: []
 
     defp form_for_errors(%Zoi.Context{errors: errors}, _action) do

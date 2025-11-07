@@ -12,8 +12,8 @@ defmodule Zoi.Types.KeyValue do
       {:ok, parsed} ->
         {:ok, Enum.into(parsed, %{})}
 
-      {:error, errors} ->
-        {:error, errors}
+      {:error, errors, parsed} ->
+        {:error, errors, Enum.into(parsed, %{})}
     end
   end
 
@@ -23,8 +23,8 @@ defmodule Zoi.Types.KeyValue do
       {:ok, parsed} ->
         {:ok, Enum.reverse(parsed)}
 
-      {:error, errors} ->
-        {:error, errors}
+      {:error, errors, parsed} ->
+        {:error, errors, Enum.reverse(parsed)}
     end
   end
 
@@ -78,7 +78,14 @@ defmodule Zoi.Types.KeyValue do
                 {:ok, parsed_value, child_errors} ->
                   {[{field_key, parsed_value} | parsed], Zoi.Errors.merge(errors, child_errors)}
 
-                {:error, child_errors} ->
+                {:error, child_errors, partial_value} ->
+                  parsed =
+                    if is_nil(partial_value) do
+                      parsed
+                    else
+                      [{field_key, partial_value} | parsed]
+                    end
+
                   {parsed, Zoi.Errors.merge(errors, child_errors)}
               end
             end
@@ -90,23 +97,24 @@ defmodule Zoi.Types.KeyValue do
     if errors == [] do
       {:ok, parsed}
     else
-      {:error, errors}
+      {:error, errors, parsed}
     end
   end
 
-  # Turn a field value into {:ok, value, errs} or {:error, errs}
+  # Turn a field value into {:ok, value, errs} or {:error, errs, partial}
   # Ensures errs is flat and has the path prepended.
-  defp parse_child_value(field_schema, raw_value, _opts, path) do
+  defp parse_child_value(field_schema, raw_value, opts, path) do
     ctx =
       Zoi.Context.new(field_schema, raw_value)
       |> Zoi.Context.add_path(path)
 
-    case Zoi.parse(field_schema, raw_value, ctx: ctx) do
-      {:ok, value} ->
-        {:ok, value, []}
+    ctx = Zoi.Context.parse(ctx, opts)
 
-      {:error, errors} ->
-        {:error, Enum.map(errors, &Zoi.Error.prepend_path(&1, path))}
+    if ctx.valid? do
+      {:ok, ctx.parsed, []}
+    else
+      errors = Enum.map(ctx.errors, &Zoi.Error.prepend_path(&1, path))
+      {:error, errors, ctx.parsed}
     end
   end
 

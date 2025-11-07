@@ -41,13 +41,15 @@ defmodule Zoi.Types.Tuple do
         end
       end)
       |> then(fn {parsed, errors} ->
+        parsed_tuple =
+          parsed
+          |> Enum.reverse()
+          |> List.to_tuple()
+
         if errors == [] do
-          {:ok,
-           parsed
-           |> Enum.reverse()
-           |> List.to_tuple()}
+          {:ok, parsed_tuple}
         else
-          {:error, errors}
+          {:error, errors, parsed_tuple}
         end
       end)
     end

@@ -23,7 +23,7 @@ defmodule Zoi.Types.Keyword do
       Zoi.Types.KeyValue.parse(type, input, opts)
     end
 
-    def parse(%Zoi.Types.Keyword{fields: value_schema, empty_values: empty_values}, input, _opts)
+    def parse(%Zoi.Types.Keyword{fields: value_schema, empty_values: empty_values}, input, opts)
         when is_list(input) and is_struct(value_schema) do
       {parsed, errors} =
         Enum.reduce(input, {[], []}, fn {key, raw_value}, {acc, errs} ->
@@ -34,23 +34,23 @@ defmodule Zoi.Types.Keyword do
               Zoi.Context.new(value_schema, raw_value)
               |> Zoi.Context.add_path([key])
 
-            case Zoi.parse(value_schema, raw_value, ctx: ctx) do
-              {:ok, val} ->
-                {[{key, val} | acc], errs}
+            ctx = Zoi.Context.parse(ctx, opts)
 
-              {:error, err_list} ->
-                patched =
-                  Enum.map(err_list, &Zoi.Error.prepend_path(&1, [key]))
-
-                {acc, Zoi.Errors.merge(errs, patched)}
+            if ctx.valid? do
+              {[{key, ctx.parsed} | acc], errs}
+            else
+              patched = Enum.map(ctx.errors, &Zoi.Error.prepend_path(&1, [key]))
+              {acc, Zoi.Errors.merge(errs, patched)}
             end
           end
         end)
 
+      parsed = Enum.reverse(parsed)
+
       if errors == [] do
-        {:ok, Enum.reverse(parsed)}
+        {:ok, parsed}
       else
-        {:error, errors}
+        {:error, errors, parsed}
       end
     end
 

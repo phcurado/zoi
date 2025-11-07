@@ -202,6 +202,73 @@ iex> Zoi.parse(schema, :hi)
  ]}
 ```
 
+## Phoenix forms
+
+`Zoi` implements the `Phoenix.HTML.FormData` protocol for `Zoi.Context`, enabling direct use
+with `Phoenix.Component.to_form/2` or other Phoenix HTML form helpers.
+
+1. Add the optional dependency to your `mix.exs`:
+
+   ```elixir
+   {:phoenix_html, "~> 2.14.2 or ~> 3.0 or ~> 4.1"}
+   ```
+
+2. Build your schema as an object and enhance it for forms:
+
+   ```elixir
+   defmodule MyApp.Accounts.UserSchema do
+     @schema \
+       Zoi.object(%{
+         name: Zoi.string() |> Zoi.min(3),
+         email: Zoi.email(),
+         age: Zoi.integer() |> Zoi.optional(),
+         addresses:
+           Zoi.array(
+             Zoi.object(%{
+               line1: Zoi.string() |> Zoi.min(3),
+               city: Zoi.string()
+             })
+           )
+       })
+       |> Zoi.Form.enhance()
+
+     def schema, do: @schema
+   end
+   ```
+
+   `Zoi.Form.enhance/1` enables key coercion, flips `:coerce` on every field (so strings get
+   cast into integers/booleans/etc.), and treats `nil`/`""` as empty values across the whole
+   schema tree, matching what Phoenix forms send.
+
+3. Parse params with `Zoi.Form.parse/3` and turn the context into a form:
+
+   ```elixir
+   def create(assigns) do
+     context =
+       assigns.params
+       |> Zoi.Form.parse(MyApp.Accounts.UserSchema.schema())
+
+     assigns = assign(assigns, :form, Phoenix.Component.to_form(context, as: :user))
+     ~H"""
+     <.form for={@form} phx-submit="save">
+       <.input field={@form[:name]} label="Name" />
+       <.inputs_for :let={address} field={@form[:addresses]}>
+         <.input field={address[:line1]} label="Address" />
+       </.inputs_for>
+     </.form>
+     """
+   end
+   ```
+
+`context.valid?` mirrors success or failure, while `context.errors` are exposed through
+`form.errors`. Because the context stores both the original params (`context.input`) and the
+successfully parsed data (`context.parsed`), forms keep all submitted values—even partial data
+when some fields fail validation.
+
+👉 See the full **[Rendering forms with Phoenix](guides/rendering_forms_with_phoenix.md)** guide for
+a larger example, including nested collections and submit handling. To localize error messages,
+check **[Localizing Zoi errors with Gettext](guides/localizing_errors_with_gettext.md)**.
+
 ### Metadata
 
 `Zoi` supports 3 types of metadata:

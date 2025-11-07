@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.9.1 - Unreleased
+## 0.9.2 - Unreleased
+
+### Added
+
+- `Zoi.Form` helpers and a `Phoenix.HTML.FormData` implementation for `Zoi.Context`, enabling Phoenix form rendering without losing the original params.
+- Partial parsing data is now preserved inside `%Zoi.Context{}` (and surfaced through forms) even when validation fails, allowing Phoenix forms to keep previously valid entries.
+- Keyword schemas defined with another schema as the value now keep the successfully parsed entries even if a sibling entry fails validation.
+- `Zoi.Form.enhance/1` now forces coercion on every nested field so Phoenix form strings are cast into their target types automatically.
+
+## 0.9.1 - 2025-11-06
 
 ### Added
 
