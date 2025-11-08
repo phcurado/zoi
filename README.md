@@ -204,70 +204,44 @@ iex> Zoi.parse(schema, :hi)
 
 ## Phoenix forms
 
-`Zoi` implements the `Phoenix.HTML.FormData` protocol for `Zoi.Context`, enabling direct use
-with `Phoenix.Component.to_form/2` or other Phoenix HTML form helpers.
+`Zoi` works seamlessly with Phoenix forms through the `Phoenix.HTML.FormData` protocol:
 
-1. Add the optional dependency to your `mix.exs`:
+```elixir
+# Define schema inline - no separate module needed!
+@user_schema Zoi.object(%{
+  name: Zoi.string() |> Zoi.min(3),
+  email: Zoi.email(),
+  addresses: Zoi.array(Zoi.object(%{street: Zoi.string()}))
+}) |> Zoi.Form.prepare()
 
-   ```elixir
-   {:phoenix_html, "~> 2.14.2 or ~> 3.0 or ~> 4.1"}
-   ```
+# Parse and render
+ctx = Zoi.Form.parse(@user_schema, params)
+form = Phoenix.Component.to_form(ctx, as: :user)
 
-2. Build your schema as an object and enhance it for forms:
+# Use in templates with nested collections
+~H"""
+<.form for={@form} phx-submit="save">
+  <.input field={@form[:name]} label="Name" />
+  <.inputs_for :let={address} field={@form[:addresses]}>
+    <.input field={address[:street]} label="Street" />
+  </.inputs_for>
+  <div>
+    <.button>Save</.button>
+  </div>
+</.form>
+"""
+```
 
-   ```elixir
-   defmodule MyApp.Accounts.UserSchema do
-     @schema \
-       Zoi.object(%{
-         name: Zoi.string() |> Zoi.min(3),
-         email: Zoi.email(),
-         age: Zoi.integer() |> Zoi.optional(),
-         addresses:
-           Zoi.array(
-             Zoi.object(%{
-               line1: Zoi.string() |> Zoi.min(3),
-               city: Zoi.string()
-             })
-           )
-       })
-       |> Zoi.Form.enhance()
+**Key benefits:**
 
-     def schema, do: @schema
-   end
-   ```
+- No embedded schemas or changeset modules required
+- Nested arrays and objects work automatically
+- Validated data in `ctx.parsed` is ready for your database
+- Partial parsing preserves valid items when siblings fail
 
-   `Zoi.Form.enhance/1` enables key coercion, flips `:coerce` on every field (so strings get
-   cast into integers/booleans/etc.), and treats `nil`/`""` as empty values across the whole
-   schema tree, matching what Phoenix forms send.
+👉 See **[Rendering forms with Phoenix](guides/rendering_forms_with_phoenix.md)** for a complete LiveView example with dynamic arrays.
 
-3. Parse params with `Zoi.Form.parse/3` and turn the context into a form:
-
-   ```elixir
-   def create(assigns) do
-     context =
-       assigns.params
-       |> Zoi.Form.parse(MyApp.Accounts.UserSchema.schema())
-
-     assigns = assign(assigns, :form, Phoenix.Component.to_form(context, as: :user))
-     ~H"""
-     <.form for={@form} phx-submit="save">
-       <.input field={@form[:name]} label="Name" />
-       <.inputs_for :let={address} field={@form[:addresses]}>
-         <.input field={address[:line1]} label="Address" />
-       </.inputs_for>
-     </.form>
-     """
-   end
-   ```
-
-`context.valid?` mirrors success or failure, while `context.errors` are exposed through
-`form.errors`. Because the context stores both the original params (`context.input`) and the
-successfully parsed data (`context.parsed`), forms keep all submitted values—even partial data
-when some fields fail validation.
-
-👉 See the full **[Rendering forms with Phoenix](guides/rendering_forms_with_phoenix.md)** guide for
-a larger example, including nested collections and submit handling. To localize error messages,
-check **[Localizing Zoi errors with Gettext](guides/localizing_errors_with_gettext.md)**.
+👉 See **[Localizing errors with Gettext](guides/localizing_errors_with_gettext.md)** for translation support.
 
 ### Metadata
 

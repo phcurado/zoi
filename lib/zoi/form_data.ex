@@ -4,6 +4,8 @@ if Code.ensure_loaded?(Phoenix.HTML) do
     def to_form(%Zoi.Context{} = context, opts) do
       %{input: input, parsed: parsed} = context
 
+      params = input || %{}
+
       {name, context, opts} = name_params_and_opts(context, opts)
       {action, opts} = Keyword.pop(opts, :action, nil)
       id = Keyword.get(opts, :id) || name
@@ -20,7 +22,7 @@ if Code.ensure_loaded?(Phoenix.HTML) do
         name: name,
         errors: form_for_errors(context, action),
         data: parsed || input || %{},
-        params: input || %{},
+        params: params,
         options: opts
       }
     end
@@ -52,7 +54,8 @@ if Code.ensure_loaded?(Phoenix.HTML) do
       {data, params} =
         scope_nested(parent.data, parent.params, field, field_str, default)
 
-      if is_list(data) or is_list(params) do
+      # Use schema to determine if this is an array field, not the data
+      if array_field?(context.schema, field) do
         items_data = list_or_empty_maps(data)
         items_params = list_or_empty_maps(params)
 
@@ -78,7 +81,6 @@ if Code.ensure_loaded?(Phoenix.HTML) do
           }
         end)
       else
-        # OBJECT: single form
         [
           %Phoenix.HTML.Form{
             source: context,
@@ -95,17 +97,41 @@ if Code.ensure_loaded?(Phoenix.HTML) do
       end
     end
 
+    # Extract nested data and params for a specific field
+    # Tries both atom and string keys for maximum compatibility
     defp scope_nested(data, params, field_atom, field_string, default) do
-      cond do
-        is_map(data) and is_map(params) ->
-          {Map.get(data, field_atom, default), Map.get(params, field_string, %{})}
-
-        true ->
-          {data || default, params || %{}}
+      if is_map(data) and is_map(params) do
+        data_value = Map.get(data, field_atom, default)
+        params_value = Map.get(params, field_string) || Map.get(params, field_atom, %{})
+        {data_value, params_value}
+      else
+        {data || default, params || %{}}
       end
     end
 
+    # Convert various data structures to lists for form iteration
+    # Handles LiveView's numeric-key maps and Phoenix metadata keys
     defp list_or_empty_maps(list) when is_list(list), do: list
+
+    defp list_or_empty_maps(%{} = map) do
+      cond do
+        map == %{} ->
+          []
+
+        has_numeric_keys?(map) ->
+          # Extract and sort numeric keys, ignoring metadata like "_persistent_id"
+          map
+          |> Enum.filter(fn {key, _value} -> index_key?(key) end)
+          |> Enum.map(fn {key, value} -> {parse_index(key), value} end)
+          |> Enum.sort_by(&elem(&1, 0))
+          |> Enum.map(&elem(&1, 1))
+
+        true ->
+          # Single map becomes single-item list
+          [map]
+      end
+    end
+
     defp list_or_empty_maps(_), do: []
 
     defp ensure_map(%{} = m, _fallback), do: m
@@ -118,7 +144,6 @@ if Code.ensure_loaded?(Phoenix.HTML) do
       end
     end
 
-    # Errors directly under the nested object: [:field] and [:field, k]
     defp nested_object_errors(errors, field) do
       Enum.flat_map(errors, fn
         %Zoi.Error{path: [^field], issue: issue} ->
@@ -132,7 +157,6 @@ if Code.ensure_loaded?(Phoenix.HTML) do
       end)
     end
 
-    # Errors for a collection item: [:field, idx] and [:field, idx, k]
     defp nested_collection_errors(errors, field, idx) do
       Enum.flat_map(errors, fn
         %Zoi.Error{path: [^field, ^idx], issue: issue} ->
@@ -183,5 +207,48 @@ if Code.ensure_loaded?(Phoenix.HTML) do
           []
       end)
     end
+
+    defp has_numeric_keys?(map) do
+      Enum.any?(map, fn {key, _value} -> index_key?(key) end)
+    end
+
+    defp index_key?(key) when is_integer(key), do: true
+
+    defp index_key?(key) when is_binary(key) do
+      case Integer.parse(key) do
+        {_int, ""} -> true
+        _ -> false
+      end
+    end
+
+    defp index_key?(_), do: false
+
+    defp parse_index(key) when is_integer(key), do: key
+
+    defp parse_index(key) when is_binary(key) do
+      {int, _} = Integer.parse(key)
+      int
+    end
+
+    # Determine if a field in the object schema is an array type
+    # This is crucial for deciding whether to create multiple forms (array) or single form (object)
+    defp array_field?(%Zoi.Types.Object{fields: fields}, field) when is_atom(field) do
+      case get_field_schema(fields, field) do
+        %Zoi.Types.Array{} -> true
+        %Zoi.Types.Default{inner: inner} -> array_field_inner?(inner)
+        _ -> false
+      end
+    end
+
+    defp array_field?(_, _), do: false
+
+    # Get field schema from fields (handles both map and keyword list structures)
+    defp get_field_schema(fields, field) when is_map(fields), do: Map.get(fields, field)
+    defp get_field_schema(fields, field) when is_list(fields), do: Keyword.get(fields, field)
+
+    # Recursively check if inner type is an array (for wrapped types like Default)
+    defp array_field_inner?(%Zoi.Types.Array{}), do: true
+    defp array_field_inner?(%Zoi.Types.Default{inner: inner}), do: array_field_inner?(inner)
+    defp array_field_inner?(_), do: false
   end
 end

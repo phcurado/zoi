@@ -32,9 +32,9 @@ defmodule Zoi.Form do
   @doc """
   Parses an object schema and returns the underlying `Zoi.Context`.
 
-  The returned context keeps the raw params in `context.input`, even when
-  validations fail, so it can be passed directly to `Phoenix.Component.to_form/2`
-  or any `Phoenix.HTML` form helper.
+  The returned context keeps the params in `context.input`, even when validations fail,
+  so it can be passed directly to `Phoenix.Component.to_form/2` or any `Phoenix.HTML`
+  form helper.
   """
   @spec parse(Zoi.Types.Object.t(), Zoi.input(), Zoi.options()) :: Zoi.Context.t()
   def parse(%Zoi.Types.Object{} = obj, input, opts \\ []) do
@@ -42,6 +42,112 @@ defmodule Zoi.Form do
     opts = Keyword.put_new(opts, :ctx, ctx)
 
     Zoi.Context.parse(ctx, opts)
+  end
+
+  @doc """
+  Appends an item to an array field in the context's input and returns a new context.
+
+  This handles LiveView's numeric-key map format automatically.
+
+  ## Examples
+
+      schema = Zoi.object(%{tags: Zoi.array(Zoi.string())}) |> Zoi.Form.prepare()
+      ctx = Zoi.Form.parse(schema, %{"tags" => ["a", "b"]})
+      new_ctx = Zoi.Form.append(ctx, "tags", "c")
+      # new_ctx.input["tags"] => ["a", "b", "c"]
+  """
+  @spec append(Zoi.Context.t(), binary() | atom(), any()) :: Zoi.Context.t()
+  def append(%Zoi.Context{schema: schema} = ctx, field, item) do
+    field_str = to_string(field)
+    current_value = Map.get(ctx.input, field_str)
+    current_list = to_list(current_value)
+    updated_list = current_list ++ [item]
+    updated_input = Map.put(ctx.input, field_str, updated_list)
+
+    parse(schema, updated_input)
+  end
+
+  @doc """
+  Removes an item at the given index from an array field and returns a new context.
+
+  ## Examples
+
+      schema = Zoi.object(%{tags: Zoi.array(Zoi.string())}) |> Zoi.Form.prepare()
+      ctx = Zoi.Form.parse(schema, %{"tags" => ["a", "b", "c"]})
+      new_ctx = Zoi.Form.delete_at(ctx, "tags", 1)
+      # new_ctx.input["tags"] => ["a", "c"]
+  """
+  @spec delete_at(Zoi.Context.t(), binary() | atom(), non_neg_integer()) :: Zoi.Context.t()
+  def delete_at(%Zoi.Context{schema: schema} = ctx, field, index) do
+    field_str = to_string(field)
+    current_value = Map.get(ctx.input, field_str)
+    current_list = to_list(current_value)
+    updated_list = List.delete_at(current_list, index)
+    updated_input = Map.put(ctx.input, field_str, updated_list)
+
+    parse(schema, updated_input)
+  end
+
+  @doc """
+  Converts a value to a list, handling LiveView's numeric-key map format.
+
+  This is useful for reading array fields from forms where LiveView can send
+  arrays as maps with numeric keys like `%{"0" => %{}, "1" => %{}}`.
+
+  ## Examples
+
+      iex> Zoi.Form.to_list([1, 2, 3])
+      [1, 2, 3]
+
+      iex> Zoi.Form.to_list(%{"0" => "a", "1" => "b"})
+      ["a", "b"]
+
+      iex> Zoi.Form.to_list(%{})
+      []
+
+      iex> Zoi.Form.to_list(nil)
+      []
+  """
+  @spec to_list(list() | map() | nil) :: list()
+  def to_list(value) when is_list(value), do: value
+  def to_list(nil), do: []
+
+  def to_list(%{} = map) do
+    cond do
+      map == %{} ->
+        []
+
+      has_index_keys?(map) ->
+        map
+        |> Enum.filter(fn {key, _value} -> index_key?(key) end)
+        |> Enum.sort_by(fn {key, _value} -> parse_index(key) end)
+        |> Enum.map(fn {_key, value} -> value end)
+
+      true ->
+        [map]
+    end
+  end
+
+  defp has_index_keys?(map) do
+    Enum.any?(map, fn {key, _value} -> index_key?(key) end)
+  end
+
+  defp index_key?(key) when is_integer(key), do: true
+
+  defp index_key?(key) when is_binary(key) do
+    case Integer.parse(key) do
+      {_int, ""} -> true
+      _ -> false
+    end
+  end
+
+  defp index_key?(_), do: false
+
+  defp parse_index(key) when is_integer(key), do: key
+
+  defp parse_index(key) when is_binary(key) do
+    {int, _} = Integer.parse(key)
+    int
   end
 
   defp enhance_nested(%Zoi.Types.Object{} = obj), do: prepare(obj)

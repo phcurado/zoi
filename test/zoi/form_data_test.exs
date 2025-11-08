@@ -104,4 +104,110 @@ defmodule Zoi.FormDataTest do
     assert first_form.data[:postal_code] == 1000
     assert FormData.input_value(context, second_form, :postal_code) == "oops"
   end
+
+  test "normalizes LiveView maps with metadata into arrays" do
+    schema =
+      Zoi.object(%{
+        addresses:
+          Zoi.array(
+            Zoi.object(%{
+              label: Zoi.string(),
+              street: Zoi.string(),
+              zip: Zoi.integer(coerce: true)
+            })
+          )
+      })
+      |> Zoi.Form.prepare()
+
+    params = %{
+      "_target" => ["user", "profile", "name"],
+      "addresses" => %{
+        "_persistent_id" => "0",
+        "_unused_label" => "",
+        "_unused_street" => "",
+        "_unused_zip" => "",
+        "label" => "Home",
+        "street" => "Main",
+        "zip" => "1000"
+      }
+    }
+
+    context = Zoi.Form.parse(schema, params)
+    form = FormData.to_form(context, as: :user)
+    [address_form] = FormData.to_form(context, form, :addresses, [])
+
+    assert FormData.input_value(context, address_form, :label) == "Home"
+    assert FormData.input_value(context, address_form, :street) == "Main"
+    assert FormData.input_value(context, address_form, :zip) == "1000"
+    assert get_in(form.params, ["_target"]) == ["user", "profile", "name"]
+
+    assert form.params["addresses"] == %{
+             "_persistent_id" => "0",
+             "_unused_label" => "",
+             "_unused_street" => "",
+             "_unused_zip" => "",
+             "label" => "Home",
+             "street" => "Main",
+             "zip" => "1000"
+           }
+  end
+
+  test "preserves entry order when LiveView sends maps with numeric keys" do
+    schema =
+      Zoi.object(%{
+        addresses:
+          Zoi.array(
+            Zoi.object(%{
+              label: Zoi.string()
+            })
+          )
+      })
+      |> Zoi.Form.prepare()
+
+    params = %{
+      "addresses" => %{
+        "_persistent_id" => "ignored",
+        "1" => %{"label" => "Work"},
+        "0" => %{"label" => "Home"}
+      }
+    }
+
+    context = Zoi.Form.parse(schema, params)
+
+    form = FormData.to_form(context, as: :company)
+    address_forms = FormData.to_form(context, form, :addresses, [])
+
+    assert Enum.map(address_forms, &FormData.input_value(context, &1, :label)) == [
+             "Home",
+             "Work"
+           ]
+  end
+
+  test "keeps Phoenix helper params but still exposes nested values" do
+    schema =
+      Zoi.object(%{
+        tags: Zoi.array(Zoi.object(%{label: Zoi.string()}))
+      })
+      |> Zoi.Form.prepare()
+
+    params = %{
+      "tags" => %{
+        "_persistent_id" => "0",
+        "_unused_label" => "",
+        "label" => "Urgent"
+      }
+    }
+
+    context = Zoi.Form.parse(schema, params)
+    form = FormData.to_form(context, as: :task)
+    [tag_form] = FormData.to_form(context, form, :tags, [])
+
+    assert FormData.input_value(context, tag_form, :label) == "Urgent"
+
+    assert form.params["tags"] == %{
+             "_persistent_id" => "0",
+             "_unused_label" => "",
+             "label" => "Urgent"
+           }
+  end
 end

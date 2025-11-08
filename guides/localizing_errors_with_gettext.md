@@ -5,8 +5,7 @@
 - `message`: rendered string (good for logging)
 - `issue`: `{template, keyword}` tuple (perfect for translation)
 
-This guide shows how to use that data with `Gettext`, including a `.pot` template you can drop
-into your project.
+This guide shows how to use that data with `Gettext`, including a `.pot` template you can drop into your project.
 
 ## 1. Extract error messages
 
@@ -17,91 +16,158 @@ schema =
   Zoi.string()
   |> Zoi.refine(fn value ->
     if String.length(value) < 3 do
-      {:error, {"too short", []}}
+      {:error, {"too short, should be smaller than %{count}", [count: 3]}}
     else
       :ok
     end
   end)
 ```
 
-Built-in errors already come with templates such as
-`{"invalid type: expected %{type}", [type: :string]}`.
+`Zoi` will automatically build the `message` string by replacing `%{count}` with `3`. This way, you can leverage dynamic values in your error messages.
+This aligns with how `Gettext` handles error translations.
+For example, the built-in `Zoi.min/2` validator uses:
+
+```elixir
+{"too small: must have at least %{count} character(s)", [count: min]}
+```
+
+Let's use these built-in messages as examples for localization.
 
 ## 2. Build a translation helper
 
-Transform Zoi errors into translated strings by passing the template to `Gettext.dgettext/4`.
+Phoenix's `<.input>` component already translates errors automatically if you provide a `translate_error/1` function. Add this to your `CoreComponents` module:
 
 ```elixir
-defmodule MyAppWeb.ErrorTranslator do
-  import MyAppWeb.Gettext
+defmodule MyAppWeb.CoreComponents do
+  # ... existing code ...
 
-  def translate_error(%Zoi.Error{issue: {msg, opts}}) when is_binary(msg) do
-    dgettext("zoi", msg, Map.new(opts))
+  @doc """
+  Translates an error message using gettext.
+  """
+  def translate_error({msg, opts}) do
+    # Because error messages are generated dynamically, we need to
+    # call Gettext with our backend as first argument. Translations
+    # are available in the errors.po file (using the "errors" domain).
+    if count = opts[:count] do
+      Gettext.dngettext(MyAppWeb.Gettext, "errors", msg, msg, count, opts)
+    else
+      Gettext.dgettext(MyAppWeb.Gettext, "errors", msg, opts)
+    end
   end
 
-  def translate_error(%Zoi.Error{message: message}), do: message
-
-  def translate_errors(errors) do
-    Enum.map(errors, &translate_error/1)
+  @doc """
+  Translates all errors for a field from a keyword list.
+  """
+  def translate_errors(errors, field) when is_list(errors) do
+    for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
 end
 ```
 
-Now your controllers or LiveViews can return localized payloads:
+**Note**: Phoenix's `<.input>` component automatically calls `translate_error/1` on form errors, so you don't need to do anything special - just define the function and it works!
 
-```elixir
-with {:error, errors} <- Zoi.parse(schema, params) do
-  render(conn, :error, errors: MyAppWeb.ErrorTranslator.translate_errors(errors))
-end
-```
+## 3. Add error messages to your `.pot` file
 
-## 3. Sample `zoi.pot`
+Add the following entries to `priv/gettext/errors.pot` (or create it) to cover built-in Zoi errors.
 
-Create `priv/gettext/zoi.pot` (or run `mix gettext.extract` after adding references) with
-entries for the messages you care about:
+**Important**: The template strings must match **exactly** as Zoi generates them. Here are the most common ones:
 
-```
-msgid ""
-msgstr ""
-"Language: en\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-
-#: lib/my_app/accounts/user_schema.ex:12
-msgid "invalid type: expected %{type}"
+```pot
+## Required field errors
+msgid "is required"
 msgstr ""
 
-#: lib/my_app/accounts/user_schema.ex:34
+## String validation errors
 msgid "too small: must have at least %{count} character(s)"
+msgid_plural "too small: must have at least %{count} character(s)"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "too big: must have at most %{count} character(s)"
+msgid_plural "too big: must have at most %{count} character(s)"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "invalid length: must have %{count} character(s)"
+msgid_plural "invalid length: must have %{count} character(s)"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "invalid email format"
 msgstr ""
 
-#: lib/my_app/accounts/user_schema.ex:40
-msgid "unrecognized key: '%{key}'"
+## Integer/Number validation errors
+msgid "too small: must be at least %{count}"
+msgid_plural "too small: must be at least %{count}"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "too big: must be at most %{count}"
+msgid_plural "too big: must be at most %{count}"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "too small: must be greater than %{count}"
+msgid_plural "too small: must be greater than %{count}"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "too big: must be less than %{count}"
+msgid_plural "too big: must be less than %{count}"
+msgstr[0] ""
+msgstr[1] ""
+
+## Type errors
+msgid "invalid type: expected string"
 msgstr ""
+
+msgid "invalid type: expected integer"
+msgstr ""
+
+msgid "invalid type: expected boolean"
+msgstr ""
+
+msgid "invalid type: expected number"
+msgstr ""
+
+msgid "invalid type: expected array"
+msgstr ""
+
+## Format/Pattern errors
+msgid "invalid format: must be a valid URL"
+msgstr ""
+
+msgid "invalid UUID format"
+msgstr ""
+
+## Other common type errors (add as needed)
+# msgid "invalid type: expected date"
+# msgid "invalid type: expected datetime"
+# msgid "unrecognized key: '%{key}'"
 ```
 
-After running `mix gettext.merge priv/gettext`, you will get locale-specific `.po` files
-(`priv/gettext/es/LC_MESSAGES/zoi.po`, etc.) where you can provide translations:
+## 4. Extract and translate
 
-```
-msgid "invalid type: expected %{type}"
-msgstr "tipo inválido: era esperado %{type}"
-```
+Run the extraction command to propagate entries to your locale files:
 
-## 4. Wiring it to Phoenix forms
-
-When turning the context into a form, plug the translated errors into `form.errors`:
-
-```elixir
-context = Zoi.Form.parse(schema, params)
-form = Phoenix.Component.to_form(context, as: :user)
-
-translated =
-  Enum.map(form.errors, fn {field, {msg, opts}} ->
-    {field, dgettext("zoi", msg, Map.new(opts))}
-  end)
-
-assign(socket, form: %{form | errors: translated})
+```bash
+mix gettext.extract --merge
 ```
 
-Because Zoi always keeps the `issue` tuple, you control how and when translations happen—
-wearing minimal glue code and keeping your schema definitions clean.
+This creates/updates files like `priv/gettext/pt_BR/LC_MESSAGES/errors.po`. Edit those files to add translations:
+
+```po
+# priv/gettext/pt_BR/LC_MESSAGES/errors.po
+msgid "is required"
+msgstr "é obrigatório"
+
+msgid "invalid email format"
+msgstr "formato de email inválido"
+
+msgid "too small: must have at least %{count} character(s)"
+msgid_plural "too small: must have at least %{count} character(s)"
+msgstr[0] "muito curto: deve ter pelo menos %{count} caractere"
+msgstr[1] "muito curto: deve ter pelo menos %{count} caracteres"
+```
+
+**Tip**: Focus on translating the errors your application actually uses. You don't need to translate every possible Zoi error upfront.

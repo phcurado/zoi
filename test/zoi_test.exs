@@ -1387,10 +1387,14 @@ defmodule ZoiTest do
 
     test "array with coercion" do
       schema = Zoi.array(Zoi.string(), coerce: true)
+      # Numeric keys are converted to arrays
       assert {:ok, ["hello", "world"]} == Zoi.parse(schema, %{"0" => "hello", "1" => "world"})
       assert {:ok, ["1", "2", "3"]} == Zoi.parse(schema, ["1", "2", "3"])
-      assert {:ok, ["hello", "world"]} == Zoi.parse(schema, %{a: "hello", b: "world"})
       assert {:ok, ["1", "2"]} == Zoi.parse(schema, {"1", "2"})
+
+      # Maps with non-numeric keys are not treated as arrays
+      assert {:error, [%Zoi.Error{code: :invalid_type, path: [0]}]} =
+               Zoi.parse(schema, %{a: "hello", b: "world"})
     end
 
     test "array with incorrect value" do
