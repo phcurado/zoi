@@ -13,7 +13,7 @@ Wrap your object schema with `Zoi.Form.enhance/1` so every field coerces string 
 
 ```elixir
 defmodule MyAppWeb.AccountForm do
-  @user_schema \
+  @user_schema
     Zoi.object(%{
       profile: Zoi.object(%{
         name: Zoi.string() |> Zoi.min(3),

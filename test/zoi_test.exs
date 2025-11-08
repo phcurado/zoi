@@ -460,6 +460,20 @@ defmodule ZoiTest do
       assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{name: nil})
       assert {:ok, %{name: "John_refined"}} == Zoi.parse(schema, %{name: "John"})
     end
+
+    test "default with refinement" do
+      schema =
+        Zoi.default(
+          Zoi.string() |> Zoi.starts_with("prefix_"),
+          "prefix_default"
+        )
+
+      assert {:ok, "prefix_default"} == Zoi.parse(schema, nil)
+      assert {:ok, "prefix_value"} == Zoi.parse(schema, "prefix_value")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "wrong_value")
+      assert Exception.message(error) == "invalid format: must start with 'prefix_'"
+    end
   end
 
   describe "union/2" do

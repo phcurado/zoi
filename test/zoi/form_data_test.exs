@@ -11,7 +11,7 @@ defmodule Zoi.FormDataTest do
           bio: Zoi.string() |> Zoi.max(100)
         })
     })
-    |> Zoi.Form.enhance()
+    |> Zoi.Form.prepare()
   end
 
   test "keeps params when validations fail" do
@@ -46,7 +46,7 @@ defmodule Zoi.FormDataTest do
             })
           )
       })
-      |> Zoi.Form.enhance()
+      |> Zoi.Form.prepare()
 
     params = %{
       "addresses" => [
@@ -84,7 +84,7 @@ defmodule Zoi.FormDataTest do
             })
           )
       })
-      |> Zoi.Form.enhance()
+      |> Zoi.Form.prepare()
 
     params = %{
       "addresses" => [

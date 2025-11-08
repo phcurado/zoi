@@ -17,8 +17,8 @@ defmodule Zoi.Form do
   into their target type and sets the empty values to `nil` and `""`, matching how
   Phoenix sends form inputs.
   """
-  @spec enhance(Zoi.Types.Object.t()) :: Zoi.Types.Object.t()
-  def enhance(%Zoi.Types.Object{} = obj) do
+  @spec prepare(Zoi.Type.t()) :: Zoi.Type.t()
+  def prepare(%Zoi.Types.Object{} = obj) do
     enhanced_fields =
       Enum.map(obj.fields, fn {key, type} ->
         {key, enhance_nested(type)}
@@ -44,7 +44,7 @@ defmodule Zoi.Form do
     Zoi.Context.parse(ctx, opts)
   end
 
-  defp enhance_nested(%Zoi.Types.Object{} = obj), do: enhance(obj)
+  defp enhance_nested(%Zoi.Types.Object{} = obj), do: prepare(obj)
   defp enhance_nested(%Zoi.Types.Keyword{} = keyword), do: enhance_keyword(keyword)
 
   defp enhance_nested(%Zoi.Types.Array{} = array) do
