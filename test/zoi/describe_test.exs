@@ -44,6 +44,33 @@ defmodule Zoi.DescribeTest do
       assert Zoi.describe(schema) == formatted_description
     end
 
+    test "describe for struct schema" do
+      defmodule User do
+        defstruct [:name]
+      end
+
+      schema =
+        Zoi.struct(User, %{
+          name: Zoi.string(description: "The name of the struct.")
+        })
+
+      formatted_description = """
+      * `:name` (`t:String.t/0`) - Required. The name of the struct.
+      """
+
+      assert Zoi.describe(schema) == formatted_description
+    end
+
+    test "describe should raise for unsupported schemas" do
+      schema = Zoi.array(Zoi.integer())
+
+      assert_raise ArgumentError,
+                   "Zoi.describe/1 only supports describing keyword, object and struct schemas",
+                   fn ->
+                     Zoi.describe(schema)
+                   end
+    end
+
     test "describe for nested schemas" do
       schema =
         Zoi.object(%{

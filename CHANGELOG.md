@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.10.1 - 2025-11-09
+
+### Added
+
+- `Zoi.describe/1` now supports `Zoi.struct/2` type.
+
 ## 0.10.0 - 2025-11-09
 
 ### Added

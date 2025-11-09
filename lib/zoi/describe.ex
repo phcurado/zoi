@@ -73,7 +73,7 @@ defmodule Zoi.Describe do
         # ...
       end
 
-  The same pattern will work for `Zoi.object/2` schemas as well, since you may also use them to define a structured map input.
+  The same pattern will work for `Zoi.object/2` and `Zoi.struct/3` schemas as well, since you may also use them to define a structured map input.
 
       schema = Zoi.object(%{
         name: Zoi.email(description: "The email address."), 
@@ -97,6 +97,15 @@ defmodule Zoi.Describe do
 
   def generate(%Zoi.Types.Object{fields: fields}) do
     Enum.map_join(fields, "\n\n", &parse_field/1) <> "\n"
+  end
+
+  def generate(%Zoi.Types.Struct{fields: fields}) do
+    Enum.map_join(fields, "\n\n", &parse_field/1) <> "\n"
+  end
+
+  def generate(_schema) do
+    raise ArgumentError,
+          "Zoi.describe/1 only supports describing keyword, object and struct schemas"
   end
 
   defp parse_field({key, schema}) do
