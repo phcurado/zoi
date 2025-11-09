@@ -107,6 +107,7 @@ defmodule Zoi.Form do
       [map]
     end
   end
+
   defp has_numeric_keys?(map) do
     Enum.any?(map, fn {key, _value} -> numeric_key?(key) end)
   end

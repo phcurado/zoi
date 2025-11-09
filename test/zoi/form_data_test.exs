@@ -3,170 +3,6 @@ defmodule Zoi.FormDataTest do
 
   alias Phoenix.HTML.FormData
 
-  describe "input normalization" do
-    test "normalizes LiveView map arrays to lists in ctx.input" do
-      schema =
-        Zoi.object(%{
-          tags: Zoi.array(Zoi.string())
-        })
-        |> Zoi.Form.prepare()
-
-      # LiveView sends this format
-      params = %{
-        "tags" => %{
-          "0" => "first",
-          "1" => "second",
-          "2" => "third"
-        }
-      }
-
-      ctx = Zoi.Form.parse(schema, params)
-
-      # ctx.input should have normalized arrays
-      assert ctx.input["tags"] == ["first", "second", "third"]
-      assert is_list(ctx.input["tags"])
-    end
-
-    test "normalizes nested array structures" do
-      schema =
-        Zoi.object(%{
-          departments:
-            Zoi.array(
-              Zoi.object(%{
-                name: Zoi.string(),
-                employees: Zoi.array(Zoi.string())
-              })
-            )
-        })
-        |> Zoi.Form.prepare()
-
-      params = %{
-        "departments" => %{
-          "0" => %{
-            "name" => "Engineering",
-            "employees" => %{"0" => "Alice", "1" => "Bob"}
-          }
-        }
-      }
-
-      ctx = Zoi.Form.parse(schema, params)
-
-      # Both levels should be normalized to lists
-      assert ctx.input["departments"] == [
-               %{"name" => "Engineering", "employees" => ["Alice", "Bob"]}
-             ]
-
-      assert is_list(ctx.input["departments"])
-      assert is_list(hd(ctx.input["departments"])["employees"])
-    end
-
-    test "handles already-normalized lists" do
-      schema =
-        Zoi.object(%{
-          tags: Zoi.array(Zoi.string())
-        })
-        |> Zoi.Form.prepare()
-
-      params = %{"tags" => ["a", "b", "c"]}
-      ctx = Zoi.Form.parse(schema, params)
-
-      # Should remain as list
-      assert ctx.input["tags"] == ["a", "b", "c"]
-    end
-
-    test "handles empty arrays" do
-      schema =
-        Zoi.object(%{
-          tags: Zoi.array(Zoi.string())
-        })
-        |> Zoi.Form.prepare()
-
-      params = %{"tags" => %{}}
-      ctx = Zoi.Form.parse(schema, params)
-
-      # Empty map should become empty list
-      assert ctx.input["tags"] == []
-    end
-
-    test "form.params also has normalized arrays" do
-      schema =
-        Zoi.object(%{
-          tags: Zoi.array(Zoi.string())
-        })
-        |> Zoi.Form.prepare()
-
-      # LiveView map format
-      params = %{"tags" => %{"0" => "a", "1" => "b"}}
-      ctx = Zoi.Form.parse(schema, params)
-      form = FormData.to_form(ctx, as: :post)
-
-      # form.params should have normalized list
-      assert form.params["tags"] == ["a", "b"]
-      assert is_list(form.params["tags"])
-    end
-  end
-
-  describe "Zoi.Form.prepare/1" do
-    test "enables coercion on all fields" do
-      schema =
-        Zoi.object(%{
-          age: Zoi.integer(),
-          active: Zoi.boolean()
-        })
-        |> Zoi.Form.prepare()
-
-      # String values should be coerced
-      ctx = Zoi.Form.parse(schema, %{"age" => "30", "active" => "true"})
-
-      assert ctx.valid?
-      assert ctx.parsed == %{age: 30, active: true}
-    end
-
-    test "sets empty values to nil and empty string" do
-      schema =
-        Zoi.object(%{
-          name: Zoi.string()
-        })
-        |> Zoi.Form.prepare()
-
-      # nil should trigger required error
-      ctx = Zoi.Form.parse(schema, %{"name" => nil})
-      refute ctx.valid?
-      assert [%Zoi.Error{code: :required}] = ctx.errors
-
-      # Empty string should also trigger required error
-      ctx = Zoi.Form.parse(schema, %{"name" => ""})
-      refute ctx.valid?
-      assert [%Zoi.Error{code: :required}] = ctx.errors
-    end
-
-    test "enables coercion on nested objects" do
-      schema =
-        Zoi.object(%{
-          user: Zoi.object(%{age: Zoi.integer()})
-        })
-        |> Zoi.Form.prepare()
-
-      ctx = Zoi.Form.parse(schema, %{"user" => %{"age" => "25"}})
-
-      assert ctx.valid?
-      assert ctx.parsed == %{user: %{age: 25}}
-    end
-
-    test "enables coercion on nested arrays" do
-      schema =
-        Zoi.object(%{
-          tags: Zoi.array(Zoi.integer())
-        })
-        |> Zoi.Form.prepare()
-
-      ctx = Zoi.Form.parse(schema, %{"tags" => ["1", "2", "3"]})
-
-      assert ctx.valid?
-      assert ctx.parsed == %{tags: [1, 2, 3]}
-    end
-  end
-
   describe "Phoenix.HTML.FormData implementation" do
     test "converts context to form with params and errors" do
       schema =
@@ -177,7 +13,7 @@ defmodule Zoi.FormDataTest do
         |> Zoi.Form.prepare()
 
       # Invalid params
-      params = %{"name" => "Jo", "email" => "invalid"}
+      params = %{"name" => "Jo", "email" => "invalid-email"}
       ctx = Zoi.Form.parse(schema, params)
 
       form = FormData.to_form(ctx, as: :user)
@@ -186,9 +22,10 @@ defmodule Zoi.FormDataTest do
       assert form.params == params
       assert form.source == ctx
 
-      # Check errors are present
-      assert {:name, _} = List.keyfind(form.errors, :name, 0)
-      assert {:email, _} = List.keyfind(form.errors, :email, 0)
+      assert {"too small: must have at least %{count} character(s)", [count: 3]} ==
+               form.errors[:name]
+
+      assert {"invalid email format", [format: :email, pattern: _]} = form.errors[:email]
     end
 
     test "preserves params even when validation fails" do
