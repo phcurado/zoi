@@ -114,10 +114,10 @@ if Code.ensure_loaded?(Phoenix.HTML) do
     end
 
     # Convert various data structures to lists for form iteration
-    # Handles LiveView's numeric-key maps and Phoenix metadata keys
+    # Handles Form's numeric-key maps and Phoenix metadata keys
     defp list_or_empty_maps(list) when is_list(list), do: list
 
-    defp list_or_empty_maps(%{} = map) do
+    defp list_or_empty_maps(map) when is_map(map) do
       cond do
         map == %{} ->
           []

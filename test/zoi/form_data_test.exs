@@ -105,7 +105,28 @@ defmodule Zoi.FormDataTest do
       form = FormData.to_form(ctx, as: :user)
       [profile_form] = FormData.to_form(ctx, form, :profile, [])
 
-      assert {:bio, _} = List.keyfind(profile_form.errors, :bio, 0)
+      assert {"too big: must have at most %{count} character(s)", [count: 10]} ==
+               profile_form.errors[:bio]
+    end
+
+    test "nested object with array params" do
+      schema =
+        Zoi.object(%{
+          profile:
+            Zoi.object(%{
+              bio: Zoi.string() |> Zoi.max(10)
+            })
+        })
+        |> Zoi.Form.prepare()
+
+      params = [%{"profile" => %{"bio" => "Hello"}}]
+      ctx = Zoi.Form.parse(schema, params)
+      form = FormData.to_form(ctx, as: :users)
+
+      [first_user_form] = FormData.to_form(ctx, form, 0, [])
+      [profile_form] = FormData.to_form(ctx, first_user_form, :profile, [])
+
+      refute FormData.input_value(ctx, profile_form, :bio)
     end
   end
 
@@ -189,13 +210,15 @@ defmodule Zoi.FormDataTest do
       form = FormData.to_form(ctx, as: :user)
       [first_form, second_form] = FormData.to_form(ctx, form, :addresses, [])
 
-      # First form should have street error only
-      assert {:street, _} = List.keyfind(first_form.errors, :street, 0)
-      refute List.keyfind(first_form.errors, :zip, 0)
+      assert {"too small: must have at least %{count} character(s)", [count: 5]} =
+               first_form.errors[:street]
 
-      # Second form should have both errors
-      assert {:street, _} = List.keyfind(second_form.errors, :street, 0)
-      assert {:zip, _} = List.keyfind(second_form.errors, :zip, 0)
+      refute first_form.errors[:zip]
+
+      assert {"invalid type: expected integer", [type: :integer]} = second_form.errors[:zip]
+
+      assert {"too small: must have at least %{count} character(s)", [count: 5]} =
+               second_form.errors[:street]
     end
   end
 
@@ -240,7 +263,7 @@ defmodule Zoi.FormDataTest do
     end
   end
 
-  describe "LiveView numeric key map format" do
+  describe "form numeric key map format" do
     test "handles maps with numeric string keys" do
       schema =
         Zoi.object(%{
