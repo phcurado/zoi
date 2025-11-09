@@ -38,8 +38,7 @@ defmodule Zoi.Context do
   @spec parse(t(), opts :: Zoi.options()) :: t()
   def parse(%__MODULE__{} = ctx, opts \\ []) do
     with {:ok, ctx} <- parse_type(ctx, opts),
-         {:ok, ctx} <- run_transforms(ctx),
-         {:ok, ctx} <- run_refinements(ctx) do
+         {:ok, ctx} <- run_effects(ctx) do
       %{ctx | valid?: true}
     else
       {:error, ctx} -> ctx
@@ -59,20 +58,10 @@ defmodule Zoi.Context do
     end
   end
 
-  defp run_transforms(ctx) do
-    case Meta.run_transforms(ctx) do
+  defp run_effects(ctx) do
+    case Meta.run_effects(ctx) do
       {:ok, result} ->
         {:ok, add_parsed(ctx, result)}
-
-      {:error, error} ->
-        {:error, add_error(ctx, error)}
-    end
-  end
-
-  defp run_refinements(ctx) do
-    case Meta.run_refinements(ctx) do
-      {:ok, _refined_result} ->
-        {:ok, ctx}
 
       {:error, error} ->
         {:error, add_error(ctx, error)}

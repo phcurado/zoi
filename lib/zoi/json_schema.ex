@@ -255,9 +255,16 @@ defmodule Zoi.JSONSchema do
     raise "Encoding not implemented for schema: #{inspect(schema)}"
   end
 
-  defp encode_refinements(encoded_schema, %Meta{refinements: []}), do: encoded_schema
+  defp encode_refinements(encoded_schema, %Meta{effects: []}), do: encoded_schema
 
-  defp encode_refinements(encoded_schema, %Meta{refinements: refinements}) do
+  defp encode_refinements(encoded_schema, %Meta{effects: effects}) do
+    # Extract only refinements from effects (ignore transforms)
+    refinements =
+      Enum.flat_map(effects, fn
+        {:refine, refinement} -> [refinement]
+        {:transform, _transform} -> []
+      end)
+
     # Separate regex refinements from others
     {regex_refinements, other_refinements} =
       Enum.split_with(refinements, fn

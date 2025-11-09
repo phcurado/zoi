@@ -127,11 +127,21 @@ defmodule Zoi do
 
   ## Architecture Summary
 
-  Basically `Zoi` is built around a core parsing, running valitations and transformations in order to achieve the final parsed output. The parsing sequence is summarized by the diagram below:
+  Basically `Zoi` is built around a core parsing, running validations and transformations in order to achieve the final parsed output. The parsing sequence is summarized by the diagram below:
 
   ```mermaid
   flowchart LR
-  ui(Unknwon Input) --> parse(Zoi.parse/2) -->  transform(Zoi.transform/2) --> refine(Zoi.refine/2) --> output(Parsed Output)
+  ui(Unknown Input) --> parse(Parse Type) --> effects(Effects: transforms & refines in chain order) --> output(Parsed Output)
+  ```
+
+  Effects (transforms and refines) execute in the order they are chained, allowing flexible composition:
+
+  ```elixir
+  Zoi.string()
+  |> Zoi.min(3)                      # refine
+  |> Zoi.transform(&String.trim/1)   # transform
+  |> Zoi.refine(fn s -> ... end)     # refine
+  |> Zoi.transform(&String.upcase/1) # transform
   ```
   """
 
@@ -2138,7 +2148,8 @@ defmodule Zoi do
   @doc ~S"""
   Adds a custom validation function to the schema.
 
-  This function will be called with the input data and options, and should return `:ok` for valid data or `{:error, reason}` for invalid data.
+  Refinements execute in chain order along with transformations, allowing flexible composition.
+  The refinement function validates the data at its position in the chain and should return `:ok` for valid data or `{:error, reason}` for invalid data.
 
       iex> schema = Zoi.string() |> Zoi.refine(fn value -> 
       ...>   if String.length(value) > 5, do: :ok, else: {:error, "must be longer than 5 characters"}
@@ -2227,15 +2238,16 @@ defmodule Zoi do
   end
 
   def refine(schema, fun) do
-    update_in(schema.meta.refinements, fn transforms ->
-      transforms ++ [fun]
+    update_in(schema.meta.effects, fn effects ->
+      effects ++ [{:refine, fun}]
     end)
   end
 
   @doc """
   Adds a transformation function to the schema.
 
-  This function will be applied to the input data after parsing but before validations.
+  Transformations execute in chain order along with refinements, allowing flexible composition.
+  A transform modifies the data and passes the result to the next effect in the chain.
 
   ## Example
 
@@ -2297,7 +2309,10 @@ defmodule Zoi do
   def transform(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
-        transform(sub_schema, fun)
+        # Prepend transform to run before existing refinements
+        update_in(sub_schema.meta.effects, fn effects ->
+          [{:transform, fun} | effects]
+        end)
       end)
 
     %{schema | schemas: schemas}
@@ -2306,15 +2321,18 @@ defmodule Zoi do
   def transform(%Zoi.Types.Intersection{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
-        transform(sub_schema, fun)
+        # Prepend transform to run before existing refinements
+        update_in(sub_schema.meta.effects, fn effects ->
+          [{:transform, fun} | effects]
+        end)
       end)
 
     %{schema | schemas: schemas}
   end
 
   def transform(schema, fun) do
-    update_in(schema.meta.transforms, fn transforms ->
-      transforms ++ [fun]
+    update_in(schema.meta.effects, fn effects ->
+      effects ++ [{:transform, fun}]
     end)
   end
 end
