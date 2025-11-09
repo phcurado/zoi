@@ -1501,6 +1501,29 @@ defmodule Zoi.FormDataTest do
       # Should prefer string key
       assert FormData.input_value(ctx, form_with_both, :name) == "string_value"
     end
+
+    test "falls back to input with atom keys when field not in params or parsed" do
+      schema =
+        Zoi.object(%{
+          name: Zoi.string()
+        })
+        |> Zoi.Form.prepare()
+
+      # Manually construct context with atom keys in input (unusual but possible)
+      ctx = %Zoi.Context{
+        schema: schema,
+        input: %{name: "from_input_atom"},
+        parsed: %{other: "field"},
+        errors: [],
+        valid?: true
+      }
+
+      # Create form with params that don't have the field
+      form = %{FormData.to_form(ctx, as: :user) | params: %{"other" => "value"}}
+
+      # Should fall back to ctx.input with atom key (line 193)
+      assert FormData.input_value(ctx, form, :name) == "from_input_atom"
+    end
   end
 
   describe "non-standard field types" do
@@ -1560,6 +1583,50 @@ defmodule Zoi.FormDataTest do
       first_dept = List.first(dept_forms)
       team_forms = FormData.to_form(ctx, first_dept, :teams, [])
       assert is_list(team_forms)
+    end
+  end
+
+  describe "array_field_inner? with non-array Default types" do
+    test "detects non-array fields wrapped in Default" do
+      schema =
+        Zoi.object(%{
+          name: Zoi.string() |> Zoi.default(""),
+          tags: Zoi.array(Zoi.string()) |> Zoi.default([])
+        })
+        |> Zoi.Form.prepare()
+
+      ctx = Zoi.Form.parse(schema, %{"name" => "test", "tags" => ["a", "b"]})
+      form = FormData.to_form(ctx, as: :post)
+
+      # :name is Default<String>, should create single form (not array)
+      name_forms = FormData.to_form(ctx, form, :name, [])
+      assert length(name_forms) == 1
+
+      # :tags is Default<Array>, should create multiple forms
+      tag_forms = FormData.to_form(ctx, form, :tags, [])
+      assert length(tag_forms) == 2
+    end
+  end
+
+  describe "list_or_empty_maps with non-list non-empty maps" do
+    test "wraps single map in list for nested forms" do
+      schema =
+        Zoi.object(%{
+          items: Zoi.array(Zoi.object(%{name: Zoi.string()}))
+        })
+        |> Zoi.Form.prepare()
+
+      ctx = Zoi.Form.parse(schema, %{"items" => []})
+      form = FormData.to_form(ctx, as: :data)
+
+      # Manually construct parent form with non-list, non-empty map params
+      # This simulates edge case where params weren't normalized
+      form_with_map = %{form | params: %{"items" => %{"name" => "test"}}}
+
+      # Should wrap the single map in a list
+      item_forms = FormData.to_form(ctx, form_with_map, :items, [])
+      assert length(item_forms) == 1
+      assert List.first(item_forms).params == %{"name" => "test"}
     end
   end
 end

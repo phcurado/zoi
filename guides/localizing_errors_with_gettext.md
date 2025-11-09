@@ -35,11 +35,11 @@ Let's use these built-in messages as examples for localization.
 
 ## 2. Build a translation helper
 
-Phoenix's `<.input>` component already translates errors automatically if you provide a `translate_error/1` function. Add this to your `CoreComponents` module:
+Phoenix's `<.input>` component already translates errors automatically if you provide a `translate_error/1` function in your `CoreComponents` module:
 
 ```elixir
 defmodule MyAppWeb.CoreComponents do
-  # ... existing code ...
+  # ... Components
 
   @doc """
   Translates an error message using gettext.
@@ -64,7 +64,7 @@ defmodule MyAppWeb.CoreComponents do
 end
 ```
 
-**Note**: Phoenix's `<.input>` component automatically calls `translate_error/1` on form errors, so you don't need to do anything special - just define the function and it works!
+So no changes are required in your phoenix application. If you are not using Phoenix, create a similar helper function to translate errors using `Gettext`.
 
 ## 3. Add error messages to your `.pot` file
 
@@ -159,7 +159,7 @@ This creates/updates files like `priv/gettext/pt_BR/LC_MESSAGES/errors.po`. Edit
 ```po
 # priv/gettext/pt_BR/LC_MESSAGES/errors.po
 msgid "is required"
-msgstr "é obrigatório"
+msgstr "campo obrigatório"
 
 msgid "invalid email format"
 msgstr "formato de email inválido"
@@ -170,4 +170,4 @@ msgstr[0] "muito curto: deve ter pelo menos %{count} caractere"
 msgstr[1] "muito curto: deve ter pelo menos %{count} caracteres"
 ```
 
-**Tip**: Focus on translating the errors your application actually uses. You don't need to translate every possible Zoi error upfront.
+**Tip**: Focus on translating the errors your application actually uses. You don't need to translate every possible `Zoi` error upfront.

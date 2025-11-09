@@ -114,28 +114,10 @@ if Code.ensure_loaded?(Phoenix.HTML) do
     end
 
     # Convert various data structures to lists for form iteration
-    # Handles Form's numeric-key maps and Phoenix metadata keys
+    # Note: Maps with numeric keys are already converted to lists by Zoi.Form.parse
     defp list_or_empty_maps(list) when is_list(list), do: list
-
-    defp list_or_empty_maps(map) when is_map(map) do
-      cond do
-        map == %{} ->
-          []
-
-        has_numeric_keys?(map) ->
-          # Extract and sort numeric keys, ignoring metadata like "_persistent_id"
-          map
-          |> Enum.filter(fn {key, _value} -> index_key?(key) end)
-          |> Enum.map(fn {key, value} -> {parse_index(key), value} end)
-          |> Enum.sort_by(&elem(&1, 0))
-          |> Enum.map(&elem(&1, 1))
-
-        true ->
-          # Single map becomes single-item list
-          [map]
-      end
-    end
-
+    defp list_or_empty_maps(%{} = map) when map_size(map) == 0, do: []
+    defp list_or_empty_maps(map) when is_map(map), do: [map]
     defp list_or_empty_maps(_), do: []
 
     defp ensure_map(%{} = m, _fallback), do: m
@@ -212,28 +194,6 @@ if Code.ensure_loaded?(Phoenix.HTML) do
       end)
     end
 
-    defp has_numeric_keys?(map) do
-      Enum.any?(map, fn {key, _value} -> index_key?(key) end)
-    end
-
-    defp index_key?(key) when is_integer(key), do: true
-
-    defp index_key?(key) when is_binary(key) do
-      case Integer.parse(key) do
-        {_int, ""} -> true
-        _ -> false
-      end
-    end
-
-    defp index_key?(_), do: false
-
-    defp parse_index(key) when is_integer(key), do: key
-
-    defp parse_index(key) when is_binary(key) do
-      {int, _} = Integer.parse(key)
-      int
-    end
-
     # Determine if a field in the object schema is an array type
     # This is crucial for deciding whether to create multiple forms (array) or single form (object)
     defp array_field?(%Zoi.Types.Object{fields: fields}, field) when is_atom(field) do
@@ -246,8 +206,8 @@ if Code.ensure_loaded?(Phoenix.HTML) do
 
     defp array_field?(_, _), do: false
 
-    # Get field schema from fields (handles both map and keyword list structures)
-    defp get_field_schema(fields, field) when is_map(fields), do: Map.get(fields, field)
+    # Get field schema from fields (keyword list structure)
+    # Note: Object fields are always stored as a list after construction
     defp get_field_schema(fields, field) when is_list(fields), do: Keyword.get(fields, field)
 
     # Recursively check if inner type is an array (for wrapped types like Default)

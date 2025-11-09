@@ -204,7 +204,7 @@ iex> Zoi.parse(schema, :hi)
 
 ## Phoenix forms
 
-`Zoi` works seamlessly with Phoenix forms through the `Phoenix.HTML.FormData` protocol:
+    `Zoi` works seamlessly with Phoenix forms through the `Phoenix.HTML.FormData` protocol:
 
 ```elixir
 # Define schema inline - no separate module needed!
@@ -213,7 +213,13 @@ iex> Zoi.parse(schema, :hi)
   email: Zoi.email()
 }) |> Zoi.Form.prepare()
 
-# Use in templates with nested collections
+# Parse and render (just like changesets!)
+ctx = Zoi.Form.parse(@user_schema, params)
+form = to_form(ctx, as: :user)
+
+socket |> assign(:form, form)
+
+# Use in your forms
 ~H"""
 <.form for={@form} phx-submit="save">
   <.input field={@form[:name]} label="Name" />
@@ -223,17 +229,12 @@ iex> Zoi.parse(schema, :hi)
   </div>
 </.form>
 """
-
-# Parse and render (just like changesets!)
-ctx = Zoi.Form.parse(@user_schema, params)
-form = to_form(ctx, as: :user)
-
-socket |> assign(:form, form)
 ```
 
-👉 See **[Rendering forms with Phoenix](guides/rendering_forms_with_phoenix.md)** for a complete LiveView example with dynamic arrays.
+https://hexdocs.pm/zoi/generating_schemas_from_json_example.html
 
-👉 See **[Localizing errors with Gettext](guides/localizing_errors_with_gettext.md)** for translation support.
+- See **[Rendering forms with Phoenix](https://hexdocs.pm/zoi/rendering_forms_with_phoenix.html)** for a complete LiveView example.
+- See **[Localizing errors with Gettext](https://hexdocs.pm/zoi/localizing_errors_with_gettext.html)** for translation support.
 
 ### Metadata
 

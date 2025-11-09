@@ -258,12 +258,3 @@ defp save_user(socket, :edit, attrs) do
   end
 end
 ```
-
-## Key Takeaways
-
-- **Just like changesets:** Store only the `form` in assigns - all data is accessible through `form.params`
-- **Simple workflow:** Parse params → check `valid?` → use `parsed` data
-- **No changesets needed:** Zoi handles validation and type coercion automatically
-- **Arrays just work:** `form.params` always has normalized lists - use standard list operations like `++` and `List.delete_at/2`
-- **Partial parsing:** When some array items fail validation, valid items are preserved in `ctx.parsed`
-- **Dynamic forms:** Update `form.params` and re-parse - no special helpers needed
