@@ -211,8 +211,6 @@ defmodule Zoi.Inspect do
   end
 
   defp add_extra(opts, opts_to_add) do
-    Keyword.update(opts, :extra_fields, opts_to_add, fn existing ->
-      existing ++ opts_to_add
-    end)
+    Keyword.put(opts, :extra_fields, opts_to_add)
   end
 end

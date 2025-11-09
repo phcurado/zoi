@@ -71,4 +71,12 @@ defmodule Zoi.InspectTest do
 
     assert inspect(type) == expected
   end
+
+  test "inspect type with description metadata" do
+    type = Zoi.string(description: "A test string")
+
+    expected = "#Zoi.string<description: \"A test string\", coerce: false>"
+
+    assert inspect(type) == expected
+  end
 end

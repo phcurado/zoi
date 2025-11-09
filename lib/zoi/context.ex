@@ -37,33 +37,45 @@ defmodule Zoi.Context do
   @doc false
   @spec parse(t(), opts :: Zoi.options()) :: t()
   def parse(%__MODULE__{} = ctx, opts \\ []) do
+    with {:ok, ctx} <- parse_type(ctx, opts),
+         {:ok, ctx} <- run_transforms(ctx),
+         {:ok, ctx} <- run_refinements(ctx) do
+      %{ctx | valid?: true}
+    else
+      {:error, ctx} -> ctx
+    end
+  end
+
+  defp parse_type(ctx, opts) do
     case Zoi.Type.parse(ctx.schema, ctx.input, opts) do
       {:ok, result} ->
-        ctx = add_parsed(ctx, result)
-
-        case Meta.run_transforms(ctx) do
-          {:ok, result} ->
-            ctx = add_parsed(ctx, result)
-
-            case Meta.run_refinements(ctx) do
-              {:ok, _refined_result} ->
-                %{ctx | valid?: true}
-
-              {:error, error} ->
-                add_error(ctx, error)
-            end
-
-          {:error, error} ->
-            add_error(ctx, error)
-        end
+        {:ok, add_parsed(ctx, result)}
 
       {:error, error} ->
-        add_error(ctx, error)
+        {:error, add_error(ctx, error)}
 
       {:error, error, partial} ->
-        ctx
-        |> add_parsed(partial)
-        |> add_error(error)
+        {:error, ctx |> add_parsed(partial) |> add_error(error)}
+    end
+  end
+
+  defp run_transforms(ctx) do
+    case Meta.run_transforms(ctx) do
+      {:ok, result} ->
+        {:ok, add_parsed(ctx, result)}
+
+      {:error, error} ->
+        {:error, add_error(ctx, error)}
+    end
+  end
+
+  defp run_refinements(ctx) do
+    case Meta.run_refinements(ctx) do
+      {:ok, _refined_result} ->
+        {:ok, ctx}
+
+      {:error, error} ->
+        {:error, add_error(ctx, error)}
     end
   end
 

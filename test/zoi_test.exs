@@ -1596,6 +1596,18 @@ defmodule ZoiTest do
     end
   end
 
+  describe "list/2" do
+    test "list/2 works as alias for array/2" do
+      schema = Zoi.list(Zoi.string())
+      assert {:ok, ["a", "b", "c"]} = Zoi.parse(schema, ["a", "b", "c"])
+    end
+
+    test "list/2 accepts options like array/2" do
+      schema = Zoi.list(Zoi.integer(), coerce: true)
+      assert {:ok, [1, 2, 3]} = Zoi.parse(schema, {1, 2, 3})
+    end
+  end
+
   describe "enum/2" do
     test "enum with atom key" do
       schema = Zoi.enum([:apple, :banana, :cherry])

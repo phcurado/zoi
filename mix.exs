@@ -76,9 +76,41 @@ defmodule Zoi.MixProject do
       source_url: @source_url,
       groups_for_extras: groups_for_extras(),
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
-      extras: extras()
+      extras: extras(),
+      before_closing_body_tag: &before_closing_body_tag/1
     ]
   end
+
+  defp before_closing_body_tag(:html) do
+    """
+    <script defer src="https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.min.js"></script>
+    <script>
+      let initialized = false;
+
+      window.addEventListener("exdoc:loaded", () => {
+        if (!initialized) {
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: document.body.className.includes("dark") ? "dark" : "default"
+          });
+          initialized = true;
+        }
+
+        let id = 0;
+        for (const codeEl of document.querySelectorAll("pre code.mermaid")) {
+          const graphDefinition = codeEl.textContent;
+          const graphId = "mermaid-graph-" + id++;
+          mermaid.render(graphId, graphDefinition).then(({svg, bindFunctions}) => {
+            codeEl.innerHTML = svg;
+            bindFunctions?.(codeEl);
+          });
+        }
+      });
+    </script>
+    """
+  end
+
+  defp before_closing_body_tag(_), do: ""
 
   defp extras do
     [

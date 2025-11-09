@@ -12,6 +12,11 @@ All notable changes to this project will be documented in this file.
 - Keyword schemas defined with another schema as the value now keep the successfully parsed entries even if a sibling entry fails validation.
 - `Zoi.Form.prepare/1` now forces coercion on every nested field so Phoenix form strings are cast into their target types automatically.
 - `Zoi.Form.parse/2` automatically normalizes LiveView's map-based array format (with numeric string keys) into regular lists in `ctx.input`, eliminating the need for manual conversion when manipulating array fields dynamically.
+- Architecture diagram in main module documentation (`Zoi`) showing the parsing flow and validation pipeline with Mermaid visualization.
+
+### Changed
+
+- Achieved 100% test coverage across the entire codebase (previously 99.8%).
 
 ## 0.9.1 - 2025-11-06
 
