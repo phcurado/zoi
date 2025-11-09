@@ -623,14 +623,9 @@ defmodule ZoiTest do
           Zoi.string() |> Zoi.starts_with("prefix_"),
           Zoi.string() |> Zoi.ends_with("_suffix")
         ])
-        |> Zoi.trim()
+        |> Zoi.to_upcase()
 
-      assert {:ok, "prefix_value_suffix"} == Zoi.parse(schema, "  prefix_value_suffix  ")
-
-      # Fails on `starts_with` refinement, fallback to string validation
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value_without_suffix")
-      assert error.code == :invalid_format
-      assert Exception.message(error) == "invalid format: must start with 'prefix_'"
+      assert {:ok, "PREFIX_VALUE_SUFFIX"} == Zoi.parse(schema, "prefix_value_suffix")
     end
 
     test "intersection type with refinements" do
@@ -2895,6 +2890,37 @@ defmodule ZoiTest do
       assert error.code == :custom
       assert Exception.message(error) == "context error"
       assert error.path == [:hello]
+    end
+
+    test "transforms and refines executes in chain order" do
+      schema =
+        Zoi.string()
+        |> Zoi.min(3)
+        |> Zoi.transform(&String.trim/1)
+        |> Zoi.transform(&String.upcase/1)
+        |> Zoi.refine(fn s ->
+          if String.starts_with?(s, "H") do
+            :ok
+          else
+            {:error, "must start with H"}
+          end
+        end)
+
+      assert {:ok, "HELLO"} = Zoi.parse(schema, "  hello  ")
+      # doesn't start with H
+      assert {:error, _} = Zoi.parse(schema, "  goodbye  ")
+    end
+
+    test "transforms modify data for subsequent refines" do
+      schema =
+        Zoi.string()
+        |> Zoi.transform(&String.trim/1)
+        # min check runs on trimmed value
+        |> Zoi.min(5)
+
+      assert {:ok, "hello"} = Zoi.parse(schema, "  hello  ")
+      # only 2 chars after trim
+      assert {:error, _} = Zoi.parse(schema, "  hi  ")
     end
   end
 

@@ -1,9 +1,12 @@
 defmodule Zoi.Types.Meta do
   @moduledoc false
 
+  @type effect ::
+          {:transform, Zoi.transform()}
+          | {:refine, Zoi.refinement()}
+
   @type t :: %__MODULE__{
-          refinements: [Zoi.refinement()],
-          transforms: [Zoi.transform()],
+          effects: [effect()],
           error: binary() | nil,
           required: boolean(),
           description: binary() | nil,
@@ -12,8 +15,7 @@ defmodule Zoi.Types.Meta do
         }
 
   @struct_fields [
-    refinements: [],
-    transforms: [],
+    effects: [],
     metadata: [],
     required: nil,
     error: nil,
@@ -40,40 +42,15 @@ defmodule Zoi.Types.Meta do
     end)
   end
 
-  @spec run_refinements(ctx :: Zoi.Context.t()) :: {:ok, Zoi.input()} | {:error, [Zoi.Errors.t()]}
-  def run_refinements(%Zoi.Context{schema: schema, parsed: input} = ctx) do
-    schema.meta.refinements
+  @spec run_effects(ctx :: Zoi.Context.t()) :: {:ok, Zoi.input()} | {:error, [Zoi.Errors.t()]}
+  def run_effects(%Zoi.Context{schema: schema, parsed: input} = ctx) do
+    schema.meta.effects
     |> Enum.reduce({{:ok, input}, []}, fn
-      {mod, func, args}, {{:ok, input}, errors} ->
-        case apply(mod, func, [input] ++ args ++ [[ctx: ctx]]) do
-          :ok ->
-            {{:ok, input}, errors}
+      {:refine, refinement}, {{:ok, input}, errors} ->
+        run_refinement(refinement, input, errors, ctx)
 
-          {:error, err} ->
-            {{:ok, input}, Zoi.Errors.add_error(errors, err)}
-
-          %Zoi.Context{} = context ->
-            {{:ok, context.parsed}, context.errors}
-        end
-
-      refine_func, {{:ok, input}, errors} ->
-        cond do
-          is_function(refine_func, 1) ->
-            refine_func.(input)
-
-          is_function(refine_func, 2) ->
-            refine_func.(input, ctx)
-        end
-        |> case do
-          :ok ->
-            {{:ok, input}, errors}
-
-          {:error, err} ->
-            {{:ok, input}, Zoi.Errors.add_error(errors, err)}
-
-          %Zoi.Context{} = context ->
-            {{:ok, context.parsed}, context.errors}
-        end
+      {:transform, transform}, {{:ok, input}, errors} ->
+        run_transform(transform, input, errors, ctx)
     end)
     |> then(fn {{:ok, value}, errors} ->
       if Enum.empty?(errors) do
@@ -84,54 +61,76 @@ defmodule Zoi.Types.Meta do
     end)
   end
 
-  @spec run_transforms(ctx :: Zoi.Context.t()) :: {:ok, Zoi.input()} | {:error, [Zoi.Errors.t()]}
-  def run_transforms(%Zoi.Context{schema: schema, parsed: input} = ctx) do
-    schema.meta.transforms
-    |> Enum.reduce({{:ok, input}, []}, fn
-      {mod, func, args}, {{:ok, input}, errors} ->
-        case apply(mod, func, [input] ++ args ++ [[ctx: ctx]]) do
-          {:ok, value} ->
-            {{:ok, value}, errors}
+  defp run_refinement({mod, func, args}, input, errors, ctx) do
+    case apply(mod, func, [input] ++ args ++ [[ctx: ctx]]) do
+      :ok ->
+        {{:ok, input}, errors}
 
-          {:error, err} ->
-            {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+      {:error, err} ->
+        {{:ok, input}, Zoi.Errors.add_error(errors, err)}
 
-          %Zoi.Context{} = context ->
-            {{:ok, context.parsed}, context.errors}
+      %Zoi.Context{} = context ->
+        {{:ok, context.parsed}, context.errors}
+    end
+  end
 
-          value ->
-            {{:ok, value}, errors}
-        end
+  defp run_refinement(refine_func, input, errors, ctx) when is_function(refine_func) do
+    cond do
+      is_function(refine_func, 1) ->
+        refine_func.(input)
 
-      transform_func, {{:ok, input}, errors} ->
-        cond do
-          is_function(transform_func, 1) ->
-            transform_func.(input)
+      is_function(refine_func, 2) ->
+        refine_func.(input, ctx)
+    end
+    |> case do
+      :ok ->
+        {{:ok, input}, errors}
 
-          is_function(transform_func, 2) ->
-            transform_func.(input, ctx)
-        end
-        |> case do
-          {:ok, value} ->
-            {{:ok, value}, errors}
+      {:error, err} ->
+        {{:ok, input}, Zoi.Errors.add_error(errors, err)}
 
-          {:error, err} ->
-            {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+      %Zoi.Context{} = context ->
+        {{:ok, context.parsed}, context.errors}
+    end
+  end
 
-          %Zoi.Context{} = context ->
-            {{:ok, context.parsed}, context.errors}
+  defp run_transform({mod, func, args}, input, errors, ctx) do
+    case apply(mod, func, [input] ++ args ++ [[ctx: ctx]]) do
+      {:ok, value} ->
+        {{:ok, value}, errors}
 
-          value ->
-            {{:ok, value}, errors}
-        end
-    end)
-    |> then(fn {{:ok, value}, errors} ->
-      if Enum.empty?(errors) do
-        {:ok, value}
-      else
-        {:error, errors}
-      end
-    end)
+      {:error, err} ->
+        {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+
+      %Zoi.Context{} = context ->
+        {{:ok, context.parsed}, context.errors}
+
+      value ->
+        {{:ok, value}, errors}
+    end
+  end
+
+  defp run_transform(transform_func, input, errors, ctx) when is_function(transform_func) do
+    cond do
+      is_function(transform_func, 1) ->
+        transform_func.(input)
+
+      is_function(transform_func, 2) ->
+        transform_func.(input, ctx)
+    end
+    |> case do
+      {:ok, value} ->
+        {{:ok, value}, errors}
+
+      {:error, err} ->
+        {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+
+      %Zoi.Context{} = context ->
+        {{:ok, context.parsed}, context.errors}
+
+      value ->
+        {{:ok, value}, errors}
+    end
   end
 
   @spec required?(t()) :: boolean()
