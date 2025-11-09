@@ -27,7 +27,7 @@ defmodule Zoi.Types.Map do
         if errors == [] do
           {:ok, parsed}
         else
-          {:error, errors}
+          {:error, errors, parsed}
         end
       end)
     end

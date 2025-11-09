@@ -124,6 +124,15 @@ defmodule Zoi do
 
   `Zoi` automatically interpolates values in the error messages using the `issue` tuple. In the above example, `%{count}` is replaced with `10`.
   For more information on what values are available for interpolation, check the documentation of each validation function.
+
+  ## Architecture Summary
+
+  Basically `Zoi` is built around a core parsing, running valitations and transformations in order to achieve the final parsed output. The parsing sequence is summarized by the diagram below:
+
+  ```mermaid
+  flowchart LR
+  ui(Unknwon Input) --> parse(Zoi.parse/2) -->  transform(Zoi.transform/2) --> refine(Zoi.refine/2) --> output(Parsed Output)
+  ```
   """
 
   alias Zoi.Regexes

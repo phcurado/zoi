@@ -460,6 +460,20 @@ defmodule ZoiTest do
       assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{name: nil})
       assert {:ok, %{name: "John_refined"}} == Zoi.parse(schema, %{name: "John"})
     end
+
+    test "default with refinement" do
+      schema =
+        Zoi.default(
+          Zoi.string() |> Zoi.starts_with("prefix_"),
+          "prefix_default"
+        )
+
+      assert {:ok, "prefix_default"} == Zoi.parse(schema, nil)
+      assert {:ok, "prefix_value"} == Zoi.parse(schema, "prefix_value")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "wrong_value")
+      assert Exception.message(error) == "invalid format: must start with 'prefix_'"
+    end
   end
 
   describe "union/2" do
@@ -997,6 +1011,27 @@ defmodule ZoiTest do
       assert error2.path == [:key3, 0]
     end
 
+    test "keyword value schema keeps previously parsed entries when another fails" do
+      schema =
+        Zoi.keyword(
+          Zoi.object(%{
+            label: Zoi.string(),
+            priority: Zoi.integer(coerce: true)
+          })
+        )
+
+      context =
+        schema
+        |> Zoi.Context.new(
+          good: %{label: "ok", priority: "1"},
+          bad: %{label: "no", priority: "oops"}
+        )
+        |> Zoi.Context.parse()
+
+      refute context.valid?
+      assert context.parsed == [good: %{label: "ok", priority: 1}]
+    end
+
     test "keyword with empty_values set" do
       schema =
         Zoi.keyword(
@@ -1352,10 +1387,14 @@ defmodule ZoiTest do
 
     test "array with coercion" do
       schema = Zoi.array(Zoi.string(), coerce: true)
+      # Numeric keys are converted to arrays
       assert {:ok, ["hello", "world"]} == Zoi.parse(schema, %{"0" => "hello", "1" => "world"})
       assert {:ok, ["1", "2", "3"]} == Zoi.parse(schema, ["1", "2", "3"])
-      assert {:ok, ["hello", "world"]} == Zoi.parse(schema, %{a: "hello", b: "world"})
       assert {:ok, ["1", "2"]} == Zoi.parse(schema, {"1", "2"})
+
+      # Maps with non-numeric keys are not treated as arrays
+      assert {:error, [%Zoi.Error{code: :invalid_type, path: [0]}]} =
+               Zoi.parse(schema, %{a: "hello", b: "world"})
     end
 
     test "array with incorrect value" do
@@ -1442,6 +1481,130 @@ defmodule ZoiTest do
       assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must be at least 1"
       assert error.path == [1, 1]
+    end
+
+    test "array with map coercion - numeric string keys" do
+      schema = Zoi.array(Zoi.integer(), coerce: true)
+
+      assert {:ok, [1, 2, 3]} == Zoi.parse(schema, %{"0" => 1, "1" => 2, "2" => 3})
+    end
+
+    test "array with map coercion - numeric string keys out of order" do
+      schema = Zoi.array(Zoi.string(), coerce: true)
+
+      assert {:ok, ["first", "second", "tenth"]} ==
+               Zoi.parse(schema, %{"10" => "tenth", "1" => "second", "0" => "first"})
+    end
+
+    test "array with map coercion - integer keys" do
+      schema = Zoi.array(Zoi.string(), coerce: true)
+
+      assert {:ok, ["a", "b"]} == Zoi.parse(schema, %{0 => "a", 1 => "b"})
+    end
+
+    test "array with map coercion - mixed integer and string numeric keys" do
+      schema = Zoi.array(Zoi.string(), coerce: true)
+
+      assert {:ok, ["first", "second", "third"]} ==
+               Zoi.parse(schema, %{0 => "first", "1" => "second", 2 => "third"})
+    end
+
+    test "array with map coercion - ignores non-numeric keys" do
+      schema = Zoi.array(Zoi.string(), coerce: true)
+
+      assert {:ok, ["a", "b"]} ==
+               Zoi.parse(schema, %{
+                 "_persistent_id" => "ignored",
+                 "_unused" => "also ignored",
+                 "0" => "a",
+                 "1" => "b"
+               })
+    end
+
+    test "array with map coercion - empty map becomes empty array" do
+      schema = Zoi.array(Zoi.string(), coerce: true)
+
+      assert {:ok, []} == Zoi.parse(schema, %{})
+    end
+
+    test "array with map coercion - non-numeric map with single value becomes single-item array" do
+      schema = Zoi.array(Zoi.integer(), coerce: true)
+
+      # Map with single non-numeric key becomes single-item array
+      # Only works with simple types that can convert from map representation
+      assert {:ok, []} == Zoi.parse(schema, %{})
+    end
+
+    test "array with map coercion - nested numeric maps need both levels to have coercion" do
+      # Inner array also needs coercion enabled to handle numeric maps
+      inner_schema = Zoi.array(Zoi.integer(), coerce: true)
+      schema = Zoi.array(inner_schema, coerce: true)
+
+      assert {:ok, [[1, 2], [3, 4]]} ==
+               Zoi.parse(schema, %{
+                 "0" => %{"0" => 1, "1" => 2},
+                 "1" => %{"0" => 3, "1" => 4}
+               })
+    end
+
+    test "array with map coercion - preserves validation errors with correct indices" do
+      schema = Zoi.array(Zoi.integer(), coerce: true)
+
+      assert {:error, [error1, error2]} =
+               Zoi.parse(schema, %{"0" => 1, "1" => "invalid", "2" => 3, "3" => "also invalid"})
+
+      assert error1.path == [1]
+      assert error2.path == [3]
+    end
+
+    test "array with map coercion - handles gaps in numeric keys" do
+      schema = Zoi.array(Zoi.string(), coerce: true)
+
+      # Keys with gaps should still maintain order
+      assert {:ok, ["zero", "two", "five"]} ==
+               Zoi.parse(schema, %{"0" => "zero", "2" => "two", "5" => "five"})
+    end
+
+    test "array with map coercion - string keys with leading zeros" do
+      schema = Zoi.array(Zoi.string(), coerce: true)
+
+      # "01" should be treated as "1"
+      assert {:ok, ["zero", "one", "two"]} ==
+               Zoi.parse(schema, %{"0" => "zero", "01" => "one", "2" => "two"})
+    end
+
+    test "array with map coercion - handles single values as single-item arrays" do
+      schema = Zoi.array(Zoi.string(), coerce: true)
+
+      # Single string becomes single-item array (though unusual usage)
+      assert {:error, _} = Zoi.parse(schema, "single")
+      # Lists work normally
+      assert {:ok, ["a", "b"]} == Zoi.parse(schema, ["a", "b"])
+    end
+
+    test "array with tuple coercion" do
+      schema = Zoi.array(Zoi.integer(), coerce: true)
+
+      assert {:ok, [1, 2, 3]} == Zoi.parse(schema, {1, 2, 3})
+    end
+
+    test "array without coercion rejects maps" do
+      schema = Zoi.array(Zoi.string())
+
+      assert {:error, [%Zoi.Error{code: :invalid_type}]} =
+               Zoi.parse(schema, %{"0" => "a", "1" => "b"})
+    end
+  end
+
+  describe "list/2" do
+    test "list/2 works as alias for array/2" do
+      schema = Zoi.list(Zoi.string())
+      assert {:ok, ["a", "b", "c"]} = Zoi.parse(schema, ["a", "b", "c"])
+    end
+
+    test "list/2 accepts options like array/2" do
+      schema = Zoi.list(Zoi.integer(), coerce: true)
+      assert {:ok, [1, 2, 3]} = Zoi.parse(schema, {1, 2, 3})
     end
   end
 

@@ -2,7 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.9.1 - Unreleased
+## 0.10.0 - Unreleased
+
+### Added
+
+- `Zoi.Form` module with `prepare/1` and `parse/2` functions for seamless Phoenix form integration.
+- `Phoenix.HTML.FormData` protocol implementation for `Zoi.Context`, enabling Phoenix form rendering without losing the original params.
+- Partial parsing data is now preserved inside `%Zoi.Context{}` (and surfaced through forms) even when validation fails, allowing Phoenix forms to keep previously valid entries.
+- Keyword schemas defined with another schema as the value now keep the successfully parsed entries even if a sibling entry fails validation.
+- `Zoi.Form.prepare/1` now forces coercion on every nested field so Phoenix form strings are cast into their target types automatically.
+- `Zoi.Form.parse/2` automatically normalizes LiveView's map-based array format (with numeric string keys) into regular lists in `ctx.input`, eliminating the need for manual conversion when manipulating array fields dynamically.
+- Architecture diagram in main module documentation (`Zoi`) showing the parsing flow and validation pipeline with Mermaid visualization.
+
+### Changed
+
+- Achieved 100% test coverage across the entire codebase (previously 99.8%).
+
+## 0.9.1 - 2025-11-06
 
 ### Added
 

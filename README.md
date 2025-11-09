@@ -202,6 +202,38 @@ iex> Zoi.parse(schema, :hi)
  ]}
 ```
 
+## Phoenix forms
+
+`Zoi` works seamlessly with Phoenix forms through the `Phoenix.HTML.FormData` protocol:
+
+```elixir
+# Define schema inline
+@user_schema Zoi.object(%{
+  name: Zoi.string() |> Zoi.min(3),
+  email: Zoi.email()
+}) |> Zoi.Form.prepare()
+
+# Parse and render (just like changesets!)
+ctx = Zoi.Form.parse(@user_schema, params)
+form = to_form(ctx, as: :user)
+
+socket |> assign(:form, form)
+
+# Use in your forms
+~H"""
+<.form for={@form} phx-submit="save">
+  <.input field={@form[:name]} label="Name" />
+  <.input field={@form[:email]} label="Email" />
+  <div>
+    <.button>Save</.button>
+  </div>
+</.form>
+"""
+```
+
+- See **[Rendering forms with Phoenix](https://hexdocs.pm/zoi/rendering_forms_with_phoenix.html)** for a complete LiveView example.
+- See **[Localizing errors with Gettext](https://hexdocs.pm/zoi/localizing_errors_with_gettext.html)** for translation support.
+
 ### Metadata
 
 `Zoi` supports 3 types of metadata:
@@ -278,4 +310,8 @@ Check the official guides for more examples and use cases:
 
 ## Acknowledgements
 
-`Zoi` is inspired by [Zod](https://zod.dev/) and [Joi](https://joi.dev/), providing a similar experience for Elixir.
+`Zoi` is inspired by different schema validation libraries, including:
+
+- [Zod](https://zod.dev/)
+- [Ecto.Changeset](https://hexdocs.pm/ecto/Ecto.Changeset.html)
+- [NimbleOptions](https://hexdocs.pm/nimble_options/NimbleOptions.html)

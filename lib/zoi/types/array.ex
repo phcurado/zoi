@@ -25,21 +25,31 @@ defmodule Zoi.Types.Array do
         end
       end)
       |> then(fn {parsed, errors} ->
+        parsed = Enum.reverse(parsed)
+
         if errors == [] do
-          {:ok, Enum.reverse(parsed)}
+          {:ok, parsed}
         else
-          {:error, errors}
+          {:error, errors, parsed}
         end
       end)
     end
 
     def parse(%Zoi.Types.Array{coerce: true} = schema, inputs, opts) when is_map(inputs) do
-      ## For cases where the list is a map with integer keys (e.g., form data)
-      inputs
-      |> Map.to_list()
-      |> Enum.sort_by(fn {k, _v} -> k end)
-      |> Enum.map(fn {_k, v} -> v end)
-      |> then(fn list -> parse(schema, list, opts) end)
+      cond do
+        has_index_keys?(inputs) ->
+          inputs
+          |> Enum.filter(fn {key, _value} -> index_key?(key) end)
+          |> Enum.sort_by(fn {key, _value} -> parse_index(key) end)
+          |> Enum.map(fn {_key, value} -> value end)
+          |> then(&parse(schema, &1, opts))
+
+        map_size(inputs) == 0 ->
+          parse(schema, [], opts)
+
+        true ->
+          parse(schema, [inputs], opts)
+      end
     end
 
     def parse(%Zoi.Types.Array{} = schema, input, opts) when is_tuple(input) do
@@ -58,6 +68,28 @@ defmodule Zoi.Types.Array do
       quote do
         [unquote(inner_spec)]
       end
+    end
+
+    defp has_index_keys?(map) do
+      Enum.any?(map, fn {key, _value} -> index_key?(key) end)
+    end
+
+    defp index_key?(key) when is_integer(key), do: true
+
+    defp index_key?(key) when is_binary(key) do
+      case Integer.parse(key) do
+        {_int, ""} -> true
+        _ -> false
+      end
+    end
+
+    defp index_key?(_), do: false
+
+    defp parse_index(key) when is_integer(key), do: key
+
+    defp parse_index(key) when is_binary(key) do
+      {int, _} = Integer.parse(key)
+      int
     end
   end
 

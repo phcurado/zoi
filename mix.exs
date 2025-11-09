@@ -2,7 +2,7 @@ defmodule Zoi.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/phcurado/zoi"
-  @version "0.9.1"
+  @version "0.10.0"
 
   def project do
     [
@@ -47,6 +47,7 @@ defmodule Zoi.MixProject do
   defp deps do
     [
       {:decimal, "~> 2.0", optional: true},
+      {:phoenix_html, "~> 2.14.2 or ~> 3.0 or ~> 4.1", optional: true},
       {:excoveralls, "~> 0.18", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
@@ -75,19 +76,53 @@ defmodule Zoi.MixProject do
       source_url: @source_url,
       groups_for_extras: groups_for_extras(),
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
-      extras: extras()
+      extras: extras(),
+      before_closing_body_tag: &before_closing_body_tag/1
     ]
   end
+
+  defp before_closing_body_tag(:html) do
+    """
+    <script defer src="https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.min.js"></script>
+    <script>
+      let initialized = false;
+
+      window.addEventListener("exdoc:loaded", () => {
+        if (!initialized) {
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: document.body.className.includes("dark") ? "dark" : "default"
+          });
+          initialized = true;
+        }
+
+        let id = 0;
+        for (const codeEl of document.querySelectorAll("pre code.mermaid")) {
+          const graphDefinition = codeEl.textContent;
+          const graphId = "mermaid-graph-" + id++;
+          mermaid.render(graphId, graphDefinition).then(({svg, bindFunctions}) => {
+            codeEl.innerHTML = svg;
+            bindFunctions?.(codeEl);
+          });
+        }
+      });
+    </script>
+    """
+  end
+
+  defp before_closing_body_tag(_), do: ""
 
   defp extras do
     [
       "CHANGELOG.md",
       "README.md",
       "guides/quickstart_guide.md",
+      "guides/rendering_forms_with_phoenix.md",
       "guides/using_zoi_to_generate_openapi_specs.md",
       "guides/validating_controller_parameters.md",
       "guides/converting_keys_from_object.md",
-      "guides/generating_schemas_from_json_example.md"
+      "guides/generating_schemas_from_json_example.md",
+      "guides/localizing_errors_with_gettext.md"
     ]
   end
 
