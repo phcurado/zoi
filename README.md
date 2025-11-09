@@ -210,34 +210,26 @@ iex> Zoi.parse(schema, :hi)
 # Define schema inline - no separate module needed!
 @user_schema Zoi.object(%{
   name: Zoi.string() |> Zoi.min(3),
-  email: Zoi.email(),
-  addresses: Zoi.array(Zoi.object(%{street: Zoi.string()}))
+  email: Zoi.email()
 }) |> Zoi.Form.prepare()
-
-# Parse and render
-ctx = Zoi.Form.parse(@user_schema, params)
-form = Phoenix.Component.to_form(ctx, as: :user)
 
 # Use in templates with nested collections
 ~H"""
 <.form for={@form} phx-submit="save">
   <.input field={@form[:name]} label="Name" />
-  <.inputs_for :let={address} field={@form[:addresses]}>
-    <.input field={address[:street]} label="Street" />
-  </.inputs_for>
+  <.input field={@form[:email]} label="Email" />
   <div>
     <.button>Save</.button>
   </div>
 </.form>
 """
+
+# Parse and render (just like changesets!)
+ctx = Zoi.Form.parse(@user_schema, params)
+form = to_form(ctx, as: :user)
+
+socket |> assign(:form, form)
 ```
-
-**Key benefits:**
-
-- No embedded schemas or changeset modules required
-- Nested arrays and objects work automatically
-- Validated data in `ctx.parsed` is ready for your database
-- Partial parsing preserves valid items when siblings fail
 
 👉 See **[Rendering forms with Phoenix](guides/rendering_forms_with_phoenix.md)** for a complete LiveView example with dynamic arrays.
 

@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Struct do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:module, :fields, :keys, :inner, :strict, :coerce]
+  use Zoi.Type.Def, fields: [:module, :fields, :strict, :coerce, empty_values: []]
 
   def new(module, fields, opts) when is_map(fields) or is_list(fields) do
     fields =
@@ -14,11 +14,6 @@ defmodule Zoi.Types.Struct do
         end
       end)
 
-    inner =
-      fields
-      |> Zoi.keyword(opts)
-      |> Zoi.to_struct(module)
-
     keys = Enum.map(fields, fn {key, _type} -> key end)
 
     if Enum.any?(keys, &(!is_atom(&1))) do
@@ -26,9 +21,12 @@ defmodule Zoi.Types.Struct do
     end
 
     opts =
-      Keyword.merge([strict: false, coerce: false], opts)
+      Keyword.merge(
+        [strict: false, coerce: false],
+        opts
+      )
 
-    apply_type(opts ++ [module: module, fields: fields, keys: keys, inner: inner])
+    apply_type(opts ++ [module: module, fields: fields])
   end
 
   def new(_module, _fields, _opts) do
@@ -36,16 +34,23 @@ defmodule Zoi.Types.Struct do
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Struct{inner: inner, module: module}, %module{} = input, opts) do
-      input =
-        Map.from_struct(input)
-        |> Map.to_list()
+    def parse(%Zoi.Types.Struct{module: module} = struct, %module{} = input, opts) do
+      input = Map.from_struct(input)
 
-      Zoi.parse(inner, input, opts)
+      Zoi.Types.KeyValue.parse(struct, input, opts)
+      |> case do
+        {:ok, map} -> {:ok, struct!(module, map)}
+        error -> error
+      end
     end
 
-    def parse(%Zoi.Types.Struct{inner: inner, coerce: true}, input, opts) when is_map(input) do
-      Zoi.parse(inner, Map.to_list(input), opts)
+    def parse(%Zoi.Types.Struct{module: module, coerce: true} = struct, input, opts)
+        when is_map(input) do
+      Zoi.Types.KeyValue.parse(struct, input, opts)
+      |> case do
+        {:ok, map} -> {:ok, struct!(module, map)}
+        error -> error
+      end
     end
 
     def parse(schema, _, _) do

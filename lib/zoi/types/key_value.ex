@@ -17,6 +17,19 @@ defmodule Zoi.Types.KeyValue do
     end
   end
 
+  def parse(%Zoi.Types.Struct{} = type, input, opts) when is_map(input) do
+    input
+    |> Map.to_list()
+    |> do_parse_pairs(type, opts)
+    |> case do
+      {:ok, parsed} ->
+        {:ok, Enum.into(parsed, %{})}
+
+      {:error, errors, parsed} ->
+        {:error, errors, Enum.into(parsed, %{})}
+    end
+  end
+
   def parse(%Zoi.Types.Keyword{} = type, input, opts) when is_list(input) do
     do_parse_pairs(input, type, opts)
     |> case do

@@ -19,14 +19,25 @@ defmodule Zoi.Form do
   """
   @spec prepare(Zoi.Type.t()) :: Zoi.Type.t()
   def prepare(%Zoi.Types.Object{} = obj) do
-    enhanced_fields =
+    prepared_fields =
       Enum.map(obj.fields, fn {key, type} ->
-        {key, enhance_nested(type)}
+        {key, prepare_nested(type)}
       end)
 
     obj
-    |> Map.put(:fields, enhanced_fields)
+    |> Map.put(:fields, prepared_fields)
     |> apply_object_defaults()
+  end
+
+  def prepare(%Zoi.Types.Struct{} = obj) do
+    prepared_fields =
+      Enum.map(obj.fields, fn {key, type} ->
+        {key, prepare_nested(type)}
+      end)
+
+    obj
+    |> Map.put(:fields, prepared_fields)
+    |> apply_struct_defaults()
   end
 
   @doc """
@@ -35,182 +46,148 @@ defmodule Zoi.Form do
   The returned context keeps the params in `context.input`, even when validations fail,
   so it can be passed directly to `Phoenix.Component.to_form/2` or any `Phoenix.HTML`
   form helper.
+
+  This function automatically normalizes LiveView's map-based array format (with numeric
+  string keys) into regular lists, so `context.input` always contains clean, manipulable
+  data structures.
   """
-  @spec parse(Zoi.Types.Object.t(), Zoi.input(), Zoi.options()) :: Zoi.Context.t()
+  @spec parse(schema :: Zoi.Types.Object.t(), input :: Zoi.input(), opts :: Zoi.options()) ::
+          Zoi.Context.t()
   def parse(%Zoi.Types.Object{} = obj, input, opts \\ []) do
-    ctx = Zoi.Context.new(obj, input)
+    # Normalize input to convert LiveView map arrays to lists
+    normalized_input = normalize_input(obj, input)
+
+    ctx = Zoi.Context.new(obj, normalized_input)
     opts = Keyword.put_new(opts, :ctx, ctx)
 
     Zoi.Context.parse(ctx, opts)
   end
 
-  @doc """
-  Appends an item to an array field in the context's input and returns a new context.
+  # Recursively normalize input based on schema structure
+  defp normalize_input(%Zoi.Types.Object{fields: fields}, input) when is_map(input) do
+    Enum.reduce(fields, input, fn {key, type}, acc ->
+      key_str = to_string(key)
 
-  This handles LiveView's numeric-key map format automatically.
-
-  ## Examples
-
-      schema = Zoi.object(%{tags: Zoi.array(Zoi.string())}) |> Zoi.Form.prepare()
-      ctx = Zoi.Form.parse(schema, %{"tags" => ["a", "b"]})
-      new_ctx = Zoi.Form.append(ctx, "tags", "c")
-      # new_ctx.input["tags"] => ["a", "b", "c"]
-  """
-  @spec append(Zoi.Context.t(), binary() | atom(), any()) :: Zoi.Context.t()
-  def append(%Zoi.Context{schema: schema} = ctx, field, item) do
-    field_str = to_string(field)
-    current_value = Map.get(ctx.input, field_str)
-    current_list = to_list(current_value)
-    updated_list = current_list ++ [item]
-    updated_input = Map.put(ctx.input, field_str, updated_list)
-
-    parse(schema, updated_input)
+      case Map.get(acc, key_str) do
+        nil -> acc
+        value -> Map.put(acc, key_str, normalize_value(type, value))
+      end
+    end)
   end
 
-  @doc """
-  Removes an item at the given index from an array field and returns a new context.
+  defp normalize_input(_schema, input), do: input
 
-  ## Examples
-
-      schema = Zoi.object(%{tags: Zoi.array(Zoi.string())}) |> Zoi.Form.prepare()
-      ctx = Zoi.Form.parse(schema, %{"tags" => ["a", "b", "c"]})
-      new_ctx = Zoi.Form.delete_at(ctx, "tags", 1)
-      # new_ctx.input["tags"] => ["a", "c"]
-  """
-  @spec delete_at(Zoi.Context.t(), binary() | atom(), non_neg_integer()) :: Zoi.Context.t()
-  def delete_at(%Zoi.Context{schema: schema} = ctx, field, index) do
-    field_str = to_string(field)
-    current_value = Map.get(ctx.input, field_str)
-    current_list = to_list(current_value)
-    updated_list = List.delete_at(current_list, index)
-    updated_input = Map.put(ctx.input, field_str, updated_list)
-
-    parse(schema, updated_input)
+  defp normalize_value(%Zoi.Types.Array{inner: inner}, value)
+       when is_list(value) or is_map(value) do
+    list = map_to_list(value)
+    Enum.map(list, &normalize_value(inner, &1))
   end
 
-  @doc """
-  Converts a value to a list, handling LiveView's numeric-key map format.
+  defp normalize_value(%Zoi.Types.Object{} = obj, value) when is_map(value) do
+    normalize_input(obj, value)
+  end
 
-  This is useful for reading array fields from forms where LiveView can send
-  arrays as maps with numeric keys like `%{"0" => %{}, "1" => %{}}`.
+  defp normalize_value(%Zoi.Types.Default{inner: inner}, value) do
+    normalize_value(inner, value)
+  end
 
-  ## Examples
+  defp normalize_value(_type, value), do: value
 
-      iex> Zoi.Form.to_list([1, 2, 3])
-      [1, 2, 3]
+  # Convert LiveView's numeric-key map format to a list
+  defp map_to_list(value) when is_list(value), do: value
+  defp map_to_list(%{} = map) when map_size(map) == 0, do: []
 
-      iex> Zoi.Form.to_list(%{"0" => "a", "1" => "b"})
-      ["a", "b"]
-
-      iex> Zoi.Form.to_list(%{})
-      []
-
-      iex> Zoi.Form.to_list(nil)
-      []
-  """
-  @spec to_list(list() | map() | nil) :: list()
-  def to_list(value) when is_list(value), do: value
-  def to_list(nil), do: []
-
-  def to_list(%{} = map) do
-    cond do
-      map == %{} ->
-        []
-
-      has_index_keys?(map) ->
-        map
-        |> Enum.filter(fn {key, _value} -> index_key?(key) end)
-        |> Enum.sort_by(fn {key, _value} -> parse_index(key) end)
-        |> Enum.map(fn {_key, value} -> value end)
-
-      true ->
-        [map]
+  defp map_to_list(map) when is_map(map) do
+    if has_numeric_keys?(map) do
+      map
+      |> Enum.filter(fn {key, _value} -> numeric_key?(key) end)
+      |> Enum.sort_by(fn {key, _value} -> parse_key_index(key) end)
+      |> Enum.map(fn {_key, value} -> value end)
+    else
+      [map]
     end
   end
-
-  defp has_index_keys?(map) do
-    Enum.any?(map, fn {key, _value} -> index_key?(key) end)
+  defp has_numeric_keys?(map) do
+    Enum.any?(map, fn {key, _value} -> numeric_key?(key) end)
   end
 
-  defp index_key?(key) when is_integer(key), do: true
+  defp numeric_key?(key) when is_integer(key), do: true
 
-  defp index_key?(key) when is_binary(key) do
+  defp numeric_key?(key) when is_binary(key) do
     case Integer.parse(key) do
       {_int, ""} -> true
       _ -> false
     end
   end
 
-  defp index_key?(_), do: false
+  defp parse_key_index(key) when is_integer(key), do: key
 
-  defp parse_index(key) when is_integer(key), do: key
-
-  defp parse_index(key) when is_binary(key) do
+  defp parse_key_index(key) when is_binary(key) do
     {int, _} = Integer.parse(key)
     int
   end
 
-  defp enhance_nested(%Zoi.Types.Object{} = obj), do: prepare(obj)
-  defp enhance_nested(%Zoi.Types.Keyword{} = keyword), do: enhance_keyword(keyword)
+  defp prepare_nested(%Zoi.Types.Object{} = obj), do: prepare(obj)
+  defp prepare_nested(%Zoi.Types.Struct{} = obj), do: prepare(obj)
+  defp prepare_nested(%Zoi.Types.Keyword{} = keyword), do: prepare_keyword(keyword)
 
-  defp enhance_nested(%Zoi.Types.Array{} = array) do
+  defp prepare_nested(%Zoi.Types.Array{} = array) do
     array
-    |> Map.put(:inner, enhance_nested(array.inner))
+    |> Map.put(:inner, prepare_nested(array.inner))
     |> maybe_enable_coercion()
   end
 
-  defp enhance_nested(%Zoi.Types.Default{} = default) do
-    %{default | inner: enhance_nested(default.inner)}
+  defp prepare_nested(%Zoi.Types.Default{} = default) do
+    %{default | inner: prepare_nested(default.inner)}
   end
 
-  defp enhance_nested(%Zoi.Types.Map{} = map) do
+  defp prepare_nested(%Zoi.Types.Map{} = map) do
     map =
       %{
         map
-        | key_type: enhance_nested(map.key_type),
-          value_type: enhance_nested(map.value_type)
+        | key_type: prepare_nested(map.key_type),
+          value_type: prepare_nested(map.value_type)
       }
 
     maybe_enable_coercion(map)
   end
 
-  defp enhance_nested(%Zoi.Types.Tuple{} = tuple) do
-    %{tuple | fields: Enum.map(tuple.fields, &enhance_nested/1)}
+  defp prepare_nested(%Zoi.Types.Tuple{} = tuple) do
+    %{tuple | fields: Enum.map(tuple.fields, &prepare_nested/1)}
   end
 
-  defp enhance_nested(%Zoi.Types.Union{} = union) do
-    %{union | schemas: Enum.map(union.schemas, &enhance_nested/1)}
+  defp prepare_nested(%Zoi.Types.Union{} = union) do
+    %{union | schemas: Enum.map(union.schemas, &prepare_nested/1)}
   end
 
-  defp enhance_nested(%Zoi.Types.Intersection{} = intersection) do
-    %{intersection | schemas: Enum.map(intersection.schemas, &enhance_nested/1)}
+  defp prepare_nested(%Zoi.Types.Intersection{} = intersection) do
+    %{intersection | schemas: Enum.map(intersection.schemas, &prepare_nested/1)}
   end
 
-  defp enhance_nested(%Zoi.Types.Struct{} = struct) do
-    %{struct | inner: enhance_nested(struct.inner)}
-    |> maybe_enable_coercion()
-  end
+  defp prepare_nested(other), do: maybe_enable_coercion(other)
 
-  defp enhance_nested(other), do: maybe_enable_coercion(other)
-
-  defp enhance_keyword(%Zoi.Types.Keyword{fields: fields} = keyword) when is_list(fields) do
-    enhanced_fields =
+  defp prepare_keyword(%Zoi.Types.Keyword{fields: fields} = keyword) when is_list(fields) do
+    prepared_fields =
       Enum.map(fields, fn {key, type} ->
-        {key, enhance_nested(type)}
+        {key, prepare_nested(type)}
       end)
 
     keyword
-    |> Map.put(:fields, enhanced_fields)
+    |> Map.put(:fields, prepared_fields)
     |> apply_keyword_defaults()
   end
 
-  defp enhance_keyword(%Zoi.Types.Keyword{fields: schema} = keyword) when is_struct(schema) do
+  defp prepare_keyword(%Zoi.Types.Keyword{fields: schema} = keyword) when is_struct(schema) do
     keyword
-    |> Map.put(:fields, enhance_nested(schema))
+    |> Map.put(:fields, prepare_nested(schema))
     |> apply_keyword_defaults()
   end
 
   defp apply_object_defaults(%Zoi.Types.Object{} = obj) do
+    %{obj | coerce: true, empty_values: @form_empty_values}
+  end
+
+  defp apply_struct_defaults(%Zoi.Types.Struct{} = obj) do
     %{obj | coerce: true, empty_values: @form_empty_values}
   end
 

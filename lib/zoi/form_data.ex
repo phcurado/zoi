@@ -61,25 +61,29 @@ if Code.ensure_loaded?(Phoenix.HTML) do
 
         max_len = max(length(items_data), length(items_params))
 
-        Enum.map(0..(max_len - 1), fn idx ->
-          item_data = Enum.at(items_data, idx) || %{}
-          item_params = Enum.at(items_params, idx) || %{}
+        if max_len == 0 do
+          []
+        else
+          Enum.map(0..(max_len - 1), fn idx ->
+            item_data = Enum.at(items_data, idx) || %{}
+            item_params = Enum.at(items_params, idx) || %{}
 
-          item_name = "#{name}[#{idx}]"
-          item_id = "#{id}[#{idx}]"
+            item_name = "#{name}[#{idx}]"
+            item_id = "#{id}[#{idx}]"
 
-          %Phoenix.HTML.Form{
-            source: context,
-            impl: __MODULE__,
-            id: item_id,
-            name: item_name,
-            data: item_data,
-            params: item_params,
-            action: action,
-            errors: nested_collection_errors(context.errors, field, idx),
-            options: opts
-          }
-        end)
+            %Phoenix.HTML.Form{
+              source: context,
+              impl: __MODULE__,
+              id: item_id,
+              name: item_name,
+              data: item_data,
+              params: item_params,
+              action: action,
+              errors: nested_collection_errors(context.errors, field, idx),
+              options: opts
+            }
+          end)
+        end
       else
         [
           %Phoenix.HTML.Form{

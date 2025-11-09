@@ -30,7 +30,7 @@ def mount(_params, _session, socket) do
   ctx = Zoi.Form.parse(@user_schema, params)
   form = Phoenix.Component.to_form(ctx, as: :user)
 
-  {:ok, assign(socket, form: form, ctx: ctx)}
+  {:ok, assign(socket, form: form)}
 end
 
 def render(assigns) do
@@ -59,7 +59,7 @@ def handle_event("validate", %{"user" => params}, socket) do
   ctx = Zoi.Form.parse(@user_schema, params)
   form = Phoenix.Component.to_form(ctx, as: :user)
 
-  {:noreply, assign(socket, form: form, ctx: ctx)}
+  {:noreply, assign(socket, form: form)}
 end
 ```
 
@@ -84,12 +84,12 @@ def handle_event("save", %{"user" => params}, socket) do
   else
     # Show all errors immediately on submit
     form = Phoenix.Component.to_form(ctx, as: :user, action: :validate)
-    {:noreply, assign(socket, form: form, ctx: ctx)}
+    {:noreply, assign(socket, form: form)}
   end
 end
 ```
 
-## 5. Add Nested Arrays
+## 5. Working with Nested data structures
 
 Add nested addresses to your schema:
 
@@ -110,62 +110,65 @@ Add nested addresses to your schema:
 Render with `<.inputs_for>`:
 
 ```elixir
-<.inputs_for :let={address} field={@form[:addresses]}>
+<.form for={@form} phx-change="validate" phx-submit="save">
+  <.input field={@form[:name]} label="Name" />
+  <.input field={@form[:email]} label="Email" />
+
+  <.inputs_for :let={address} field={@form[:addresses]}>
+    <div>
+      <.input field={address[:street]} label="Street" />
+      <.input field={address[:city]} label="City" />
+      <.input field={address[:zip]} label="ZIP" />
+
+      <.button type="button" phx-click="remove_address" phx-value-index={address.index}>
+        Remove
+      </.button>
+    </div>
+  </.inputs_for>
+
+  <.button type="button" phx-click="add_address">Add Address</.button>
+
   <div>
-    <.input field={address[:street]} label="Street" />
-    <.input field={address[:city]} label="City" />
-    <.input field={address[:zip]} label="ZIP" />
+    <.button>Save</.button>
   </div>
-</.inputs_for>
+</.form>
 ```
 
-## 6. Add Dynamic Add/Remove
+## 6. Dynamic Add/Remove
 
-Add and remove items directly from the context input. `Zoi.Form.parse/2` automatically normalizes array fields to lists:
+To add or remove array items, work with `form.params` directly (arrays are always lists):
 
 ```elixir
 def handle_event("add_address", _params, socket) do
-  # ctx.input has arrays already normalized to lists
-  ctx = socket.assigns.ctx
-  current_addresses = ctx.input["addresses"] || []
-  updated_input = Map.put(ctx.input, "addresses", current_addresses ++ [%{}])
+  # Get current addresses from form.params (always a list)
+  addresses = socket.assigns.form.params["addresses"] || []
 
-  new_ctx = Zoi.Form.parse(@user_schema, updated_input)
-  form = Phoenix.Component.to_form(new_ctx, as: :user)
+  # Add a new empty address
+  updated_params = Map.put(socket.assigns.form.params, "addresses", addresses ++ [%{}])
 
-  {:noreply, assign(socket, form: form, ctx: new_ctx)}
+  # Re-parse and update form
+  ctx = Zoi.Form.parse(@user_schema, updated_params)
+  form = Phoenix.Component.to_form(ctx, as: :user)
+
+  {:noreply, assign(socket, form: form)}
 end
 
 def handle_event("remove_address", %{"index" => index}, socket) do
+  addresses = socket.assigns.form.params["addresses"] || []
   idx = String.to_integer(index)
-  ctx = socket.assigns.ctx
-  current_addresses = ctx.input["addresses"] || []
-  updated_input = Map.put(ctx.input, "addresses", List.delete_at(current_addresses, idx))
 
-  new_ctx = Zoi.Form.parse(@user_schema, updated_input)
-  form = Phoenix.Component.to_form(new_ctx, as: :user)
+  # Remove the address at the index
+  updated_params = Map.put(socket.assigns.form.params, "addresses", List.delete_at(addresses, idx))
 
-  {:noreply, assign(socket, form: form, ctx: new_ctx)}
+  # Re-parse and update form
+  ctx = Zoi.Form.parse(@user_schema, updated_params)
+  form = Phoenix.Component.to_form(ctx, as: :user)
+
+  {:noreply, assign(socket, form: form)}
 end
 ```
 
-In your template:
-
-```elixir
-<.button type="button" phx-click="add_address">Add Address</.button>
-
-<.inputs_for :let={address} field={@form[:addresses]}>
-  <div>
-    <.input field={address[:street]} label="Street" />
-    <.input field={address[:city]} label="City" />
-    <.input field={address[:zip]} label="ZIP" />
-
-    <.button type="button" phx-click="remove_address" phx-value-index={address.index}>
-      Remove
-    </.button>
-  </div>
-</.inputs_for>
-```
+**Note:** `Zoi.Form.parse/2` automatically converts LiveView's map-based array format to lists, so `form.params` always contains clean data you can manipulate with standard list operations.
 
 ## 7. Handle Create and Edit
 
@@ -177,7 +180,8 @@ def handle_params(params, _url, socket) do
 end
 
 defp apply_action(socket, :new, _params) do
-  params = %{"addresses" => [%{}]}  # Start with one empty address
+  # Start with one empty address
+  params = %{"addresses" => [%{}]}
   ctx = Zoi.Form.parse(@user_schema, params)
   form = Phoenix.Component.to_form(ctx, as: :user)
 
@@ -185,7 +189,6 @@ defp apply_action(socket, :new, _params) do
   |> assign(:page_title, "New User")
   |> assign(:user, nil)
   |> assign(:form, form)
-  |> assign(:ctx, ctx)
 end
 
 defp apply_action(socket, :edit, %{"id" => id}) do
@@ -212,7 +215,6 @@ defp apply_action(socket, :edit, %{"id" => id}) do
   |> assign(:page_title, "Edit User")
   |> assign(:user, user)
   |> assign(:form, form)
-  |> assign(:ctx, ctx)
 end
 ```
 
@@ -226,7 +228,7 @@ def handle_event("save", %{"user" => params}, socket) do
     save_user(socket, socket.assigns.live_action, ctx.parsed)
   else
     form = Phoenix.Component.to_form(ctx, as: :user, action: :validate)
-    {:noreply, assign(socket, form: form, ctx: ctx)}
+    {:noreply, assign(socket, form: form)}
   end
 end
 
@@ -256,3 +258,12 @@ defp save_user(socket, :edit, attrs) do
   end
 end
 ```
+
+## Key Takeaways
+
+- **Just like changesets:** Store only the `form` in assigns - all data is accessible through `form.params`
+- **Simple workflow:** Parse params → check `valid?` → use `parsed` data
+- **No changesets needed:** Zoi handles validation and type coercion automatically
+- **Arrays just work:** `form.params` always has normalized lists - use standard list operations like `++` and `List.delete_at/2`
+- **Partial parsing:** When some array items fail validation, valid items are preserved in `ctx.parsed`
+- **Dynamic forms:** Update `form.params` and re-parse - no special helpers needed
