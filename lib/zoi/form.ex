@@ -51,7 +51,7 @@ defmodule Zoi.Form do
   string keys) into regular lists, so `context.input` always contains clean, manipulable
   data structures.
   """
-  @spec parse(schema :: Zoi.Types.Object.t(), input :: Zoi.input(), opts :: Zoi.options()) ::
+  @spec parse(schema :: Zoi.Type.t(), input :: Zoi.input(), opts :: Zoi.options()) ::
           Zoi.Context.t()
   def parse(%Zoi.Types.Object{} = obj, input, opts \\ []) do
     # Normalize input to convert LiveView map arrays to lists
