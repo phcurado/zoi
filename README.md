@@ -204,10 +204,10 @@ iex> Zoi.parse(schema, :hi)
 
 ## Phoenix forms
 
-    `Zoi` works seamlessly with Phoenix forms through the `Phoenix.HTML.FormData` protocol:
+`Zoi` works seamlessly with Phoenix forms through the `Phoenix.HTML.FormData` protocol:
 
 ```elixir
-# Define schema inline - no separate module needed!
+# Define schema inline
 @user_schema Zoi.object(%{
   name: Zoi.string() |> Zoi.min(3),
   email: Zoi.email()
@@ -230,8 +230,6 @@ socket |> assign(:form, form)
 </.form>
 """
 ```
-
-https://hexdocs.pm/zoi/generating_schemas_from_json_example.html
 
 - See **[Rendering forms with Phoenix](https://hexdocs.pm/zoi/rendering_forms_with_phoenix.html)** for a complete LiveView example.
 - See **[Localizing errors with Gettext](https://hexdocs.pm/zoi/localizing_errors_with_gettext.html)** for translation support.
