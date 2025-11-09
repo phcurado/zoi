@@ -72,7 +72,7 @@ defmodule Zoi.JSONSchemaTest do
           tags:
             Zoi.array(
               Zoi.object(%{
-                name: Zoi.string(),
+                name: Zoi.string() |> Zoi.trim(),
                 value: Zoi.string()
               })
             )

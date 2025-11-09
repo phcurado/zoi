@@ -28,9 +28,8 @@ Parse params with `Zoi.Form.parse/2` and convert the context to a Phoenix form:
 def mount(_params, _session, socket) do
   params = %{}  # Start with empty form
   ctx = Zoi.Form.parse(@user_schema, params)
-  form = Phoenix.Component.to_form(ctx, as: :user)
 
-  {:ok, assign(socket, form: form)}
+  {:ok, assign(socket, to_form(ctx, as: :user)}
 end
 
 def render(assigns) do
@@ -57,9 +56,8 @@ Parse params on every change to show live validation:
 ```elixir
 def handle_event("validate", %{"user" => params}, socket) do
   ctx = Zoi.Form.parse(@user_schema, params)
-  form = Phoenix.Component.to_form(ctx, as: :user)
 
-  {:noreply, assign(socket, form: form)}
+  {:noreply, assign(socket, form: to_form(ctx, as: :user))}
 end
 ```
 
@@ -79,11 +77,12 @@ def handle_event("save", %{"user" => params}, socket) do
         {:noreply, push_navigate(socket, to: ~p"/users/#{user}")}
 
       {:error, _reason} ->
+        # You can also show changeset errors here if applicable
         {:noreply, put_flash(socket, :error, "Failed to save")}
     end
   else
     # Show all errors immediately on submit
-    form = Phoenix.Component.to_form(ctx, as: :user, action: :validate)
+    form = to_form(ctx, as: :user, action: :validate)
     {:noreply, assign(socket, form: form)}
   end
 end
@@ -115,15 +114,13 @@ Render with `<.inputs_for>`:
   <.input field={@form[:email]} label="Email" />
 
   <.inputs_for :let={address} field={@form[:addresses]}>
-    <div>
-      <.input field={address[:street]} label="Street" />
-      <.input field={address[:city]} label="City" />
-      <.input field={address[:zip]} label="ZIP" />
+    <.input field={address[:street]} label="Street" />
+    <.input field={address[:city]} label="City" />
+    <.input field={address[:zip]} label="ZIP" />
 
-      <.button type="button" phx-click="remove_address" phx-value-index={address.index}>
-        Remove
-      </.button>
-    </div>
+    <.button type="button" phx-click="remove_address" phx-value-index={address.index}>
+      Remove
+    </.button>
   </.inputs_for>
 
   <.button type="button" phx-click="add_address">Add Address</.button>
@@ -148,9 +145,8 @@ def handle_event("add_address", _params, socket) do
 
   # Re-parse and update form
   ctx = Zoi.Form.parse(@user_schema, updated_params)
-  form = Phoenix.Component.to_form(ctx, as: :user)
 
-  {:noreply, assign(socket, form: form)}
+  {:noreply, assign(socket, form: to_form(ctx, as: :user))}
 end
 
 def handle_event("remove_address", %{"index" => index}, socket) do
@@ -162,9 +158,8 @@ def handle_event("remove_address", %{"index" => index}, socket) do
 
   # Re-parse and update form
   ctx = Zoi.Form.parse(@user_schema, updated_params)
-  form = Phoenix.Component.to_form(ctx, as: :user)
 
-  {:noreply, assign(socket, form: form)}
+  {:noreply, assign(socket, form: to_form(ctx, as: :user))}
 end
 ```
 
@@ -183,22 +178,23 @@ defp apply_action(socket, :new, _params) do
   # Start with one empty address
   params = %{"addresses" => [%{}]}
   ctx = Zoi.Form.parse(@user_schema, params)
-  form = Phoenix.Component.to_form(ctx, as: :user)
 
   socket
   |> assign(:page_title, "New User")
   |> assign(:user, nil)
-  |> assign(:form, form)
+  |> assign(:form, to_form(ctx, as: :user))
 end
 
 defp apply_action(socket, :edit, %{"id" => id}) do
   user = Accounts.get_user!(id)
 
   # Convert database record to form params (all strings)
+  # You may also use Zoi to help with this conversion if needed
+  # But in general, good to map manually for clarity
   params = %{
     "name" => user.name,
     "email" => user.email,
-    "age" => user.age && to_string(user.age),
+    "age" => user.age,
     "addresses" => Enum.map(user.addresses, fn addr ->
       %{
         "street" => addr.street,
@@ -209,12 +205,11 @@ defp apply_action(socket, :edit, %{"id" => id}) do
   }
 
   ctx = Zoi.Form.parse(@user_schema, params)
-  form = Phoenix.Component.to_form(ctx, as: :user)
 
   socket
   |> assign(:page_title, "Edit User")
   |> assign(:user, user)
-  |> assign(:form, form)
+  |> assign(:form, to_form(ctx, as: :user))
 end
 ```
 
@@ -227,8 +222,7 @@ def handle_event("save", %{"user" => params}, socket) do
   if ctx.valid? do
     save_user(socket, socket.assigns.live_action, ctx.parsed)
   else
-    form = Phoenix.Component.to_form(ctx, as: :user, action: :validate)
-    {:noreply, assign(socket, form: form)}
+    {:noreply, assign(socket, form: to_form(ctx, as: :user, action: :validate))}
   end
 end
 
@@ -240,7 +234,7 @@ defp save_user(socket, :new, attrs) do
        |> put_flash(:info, "User created")
        |> push_navigate(to: ~p"/users/#{user}")}
 
-    {:error, _} ->
+    {:error, _changeset} ->
       {:noreply, put_flash(socket, :error, "Failed to create")}
   end
 end
@@ -253,7 +247,7 @@ defp save_user(socket, :edit, attrs) do
        |> put_flash(:info, "User updated")
        |> push_navigate(to: ~p"/users/#{user}")}
 
-    {:error, _} ->
+    {:error, _changeset} ->
       {:noreply, put_flash(socket, :error, "Failed to update")}
   end
 end

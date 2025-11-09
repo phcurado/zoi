@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.10.2 - Unreleased
+
+### Changed
+
+- `Zoi.transform/2` and `Zoi.refine/2` are now chained in the order they were added, allowing more flexible validation and transformation flows.
+
 ## 0.10.1 - 2025-11-09
 
 ### Added
