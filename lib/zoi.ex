@@ -136,13 +136,11 @@ defmodule Zoi do
 
   Effects (transforms and refines) execute in the order they are chained, allowing flexible composition:
 
-  ```elixir
-  Zoi.string()
-  |> Zoi.min(3)                      # refine
-  |> Zoi.transform(&String.trim/1)   # transform
-  |> Zoi.refine(fn s -> ... end)     # refine
-  |> Zoi.transform(&String.upcase/1) # transform
-  ```
+      Zoi.string()
+      |> Zoi.min(3)                      # refine
+      |> Zoi.transform(&String.trim/1)   # transform
+      |> Zoi.refine(fn s -> ... end)     # refine
+      |> Zoi.transform(&String.upcase/1) # transform
   """
 
   alias Zoi.Regexes
@@ -2309,10 +2307,7 @@ defmodule Zoi do
   def transform(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
-        # Prepend transform to run before existing refinements
-        update_in(sub_schema.meta.effects, fn effects ->
-          [{:transform, fun} | effects]
-        end)
+        transform(sub_schema, fun)
       end)
 
     %{schema | schemas: schemas}
@@ -2321,10 +2316,7 @@ defmodule Zoi do
   def transform(%Zoi.Types.Intersection{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
-        # Prepend transform to run before existing refinements
-        update_in(sub_schema.meta.effects, fn effects ->
-          [{:transform, fun} | effects]
-        end)
+        transform(sub_schema, fun)
       end)
 
     %{schema | schemas: schemas}

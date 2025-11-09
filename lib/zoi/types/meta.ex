@@ -75,16 +75,14 @@ defmodule Zoi.Types.Meta do
   end
 
   defp run_refinement(refine_func, input, errors, ctx) when is_function(refine_func) do
-    result =
-      cond do
-        is_function(refine_func, 1) ->
-          refine_func.(input)
+    cond do
+      is_function(refine_func, 1) ->
+        refine_func.(input)
 
-        is_function(refine_func, 2) ->
-          refine_func.(input, ctx)
-      end
-
-    case result do
+      is_function(refine_func, 2) ->
+        refine_func.(input, ctx)
+    end
+    |> case do
       :ok ->
         {{:ok, input}, errors}
 
@@ -113,16 +111,14 @@ defmodule Zoi.Types.Meta do
   end
 
   defp run_transform(transform_func, input, errors, ctx) when is_function(transform_func) do
-    result =
-      cond do
-        is_function(transform_func, 1) ->
-          transform_func.(input)
+    cond do
+      is_function(transform_func, 1) ->
+        transform_func.(input)
 
-        is_function(transform_func, 2) ->
-          transform_func.(input, ctx)
-      end
-
-    case result do
+      is_function(transform_func, 2) ->
+        transform_func.(input, ctx)
+    end
+    |> case do
       {:ok, value} ->
         {{:ok, value}, errors}
 

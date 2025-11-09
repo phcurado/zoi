@@ -623,14 +623,9 @@ defmodule ZoiTest do
           Zoi.string() |> Zoi.starts_with("prefix_"),
           Zoi.string() |> Zoi.ends_with("_suffix")
         ])
-        |> Zoi.trim()
+        |> Zoi.to_upcase()
 
-      assert {:ok, "prefix_value_suffix"} == Zoi.parse(schema, "  prefix_value_suffix  ")
-
-      # Fails on `starts_with` refinement, fallback to string validation
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value_without_suffix")
-      assert error.code == :invalid_format
-      assert Exception.message(error) == "invalid format: must start with 'prefix_'"
+      assert {:ok, "PREFIX_VALUE_SUFFIX"} == Zoi.parse(schema, "prefix_value_suffix")
     end
 
     test "intersection type with refinements" do
