@@ -310,4 +310,8 @@ Check the official guides for more examples and use cases:
 
 ## Acknowledgements
 
-`Zoi` is inspired by [Zod](https://zod.dev/) and [Joi](https://joi.dev/), providing a similar experience for Elixir.
+`Zoi` is inspired by different schema validation libraries, including:
+
+- [Zod](https://zod.dev/)
+- [Ecto.Changeset](https://hexdocs.pm/ecto/Ecto.Changeset.html)
+- [NimbleOptions](https://hexdocs.pm/nimble_options/NimbleOptions.html)
