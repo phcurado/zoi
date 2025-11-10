@@ -75,6 +75,7 @@ defmodule Zoi.MixProject do
       extra_section: "GUIDES",
       source_url: @source_url,
       groups_for_extras: groups_for_extras(),
+      groups_for_modules: groups_for_modules(),
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
       extras: extras(),
       before_closing_body_tag: &before_closing_body_tag/1
@@ -129,6 +130,15 @@ defmodule Zoi.MixProject do
   defp groups_for_extras do
     [
       Guides: ~r/guides\/.*\.md/
+    ]
+  end
+
+  defp groups_for_modules do
+    [
+      "Main API": [Zoi, Zoi.ISO],
+      Schema: [Zoi.Schema, Zoi.Struct, Zoi.Describe],
+      Integrations: [Zoi.JSONSchema, Zoi.Form],
+      Internals: [Zoi.Context, Zoi.Type]
     ]
   end
 end

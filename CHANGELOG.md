@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## 0.10.2 - Unreleased
 
+### Added
+
+- `Zoi.Schema.traverse/2` for recursively walking and transforming schema structures. This function applies a transformation to all nested fields while leaving the root schema unchanged, making it easy to apply operations like coercion, nullish, or defaults across an entire schema tree.
+- `Zoi.coerce/1` helper function to enable type coercion on schemas that support it.
+
 ### Changed
 
 - `Zoi.transform/2` and `Zoi.refine/2` are now chained in the order they were added, allowing more flexible validation and transformation flows.

@@ -3261,6 +3261,28 @@ defmodule ZoiTest do
     end
   end
 
+  describe "coerce/1" do
+    test "enables coercion on types that support it" do
+      schemas = [
+        Zoi.string(),
+        Zoi.integer(),
+        Zoi.float(),
+        Zoi.boolean(),
+        Zoi.object(%{}),
+        Zoi.array(Zoi.string())
+      ]
+
+      Enum.each(schemas, fn schema ->
+        assert %{coerce: true} = Zoi.coerce(schema)
+      end)
+    end
+
+    test "returns unchanged for types that don't support coercion" do
+      schema = Zoi.literal("test")
+      assert Zoi.coerce(schema) == schema
+    end
+  end
+
   describe "metadata/1" do
     test "all main types metadata" do
       types = [
