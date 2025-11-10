@@ -129,7 +129,17 @@ defmodule Zoi.MixProject do
 
   defp groups_for_extras do
     [
-      Guides: ~r/guides\/.*\.md/
+      Setup: ["guides/quickstart_guide.md"],
+      Integrations: [
+        "guides/rendering_forms_with_phoenix.md",
+        "guides/using_zoi_to_generate_openapi_specs.md",
+        "guides/validating_controller_parameters.md"
+      ],
+      Utilities: [
+        "guides/converting_keys_from_object.md",
+        "guides/generating_schemas_from_json_example.md",
+        "guides/localizing_errors_with_gettext.md"
+      ]
     ]
   end
 
