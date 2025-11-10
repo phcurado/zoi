@@ -19,24 +19,44 @@ defmodule Zoi.Form do
   """
   @spec prepare(Zoi.Type.t()) :: Zoi.Type.t()
   def prepare(%Zoi.Types.Object{} = obj) do
-    prepared_fields =
-      Enum.map(obj.fields, fn {key, type} ->
-        {key, prepare_nested(type)}
-      end)
-
     obj
-    |> Map.put(:fields, prepared_fields)
+    |> Zoi.Schema.traverse(fn
+      %Zoi.Types.Object{} = inner_obj ->
+        apply_object_defaults(inner_obj)
+
+      %Zoi.Types.Struct{} = struct ->
+        apply_struct_defaults(struct)
+
+      %Zoi.Types.Keyword{fields: fields} = keyword when is_list(fields) ->
+        apply_keyword_defaults(keyword)
+
+      %Zoi.Types.Keyword{fields: schema} = keyword when is_struct(schema) ->
+        apply_keyword_defaults(keyword)
+
+      node ->
+        Zoi.coerce(node)
+    end)
     |> apply_object_defaults()
   end
 
-  def prepare(%Zoi.Types.Struct{} = obj) do
-    prepared_fields =
-      Enum.map(obj.fields, fn {key, type} ->
-        {key, prepare_nested(type)}
-      end)
+  def prepare(%Zoi.Types.Struct{} = struct) do
+    struct
+    |> Zoi.Schema.traverse(fn
+      %Zoi.Types.Object{} = obj ->
+        apply_object_defaults(obj)
 
-    obj
-    |> Map.put(:fields, prepared_fields)
+      %Zoi.Types.Struct{} = inner_struct ->
+        apply_struct_defaults(inner_struct)
+
+      %Zoi.Types.Keyword{fields: fields} = keyword when is_list(fields) ->
+        apply_keyword_defaults(keyword)
+
+      %Zoi.Types.Keyword{fields: schema} = keyword when is_struct(schema) ->
+        apply_keyword_defaults(keyword)
+
+      node ->
+        Zoi.coerce(node)
+    end)
     |> apply_struct_defaults()
   end
 
@@ -128,62 +148,6 @@ defmodule Zoi.Form do
     int
   end
 
-  defp prepare_nested(%Zoi.Types.Object{} = obj), do: prepare(obj)
-  defp prepare_nested(%Zoi.Types.Struct{} = obj), do: prepare(obj)
-  defp prepare_nested(%Zoi.Types.Keyword{} = keyword), do: prepare_keyword(keyword)
-
-  defp prepare_nested(%Zoi.Types.Array{} = array) do
-    array
-    |> Map.put(:inner, prepare_nested(array.inner))
-    |> maybe_enable_coercion()
-  end
-
-  defp prepare_nested(%Zoi.Types.Default{} = default) do
-    %{default | inner: prepare_nested(default.inner)}
-  end
-
-  defp prepare_nested(%Zoi.Types.Map{} = map) do
-    map =
-      %{
-        map
-        | key_type: prepare_nested(map.key_type),
-          value_type: prepare_nested(map.value_type)
-      }
-
-    maybe_enable_coercion(map)
-  end
-
-  defp prepare_nested(%Zoi.Types.Tuple{} = tuple) do
-    %{tuple | fields: Enum.map(tuple.fields, &prepare_nested/1)}
-  end
-
-  defp prepare_nested(%Zoi.Types.Union{} = union) do
-    %{union | schemas: Enum.map(union.schemas, &prepare_nested/1)}
-  end
-
-  defp prepare_nested(%Zoi.Types.Intersection{} = intersection) do
-    %{intersection | schemas: Enum.map(intersection.schemas, &prepare_nested/1)}
-  end
-
-  defp prepare_nested(other), do: maybe_enable_coercion(other)
-
-  defp prepare_keyword(%Zoi.Types.Keyword{fields: fields} = keyword) when is_list(fields) do
-    prepared_fields =
-      Enum.map(fields, fn {key, type} ->
-        {key, prepare_nested(type)}
-      end)
-
-    keyword
-    |> Map.put(:fields, prepared_fields)
-    |> apply_keyword_defaults()
-  end
-
-  defp prepare_keyword(%Zoi.Types.Keyword{fields: schema} = keyword) when is_struct(schema) do
-    keyword
-    |> Map.put(:fields, prepare_nested(schema))
-    |> apply_keyword_defaults()
-  end
-
   defp apply_object_defaults(%Zoi.Types.Object{} = obj) do
     %{obj | coerce: true, empty_values: @form_empty_values}
   end
@@ -195,7 +159,4 @@ defmodule Zoi.Form do
   defp apply_keyword_defaults(%Zoi.Types.Keyword{} = keyword) do
     %{keyword | coerce: true, empty_values: @form_empty_values}
   end
-
-  defp maybe_enable_coercion(%{coerce: _} = type), do: %{type | coerce: true}
-  defp maybe_enable_coercion(type), do: type
 end

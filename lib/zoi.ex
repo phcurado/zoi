@@ -373,6 +373,34 @@ defmodule Zoi do
   end
 
   @doc """
+  Enables coercion on a schema.
+
+  This is a helper function that enables type coercion on schemas that support it.
+  Types that don't have a `:coerce` field are returned unchanged.
+
+  Coercion allows automatic type conversion of input data. For example, the string `"42"`
+  can be coerced to the integer `42`, or the string `"true"` to the boolean `true`.
+
+  ## Example
+
+      iex> schema = Zoi.integer() |> Zoi.coerce()
+      iex> Zoi.parse(schema, "42")
+      {:ok, 42}
+
+  For nested schemas, use `Zoi.Schema.traverse/2` to enable coercion on child fields.
+  Note that traverse only applies to nested fields, not the root schema:
+
+      iex> schema = Zoi.object(%{age: Zoi.integer()}) |> Zoi.Schema.traverse(&Zoi.coerce/1) |> Zoi.coerce()
+      iex> Zoi.parse(schema, %{"age" => "25"})
+      {:ok, %{age: 25}}
+  """
+  @doc group: "Parsing"
+  @doc since: "0.11.0"
+  @spec coerce(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  def coerce(%{coerce: _} = schema), do: %{schema | coerce: true}
+  def coerce(schema), do: schema
+
+  @doc """
   Converts a list of errors into a tree structure, where each error is placed at its corresponding path.
 
   This is useful for displaying validation errors in a structured way, such as in a form.
