@@ -16,6 +16,17 @@ defmodule Zoi.StructTest do
       assert :email in keys
       assert :name in keys
     end
+
+    test "enforce keys on default and optional fields" do
+      schema =
+        Zoi.struct(__MODULE__, %{
+          name: Zoi.default(Zoi.optional(Zoi.string()), "Unknown"),
+          age: Zoi.optional(Zoi.default(Zoi.integer(), 18))
+        })
+
+      keys = Zoi.Struct.enforce_keys(schema)
+      assert keys == []
+    end
   end
 
   describe "struct_fields/1" do
@@ -32,6 +43,19 @@ defmodule Zoi.StructTest do
       assert :name in keys
       assert :email in keys
       assert {:age, 0} in keys
+    end
+
+    test "struct fields with default and optional" do
+      schema =
+        Zoi.struct(__MODULE__, %{
+          name: Zoi.default(Zoi.optional(Zoi.string()), "Unknown"),
+          age: Zoi.optional(Zoi.default(Zoi.integer(), 18))
+        })
+
+      keys = Zoi.Struct.struct_fields(schema)
+
+      assert {:name, "Unknown"} in keys
+      assert {:age, 18} in keys
     end
   end
 end
