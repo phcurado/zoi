@@ -162,9 +162,43 @@ defmodule Zoi.FormTest do
       age_field = schema.fields[:age]
       assert age_field.inner.coerce == true
     end
+
+    test "enables coercion on struct with nested struct" do
+      schema =
+        Zoi.struct(TestUser, %{
+          profile: Zoi.struct(TestUser, %{name: Zoi.string()})
+        })
+        |> Zoi.Form.prepare()
+
+      profile_field = schema.fields[:profile]
+      assert profile_field.coerce == true
+    end
+
+    test "enables coercion on struct with keyword list fields" do
+      schema =
+        Zoi.struct(TestUser, %{
+          opts: Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
+        })
+        |> Zoi.Form.prepare()
+
+      opts_field = schema.fields[:opts]
+      assert opts_field.coerce == true
+    end
+
+    test "enables coercion on struct with keyword schema" do
+      schema =
+        Zoi.struct(TestUser, %{
+          opts: Zoi.keyword(Zoi.string())
+        })
+        |> Zoi.Form.prepare()
+
+      opts_field = schema.fields[:opts]
+      assert opts_field.coerce == true
+      assert opts_field.fields.coerce == true
+    end
   end
 
-  describe "Zoi.Form.parse/2 normalization" do
+  describe "parse/2" do
     test "normalizes single-level array from map to list" do
       schema =
         Zoi.object(%{
@@ -426,9 +460,7 @@ defmodule Zoi.FormTest do
 
       assert ctx.input["items"] == ["first", "second"]
     end
-  end
 
-  describe "edge cases" do
     test "handles non-map input gracefully" do
       schema =
         Zoi.object(%{
