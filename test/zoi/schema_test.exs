@@ -282,9 +282,7 @@ defmodule Zoi.SchemaTest do
       assert profile_field.coerce == true
       assert profile_field.fields[:bio].coerce == true
     end
-  end
 
-  describe "practical examples" do
     test "make all fields nullable with coercion" do
       schema =
         Zoi.object(%{
@@ -356,6 +354,28 @@ defmodule Zoi.SchemaTest do
       user_field = schema.fields[:user]
       assert user_field.coerce == true
       assert user_field.fields[:email].coerce == true
+    end
+
+    test "supports keyword with schema as root" do
+      schema =
+        Zoi.keyword(Zoi.string())
+        |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+      # Root is not transformed
+      refute schema.coerce
+      # The inner schema should be transformed
+      assert schema.fields.coerce == true
+    end
+
+    test "handles primitive schemas at root level" do
+      string_schema = Zoi.string() |> Zoi.Schema.traverse(&Zoi.coerce/1)
+      integer_schema = Zoi.integer() |> Zoi.Schema.traverse(&Zoi.coerce/1)
+      boolean_schema = Zoi.boolean() |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+      # Primitive schemas have no children to traverse, so they remain unchanged
+      refute string_schema.coerce
+      refute integer_schema.coerce
+      refute boolean_schema.coerce
     end
   end
 end
