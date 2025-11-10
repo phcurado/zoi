@@ -17,7 +17,7 @@ defmodule Zoi.Form do
   into their target type and sets the empty values to `nil` and `""`, matching how
   Phoenix sends form inputs.
   """
-  @spec prepare(Zoi.Type.t()) :: Zoi.Type.t()
+  @spec prepare(Zoi.schema()) :: Zoi.schema()
   def prepare(%Zoi.Types.Object{} = obj) do
     obj
     |> Zoi.Schema.traverse(fn
@@ -71,7 +71,7 @@ defmodule Zoi.Form do
   string keys) into regular lists, so `context.input` always contains clean, manipulable
   data structures.
   """
-  @spec parse(schema :: Zoi.Type.t(), input :: Zoi.input(), opts :: Zoi.options()) ::
+  @spec parse(schema :: Zoi.schema(), input :: Zoi.input(), opts :: Zoi.options()) ::
           Zoi.Context.t()
   def parse(%Zoi.Types.Object{} = obj, input, opts \\ []) do
     # Normalize input to convert LiveView map arrays to lists

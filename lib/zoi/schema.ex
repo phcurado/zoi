@@ -66,7 +66,7 @@ defmodule Zoi.Schema do
         end
       end)
   """
-  @spec traverse(Zoi.Type.t(), function()) :: Zoi.Type.t()
+  @spec traverse(Zoi.schema(), function()) :: Zoi.schema()
   def traverse(schema, fun) when is_function(fun, 1) or is_function(fun, 2) do
     do_traverse_root(schema, fun)
   end

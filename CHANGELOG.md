@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.10.3 - 2025-11-10
+
+### Added
+
+- wrap `Zoi.Type.t()` into `Zoi.schema()` type
+- Group guides on hexdocs
+
 ## 0.10.2 - 2025-11-10
 
 ### Added

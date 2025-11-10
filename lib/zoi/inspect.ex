@@ -3,7 +3,7 @@ defmodule Zoi.Inspect do
 
   import Inspect.Algebra
 
-  @spec inspect_type(Zoi.Type.t(), Inspect.Opts.t(), keyword()) :: Inspect.Algebra.t()
+  @spec inspect_type(Zoi.schema(), Inspect.Opts.t(), keyword()) :: Inspect.Algebra.t()
   def inspect_type(type, inspect_opts, opts \\ [])
 
   def inspect_type(%Zoi.Types.Array{} = type, inspect_opts, opts),

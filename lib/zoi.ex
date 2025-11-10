@@ -145,6 +145,9 @@ defmodule Zoi do
 
   alias Zoi.Regexes
 
+  @typedoc "The schema definition."
+  @type schema :: Zoi.Type.t()
+
   @typedoc "The input data to be validated against a schema."
   @type input :: any()
 
@@ -189,7 +192,7 @@ defmodule Zoi do
       {:ok, "123"}
   """
   @doc group: "Parsing"
-  @spec parse(schema :: Zoi.Type.t(), input :: input(), opts :: options()) :: result()
+  @spec parse(schema :: schema(), input :: input(), opts :: options()) :: result()
   def parse(schema, input, opts \\ []) do
     ctx = Zoi.Context.new(schema, input)
     opts = Keyword.put_new(opts, :ctx, ctx)
@@ -216,7 +219,7 @@ defmodule Zoi do
       # too small: must have at least 2 characters
   """
   @doc group: "Parsing"
-  @spec parse!(schema :: Zoi.Type.t(), input :: input(), opts :: options()) :: any()
+  @spec parse!(schema :: schema(), input :: input(), opts :: options()) :: any()
   def parse!(schema, input, opts \\ []) do
     case parse(schema, input, opts) do
       {:ok, result} ->
@@ -266,7 +269,7 @@ defmodule Zoi do
   All the types provided by `Zoi` supports the type spec generation.
   """
   @doc group: "Parsing"
-  @spec type_spec(schema :: Zoi.Type.t(), opts :: options()) :: Macro.t()
+  @spec type_spec(schema :: schema(), opts :: options()) :: Macro.t()
   def type_spec(schema, opts \\ []) do
     Zoi.Type.type_spec(schema, opts)
   end
@@ -284,7 +287,7 @@ defmodule Zoi do
       "Defines the name of the user"
   """
   @doc group: "Parsing"
-  @spec description(schema :: Zoi.Type.t()) :: binary() | nil
+  @spec description(schema :: schema()) :: binary() | nil
   def description(schema) do
     schema.meta.description
   end
@@ -326,7 +329,7 @@ defmodule Zoi do
       end
   """
   @doc group: "Parsing"
-  @spec example(schema :: Zoi.Type.t()) :: input()
+  @spec example(schema :: schema()) :: input()
   def example(schema) do
     schema.meta.example
   end
@@ -367,7 +370,7 @@ defmodule Zoi do
   The metadata is flexible, allowing you to store any key-value pairs that suit your needs.
   """
   @doc group: "Parsing"
-  @spec metadata(schema :: Zoi.Type.t()) :: keyword()
+  @spec metadata(schema :: schema()) :: keyword()
   def metadata(schema) do
     schema.meta.metadata
   end
@@ -396,7 +399,7 @@ defmodule Zoi do
   """
   @doc group: "Parsing"
   @doc since: "0.11.0"
-  @spec coerce(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  @spec coerce(schema :: schema()) :: schema()
   def coerce(%{coerce: _} = schema), do: %{schema | coerce: true}
   def coerce(schema), do: schema
 
@@ -507,14 +510,14 @@ defmodule Zoi do
   See `Zoi.JSONSchema`
   """
   @doc group: "Parsing"
-  @spec to_json_schema(schema :: Zoi.Type.t()) :: map()
+  @spec to_json_schema(schema :: schema()) :: map()
   defdelegate to_json_schema(schema), to: Zoi.JSONSchema, as: :encode
 
   @doc """
   See `Zoi.Describe`
   """
   @doc group: "Parsing"
-  @spec describe(schema :: Zoi.Type.t()) :: binary()
+  @spec describe(schema :: schema()) :: binary()
   defdelegate describe(schema), to: Zoi.Describe, as: :generate
 
   # Types
@@ -558,7 +561,7 @@ defmodule Zoi do
       {:ok, "123"}
   """
   @doc group: "Basic Types"
-  @spec string(opts :: options()) :: Zoi.Type.t()
+  @spec string(opts :: options()) :: schema()
   defdelegate string(opts \\ []), to: Zoi.Types.String, as: :new
 
   @doc """
@@ -585,7 +588,7 @@ defmodule Zoi do
       {:ok, 42}
   """
   @doc group: "Basic Types"
-  @spec integer(opts :: options()) :: Zoi.Type.t()
+  @spec integer(opts :: options()) :: schema()
   defdelegate integer(opts \\ []), to: Zoi.Types.Integer, as: :new
 
   @doc """
@@ -606,7 +609,7 @@ defmodule Zoi do
       {:ok, 3.14}
   """
   @doc group: "Basic Types"
-  @spec float(opts :: options()) :: Zoi.Type.t()
+  @spec float(opts :: options()) :: schema()
   defdelegate float(opts \\ []), to: Zoi.Types.Float, as: :new
 
   @doc """
@@ -632,7 +635,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Basic Types"
-  @spec number(opts :: options()) :: Zoi.Type.t()
+  @spec number(opts :: options()) :: schema()
   defdelegate number(opts \\ []), to: Zoi.Types.Number, as: :new
 
   @doc """
@@ -649,7 +652,7 @@ defmodule Zoi do
       {:ok, true}
   """
   @doc group: "Basic Types"
-  @spec boolean(opts :: options()) :: Zoi.Type.t()
+  @spec boolean(opts :: options()) :: schema()
   defdelegate boolean(opts \\ []), to: Zoi.Types.Boolean, as: :new
 
   @doc """
@@ -696,7 +699,7 @@ defmodule Zoi do
       {:ok, true}
   """
   @doc group: "Basic Types"
-  @spec string_boolean(opts :: options()) :: Zoi.Type.t()
+  @spec string_boolean(opts :: options()) :: schema()
   defdelegate string_boolean(opts \\ []), to: Zoi.Types.StringBoolean, as: :new
 
   @doc """
@@ -715,7 +718,7 @@ defmodule Zoi do
       {:ok, %{key: "value"}}
   """
   @doc group: "Basic Types"
-  @spec any(opts :: options()) :: Zoi.Type.t()
+  @spec any(opts :: options()) :: schema()
   defdelegate any(opts \\ []), to: Zoi.Types.Any, as: :new
 
   @doc """
@@ -737,7 +740,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Basic Types"
-  @spec atom(opts :: options()) :: Zoi.Type.t()
+  @spec atom(opts :: options()) :: schema()
   defdelegate atom(opts \\ []), to: Zoi.Types.Atom, as: :new
 
   @doc """
@@ -773,7 +776,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Basic Types"
-  @spec literal(value :: input(), opts :: options()) :: Zoi.Type.t()
+  @spec literal(value :: input(), opts :: options()) :: schema()
   defdelegate literal(value, opts \\ []), to: Zoi.Types.Literal, as: :new
 
   @doc """
@@ -796,7 +799,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Basic Types"
-  @spec null(opts :: options()) :: Zoi.Type.t()
+  @spec null(opts :: options()) :: schema()
   defdelegate null(opts \\ []), to: Zoi.Types.Null, as: :new
 
   @doc """
@@ -809,7 +812,7 @@ defmodule Zoi do
       {:ok, %{}}
   """
   @doc group: "Encapsulated Types"
-  @spec optional(inner :: Zoi.Type.t()) :: Zoi.Type.t()
+  @spec optional(inner :: schema()) :: schema()
   defdelegate optional(inner), to: Zoi.Types.Optional, as: :new
 
   @doc """
@@ -830,7 +833,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Encapsulated Types"
-  @spec required(inner :: Zoi.Type.t()) :: Zoi.Type.t()
+  @spec required(inner :: schema()) :: schema()
   defdelegate required(inner), to: Zoi.Types.Required, as: :new
 
   @doc """
@@ -844,7 +847,7 @@ defmodule Zoi do
       {:ok, "hello"}
   """
   @doc group: "Encapsulated Types"
-  @spec nullable(inner :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  @spec nullable(inner :: schema(), opts :: options()) :: schema()
   defdelegate nullable(inner, opts \\ []), to: Zoi.Types.Nullable, as: :new
 
   @doc """
@@ -859,7 +862,7 @@ defmodule Zoi do
   """
   @doc group: "Encapsulated Types"
   @doc since: "0.7.5"
-  @spec nullish(inner :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  @spec nullish(inner :: schema(), opts :: options()) :: schema()
   defdelegate nullish(inner, opts \\ []), to: Zoi.Types.Nullish, as: :new
 
   @doc """
@@ -874,7 +877,7 @@ defmodule Zoi do
 
   """
   @doc group: "Encapsulated Types"
-  @spec default(inner :: Zoi.Type.t(), value :: input(), opts :: options()) :: Zoi.Type.t()
+  @spec default(inner :: schema(), value :: input(), opts :: options()) :: schema()
   defdelegate default(inner, value, opts \\ []), to: Zoi.Types.Default, as: :new
 
   @doc """
@@ -945,7 +948,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Encapsulated Types"
-  @spec union(fields :: [Zoi.Type.t()], opts :: options()) :: Zoi.Type.t()
+  @spec union(fields :: [schema()], opts :: options()) :: schema()
   defdelegate union(fields, opts \\ []), to: Zoi.Types.Union, as: :new
 
   @doc """
@@ -992,7 +995,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Encapsulated Types"
-  @spec intersection(fields :: [Zoi.Type.t()], opts :: options()) :: Zoi.Type.t()
+  @spec intersection(fields :: [schema()], opts :: options()) :: schema()
   defdelegate intersection(fields, opts \\ []), to: Zoi.Types.Intersection, as: :new
 
   @doc """
@@ -1118,7 +1121,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Complex Types"
-  @spec object(fields :: map(), opts :: options()) :: Zoi.Type.t()
+  @spec object(fields :: map(), opts :: options()) :: schema()
   defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
 
   @doc """
@@ -1175,7 +1178,7 @@ defmodule Zoi do
       {:ok, [a: "hello", b: "world"]}
   """
   @doc group: "Complex Types"
-  @spec keyword(fields :: keyword(), opts :: options()) :: Zoi.Type.t()
+  @spec keyword(fields :: keyword(), opts :: options()) :: schema()
   defdelegate keyword(fields, opts \\ []), to: Zoi.Types.Keyword, as: :new
 
   @doc """
@@ -1223,7 +1226,7 @@ defmodule Zoi do
 
   """
   @doc group: "Complex Types"
-  @spec struct(module :: module(), fields :: map(), opts :: options()) :: Zoi.Type.t()
+  @spec struct(module :: module(), fields :: map(), opts :: options()) :: schema()
   defdelegate struct(module, fields, opts \\ []), to: Zoi.Types.Struct, as: :new
 
   @doc """
@@ -1238,8 +1241,8 @@ defmodule Zoi do
       {:ok, %{name: "Alice", role: :admin}}
   """
   @doc group: "Complex Types"
-  @spec extend(schema1 :: Zoi.Type.t(), schema2 :: Zoi.Type.t(), opts :: options()) ::
-          Zoi.Type.t()
+  @spec extend(schema1 :: schema(), schema2 :: schema(), opts :: options()) ::
+          schema()
   defdelegate extend(schema1, schema2, opts \\ []), to: Zoi.Types.Extend, as: :new
 
   @doc """
@@ -1261,8 +1264,8 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Complex Types"
-  @spec map(key :: Zoi.Type.t(), type :: Zoi.Type.t(), opts :: options()) ::
-          Zoi.Type.t()
+  @spec map(key :: schema(), type :: schema(), opts :: options()) ::
+          schema()
   defdelegate map(key, type, opts \\ []), to: Zoi.Types.Map, as: :new
 
   @doc """
@@ -1272,7 +1275,7 @@ defmodule Zoi do
       Zoi.map(Zoi.any(), Zoi.any())
   """
   @doc group: "Complex Types"
-  @spec map(opts :: options()) :: Zoi.Type.t()
+  @spec map(opts :: options()) :: schema()
   defdelegate map(opts \\ []), to: Zoi.Types.Map, as: :new
 
   @doc """
@@ -1295,7 +1298,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Complex Types"
-  @spec tuple(fields :: tuple(), opts :: options()) :: Zoi.Type.t()
+  @spec tuple(fields :: tuple(), opts :: options()) :: schema()
   defdelegate tuple(fields, opts \\ []), to: Zoi.Types.Tuple, as: :new
 
   @doc """
@@ -1335,7 +1338,7 @@ defmodule Zoi do
       {:ok, [1, 2, 3]}
   """
   @doc group: "Complex Types"
-  @spec array(elements :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  @spec array(elements :: schema(), opts :: options()) :: schema()
   def array(elements \\ Zoi.any(), opts \\ []) do
     Zoi.Types.Array.new(elements, opts)
   end
@@ -1344,7 +1347,7 @@ defmodule Zoi do
   alias for `Zoi.array/2`
   """
   @doc group: "Complex Types"
-  @spec list(elements :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  @spec list(elements :: schema(), opts :: options()) :: schema()
   defdelegate list(elements, opts \\ []), to: Zoi.Types.Array, as: :new
 
   @doc """
@@ -1454,7 +1457,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Complex Types"
-  @spec enum(values :: [input()] | keyword(), opts :: options()) :: Zoi.Type.t()
+  @spec enum(values :: [input()] | keyword(), opts :: options()) :: schema()
   defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
 
   @doc """
@@ -1487,7 +1490,7 @@ defmodule Zoi do
 
   """
   @doc group: "Structured Types"
-  @spec date(opts :: options()) :: Zoi.Type.t()
+  @spec date(opts :: options()) :: schema()
   defdelegate date(opts \\ []), to: Zoi.Types.Date, as: :new
 
   @doc """
@@ -1517,7 +1520,7 @@ defmodule Zoi do
       {:ok, ~T[12:34:56]}
   """
   @doc group: "Structured Types"
-  @spec time(opts :: options()) :: Zoi.Type.t()
+  @spec time(opts :: options()) :: schema()
   defdelegate time(opts \\ []), to: Zoi.Types.Time, as: :new
 
   @doc """
@@ -1548,7 +1551,7 @@ defmodule Zoi do
       {:ok, ~U[2016-05-24 13:26:08Z]}
   """
   @doc group: "Structured Types"
-  @spec datetime(opts :: options()) :: Zoi.Type.t()
+  @spec datetime(opts :: options()) :: schema()
   defdelegate datetime(opts \\ []), to: Zoi.Types.DateTime, as: :new
 
   @doc """
@@ -1580,7 +1583,7 @@ defmodule Zoi do
       {:ok, ~N[0000-01-01 00:00:01]}
   """
   @doc group: "Structured Types"
-  @spec naive_datetime(opts :: options()) :: Zoi.Type.t()
+  @spec naive_datetime(opts :: options()) :: schema()
   defdelegate naive_datetime(opts \\ []), to: Zoi.Types.NaiveDateTime, as: :new
 
   if Code.ensure_loaded?(Decimal) do
@@ -1614,7 +1617,7 @@ defmodule Zoi do
         {:ok, Decimal.new("123")}
     """
     @doc group: "Structured Types"
-    @spec decimal(opts :: options()) :: Zoi.Type.t()
+    @spec decimal(opts :: options()) :: schema()
     defdelegate decimal(opts \\ []), to: Zoi.Types.Decimal, as: :new
   else
     def decimal(_opts \\ []) do
@@ -1656,7 +1659,7 @@ defmodule Zoi do
       Zoi.email(pattern: ~r/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)  
   """
   @doc group: "Formats"
-  @spec email(opts :: options()) :: Zoi.Type.t()
+  @spec email(opts :: options()) :: schema()
   def email(opts \\ []) do
     regex = Keyword.get(opts, :pattern, Regexes.email())
 
@@ -1686,7 +1689,7 @@ defmodule Zoi do
       {:ok, "6d084cef-a067-8e9e-be6d-7c5aefdfd9b4"}
   """
   @doc group: "Formats"
-  @spec uuid(opts :: options()) :: Zoi.Type.t()
+  @spec uuid(opts :: options()) :: schema()
   def uuid(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.uuid(opts),
@@ -1708,7 +1711,7 @@ defmodule Zoi do
       "invalid format: must be a valid URL"
   """
   @doc group: "Formats"
-  @spec url(opts :: options()) :: Zoi.Type.t()
+  @spec url(opts :: options()) :: schema()
   def url(opts \\ []) do
     Zoi.string()
     |> refine({Zoi.Refinements, :refine, [[:url], opts]})
@@ -1724,7 +1727,7 @@ defmodule Zoi do
       {:ok, "127.0.0.1"}
   """
   @doc group: "Formats"
-  @spec ipv4(opts :: options()) :: Zoi.Type.t()
+  @spec ipv4(opts :: options()) :: schema()
   def ipv4(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.ipv4(),
@@ -1743,7 +1746,7 @@ defmodule Zoi do
       {:ok, "2001:0db8:85a3:0000:0000:8a2e:0370:7334"}
   """
   @doc group: "Formats"
-  @spec ipv6(opts :: options()) :: Zoi.Type.t()
+  @spec ipv6(opts :: options()) :: schema()
   def ipv6(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.ipv6(),
@@ -1762,7 +1765,7 @@ defmodule Zoi do
       {:ok, "a3c113"}
   """
   @doc group: "Formats"
-  @spec hex(opts :: options()) :: Zoi.Type.t()
+  @spec hex(opts :: options()) :: schema()
   def hex(opts \\ []) do
     Zoi.string()
     |> regex(Regexes.hex(),
@@ -1793,8 +1796,8 @@ defmodule Zoi do
   """
 
   @doc group: "Refinements"
-  @spec length(schema :: Zoi.Type.t(), length :: non_neg_integer(), opts :: options()) ::
-          Zoi.Type.t()
+  @spec length(schema :: schema(), length :: non_neg_integer(), opts :: options()) ::
+          schema()
   def length(schema, length, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[length: length], opts]})
@@ -1804,7 +1807,7 @@ defmodule Zoi do
   alias for `Zoi.gte/2`
   """
   @doc group: "Refinements"
-  @spec min(schema :: Zoi.Type.t(), min :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  @spec min(schema :: schema(), min :: non_neg_integer(), opts :: options()) :: schema()
   def min(schema, min, opts \\ []) do
     __MODULE__.gte(schema, min, opts)
   end
@@ -1830,7 +1833,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec gte(schema :: Zoi.Type.t(), min :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  @spec gte(schema :: schema(), min :: non_neg_integer(), opts :: options()) :: schema()
   def gte(schema, gte, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
@@ -1857,7 +1860,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec gt(schema :: Zoi.Type.t(), gt :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  @spec gt(schema :: schema(), gt :: non_neg_integer(), opts :: options()) :: schema()
   def gt(schema, gt, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[gt: gt], opts]})
@@ -1867,7 +1870,7 @@ defmodule Zoi do
   alias for `Zoi.lte/2`
   """
   @doc group: "Refinements"
-  @spec max(schema :: Zoi.Type.t(), max :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  @spec max(schema :: schema(), max :: non_neg_integer(), opts :: options()) :: schema()
   def max(schema, max, opts \\ []) do
     lte(schema, max, opts)
   end
@@ -1893,7 +1896,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec lte(schema :: Zoi.Type.t(), lte :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  @spec lte(schema :: schema(), lte :: non_neg_integer(), opts :: options()) :: schema()
   def lte(schema, lte, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
@@ -1920,7 +1923,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec lt(schema :: Zoi.Type.t(), lt :: non_neg_integer(), opts :: options()) :: Zoi.Type.t()
+  @spec lt(schema :: schema(), lt :: non_neg_integer(), opts :: options()) :: schema()
   def lt(schema, lt, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[lt: lt], opts]})
@@ -1945,7 +1948,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec positive(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  @spec positive(schema :: schema(), opts :: options()) :: schema()
   def positive(schema, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[gt: 0], opts]})
@@ -1970,7 +1973,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec negative(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  @spec negative(schema :: schema(), opts :: options()) :: schema()
   def negative(schema, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[lt: 0], opts]})
@@ -1995,7 +1998,7 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec non_negative(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  @spec non_negative(schema :: schema(), opts :: options()) :: schema()
   def non_negative(schema, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[gte: 0], opts]})
@@ -2010,7 +2013,7 @@ defmodule Zoi do
       {:ok, "12345"}
   """
   @doc group: "Refinements"
-  @spec regex(schema :: Zoi.Type.t(), regex :: Regex.t(), opts :: options()) :: Zoi.Type.t()
+  @spec regex(schema :: schema(), regex :: Regex.t(), opts :: options()) :: schema()
   def regex(schema, regex, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[regex: regex.source, opts: regex.opts], opts]})
@@ -2029,7 +2032,7 @@ defmodule Zoi do
       "invalid format: must start with 'hello'"
   """
   @doc group: "Refinements"
-  @spec starts_with(schema :: Zoi.Type.t(), prefix :: binary(), opts :: options()) :: Zoi.Type.t()
+  @spec starts_with(schema :: schema(), prefix :: binary(), opts :: options()) :: schema()
   def starts_with(schema, prefix, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[starts_with: prefix], opts]})
@@ -2048,7 +2051,7 @@ defmodule Zoi do
       "invalid format: must end with 'world'"
   """
   @doc group: "Refinements"
-  @spec ends_with(schema :: Zoi.Type.t(), suffix :: binary(), opts :: options()) :: Zoi.Type.t()
+  @spec ends_with(schema :: schema(), suffix :: binary(), opts :: options()) :: schema()
   def ends_with(schema, suffix, opts \\ []) do
     schema
     |> refine({Zoi.Refinements, :refine, [[ends_with: suffix], opts]})
@@ -2067,7 +2070,7 @@ defmodule Zoi do
       "invalid format: must be lowercase"
   """
   @doc group: "Refinements"
-  @spec downcase(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  @spec downcase(schema :: schema(), opts :: options()) :: schema()
   def downcase(schema, opts \\ []) do
     schema
     |> regex(Regexes.downcase(),
@@ -2089,7 +2092,7 @@ defmodule Zoi do
       "invalid format: must be uppercase"
   """
   @doc group: "Refinements"
-  @spec upcase(schema :: Zoi.Type.t(), opts :: options()) :: Zoi.Type.t()
+  @spec upcase(schema :: schema(), opts :: options()) :: schema()
   def upcase(schema, opts \\ []) do
     schema
     |> regex(Regexes.upcase(),
@@ -2110,7 +2113,7 @@ defmodule Zoi do
       {:ok, "hello world"}
   """
   @doc group: "Transforms"
-  @spec trim(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  @spec trim(schema :: schema()) :: schema()
   def trim(schema) do
     schema
     |> transform({Zoi.Transforms, :transform, [[:trim]]})
@@ -2139,7 +2142,7 @@ defmodule Zoi do
       {:ok, "HELLO WORLD"}
   """
   @doc group: "Transforms"
-  @spec to_upcase(schema :: Zoi.Type.t()) :: Zoi.Type.t()
+  @spec to_upcase(schema :: schema()) :: schema()
   def to_upcase(schema) do
     schema
     |> transform({Zoi.Transforms, :transform, [[:to_upcase]]})
@@ -2165,7 +2168,7 @@ defmodule Zoi do
       #=> {:ok, %User{name: "Alice", age: 30}}
   """
   @doc group: "Transforms"
-  @spec to_struct(schema :: Zoi.Type.t(), struct :: module()) :: Zoi.Type.t()
+  @spec to_struct(schema :: schema(), struct :: module()) :: schema()
   def to_struct(schema, module) do
     schema
     |> transform({Zoi.Transforms, :transform, [[struct: module]]})
@@ -2244,7 +2247,7 @@ defmodule Zoi do
   In general, most cases the `:ok` or `{:error, reason}` returns will be enough. Use the context only if you need extra errors or modify the context in some way.
   """
   @doc group: "Extensions"
-  @spec refine(schema :: Zoi.Type.t(), fun :: refinement()) :: Zoi.Type.t()
+  @spec refine(schema :: schema(), fun :: refinement()) :: schema()
   def refine(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
@@ -2331,7 +2334,7 @@ defmodule Zoi do
   The `ctx` is a `Zoi.Context` struct that contains information about the current parsing context, including the path, options, and any errors that have been added so far.
   """
   @doc group: "Extensions"
-  @spec transform(schema :: Zoi.Type.t(), fun :: transform()) :: Zoi.Type.t()
+  @spec transform(schema :: schema(), fun :: transform()) :: schema()
   def transform(%Zoi.Types.Union{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
