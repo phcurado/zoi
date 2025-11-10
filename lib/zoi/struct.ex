@@ -44,6 +44,12 @@ defmodule Zoi.Struct do
   """
   def enforce_keys(%Zoi.Types.Struct{fields: fields}) do
     Enum.reduce(fields, [], fn {key, type}, acc ->
+      type =
+        case type do
+          %Zoi.Types.Default{inner: inner} -> inner
+          type -> type
+        end
+
       if Meta.required?(type.meta) do
         [key | acc]
       else

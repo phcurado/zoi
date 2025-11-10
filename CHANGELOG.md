@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.10.4 - 2025-11-10
+
+### Changed
+
+- Fix `Zoi.Struct.enforce_keys/1` to work when `Zoi.default/2` wraps a `Zoi.optional/2` type
+
 ## 0.10.3 - 2025-11-10
 
 ### Added
