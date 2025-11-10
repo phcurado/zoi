@@ -9,7 +9,7 @@ defmodule Zoi.Context do
   alias Zoi.Types.Meta
 
   @type t :: %__MODULE__{
-          schema: Zoi.Type.t(),
+          schema: Zoi.schema(),
           input: Zoi.input(),
           parsed: Zoi.input(),
           path: Zoi.Error.path(),
@@ -22,7 +22,7 @@ defmodule Zoi.Context do
   defstruct [:schema, :input, :parsed, :path, valid?: false, errors: []]
 
   @doc false
-  @spec new(Zoi.Type.t(), Zoi.input()) :: t()
+  @spec new(Zoi.schema(), Zoi.input()) :: t()
   def new(schema, input) do
     %__MODULE__{
       schema: schema,

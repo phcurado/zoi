@@ -74,7 +74,7 @@ defmodule Zoi.JSONSchema do
 
   @draft "https://json-schema.org/draft/2020-12/schema"
 
-  @spec encode(Zoi.Type.t()) :: map()
+  @spec encode(Zoi.schema()) :: map()
   def encode(schema) do
     schema
     |> encode_schema()

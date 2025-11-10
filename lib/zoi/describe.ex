@@ -90,7 +90,7 @@ defmodule Zoi.Describe do
   alias Zoi.Types.Meta
 
   @doc false
-  @spec generate(Zoi.Type.t()) :: binary()
+  @spec generate(Zoi.schema()) :: binary()
   def generate(%Zoi.Types.Keyword{fields: fields}) do
     Enum.map_join(fields, "\n\n", &parse_field/1) <> "\n"
   end
