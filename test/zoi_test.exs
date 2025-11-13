@@ -2599,6 +2599,77 @@ defmodule ZoiTest do
     end
   end
 
+  describe "one_of/3" do
+    test "valid string value" do
+      schema = Zoi.string() |> Zoi.one_of(["red", "green", "blue"])
+      assert {:ok, "red"} == Zoi.parse(schema, "red")
+      assert {:ok, "green"} == Zoi.parse(schema, "green")
+      assert {:ok, "blue"} == Zoi.parse(schema, "blue")
+    end
+
+    test "invalid string value" do
+      schema = Zoi.string() |> Zoi.one_of(["red", "green", "blue"])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "yellow")
+      assert error.code == :not_in_values
+      assert Exception.message(error) == "invalid value: expected one of red, green, blue"
+
+      assert error.issue == {
+               "invalid value: expected one of %{values}",
+               [values: ["red", "green", "blue"]]
+             }
+    end
+
+    test "valid integer value" do
+      schema = Zoi.integer() |> Zoi.one_of([1, 2, 3, 5, 8])
+      assert {:ok, 1} == Zoi.parse(schema, 1)
+      assert {:ok, 5} == Zoi.parse(schema, 5)
+      assert {:ok, 8} == Zoi.parse(schema, 8)
+    end
+
+    test "invalid integer value" do
+      schema = Zoi.integer() |> Zoi.one_of([1, 2, 3, 5, 8])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 4)
+      assert error.code == :not_in_values
+      assert Exception.message(error) == "invalid value: expected one of 1, 2, 3, 5, 8"
+
+      assert error.issue == {
+               "invalid value: expected one of %{values}",
+               [values: [1, 2, 3, 5, 8]]
+             }
+    end
+
+    test "valid atom value" do
+      schema = Zoi.atom() |> Zoi.one_of([:small, :medium, :large])
+      assert {:ok, :small} == Zoi.parse(schema, :small)
+      assert {:ok, :large} == Zoi.parse(schema, :large)
+    end
+
+    test "invalid atom value" do
+      schema = Zoi.atom() |> Zoi.one_of([:small, :medium, :large])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, :extra_large)
+      assert error.code == :not_in_values
+      assert Exception.message(error) == "invalid value: expected one of small, medium, large"
+
+      assert error.issue == {
+               "invalid value: expected one of %{values}",
+               [values: [:small, :medium, :large]]
+             }
+    end
+
+    test "with custom error message" do
+      schema = Zoi.string() |> Zoi.one_of(["admin", "user"], error: "must be a valid role")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "guest")
+      assert error.code == :custom
+      assert Exception.message(error) == "must be a valid role"
+    end
+
+    test "works with any type" do
+      schema = Zoi.number() |> Zoi.one_of([1.5, 2.5, 3.5])
+      assert {:ok, 2.5} == Zoi.parse(schema, 2.5)
+      assert {:error, [%Zoi.Error{}]} = Zoi.parse(schema, 2.0)
+    end
+  end
+
   describe "regex/2" do
     test "valid regex match" do
       schema = Zoi.string() |> Zoi.regex(~r/^\d+$/)

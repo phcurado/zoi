@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.10.6 - 2025-11-13
+
+### Added
+
+- `Zoi.one_of/2` type to accept a value that matches exactly one of the provided literal values.
+
 ## 0.10.5 - 2025-11-13
 
 ### Changed

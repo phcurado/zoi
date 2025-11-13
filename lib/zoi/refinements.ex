@@ -216,6 +216,14 @@ defmodule Zoi.Refinements do
     end
   end
 
+  defp do_refine(_schema, input, [one_of: values], opts) do
+    if input in values do
+      :ok
+    else
+      {:error, Zoi.Error.not_in_values(values, opts)}
+    end
+  end
+
   defp do_refine(_schema, _input, _args, _opts) do
     # Default to :ok if there is no type pattern match
     :ok
