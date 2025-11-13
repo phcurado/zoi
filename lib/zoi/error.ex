@@ -18,6 +18,7 @@ defmodule Zoi.Error do
     - `:invalid_tuple`
     - `:unrecognized_key`
     - `:invalid_enum_value`
+    - `:not_in_values`
     - `:required`
     - `:less_than`
     - `:greater_than`
@@ -142,6 +143,10 @@ defmodule Zoi.Error do
     render_message_from_issue({issue, []})
   end
 
+  defp parse_message_type(values) when is_list(values) do
+    Enum.map_join(values, ", ", &parse_message_type/1)
+  end
+
   defp parse_message_type(%Regex{} = regex) do
     Regex.source(regex)
   end
@@ -234,6 +239,38 @@ defmodule Zoi.Error do
         code: :invalid_enum_value,
         issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: expected]}
       )
+    end
+  end
+
+  @doc ~S"""
+  Creates a not in values error for the given list of valid values.
+
+  ## Example
+      iex> Zoi.Error.not_in_values(["red", "green", "blue"])
+      %Zoi.Error{
+        code: :not_in_values,
+        issue: {"invalid value: expected one of %{values}", [values: ["red", "green", "blue"]]},
+        message: "invalid value: expected one of red, green, blue",
+        path: []
+      }
+  """
+  @spec not_in_values(list()) :: t()
+  def not_in_values(values, opts \\ []) when is_list(values) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(issue: {msg, [values: values]})
+    else
+      opts =
+        Keyword.merge(
+          [
+            {:code, :not_in_values},
+            {:issue, {"invalid value: expected one of %{values}", [values: values]}}
+          ],
+          opts
+        )
+
+      new(opts)
     end
   end
 

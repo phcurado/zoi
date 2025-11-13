@@ -1803,6 +1803,41 @@ defmodule Zoi do
     |> refine({Zoi.Refinements, :refine, [[length: length], opts]})
   end
 
+  @doc ~S"""
+  Validates that the input value is within a list of valid literals.
+
+  This refinement can be used with any type and checks if the parsed value
+  is a member of the provided list.
+
+  ## Example
+      iex> schema = Zoi.string() |> Zoi.one_of(["red", "green", "blue"])
+      iex> Zoi.parse(schema, "red")
+      {:ok, "red"}
+      iex> Zoi.parse(schema, "yellow")
+      {:error,
+       [
+         %Zoi.Error{
+           code: :not_in_values,
+           message: "invalid value: expected one of red, green, blue",
+           issue: {"invalid value: expected one of %{values}", [values: ["red", "green", "blue"]]},
+           path: []
+         }
+       ]}
+
+      iex> schema = Zoi.integer() |> Zoi.one_of([1, 2, 3, 5, 8])
+      iex> Zoi.parse(schema, 5)
+      {:ok, 5}
+      iex> {:error, [%Zoi.Error{code: code}]} = Zoi.parse(schema, 4)
+      iex> code
+      :not_in_values
+  """
+  @doc group: "Refinements"
+  @spec one_of(schema :: schema(), values :: list(), opts :: options()) :: schema()
+  def one_of(schema, values, opts \\ []) when is_list(values) do
+    schema
+    |> refine({Zoi.Refinements, :refine, [[one_of: values], opts]})
+  end
+
   @doc """
   alias for `Zoi.gte/2`
   """
