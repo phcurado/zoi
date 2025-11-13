@@ -68,12 +68,17 @@ defmodule Zoi.Types.Enum do
     def type_spec(%Zoi.Types.Enum{values: values} = _schema, _opts) do
       keys = Enum.map(values, fn {key, _value} -> key end)
 
-      if Enum.any?(keys, &is_binary(&1)) do
-        quote(do: any())
-      else
-        keys
-        |> Enum.reverse()
-        |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
+      cond do
+        Enum.all?(keys, &is_binary(&1)) ->
+          quote(do: binary())
+
+        Enum.any?(keys, &is_binary(&1)) ->
+          quote(do: any())
+
+        true ->
+          keys
+          |> Enum.reverse()
+          |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
       end
     end
   end
