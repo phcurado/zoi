@@ -3064,7 +3064,7 @@ defmodule ZoiTest do
         {Zoi.datetime(), quote(do: DateTime.t())},
         {Zoi.decimal(), quote(do: Decimal.t())},
         {Zoi.default(Zoi.string(), "default"), quote(do: binary())},
-        {Zoi.enum(["a", "b", "c"]), quote(do: "a" | "b" | "c")},
+        {Zoi.enum(["a", "b", "c"]), quote(do: any())},
         {Zoi.enum([:a, :b, :c]), quote(do: :a | :b | :c)},
         {Zoi.enum([1, 2, 3]), quote(do: 1 | 2 | 3)},
         {Zoi.enum(red: "Red", green: "Green", blue: "Blue"), quote(do: :red | :green | :blue)},
