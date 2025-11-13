@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.10.5 - 2025-11-13
+
+### Changed
+
+- `Zoi.enum/2` typespec for binary now returns `binary()` instead of literals.
+
 ## 0.10.4 - 2025-11-10
 
 ### Changed
