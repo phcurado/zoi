@@ -302,6 +302,7 @@ end
 Check the official guides for more examples and use cases:
 
 - [Quickstart Guide](https://hexdocs.pm/zoi/quickstart_guide.html)
+- [Recipes](https://hexdocs.pm/zoi/recipes.html)
 - [Main API Reference](https://hexdocs.pm/zoi/Zoi.html)
 - [Using Zoi to generate OpenAPI specs](https://hexdocs.pm/zoi/using_zoi_to_generate_openapi_specs.html)
 - [Validating controller parameters](https://hexdocs.pm/zoi/validating_controller_parameters.html)
