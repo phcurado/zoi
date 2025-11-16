@@ -116,20 +116,16 @@ defmodule Zoi.MixProject do
   defp extras do
     [
       "CHANGELOG.md",
-      "README.md",
-      "guides/quickstart_guide.md",
-      "guides/rendering_forms_with_phoenix.md",
-      "guides/using_zoi_to_generate_openapi_specs.md",
-      "guides/validating_controller_parameters.md",
-      "guides/converting_keys_from_object.md",
-      "guides/generating_schemas_from_json_example.md",
-      "guides/localizing_errors_with_gettext.md"
-    ]
+      "README.md"
+    ] ++ Enum.flat_map(groups_for_extras(), fn {_group, guides} -> guides end)
   end
 
   defp groups_for_extras do
     [
-      Setup: ["guides/quickstart_guide.md"],
+      Setup: [
+        "guides/quickstart_guide.md",
+        "guides/recipes.md"
+      ],
       Integrations: [
         "guides/rendering_forms_with_phoenix.md",
         "guides/using_zoi_to_generate_openapi_specs.md",
