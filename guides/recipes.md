@@ -4,11 +4,13 @@
 - [Applying coercion globally in the schema](#applying-coercion-globally-in-the-schema)
 - [Applying nullable or nullish or optional globally in the schema](#applying-nullable-or-nullish-or-optional-globally-in-the-schema)
 - [Generalizing types](#generalizing-types)
+- [Custom error messages](#custom-error-messages)
+- [Conditional fields](#conditional-fields)
 - [Creating a user registration schema](#creating-a-user-registration-schema)
 
 ## Using `Zoi.object/2` with string or atom keys
 
-When defining object schemas with `Zoi.object/2`, you can use either string keys or atom keys for the fields. Both approaches are supported but differ on how parsing will work:
+When defining object schemas with `Zoi.object/2`, you can use either string keys or atom keys for the fields. Both approaches are supported but differ in how parsing will work:
 
 ```elixir
 # Using atom keys
@@ -16,9 +18,11 @@ schema = Zoi.object(%{
   name: Zoi.string(),
   age: Zoi.integer()
 })
+
 # Parsing with atom keys
 Zoi.parse(schema, %{name: "Alice", age: 30})
 # => {:ok, %{name: "Alice", age: 30}}
+
 # Parsing with string keys will fail
 Zoi.parse(schema, %{"name" => "Alice", "age" => 30})
 # => {:error,
@@ -46,6 +50,7 @@ schema = Zoi.object(%{
   "name" => Zoi.string(),
   "age" => Zoi.integer()
 })
+
 # Parsing with string keys
 Zoi.parse(schema, %{"name" => "Alice", "age" => 30})
 # => {:ok, %{"name" => "Alice", "age" => 30}}
@@ -73,7 +78,7 @@ schema = Zoi.object(%{
 }) |> Zoi.Schema.traverse(&Zoi.coerce/1)
 ```
 
-This will make all fields in the schema to coerce to it's declared type.
+This will make all fields in the schema to coerce to its declared type.
 
 ## Applying nullable or nullish or optional globally in the schema
 
@@ -115,6 +120,118 @@ defmodule MyApp.ZoiTypes do
     )
   end
 end
+
+# Using the generalized types in your schemas
+schema = Zoi.object(%{
+  user: MyApp.ZoiTypes.user_info(),
+  prefered_currency: MyApp.ZoiTypes.supported_currencies(),
+  user_type: MyApp.ZoiTypes.user_types()
+})
+
+Zoi.parse(schema, %{
+  user: %{name: "Alice", email: "alice@example.com"},
+  prefered_currency: "USD",
+  user_type: :admin
+})
+# => {:ok, %{user: %{name: "Alice", email: "alice@example.com"}, prefered_currency: "USD", user_type: :admin}}
+```
+
+## Custom error messages
+
+You can provide custom error messages for your validations using the `refine` function. This is useful when you want to give more specific feedback to users based on business logic.
+
+```elixir
+schema = Zoi.object(%{
+  age: Zoi.integer()
+}) |> Zoi.refine(fn data ->
+  if data.age >= 18 do
+    :ok
+  else
+    {:error, "You must be at least 18 years old to register"}
+  end
+end)
+
+Zoi.parse(schema, %{age: 16})
+# => {:error,
+# =>  [
+# =>    %Zoi.Error{
+# =>      code: :custom,
+# =>      issue: {"You must be at least 18 years old to register", []},
+# =>      message: "You must be at least 18 years old to register",
+# =>      path: []
+# =>    }
+# =>  ]}
+
+Zoi.parse(schema, %{age: 21})
+# => {:ok, %{age: 21}}
+```
+
+You can also target specific fields in your error messages by using the `path` option:
+
+```elixir
+schema = Zoi.object(%{
+  username: Zoi.string()
+}) |> Zoi.refine(fn data ->
+  if String.contains?(data.username, " ") do
+    {:error, [%Zoi.Error{
+      code: :custom,
+      message: "Username cannot contain spaces",
+      path: [:username],
+      issue: {"Username cannot contain spaces", []}
+    }]}
+  else
+    :ok
+  end
+end)
+
+Zoi.parse(schema, %{username: "john doe"})
+# => {:error,
+# =>  [
+# =>    %Zoi.Error{
+# =>      code: :custom,
+# =>      issue: {"Username cannot contain spaces", []},
+# =>      message: "Username cannot contain spaces",
+# =>      path: [:username]
+# =>    }
+# =>  ]}
+```
+
+## Conditional fields
+
+You can use `refine` to require fields only when another field has a specific value.
+
+```elixir
+schema = Zoi.object(%{
+  account_type: Zoi.enum(["personal", "business"]),
+  company_name: Zoi.string() |> Zoi.optional(),
+  tax_id: Zoi.string() |> Zoi.optional()
+})|> Zoi.refine(fn data ->
+  cond do
+    data[:account_type] == "business" and !data[:company_name] ->
+      {:error, "Company name and Tax ID are required for business accounts"}
+    data[:account_type] == "business" and !data[:tax_id] ->
+      {:error, "Company name and Tax ID are required for business accounts"}
+    true ->
+      :ok
+  end
+end)
+
+Zoi.parse(schema, %{account_type: "business"})
+# => {:error,
+# =>  [
+# =>    %Zoi.Error{
+# =>      code: :custom,
+# =>      issue: {"Company name and Tax ID are required for business accounts", []},
+# =>      message: "Company name and Tax ID are required for business accounts",
+# =>      path: []
+# =>    }
+# =>  ]}
+
+Zoi.parse(schema, %{account_type: "personal"})
+# => {:ok, %{account_type: "personal"}}
+
+Zoi.parse(schema, %{account_type: "business", company_name: "Acme Corp", tax_id: "123456789"})
+# => {:ok, %{account_type: "business", company_name: "Acme Corp", tax_id: "123456789"}}
 ```
 
 ## Creating a user registration schema
@@ -133,6 +250,7 @@ schema = Zoi.object(%{
     {:error, "Password confirmation does not match"}
   end
 end)
+
 Zoi.parse(schema, %{
   email: "john@example.com",
   password: "securepassword",
@@ -147,4 +265,11 @@ Zoi.parse(schema, %{
 # =>      path: []
 # =>    }
 # =>  ]}
+
+Zoi.parse(schema, %{
+  email: "john@example.com",
+  password: "securepassword",
+  password_confirmation: "securepassword"
+})
+# => {:ok, %{email: "john@example.com", password: "securepassword", password_confirmation: "securepassword"}}
 ```
