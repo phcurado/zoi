@@ -170,6 +170,8 @@ defmodule Zoi do
           | (input(), Zoi.Context.t() ->
                {:ok, input()} | {:error, binary()} | input())
 
+  ## API
+
   @doc """
   Parse input data against a schema.
   Accepts optional `coerce: true` option to enable coercion.
@@ -559,10 +561,18 @@ defmodule Zoi do
   for coercion, you can pass the `:coerce` option:
       iex> Zoi.string(coerce: true) |> Zoi.parse(123)
       {:ok, "123"}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Opts.string())}
   """
   @doc group: "Basic Types"
   @spec string(opts :: options()) :: schema()
-  defdelegate string(opts \\ []), to: Zoi.Types.String, as: :new
+  def string(opts \\ []) do
+    Zoi.Opts.string()
+    |> parse!(opts)
+    |> Zoi.Types.String.new()
+  end
 
   @doc """
   Defines a number type schema.
@@ -586,10 +596,18 @@ defmodule Zoi do
   For coercion, you can pass the `:coerce` option:
       iex> Zoi.integer(coerce: true) |> Zoi.parse("42")
       {:ok, 42}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Opts.integer())}
   """
   @doc group: "Basic Types"
   @spec integer(opts :: options()) :: schema()
-  defdelegate integer(opts \\ []), to: Zoi.Types.Integer, as: :new
+  def integer(opts \\ []) do
+    Zoi.Opts.integer()
+    |> parse!(opts)
+    |> Zoi.Types.Integer.new()
+  end
 
   @doc """
   Defines a float type schema.
@@ -607,10 +625,18 @@ defmodule Zoi do
   For coercion, you can pass the `:coerce` option:
       iex> Zoi.float(coerce: true) |> Zoi.parse("3.14")
       {:ok, 3.14}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Opts.float())}
   """
   @doc group: "Basic Types"
   @spec float(opts :: options()) :: schema()
-  defdelegate float(opts \\ []), to: Zoi.Types.Float, as: :new
+  def float(opts \\ []) do
+    Zoi.Opts.float()
+    |> parse!(opts)
+    |> Zoi.Types.Float.new()
+  end
 
   @doc """
   Defines the numeric type schema.
@@ -1176,10 +1202,20 @@ defmodule Zoi do
       iex> schema = Zoi.keyword(Zoi.string())
       iex> Zoi.parse(schema, [a: "hello", b: "world"])
       {:ok, [a: "hello", b: "world"]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Opts.keyword())}
   """
   @doc group: "Complex Types"
   @spec keyword(fields :: keyword(), opts :: options()) :: schema()
-  defdelegate keyword(fields, opts \\ []), to: Zoi.Types.Keyword, as: :new
+  def keyword(fields, opts \\ []) do
+    Zoi.Opts.keyword()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Keyword.new(fields, opts)
+    end)
+  end
 
   @doc """
   Defines a struct type schema.

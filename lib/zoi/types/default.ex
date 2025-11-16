@@ -5,15 +5,18 @@ defmodule Zoi.Types.Default do
   def new(inner, value, opts \\ []) do
     {meta, opts} = Zoi.Types.Meta.create_meta(opts)
 
-    case Zoi.parse(inner, value, opts) do
-      {:ok, _} ->
-        opts = Keyword.merge(opts, inner: inner, value: value, meta: meta)
-        struct!(__MODULE__, opts)
+    # case Zoi.parse(inner, value, opts) do
+    #   {:ok, _} ->
+    #     opts = Keyword.merge(opts, inner: inner, value: value, meta: meta)
+    #     struct!(__MODULE__, opts)
+    #
+    #   {:error, error} ->
+    #     raise ArgumentError,
+    #           "Invalid default value: #{inspect(value)}. Reason: #{Zoi.Errors.message(error)}"
+    # end
 
-      {:error, error} ->
-        raise ArgumentError,
-              "Invalid default value: #{inspect(value)}. Reason: #{Zoi.Errors.message(error)}"
-    end
+    opts = Keyword.merge(opts, inner: inner, value: value, meta: meta)
+    struct!(__MODULE__, opts)
   end
 
   defimpl Zoi.Type do

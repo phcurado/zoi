@@ -4,7 +4,6 @@ defmodule Zoi.Types.Float do
   use Zoi.Type.Def, fields: [coerce: false]
 
   def new(opts \\ []) do
-    opts = Keyword.merge([coerce: false], opts)
     apply_type(opts)
   end
 
