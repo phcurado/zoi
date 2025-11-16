@@ -959,10 +959,19 @@ defmodule Zoi do
       iex> Zoi.parse(schema, nil)
       {:ok, "default value"}
 
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Default.opts())}
   """
   @doc group: "Encapsulated Types"
   @spec default(inner :: schema(), value :: input(), opts :: options()) :: schema()
-  defdelegate default(inner, value, opts \\ []), to: Zoi.Types.Default, as: :new
+  def default(inner, value, opts \\ []) do
+    Zoi.Types.Default.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Default.new(inner, value, opts)
+    end)
+  end
 
   @doc """
   Defines a union type schema.
@@ -1030,6 +1039,7 @@ defmodule Zoi do
            path: []
          }
        ]}
+
   """
   @doc group: "Encapsulated Types"
   @spec union(fields :: [schema()], opts :: options()) :: schema()
@@ -1077,6 +1087,7 @@ defmodule Zoi do
            path: []
          }
        ]}
+
   """
   @doc group: "Encapsulated Types"
   @spec intersection(fields :: [schema()], opts :: options()) :: schema()
@@ -1423,10 +1434,20 @@ defmodule Zoi do
            path: [1]
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Tuple.opts())}
   """
   @doc group: "Complex Types"
   @spec tuple(fields :: tuple(), opts :: options()) :: schema()
-  defdelegate tuple(fields, opts \\ []), to: Zoi.Types.Tuple, as: :new
+  def tuple(fields, opts \\ []) do
+    Zoi.Types.Tuple.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Tuple.new(fields, opts)
+    end)
+  end
 
   @doc """
   Defines a array type schema.
@@ -1483,7 +1504,9 @@ defmodule Zoi do
   """
   @doc group: "Complex Types"
   @spec list(elements :: schema(), opts :: options()) :: schema()
-  defdelegate list(elements, opts \\ []), to: Zoi.Types.Array, as: :new
+  def list(elements \\ Zoi.any(), opts \\ []) do
+    array(elements, opts)
+  end
 
   @doc """
   Defines an enum type schema.
@@ -1633,10 +1656,17 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 730_485) # 730_485 is the number of days since epoch
       {:ok, ~D[2000-01-01]}
 
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Date.opts())}
   """
   @doc group: "Structured Types"
   @spec date(opts :: options()) :: schema()
-  defdelegate date(opts \\ []), to: Zoi.Types.Date, as: :new
+  def date(opts \\ []) do
+    Zoi.Types.Date.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Date.new()
+  end
 
   @doc """
   Defines a time type schema.
@@ -1663,10 +1693,18 @@ defmodule Zoi do
       iex> schema = Zoi.time(coerce: true)
       iex> Zoi.parse(schema, "12:34:56")
       {:ok, ~T[12:34:56]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Time.opts())}
   """
   @doc group: "Structured Types"
   @spec time(opts :: options()) :: schema()
-  defdelegate time(opts \\ []), to: Zoi.Types.Time, as: :new
+  def time(opts \\ []) do
+    Zoi.Types.Time.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Time.new()
+  end
 
   @doc """
   Defines a DateTime type schema.
@@ -1694,10 +1732,18 @@ defmodule Zoi do
       {:ok, ~U[2000-01-01 12:34:56Z]}
       iex> Zoi.parse(schema, 1_464_096_368) # 1_464_096_368 is the Unix timestamp
       {:ok, ~U[2016-05-24 13:26:08Z]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.DateTime.opts())}
   """
   @doc group: "Structured Types"
   @spec datetime(opts :: options()) :: schema()
-  defdelegate datetime(opts \\ []), to: Zoi.Types.DateTime, as: :new
+  def datetime(opts \\ []) do
+    Zoi.Types.DateTime.opts()
+    |> parse!(opts)
+    |> Zoi.Types.DateTime.new()
+  end
 
   @doc """
   Defines a NaiveDateTime type schema.
@@ -1726,10 +1772,18 @@ defmodule Zoi do
       {:ok, ~N[2000-01-01 12:34:56]}
       iex> Zoi.parse(schema, 1) # 1  is the number of days since epoch
       {:ok, ~N[0000-01-01 00:00:01]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.NaiveDateTime.opts())}
   """
   @doc group: "Structured Types"
   @spec naive_datetime(opts :: options()) :: schema()
-  defdelegate naive_datetime(opts \\ []), to: Zoi.Types.NaiveDateTime, as: :new
+  def naive_datetime(opts \\ []) do
+    Zoi.Types.NaiveDateTime.opts()
+    |> parse!(opts)
+    |> Zoi.Types.NaiveDateTime.new()
+  end
 
   if Code.ensure_loaded?(Decimal) do
     @doc """
@@ -1760,10 +1814,18 @@ defmodule Zoi do
         {:ok, Decimal.new("123.45")}
         iex> Zoi.parse(schema, 123)
         {:ok, Decimal.new("123")}
+
+    ## Options
+
+    #{Zoi.Describe.generate(Zoi.Types.Decimal.opts())}
     """
     @doc group: "Structured Types"
     @spec decimal(opts :: options()) :: schema()
-    defdelegate decimal(opts \\ []), to: Zoi.Types.Decimal, as: :new
+    def decimal(opts \\ []) do
+      Zoi.Types.Decimal.opts()
+      |> parse!(opts)
+      |> Zoi.Types.Decimal.new()
+    end
   else
     def decimal(_opts \\ []) do
       raise "`Decimal` library is not available. Please add `{:decimal, \"~> 2.0\"}` to your mix.exs dependencies."

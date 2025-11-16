@@ -28,9 +28,17 @@ defmodule Zoi.ISO do
            path: []
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.ISO.Time.opts())}
   """
   @doc group: "Basic Types"
-  defdelegate time(opts \\ []), to: Zoi.ISO.Time, as: :new
+  def time(opts \\ []) do
+    Zoi.ISO.Time.opts()
+    |> Zoi.parse!(opts)
+    |> Zoi.ISO.Time.new()
+  end
 
   @doc """
   Defines a date type schema.
@@ -50,9 +58,17 @@ defmodule Zoi.ISO do
            path: []
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.ISO.Date.opts())}
   """
   @doc group: "Basic Types"
-  defdelegate date(opts \\ []), to: Zoi.ISO.Date, as: :new
+  def date(opts \\ []) do
+    Zoi.ISO.Date.opts()
+    |> Zoi.parse!(opts)
+    |> Zoi.ISO.Date.new()
+  end
 
   @doc """
   Defines a datetime type schema.
@@ -74,9 +90,17 @@ defmodule Zoi.ISO do
            path: []
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.ISO.DateTime.opts())}
   """
   @doc group: "Basic Types"
-  defdelegate datetime(opts \\ []), to: Zoi.ISO.DateTime, as: :new
+  def datetime(opts \\ []) do
+    Zoi.ISO.DateTime.opts()
+    |> Zoi.parse!(opts)
+    |> Zoi.ISO.DateTime.new()
+  end
 
   @doc """
   Defines a naive datetime type schema.
@@ -98,9 +122,17 @@ defmodule Zoi.ISO do
            path: []
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.ISO.NaiveDateTime.opts())}
   """
   @doc group: "Basic Types"
-  defdelegate naive_datetime(opts \\ []), to: Zoi.ISO.NaiveDateTime, as: :new
+  def naive_datetime(opts \\ []) do
+    Zoi.ISO.NaiveDateTime.opts()
+    |> Zoi.parse!(opts)
+    |> Zoi.ISO.NaiveDateTime.new()
+  end
 
   # Transforms
 

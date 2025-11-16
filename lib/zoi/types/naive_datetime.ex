@@ -2,6 +2,10 @@ defmodule Zoi.Types.NaiveDateTime do
   @moduledoc false
   use Zoi.Type.Def, fields: [coerce: false]
 
+  def opts() do
+    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), [])
+  end
+
   def new(opts \\ []) do
     opts = Keyword.merge([coerce: false], opts)
     apply_type(opts)

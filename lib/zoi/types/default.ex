@@ -2,6 +2,18 @@ defmodule Zoi.Types.Default do
   @moduledoc false
   use Zoi.Type.Def, fields: [:inner, :value]
 
+  def opts() do
+    Zoi.Types.Keyword.new(
+      [
+        description: Zoi.Opts.description(),
+        example: Zoi.Opts.example(),
+        metadata: Zoi.Opts.metadata(),
+        error: Zoi.Opts.error()
+      ],
+      []
+    )
+  end
+
   def new(inner, value, opts \\ []) do
     {meta, opts} = Zoi.Types.Meta.create_meta(opts)
 
