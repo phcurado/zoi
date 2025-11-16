@@ -564,12 +564,12 @@ defmodule Zoi do
 
   ## Options
 
-  #{Zoi.Describe.generate(Zoi.Opts.string())}
+  #{Zoi.Describe.generate(Zoi.Types.String.opts())}
   """
   @doc group: "Basic Types"
   @spec string(opts :: options()) :: schema()
   def string(opts \\ []) do
-    Zoi.Opts.string()
+    Zoi.Types.String.opts()
     |> parse!(opts)
     |> Zoi.Types.String.new()
   end
@@ -599,12 +599,12 @@ defmodule Zoi do
 
   ## Options
 
-  #{Zoi.Describe.generate(Zoi.Opts.integer())}
+  #{Zoi.Describe.generate(Zoi.Types.Integer.opts())}
   """
   @doc group: "Basic Types"
   @spec integer(opts :: options()) :: schema()
   def integer(opts \\ []) do
-    Zoi.Opts.integer()
+    Zoi.Types.Integer.opts()
     |> parse!(opts)
     |> Zoi.Types.Integer.new()
   end
@@ -628,12 +628,12 @@ defmodule Zoi do
 
   ## Options
 
-  #{Zoi.Describe.generate(Zoi.Opts.float())}
+  #{Zoi.Describe.generate(Zoi.Types.Float.opts())}
   """
   @doc group: "Basic Types"
   @spec float(opts :: options()) :: schema()
   def float(opts \\ []) do
-    Zoi.Opts.float()
+    Zoi.Types.Float.opts()
     |> parse!(opts)
     |> Zoi.Types.Float.new()
   end
@@ -659,10 +659,18 @@ defmodule Zoi do
            path: []
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Number.opts())}
   """
   @doc group: "Basic Types"
   @spec number(opts :: options()) :: schema()
-  defdelegate number(opts \\ []), to: Zoi.Types.Number, as: :new
+  def number(opts \\ []) do
+    Zoi.Types.Number.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Number.new()
+  end
 
   @doc """
   Defines a boolean type schema.
@@ -676,10 +684,18 @@ defmodule Zoi do
   For coercion, you can pass the `:coerce` option:
       iex> Zoi.boolean(coerce: true) |> Zoi.parse("true")
       {:ok, true}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Boolean.opts())}
   """
   @doc group: "Basic Types"
   @spec boolean(opts :: options()) :: schema()
-  defdelegate boolean(opts \\ []), to: Zoi.Types.Boolean, as: :new
+  def boolean(opts \\ []) do
+    Zoi.Types.Boolean.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Boolean.new()
+  end
 
   @doc """
   Defines a string boolean type schema.
@@ -723,10 +739,18 @@ defmodule Zoi do
        ]}
       iex> Zoi.parse(schema, "true")
       {:ok, true}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.StringBoolean.opts())}
   """
   @doc group: "Basic Types"
   @spec string_boolean(opts :: options()) :: schema()
-  defdelegate string_boolean(opts \\ []), to: Zoi.Types.StringBoolean, as: :new
+  def string_boolean(opts \\ []) do
+    Zoi.Types.StringBoolean.opts()
+    |> parse!(opts)
+    |> Zoi.Types.StringBoolean.new()
+  end
 
   @doc """
   Defines a schema that accepts any type of input.
@@ -742,10 +766,18 @@ defmodule Zoi do
       {:ok, 42}
       iex> Zoi.parse(schema, %{key: "value"})
       {:ok, %{key: "value"}}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Any.opts())}
   """
   @doc group: "Basic Types"
   @spec any(opts :: options()) :: schema()
-  defdelegate any(opts \\ []), to: Zoi.Types.Any, as: :new
+  def any(opts \\ []) do
+    Zoi.Types.Any.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Any.new()
+  end
 
   @doc """
   Defines an atom type schema.
@@ -764,10 +796,18 @@ defmodule Zoi do
            path: []
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Atom.opts())}
   """
   @doc group: "Basic Types"
   @spec atom(opts :: options()) :: schema()
-  defdelegate atom(opts \\ []), to: Zoi.Types.Atom, as: :new
+  def atom(opts \\ []) do
+    Zoi.Types.Atom.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Atom.new()
+  end
 
   @doc """
   Defines a literal type schema.
@@ -800,10 +840,20 @@ defmodule Zoi do
            path: []
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Literal.opts())}
   """
   @doc group: "Basic Types"
   @spec literal(value :: input(), opts :: options()) :: schema()
-  defdelegate literal(value, opts \\ []), to: Zoi.Types.Literal, as: :new
+  def literal(value, opts \\ []) do
+    Zoi.Types.Literal.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Literal.new(value, opts)
+    end)
+  end
 
   @doc """
   Defines a nil type schema.
@@ -823,10 +873,18 @@ defmodule Zoi do
            path: []
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Null.opts())}
   """
   @doc group: "Basic Types"
   @spec null(opts :: options()) :: schema()
-  defdelegate null(opts \\ []), to: Zoi.Types.Null, as: :new
+  def null(opts \\ []) do
+    Zoi.Types.Null.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Null.new()
+  end
 
   @doc """
   Makes the schema optional for the `Zoi.object/2` and `Zoi.keyword/2` types.
@@ -1145,10 +1203,20 @@ defmodule Zoi do
            path: [:name]
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Object.opts())}
   """
   @doc group: "Complex Types"
   @spec object(fields :: map(), opts :: options()) :: schema()
-  defdelegate object(fields, opts \\ []), to: Zoi.Types.Object, as: :new
+  def object(fields, opts \\ []) do
+    Zoi.Types.Object.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Object.new(fields, opts)
+    end)
+  end
 
   @doc """
   Defines a keyword list type schema.
@@ -1205,12 +1273,12 @@ defmodule Zoi do
 
   ## Options
 
-  #{Zoi.Describe.generate(Zoi.Opts.keyword())}
+  #{Zoi.Describe.generate(Zoi.Types.Keyword.opts())}
   """
   @doc group: "Complex Types"
   @spec keyword(fields :: keyword(), opts :: options()) :: schema()
   def keyword(fields, opts \\ []) do
-    Zoi.Opts.keyword()
+    Zoi.Types.Keyword.opts()
     |> parse!(opts)
     |> then(fn opts ->
       Zoi.Types.Keyword.new(fields, opts)
@@ -1259,11 +1327,19 @@ defmodule Zoi do
       Zoi.parse(schema, %{"name" => "Alice", "age" => 30, "email" => "alice@email.com"})
       #=> {:ok, %MyApp.User{name: "Alice", age: 30, email: "alice@email.com"}}
 
+  ## Options
 
+  #{Zoi.Describe.generate(Zoi.Types.Struct.opts())}
   """
   @doc group: "Complex Types"
   @spec struct(module :: module(), fields :: map(), opts :: options()) :: schema()
-  defdelegate struct(module, fields, opts \\ []), to: Zoi.Types.Struct, as: :new
+  def struct(module, fields, opts \\ []) do
+    Zoi.Types.Struct.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Struct.new(module, fields, opts)
+    end)
+  end
 
   @doc """
   Extends two object type schemas into one.
@@ -1298,11 +1374,20 @@ defmodule Zoi do
            path: ["a"]
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Map.opts())}
   """
   @doc group: "Complex Types"
-  @spec map(key :: schema(), type :: schema(), opts :: options()) ::
-          schema()
-  defdelegate map(key, type, opts \\ []), to: Zoi.Types.Map, as: :new
+  @spec map(key :: schema(), type :: schema(), opts :: options()) :: schema()
+  def map(key, type, opts \\ []) do
+    Zoi.Types.Map.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Map.new(key, type, opts)
+    end)
+  end
 
   @doc """
   Defines a map type schema with `Zoi.any()` type.
@@ -1312,7 +1397,13 @@ defmodule Zoi do
   """
   @doc group: "Complex Types"
   @spec map(opts :: options()) :: schema()
-  defdelegate map(opts \\ []), to: Zoi.Types.Map, as: :new
+  def map(opts \\ []) do
+    Zoi.Types.Map.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Map.new(Zoi.any(), Zoi.any(), opts)
+    end)
+  end
 
   @doc """
   Defines a tuple type schema.
@@ -1372,11 +1463,19 @@ defmodule Zoi do
       {:ok, [1, 2, 3]}
       iex> Zoi.parse(schema, {1, 2, 3})
       {:ok, [1, 2, 3]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Array.opts())}
   """
   @doc group: "Complex Types"
   @spec array(elements :: schema(), opts :: options()) :: schema()
   def array(elements \\ Zoi.any(), opts \\ []) do
-    Zoi.Types.Array.new(elements, opts)
+    Zoi.Types.Array.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Array.new(elements, opts)
+    end)
   end
 
   @doc """
@@ -1491,10 +1590,20 @@ defmodule Zoi do
            path: []
          }
        ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Enum.opts())}
   """
   @doc group: "Complex Types"
   @spec enum(values :: [input()] | keyword(), opts :: options()) :: schema()
-  defdelegate enum(values, opts \\ []), to: Zoi.Types.Enum, as: :new
+  def enum(values, opts \\ []) do
+    Zoi.Types.Enum.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Enum.new(values, opts)
+    end)
+  end
 
   @doc """
   Defines a date type schema.

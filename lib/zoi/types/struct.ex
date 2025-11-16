@@ -3,6 +3,18 @@ defmodule Zoi.Types.Struct do
 
   use Zoi.Type.Def, fields: [:module, :fields, :strict, :coerce, empty_values: []]
 
+  def opts() do
+    Keyword.merge(Zoi.Opts.shared_metadata(),
+      strict:
+        Zoi.Types.Boolean.new(
+          description: "If true, unrecognized keys will cause validation to fail."
+        )
+        |> Zoi.Types.Default.new(false),
+      empty_values: Zoi.Opts.empty_values()
+    )
+    |> Zoi.Types.Keyword.new([])
+  end
+
   def new(module, fields, opts) when is_map(fields) or is_list(fields) do
     fields =
       fields

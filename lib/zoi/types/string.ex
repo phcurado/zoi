@@ -2,6 +2,10 @@ defmodule Zoi.Types.String do
   @moduledoc false
   use Zoi.Type.Def, fields: [coerce: false]
 
+  def opts() do
+    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), [])
+  end
+
   def new(opts) do
     apply_type(opts)
   end

@@ -3,6 +3,18 @@ defmodule Zoi.Types.Literal do
 
   use Zoi.Type.Def, fields: [:value]
 
+  def opts() do
+    Zoi.Types.Keyword.new(
+      [
+        description: Zoi.Opts.description(),
+        example: Zoi.Opts.example(),
+        metadata: Zoi.Opts.metadata(),
+        error: Zoi.Opts.error()
+      ],
+      []
+    )
+  end
+
   def new(value, opts) do
     apply_type(opts ++ [value: value])
   end

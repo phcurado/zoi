@@ -1,10 +1,13 @@
 defmodule Zoi.Types.Array do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:inner, :coerce]
+  use Zoi.Type.Def, fields: [:inner, coerce: false]
+
+  def opts() do
+    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), [])
+  end
 
   def new(inner, opts) do
-    opts = Keyword.merge([coerce: false], opts)
     apply_type(opts ++ [inner: inner])
   end
 

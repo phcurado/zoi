@@ -1,6 +1,10 @@
 defmodule Zoi.Types.Enum do
   @moduledoc false
-  use Zoi.Type.Def, fields: [:values, :enum_type, :coerce]
+  use Zoi.Type.Def, fields: [:values, :enum_type, coerce: false]
+
+  def opts() do
+    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), [])
+  end
 
   def new(values, opts \\ []) when is_list(values) do
     type = verify_type(values)

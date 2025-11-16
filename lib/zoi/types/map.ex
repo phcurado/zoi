@@ -3,12 +3,20 @@ defmodule Zoi.Types.Map do
 
   use Zoi.Type.Def, fields: [:key_type, :value_type]
 
-  def new(key_type, value_type, opts) do
-    apply_type(Keyword.merge(opts, key_type: key_type, value_type: value_type))
+  def opts() do
+    Zoi.Types.Keyword.new(
+      [
+        description: Zoi.Opts.description(),
+        example: Zoi.Opts.example(),
+        metadata: Zoi.Opts.metadata(),
+        error: Zoi.Opts.error()
+      ],
+      []
+    )
   end
 
-  def new(opts) do
-    new(Zoi.any(), Zoi.any(), opts)
+  def new(key_type, value_type, opts) do
+    apply_type(Keyword.merge(opts, key_type: key_type, value_type: value_type))
   end
 
   defimpl Zoi.Type do

@@ -3,6 +3,27 @@ defmodule Zoi.Types.StringBoolean do
 
   use Zoi.Type.Def, fields: [:case, :truthy, :falsy]
 
+  def opts() do
+    Keyword.merge(Zoi.Opts.shared_metadata(),
+      case:
+        Zoi.Types.Enum.new(["sensitive", "insensitive"],
+          description: "Whether string comparison is case sensitive or insensitive."
+        )
+        |> Zoi.Types.Default.new("insensitive"),
+      truthy:
+        Zoi.Types.Array.new(Zoi.Types.String.new([]),
+          description: "List of strings to interpret as true."
+        )
+        |> Zoi.Types.Default.new(["true", "1", "yes", "on", "y", "enabled"]),
+      falsy:
+        Zoi.Types.Array.new(Zoi.Types.String.new([]),
+          description: "List of strings to interpret as false."
+        )
+        |> Zoi.Types.Default.new(["false", "0", "no", "off", "n", "disabled"])
+    )
+    |> Zoi.Types.Keyword.new([])
+  end
+
   def new(opts \\ []) do
     truthy = ["true", "1", "yes", "on", "y", "enabled"]
     falsy = ["false", "0", "no", "off", "n", "disabled"]

@@ -3,6 +3,10 @@ defmodule Zoi.Types.Float do
 
   use Zoi.Type.Def, fields: [coerce: false]
 
+  def opts() do
+    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), [])
+  end
+
   def new(opts \\ []) do
     apply_type(opts)
   end
