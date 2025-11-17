@@ -436,11 +436,9 @@ defmodule ZoiTest do
     end
 
     test "default with incorrect type" do
-      assert_raise ArgumentError,
-                   "Invalid default value: \"10\". Reason: invalid type: expected integer",
-                   fn ->
-                     Zoi.default(Zoi.integer(), "10")
-                   end
+      # Zoi will not validate the default value
+      schema = Zoi.default(Zoi.integer(), "10")
+      assert {:ok, "10"} == Zoi.parse(schema, nil)
     end
 
     test "optional with default value" do
@@ -456,7 +454,7 @@ defmodule ZoiTest do
         })
 
       assert {:ok, %{}} == Zoi.parse(schema, %{})
-      # Transform will not run since it could not parse as string
+      # Transform will run on default value, since it's short circuit
       assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{name: nil})
       assert {:ok, %{name: "John_refined"}} == Zoi.parse(schema, %{name: "John"})
     end
