@@ -809,14 +809,14 @@ defmodule ZoiTest do
       assert ^errors = [
                %Zoi.Error{
                  code: :unrecognized_key,
-                 message: "unrecognized key: 'wrong key'",
-                 issue: {"unrecognized key: '%{key}'", [key: "wrong key"]},
+                 message: "unrecognized key: wrong key",
+                 issue: {"unrecognized key: %{key}", [key: "wrong key"]},
                  path: [:phone]
                },
                %Zoi.Error{
                  code: :unrecognized_key,
-                 message: "unrecognized key: 'age'",
-                 issue: {"unrecognized key: '%{key}'", [key: :age]},
+                 message: "unrecognized key: age",
+                 issue: {"unrecognized key: %{key}", [key: :age]},
                  path: []
                }
              ]
@@ -970,14 +970,14 @@ defmodule ZoiTest do
       assert ^errors = [
                %Zoi.Error{
                  code: :unrecognized_key,
-                 message: "unrecognized key: 'wrong_key'",
-                 issue: {"unrecognized key: '%{key}'", [key: :wrong_key]},
+                 message: "unrecognized key: wrong_key",
+                 issue: {"unrecognized key: %{key}", [key: :wrong_key]},
                  path: [:phone]
                },
                %Zoi.Error{
                  code: :unrecognized_key,
-                 message: "unrecognized key: 'age'",
-                 issue: {"unrecognized key: '%{key}'", [key: :age]},
+                 message: "unrecognized key: age",
+                 issue: {"unrecognized key: %{key}", [key: :age]},
                  path: []
                }
              ]
@@ -3072,7 +3072,7 @@ defmodule ZoiTest do
                    }
                  }
                },
-               __errors__: ["unrecognized key: 'invalid_key'"]
+               __errors__: ["unrecognized key: invalid_key"]
              }
     end
   end

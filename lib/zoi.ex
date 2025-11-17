@@ -1124,8 +1124,8 @@ defmodule Zoi do
        [
          %Zoi.Error{
            code: :unrecognized_key,
-           message: "unrecognized key: 'age'",
-           issue: {"unrecognized key: '%{key}'", [key: :age]},
+           message: "unrecognized key: age",
+           issue: {"unrecognized key: %{key}", [key: :age]},
            path: []
          }
        ]}
@@ -1254,8 +1254,8 @@ defmodule Zoi do
        [
          %Zoi.Error{
            code: :unrecognized_key,
-           message: "unrecognized key: 'age'",
-           issue: {"unrecognized key: '%{key}'", [key: :age]},
+           message: "unrecognized key: age",
+           issue: {"unrecognized key: %{key}", [key: :age]},
            path: []
          }
        ]}

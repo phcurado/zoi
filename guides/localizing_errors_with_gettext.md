@@ -143,7 +143,7 @@ msgstr ""
 ## Other common type errors (add as needed)
 # msgid "invalid type: expected date"
 # msgid "invalid type: expected datetime"
-# msgid "unrecognized key: '%{key}'"
+# msgid "unrecognized key: %{key}"
 ```
 
 ## 4. Extract and translate
