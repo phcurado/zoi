@@ -4,7 +4,7 @@ defmodule Zoi.Types.Array do
   use Zoi.Type.Def, fields: [:inner, coerce: false]
 
   def opts() do
-    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), [])
+    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), strict: true)
   end
 
   def new(inner, opts) do

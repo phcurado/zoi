@@ -10,7 +10,7 @@ defmodule Zoi.Types.Default do
         metadata: Zoi.Opts.metadata(),
         error: Zoi.Opts.error()
       ],
-      []
+      strict: true
     )
   end
 

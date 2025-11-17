@@ -4,7 +4,7 @@ defmodule Zoi.Types.Null do
   use Zoi.Type.Def
 
   def opts() do
-    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), [])
+    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), strict: true)
   end
 
   def new(opts \\ []) do

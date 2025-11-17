@@ -21,7 +21,7 @@ defmodule Zoi.Types.StringBoolean do
         )
         |> Zoi.Types.Default.new(["false", "0", "no", "off", "n", "disabled"])
     )
-    |> Zoi.Types.Keyword.new([])
+    |> Zoi.Types.Keyword.new(strict: true)
   end
 
   def new(opts \\ []) do

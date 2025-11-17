@@ -11,7 +11,7 @@ defmodule Zoi.Types.Literal do
         metadata: Zoi.Opts.metadata(),
         error: Zoi.Opts.error()
       ],
-      []
+      strict: true
     )
   end
 

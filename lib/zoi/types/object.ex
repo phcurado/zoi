@@ -14,7 +14,7 @@ defmodule Zoi.Types.Object do
         |> Zoi.Types.Default.new(false),
       empty_values: Zoi.Opts.empty_values()
     )
-    |> Zoi.Types.Keyword.new([])
+    |> Zoi.Types.Keyword.new(strict: true)
   end
 
   def new(fields, opts) when is_map(fields) or is_list(fields) do

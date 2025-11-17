@@ -5,7 +5,7 @@ if Code.ensure_loaded?(Decimal) do
     use Zoi.Type.Def, fields: [coerce: false]
 
     def opts() do
-      Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), [])
+      Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), strict: true)
     end
 
     def new(opts) do

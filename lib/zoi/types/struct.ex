@@ -12,7 +12,7 @@ defmodule Zoi.Types.Struct do
         |> Zoi.Types.Default.new(false),
       empty_values: Zoi.Opts.empty_values()
     )
-    |> Zoi.Types.Keyword.new([])
+    |> Zoi.Types.Keyword.new(strict: true)
   end
 
   def new(module, fields, opts) when is_map(fields) or is_list(fields) do

@@ -11,7 +11,7 @@ defmodule Zoi.Types.Map do
         metadata: Zoi.Opts.metadata(),
         error: Zoi.Opts.error()
       ],
-      []
+      strict: true
     )
   end
 
