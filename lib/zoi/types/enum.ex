@@ -3,7 +3,8 @@ defmodule Zoi.Types.Enum do
   use Zoi.Type.Def, fields: [:values, :enum_type, coerce: false]
 
   def opts() do
-    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), strict: true)
+    Zoi.Opts.meta_opts()
+    |> Zoi.Opts.with_coerce()
   end
 
   def new(values, opts \\ []) when is_list(values) do

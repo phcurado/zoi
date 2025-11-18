@@ -3,15 +3,7 @@ defmodule Zoi.Types.Any do
   use Zoi.Type.Def
 
   def opts() do
-    Zoi.Types.Keyword.new(
-      [
-        description: Zoi.Opts.description(),
-        example: Zoi.Opts.example(),
-        metadata: Zoi.Opts.metadata(),
-        error: Zoi.Opts.error()
-      ],
-      strict: true
-    )
+    Zoi.Opts.meta_opts()
   end
 
   def new(opts \\ []) do

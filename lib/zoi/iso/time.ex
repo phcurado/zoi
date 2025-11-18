@@ -3,7 +3,7 @@ defmodule Zoi.ISO.Time do
   use Zoi.Type.Def
 
   def opts() do
-    Zoi.Types.Keyword.new(Zoi.Opts.shared_metadata(), [])
+    Zoi.Opts.meta_opts()
   end
 
   def new(opts \\ []) do

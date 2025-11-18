@@ -3,15 +3,7 @@ defmodule Zoi.Types.Tuple do
   use Zoi.Type.Def, fields: [:fields, :length]
 
   def opts() do
-    Zoi.Types.Keyword.new(
-      [
-        description: Zoi.Opts.description(),
-        example: Zoi.Opts.example(),
-        metadata: Zoi.Opts.metadata(),
-        error: Zoi.Opts.error()
-      ],
-      strict: true
-    )
+    Zoi.Opts.meta_opts()
   end
 
   def new(fields, opts) when is_tuple(fields) do

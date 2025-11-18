@@ -6,15 +6,7 @@ defmodule Zoi.Types.Object do
   alias Zoi.Types.Meta
 
   def opts() do
-    Keyword.merge(Zoi.Opts.shared_metadata(),
-      strict:
-        Zoi.Types.Boolean.new(
-          description: "If true, unrecognized keys will cause validation to fail."
-        )
-        |> Zoi.Types.Default.new(false),
-      empty_values: Zoi.Opts.empty_values()
-    )
-    |> Zoi.Types.Keyword.new(strict: true)
+    Zoi.Opts.complex_type_opts()
   end
 
   def new(fields, opts) when is_map(fields) or is_list(fields) do
