@@ -190,7 +190,7 @@ defmodule Zoi.Describe do
   end
 
   defp check_description(str, schema) do
-    case Zoi.description(schema) do
+    case schema.meta.description do
       nil -> str
       description -> str <> description
     end

@@ -3,6 +3,10 @@ defmodule Zoi.Types.Keyword do
 
   use Zoi.Type.Def, fields: [:fields, :strict, :coerce, empty_values: []]
 
+  def opts() do
+    Zoi.Opts.complex_type_opts()
+  end
+
   def new(fields, opts) when is_list(fields) or is_struct(fields) do
     opts =
       Keyword.merge(

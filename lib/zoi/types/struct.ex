@@ -3,6 +3,10 @@ defmodule Zoi.Types.Struct do
 
   use Zoi.Type.Def, fields: [:module, :fields, :strict, :coerce, empty_values: []]
 
+  def opts() do
+    Zoi.Opts.complex_type_opts()
+  end
+
   def new(module, fields, opts) when is_map(fields) or is_list(fields) do
     fields =
       fields

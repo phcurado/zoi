@@ -3,8 +3,12 @@ defmodule Zoi.Types.Integer do
 
   use Zoi.Type.Def, fields: [coerce: false]
 
+  def opts() do
+    Zoi.Opts.meta_opts()
+    |> Zoi.Opts.with_coerce()
+  end
+
   def new(opts) do
-    opts = Keyword.merge([coerce: false], opts)
     apply_type(opts)
   end
 

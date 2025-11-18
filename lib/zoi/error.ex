@@ -312,15 +312,15 @@ defmodule Zoi.Error do
       iex> Zoi.Error.unrecognized_key(:foo)
       %Zoi.Error{
         code: :unrecognized_key,
-        issue: {"unrecognized key: '%{key}'", [key: :foo]},
-        message: "unrecognized key: 'foo'"
+        issue: {"unrecognized key: %{key}", [key: :foo]},
+        message: "unrecognized key: foo"
       }
   """
   @spec unrecognized_key(atom() | binary() | integer()) :: t()
   def unrecognized_key(key) do
     new(
       code: :unrecognized_key,
-      issue: {"unrecognized key: '%{key}'", [key: key]}
+      issue: {"unrecognized key: %{key}", [key: key]}
     )
   end
 

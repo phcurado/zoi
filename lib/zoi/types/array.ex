@@ -1,10 +1,14 @@
 defmodule Zoi.Types.Array do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:inner, :coerce]
+  use Zoi.Type.Def, fields: [:inner, coerce: false]
+
+  def opts() do
+    Zoi.Opts.meta_opts()
+    |> Zoi.Opts.with_coerce()
+  end
 
   def new(inner, opts) do
-    opts = Keyword.merge([coerce: false], opts)
     apply_type(opts ++ [inner: inner])
   end
 

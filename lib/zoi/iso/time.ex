@@ -2,6 +2,10 @@ defmodule Zoi.ISO.Time do
   @moduledoc false
   use Zoi.Type.Def
 
+  def opts() do
+    Zoi.Opts.meta_opts()
+  end
+
   def new(opts \\ []) do
     apply_type(opts)
   end

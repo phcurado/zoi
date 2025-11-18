@@ -3,6 +3,10 @@ defmodule Zoi.Types.Literal do
 
   use Zoi.Type.Def, fields: [:value]
 
+  def opts() do
+    Zoi.Opts.meta_opts()
+  end
+
   def new(value, opts) do
     apply_type(opts ++ [value: value])
   end

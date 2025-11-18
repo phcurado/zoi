@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.11.0 - Unreleased
+
+### Changed
+
+- Now all types `opts` params are validated at type creation time, using `Zoi` internals, raising errors if invalid options are provided.
+
 ## 0.10.7 - 2025-11-16
 
 ### Added

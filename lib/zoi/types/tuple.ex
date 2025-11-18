@@ -2,6 +2,10 @@ defmodule Zoi.Types.Tuple do
   @moduledoc false
   use Zoi.Type.Def, fields: [:fields, :length]
 
+  def opts() do
+    Zoi.Opts.meta_opts()
+  end
+
   def new(fields, opts) when is_tuple(fields) do
     fields = Tuple.to_list(fields)
     apply_type(Keyword.merge(opts, fields: fields, length: length(fields)))

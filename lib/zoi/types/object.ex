@@ -5,6 +5,10 @@ defmodule Zoi.Types.Object do
 
   alias Zoi.Types.Meta
 
+  def opts() do
+    Zoi.Opts.complex_type_opts()
+  end
+
   def new(fields, opts) when is_map(fields) or is_list(fields) do
     fields =
       fields

@@ -1,6 +1,8 @@
 defmodule Zoi.Types.Extend do
   @moduledoc false
 
+  def new(schema1, shema2, opts \\ [])
+
   def new(%Zoi.Types.Object{} = schema1, %Zoi.Types.Object{} = schema2, _opts) do
     fields = Keyword.merge(schema1.fields, schema2.fields)
     strict = schema1.strict || schema2.strict

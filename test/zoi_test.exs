@@ -436,11 +436,9 @@ defmodule ZoiTest do
     end
 
     test "default with incorrect type" do
-      assert_raise ArgumentError,
-                   "Invalid default value: \"10\". Reason: invalid type: expected integer",
-                   fn ->
-                     Zoi.default(Zoi.integer(), "10")
-                   end
+      # Zoi will not validate the default value
+      schema = Zoi.default(Zoi.integer(), "10")
+      assert {:ok, "10"} == Zoi.parse(schema, nil)
     end
 
     test "optional with default value" do
@@ -456,7 +454,7 @@ defmodule ZoiTest do
         })
 
       assert {:ok, %{}} == Zoi.parse(schema, %{})
-      # Transform will not run since it could not parse as string
+      # Transform will run on default value, since it's short circuit
       assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{name: nil})
       assert {:ok, %{name: "John_refined"}} == Zoi.parse(schema, %{name: "John"})
     end
@@ -811,14 +809,14 @@ defmodule ZoiTest do
       assert ^errors = [
                %Zoi.Error{
                  code: :unrecognized_key,
-                 message: "unrecognized key: 'wrong key'",
-                 issue: {"unrecognized key: '%{key}'", [key: "wrong key"]},
+                 message: "unrecognized key: wrong key",
+                 issue: {"unrecognized key: %{key}", [key: "wrong key"]},
                  path: [:phone]
                },
                %Zoi.Error{
                  code: :unrecognized_key,
-                 message: "unrecognized key: 'age'",
-                 issue: {"unrecognized key: '%{key}'", [key: :age]},
+                 message: "unrecognized key: age",
+                 issue: {"unrecognized key: %{key}", [key: :age]},
                  path: []
                }
              ]
@@ -972,14 +970,14 @@ defmodule ZoiTest do
       assert ^errors = [
                %Zoi.Error{
                  code: :unrecognized_key,
-                 message: "unrecognized key: 'wrong_key'",
-                 issue: {"unrecognized key: '%{key}'", [key: :wrong_key]},
+                 message: "unrecognized key: wrong_key",
+                 issue: {"unrecognized key: %{key}", [key: :wrong_key]},
                  path: [:phone]
                },
                %Zoi.Error{
                  code: :unrecognized_key,
-                 message: "unrecognized key: 'age'",
-                 issue: {"unrecognized key: '%{key}'", [key: :age]},
+                 message: "unrecognized key: age",
+                 issue: {"unrecognized key: %{key}", [key: :age]},
                  path: []
                }
              ]
@@ -3074,7 +3072,7 @@ defmodule ZoiTest do
                    }
                  }
                },
-               __errors__: ["unrecognized key: 'invalid_key'"]
+               __errors__: ["unrecognized key: invalid_key"]
              }
     end
   end
