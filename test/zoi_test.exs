@@ -71,6 +71,58 @@ defmodule ZoiTest do
     test "string type spec" do
       assert Zoi.type_spec(Zoi.string()) == quote(do: binary())
     end
+
+    test "string with min_length option" do
+      schema = Zoi.string(min_length: 5)
+
+      assert {:ok, "hello"} = Zoi.parse(schema, "hello")
+
+      assert {:error, [error]} = Zoi.parse(schema, "hi")
+      assert error.code == :greater_than_or_equal_to
+      assert Exception.message(error) == "too small: must have at least 5 character(s)"
+    end
+
+    test "string with max_length option" do
+      schema = Zoi.string(max_length: 10)
+
+      assert {:ok, "hello"} = Zoi.parse(schema, "hello")
+
+      assert {:error, [error]} = Zoi.parse(schema, "hello world")
+      assert error.code == :less_than_or_equal_to
+      assert Exception.message(error) == "too big: must have at most 10 character(s)"
+    end
+
+    test "string with both min_length and max_length options" do
+      schema = Zoi.string(min_length: 3, max_length: 10)
+
+      assert {:ok, "hello"} = Zoi.parse(schema, "hello")
+
+      assert {:error, [error]} = Zoi.parse(schema, "hi")
+      assert error.code == :greater_than_or_equal_to
+
+      assert {:error, [error]} = Zoi.parse(schema, "hello world")
+      assert error.code == :less_than_or_equal_to
+    end
+
+    test "string min_length validates before transform" do
+      # min_length is set as field, so validates during parse_type (before effects)
+      schema = Zoi.string(min_length: 10) |> Zoi.transform(&String.trim/1)
+
+      assert {:ok, "hello world"} = Zoi.parse(schema, "hello world")
+
+      assert {:error, [error]} = Zoi.parse(schema, "  hello  ")
+      assert error.code == :greater_than_or_equal_to
+    end
+
+    test "string min after transform validates after transform" do
+      # min added after transform goes into effects
+      schema = Zoi.string() |> Zoi.transform(&String.trim/1) |> Zoi.min(5)
+
+      assert {:ok, "hello"} = Zoi.parse(schema, "  hello  ")
+
+      assert {:error, [error]} = Zoi.parse(schema, "  hi  ")
+      assert error.code == :greater_than_or_equal_to
+    end
   end
 
   describe "integer/1" do

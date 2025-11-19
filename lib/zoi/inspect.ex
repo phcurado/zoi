@@ -6,6 +6,9 @@ defmodule Zoi.Inspect do
   @spec inspect_type(Zoi.schema(), Inspect.Opts.t(), keyword()) :: Inspect.Algebra.t()
   def inspect_type(type, inspect_opts, opts \\ [])
 
+  def inspect_type(%Zoi.Types.String{} = type, inspect_opts, opts),
+    do: inspect_string(type, inspect_opts, opts)
+
   def inspect_type(%Zoi.Types.Array{} = type, inspect_opts, opts),
     do: inspect_array(type, inspect_opts, opts)
 
@@ -81,6 +84,16 @@ defmodule Zoi.Inspect do
       ["Zoi", "ISO", name] -> "ISO." <> Macro.underscore(name)
       list -> List.last(list) |> Macro.underscore()
     end
+  end
+
+  defp inspect_string(type, inspect_opts, opts) do
+    extra_fields =
+      Enum.map([:min_length, :max_length], fn field ->
+        {field, Map.get(type, field)}
+      end)
+
+    opts = add_extra(opts, extra_fields)
+    do_inspect_type(type, inspect_opts, opts)
   end
 
   defp inspect_array(type, inspect_opts, opts) do
@@ -211,6 +224,11 @@ defmodule Zoi.Inspect do
   end
 
   defp add_extra(opts, opts_to_add) do
-    Keyword.put(opts, :extra_fields, opts_to_add)
+    {_, val} =
+      Keyword.get_and_update(opts, :extra_fields, fn current_value ->
+        {current_value, Keyword.merge(current_value || [], opts_to_add)}
+      end)
+
+    val
   end
 end

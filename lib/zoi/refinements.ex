@@ -16,20 +16,14 @@ defmodule Zoi.Refinements do
     end
   end
 
-  defp do_refine(%Zoi.Types.String{}, input, [gte: min], opts) do
-    if String.length(input) >= min do
-      :ok
-    else
-      {:error, Zoi.Error.greater_than_or_equal_to(:string, min, opts)}
-    end
+  defp do_refine(%Zoi.Types.String{} = schema, input, [gte: min], opts) do
+    schema = %{schema | min_length: min}
+    Zoi.Validations.Gte.validate(schema, input, opts)
   end
 
-  defp do_refine(%Zoi.Types.String{}, input, [lte: max], opts) do
-    if String.length(input) <= max do
-      :ok
-    else
-      {:error, Zoi.Error.less_than_or_equal_to(:string, max, opts)}
-    end
+  defp do_refine(%Zoi.Types.String{} = schema, input, [lte: max], opts) do
+    schema = %{schema | max_length: max}
+    Zoi.Validations.Lte.validate(schema, input, opts)
   end
 
   defp do_refine(%Zoi.Types.String{}, input, [length: length], opts) do

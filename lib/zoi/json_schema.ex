@@ -87,6 +87,7 @@ defmodule Zoi.JSONSchema do
 
   defp encode_schema(%Zoi.Types.String{} = schema) do
     %{type: :string}
+    |> encode_string_constraints(schema)
     |> encode_metadata(schema)
     |> encode_refinements(schema.meta)
   end
@@ -401,6 +402,18 @@ defmodule Zoi.JSONSchema do
         # json_schema
     end
   end
+
+  defp encode_string_constraints(json_schema, %Zoi.Types.String{
+         min_length: min_length,
+         max_length: max_length
+       }) do
+    json_schema
+    |> maybe_put_length(:minLength, min_length)
+    |> maybe_put_length(:maxLength, max_length)
+  end
+
+  defp maybe_put_length(json_schema, _key, nil), do: json_schema
+  defp maybe_put_length(json_schema, key, value), do: Map.put(json_schema, key, value)
 
   defp encode_metadata(json_schema, zoi_schema) do
     json_schema =

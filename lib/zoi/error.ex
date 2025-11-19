@@ -177,16 +177,11 @@ defmodule Zoi.Error do
     else
       {issue, opts} = Keyword.pop(opts, :issue)
 
-      opts =
-        Keyword.merge(
-          [
-            {:code, :invalid_type},
-            {:issue, {issue || "invalid type: expected #{type || "nil"}", [type: type]}}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :invalid_type,
+        issue: {issue || "invalid type: expected #{type || "nil"}", [type: type]},
+        path: opts[:path] || []
+      )
     end
   end
 
@@ -261,16 +256,11 @@ defmodule Zoi.Error do
     if msg do
       custom_error(issue: {msg, [values: values]})
     else
-      opts =
-        Keyword.merge(
-          [
-            {:code, :not_in_values},
-            {:issue, {"invalid value: expected one of %{values}", [values: values]}}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :not_in_values,
+        issue: {"invalid value: expected one of %{values}", [values: values]},
+        path: opts[:path] || []
+      )
     end
   end
 
@@ -368,16 +358,11 @@ defmodule Zoi.Error do
           :date -> "too big: must be at most %{count}"
         end
 
-      opts =
-        Keyword.merge(
-          [
-            {:code, :less_than_or_equal_to},
-            {:issue, {message, [count: max]}}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :less_than_or_equal_to,
+        issue: {message, [count: max]},
+        path: opts[:path] || []
+      )
     end
   end
 
@@ -407,16 +392,11 @@ defmodule Zoi.Error do
           :date -> "too small: must be at least %{count}"
         end
 
-      opts =
-        Keyword.merge(
-          [
-            {:code, :greater_than_or_equal_to},
-            {:issue, {message, [count: min]}}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :greater_than_or_equal_to,
+        issue: {message, [count: min]},
+        path: opts[:path] || []
+      )
     end
   end
 
@@ -445,16 +425,11 @@ defmodule Zoi.Error do
           :date -> "too small: must be greater than %{count}"
         end
 
-      opts =
-        Keyword.merge(
-          [
-            {:code, :greater_than},
-            {:issue, {message, [count: min]}}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :greater_than,
+        issue: {message, [count: min]},
+        path: opts[:path] || []
+      )
     end
   end
 
@@ -483,16 +458,11 @@ defmodule Zoi.Error do
           :date -> "too big: must be less than %{count}"
         end
 
-      opts =
-        Keyword.merge(
-          [
-            {:code, :less_than},
-            {:issue, {message, [count: max]}}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :less_than,
+        issue: {message, [count: max]},
+        path: opts[:path] || []
+      )
     end
   end
 
@@ -519,16 +489,11 @@ defmodule Zoi.Error do
           :array -> "invalid length: must have %{count} item(s)"
         end
 
-      opts =
-        Keyword.merge(
-          [
-            {:code, :invalid_length},
-            {:issue, {message, [count: length]}}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :invalid_length,
+        issue: {message, [count: length]},
+        path: opts[:path] || []
+      )
     end
   end
 
@@ -549,20 +514,11 @@ defmodule Zoi.Error do
     if msg do
       custom_error(issue: {msg, [value: prefix]})
     else
-      opts =
-        Keyword.merge(
-          [
-            {:code, :invalid_format},
-            {:issue,
-             {
-               "invalid format: must start with '%{value}'",
-               [value: prefix]
-             }}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :invalid_format,
+        issue: {"invalid format: must start with '%{value}'", [value: prefix]},
+        path: opts[:path] || []
+      )
     end
   end
 
@@ -584,20 +540,11 @@ defmodule Zoi.Error do
     if msg do
       custom_error(issue: {msg, [value: suffix]})
     else
-      opts =
-        Keyword.merge(
-          [
-            {:code, :invalid_format},
-            {:issue,
-             {
-               "invalid format: must end with '%{value}'",
-               [value: suffix]
-             }}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :invalid_format,
+        issue: {"invalid format: must end with '%{value}'", [value: suffix]},
+        path: opts[:path] || []
+      )
     end
   end
 
@@ -607,20 +554,11 @@ defmodule Zoi.Error do
     if msg do
       custom_error(issue: {msg, [value: url]})
     else
-      opts =
-        Keyword.merge(
-          [
-            {:code, :invalid_format},
-            {:issue,
-             {
-               "invalid format: must be a valid URL",
-               [value: url]
-             }}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :invalid_format,
+        issue: {"invalid format: must be a valid URL", [value: url]},
+        path: opts[:path] || []
+      )
     end
   end
 
@@ -659,16 +597,11 @@ defmodule Zoi.Error do
           _format -> [{:format, format} | default_issue_opts]
         end
 
-      opts =
-        Keyword.merge(
-          [
-            {:code, :invalid_format},
-            {:issue, {message, issue_opts}}
-          ],
-          opts
-        )
-
-      new(opts)
+      new(
+        code: :invalid_format,
+        issue: {message, issue_opts},
+        path: opts[:path] || []
+      )
     end
   end
 

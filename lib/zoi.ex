@@ -152,7 +152,7 @@ defmodule Zoi do
   @type input :: any()
 
   @typedoc "The result of parsing, either `{:ok, value}` or `{:error, errors}`."
-  @type result :: {:ok, any()} | {:error, [Zoi.Error.t() | binary()]}
+  @type result :: {:ok, any()} | {:error, [Zoi.Error.t()]}
 
   @typedoc "Options for parsing and schema definitions."
   @type options :: keyword()
@@ -552,13 +552,31 @@ defmodule Zoi do
       Zoi.ends_with("world")
       Zoi.regex(~r/^[a-zA-Z]+$/)
 
+  You can also pass validation constraints directly when creating a string schema:
+
+      iex> schema = Zoi.string(min_length: 2, max_length: 100)
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, "h")
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           issue: {"too small: must have at least %{count} character(s)", [count: 2]},
+           message: "too small: must have at least 2 character(s)",
+           path: []
+         }
+       ]}
+
   Additionally it can perform data transformation:
+
       Zoi.string()
       |> Zoi.trim()
       |> Zoi.to_downcase()
       |> Zoi.to_uppercase()
 
   for coercion, you can pass the `:coerce` option:
+
       iex> Zoi.string(coerce: true) |> Zoi.parse(123)
       {:ok, "123"}
 
@@ -2076,7 +2094,18 @@ defmodule Zoi do
   """
   @doc group: "Refinements"
   @spec gte(schema :: schema(), min :: non_neg_integer(), opts :: options()) :: schema()
-  def gte(schema, gte, opts \\ []) do
+  def gte(schema, gte, opts \\ [])
+
+  def gte(%Zoi.Types.String{} = schema, gte, opts) do
+    if Enum.empty?(schema.meta.effects) do
+      %{schema | min_length: gte}
+    else
+      schema
+      |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
+    end
+  end
+
+  def gte(schema, gte, opts) do
     schema
     |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
   end
@@ -2139,7 +2168,18 @@ defmodule Zoi do
   """
   @doc group: "Refinements"
   @spec lte(schema :: schema(), lte :: non_neg_integer(), opts :: options()) :: schema()
-  def lte(schema, lte, opts \\ []) do
+  def lte(schema, lte, opts \\ [])
+
+  def lte(%Zoi.Types.String{} = schema, lte, opts) do
+    if Enum.empty?(schema.meta.effects) do
+      %{schema | max_length: lte}
+    else
+      schema
+      |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
+    end
+  end
+
+  def lte(schema, lte, opts) do
     schema
     |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
   end
