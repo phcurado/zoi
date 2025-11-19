@@ -70,22 +70,6 @@ defmodule Zoi.Refinements do
     |> Zoi.Validations.Gte.validate(input, opts)
   end
 
-  defp do_refine(%Zoi.Types.Array{}, input, [gt: gt], opts) do
-    if length(input) > gt do
-      :ok
-    else
-      {:error, Zoi.Error.greater_than(:array, gt, opts)}
-    end
-  end
-
-  defp do_refine(%Zoi.Types.Array{}, input, [lt: lt], opts) do
-    if length(input) < lt do
-      :ok
-    else
-      {:error, Zoi.Error.less_than(:array, lt, opts)}
-    end
-  end
-
   defp do_refine(%Zoi.Types.Array{} = schema, input, [lte: max], opts) do
     schema
     |> Zoi.Validations.Lte.set(max)

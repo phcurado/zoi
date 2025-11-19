@@ -2419,15 +2419,6 @@ defmodule ZoiTest do
       assert Exception.message(error) == "too small: must be greater than 10.5"
     end
 
-    test "gt for array" do
-      schema = Zoi.array(Zoi.integer()) |> Zoi.gt(3)
-      assert {:ok, [1, 2, 3, 4]} == Zoi.parse(schema, [1, 2, 3, 4])
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2])
-      assert error.code == :greater_than
-      assert Exception.message(error) == "too small: must be greater than 3 item(s)"
-      assert error.issue == {"too small: must be greater than %{count} item(s)", [count: 3]}
-    end
-
     test "gt for time" do
       schema = Zoi.time() |> Zoi.gt(~T[12:00:00])
       assert {:ok, ~T[12:30:00]} == Zoi.parse(schema, ~T[12:30:00])
@@ -2670,15 +2661,6 @@ defmodule ZoiTest do
       assert {:ok, Decimal.new("9.99")} == Zoi.parse(schema, Decimal.new("9.99"))
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, Decimal.new("10.5"))
       assert Exception.message(error) == "too big: must be less than 10.5"
-    end
-
-    test "lt for array" do
-      schema = Zoi.array(Zoi.integer()) |> Zoi.lt(3)
-      assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3])
-      assert error.code == :less_than
-      assert Exception.message(error) == "too big: must be less than 3 item(s)"
-      assert error.issue == {"too big: must be less than %{count} item(s)", [count: 3]}
     end
 
     test "lt for time" do

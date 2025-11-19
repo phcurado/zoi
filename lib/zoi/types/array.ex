@@ -18,21 +18,20 @@ defmodule Zoi.Types.Array do
     )
   end
 
-  def new(inner, opts) do
-    opts =
-      opts
-      |> apply_option(:min_length, opts, &Zoi.Validations.Gte.set/2)
-      |> apply_option(:max_length, opts, &Zoi.Validations.Lte.set/2)
-      |> apply_option(:length, opts, &Zoi.Validations.Length.set/2)
+  def new(inner, opts) when is_struct(inner) do
+    schema = apply_type([inner: inner] ++ opts)
 
-    apply_type(opts ++ [inner: inner])
+    # Ensure length overrides min/max when both are present
+    if Keyword.has_key?(opts, :length) do
+      Zoi.Validations.Length.set(schema, opts[:length])
+    else
+      schema
+    end
   end
 
-  defp apply_option(schema, key, opts, fun) do
-    case Keyword.fetch(opts, key) do
-      {:ok, value} -> fun.(schema, value)
-      :error -> schema
-    end
+  def new(inner, _opts) do
+    raise ArgumentError,
+          "you should use a valid Zoi schema, got: #{inspect(inner)}"
   end
 
   defimpl Zoi.Type do

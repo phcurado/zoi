@@ -419,16 +419,14 @@ defmodule Zoi.JSONSchema do
          min_length: min_length,
          max_length: max_length
        }) do
-    cond do
-      length != nil ->
-        json_schema
-        |> Map.put(:minItems, length)
-        |> Map.put(:maxItems, length)
-
-      true ->
-        json_schema
-        |> maybe_put_length(:minItems, min_length)
-        |> maybe_put_length(:maxItems, max_length)
+    if length do
+      json_schema
+      |> Map.put(:minItems, length)
+      |> Map.put(:maxItems, length)
+    else
+      json_schema
+      |> maybe_put_length(:minItems, min_length)
+      |> maybe_put_length(:maxItems, max_length)
     end
   end
 
