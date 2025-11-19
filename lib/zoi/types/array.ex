@@ -19,11 +19,13 @@ defmodule Zoi.Types.Array do
   end
 
   def new(inner, opts) do
-    opts
-    |> then(&apply_type(&1 ++ [inner: inner]))
-    |> apply_option(:min_length, opts, &Zoi.Validations.Gte.set/2)
-    |> apply_option(:max_length, opts, &Zoi.Validations.Lte.set/2)
-    |> apply_option(:length, opts, &Zoi.Validations.Length.set/2)
+    opts =
+      opts
+      |> apply_option(:min_length, opts, &Zoi.Validations.Gte.set/2)
+      |> apply_option(:max_length, opts, &Zoi.Validations.Lte.set/2)
+      |> apply_option(:length, opts, &Zoi.Validations.Length.set/2)
+
+    apply_type(opts ++ [inner: inner])
   end
 
   defp apply_option(schema, key, opts, fun) do

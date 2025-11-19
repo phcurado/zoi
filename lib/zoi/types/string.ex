@@ -39,9 +39,19 @@ defmodule Zoi.Types.String do
     end
 
     defp validate_constraints(schema, input, opts) do
-      with :ok <- Zoi.Validations.Gte.validate(schema, input, opts),
-           :ok <- Zoi.Validations.Lte.validate(schema, input, opts) do
+      errors =
+        [Zoi.Validations.Gte, Zoi.Validations.Lte]
+        |> Enum.reduce([], fn module, acc ->
+          case module.validate(schema, input, opts) do
+            :ok -> acc
+            {:error, error} -> [error | acc]
+          end
+        end)
+
+      if errors == [] do
         :ok
+      else
+        {:error, Enum.reverse(errors)}
       end
     end
 
