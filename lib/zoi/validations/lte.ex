@@ -3,4 +3,11 @@ defprotocol Zoi.Validations.Lte do
 
   @spec validate(Zoi.schema(), Zoi.input(), Zoi.options()) :: :ok | {:error, String.t()}
   def validate(schema, input, opts)
+
+  @doc """
+  Sets the maximum constraint value on the schema.
+  Each type implements this to set the appropriate field (e.g., max_length for String, max for Integer).
+  """
+  @spec set(Zoi.schema(), term()) :: Zoi.schema()
+  def set(schema, value)
 end

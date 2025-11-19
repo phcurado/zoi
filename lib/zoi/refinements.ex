@@ -17,13 +17,15 @@ defmodule Zoi.Refinements do
   end
 
   defp do_refine(%Zoi.Types.String{} = schema, input, [gte: min], opts) do
-    schema = %{schema | min_length: min}
-    Zoi.Validations.Gte.validate(schema, input, opts)
+    schema
+    |> Zoi.Validations.Gte.set(min)
+    |> Zoi.Validations.Gte.validate(input, opts)
   end
 
   defp do_refine(%Zoi.Types.String{} = schema, input, [lte: max], opts) do
-    schema = %{schema | max_length: max}
-    Zoi.Validations.Lte.validate(schema, input, opts)
+    schema
+    |> Zoi.Validations.Lte.set(max)
+    |> Zoi.Validations.Lte.validate(input, opts)
   end
 
   defp do_refine(%Zoi.Types.String{}, input, [length: length], opts) do

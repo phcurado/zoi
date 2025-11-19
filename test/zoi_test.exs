@@ -2393,6 +2393,19 @@ defmodule ZoiTest do
       assert error.issue == {"too big: must have at most %{count} character(s)", [count: 5]}
     end
 
+    test "max for string with transforms runs refinements" do
+      schema =
+        Zoi.string()
+        |> Zoi.trim()
+        |> Zoi.max(3)
+
+      assert {:ok, "abc"} == Zoi.parse(schema, "  abc  ")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "abcdef")
+      assert error.code == :less_than_or_equal_to
+      assert Exception.message(error) == "too big: must have at most 3 character(s)"
+    end
+
     test "max for integer" do
       schema = Zoi.integer() |> Zoi.max(10)
       assert {:ok, 5} == Zoi.parse(schema, 5)

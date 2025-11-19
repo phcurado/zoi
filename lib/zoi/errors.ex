@@ -32,9 +32,4 @@ defmodule Zoi.Errors do
   def add_error(errors_1, errors_2) when is_list(errors_2) do
     errors_1 ++ errors_2
   end
-
-  def message(errors) do
-    errors
-    |> Enum.map_join(", ", & &1.message)
-  end
 end

@@ -7,36 +7,33 @@ defmodule Zoi.JSONSchemaTest do
   @draft "https://json-schema.org/draft/2020-12/schema"
 
   describe "Zoi.to_json_schema/1" do
-    @base_schemas [
-      {"string", Zoi.string(), %{type: :string}},
-      {"integer", Zoi.integer(), %{type: :integer}},
-      {"float", Zoi.float(), %{type: :number}},
-      {"number", Zoi.number(), %{type: :number}},
-      {"decimal", Zoi.decimal(), %{type: :number}},
-      {"boolean", Zoi.boolean(), %{type: :boolean}},
-      {"literal", Zoi.literal("fixed"), %{const: "fixed"}},
-      {"null", Zoi.null(), %{type: :null}},
-      {"array", Zoi.array(Zoi.integer()), %{type: :array, items: %{type: :integer}}},
-      {"any array", Zoi.array(), %{type: :array}},
-      {"tuple", Zoi.tuple({Zoi.string(), Zoi.integer()}),
-       %{type: :array, prefixItems: [%{type: :string}, %{type: :integer}]}},
-      {"enum", Zoi.enum(["red", "green", "blue"]),
-       %{type: :string, enum: ["red", "green", "blue"]}},
-      {"any object", Zoi.map(), %{type: :object}},
-      {"intersection", Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
-       %{allOf: [%{type: :string}, %{const: "fixed"}]}},
-      {"union", Zoi.union([Zoi.string(), Zoi.integer()]),
-       %{anyOf: [%{type: :string}, %{type: :integer}]}},
-      {"nullable", Zoi.nullable(Zoi.integer()), %{anyOf: [%{type: :null}, %{type: :integer}]}}
-    ]
+    test "different schemas to json" do
+      schemas = [
+        {Zoi.string(), %{type: :string}},
+        {Zoi.integer(), %{type: :integer}},
+        {Zoi.float(), %{type: :number}},
+        {Zoi.number(), %{type: :number}},
+        {Zoi.decimal(), %{type: :number}},
+        {Zoi.boolean(), %{type: :boolean}},
+        {Zoi.literal("fixed"), %{const: "fixed"}},
+        {Zoi.null(), %{type: :null}},
+        {Zoi.array(Zoi.integer()), %{type: :array, items: %{type: :integer}}},
+        {Zoi.array(), %{type: :array}},
+        {Zoi.tuple({Zoi.string(), Zoi.integer()}),
+         %{type: :array, prefixItems: [%{type: :string}, %{type: :integer}]}},
+        {Zoi.enum(["red", "green", "blue"]), %{type: :string, enum: ["red", "green", "blue"]}},
+        {Zoi.map(), %{type: :object}},
+        {Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
+         %{allOf: [%{type: :string}, %{const: "fixed"}]}},
+        {Zoi.union([Zoi.string(), Zoi.integer()]),
+         %{anyOf: [%{type: :string}, %{type: :integer}]}},
+        {Zoi.nullable(Zoi.integer()), %{anyOf: [%{type: :null}, %{type: :integer}]}}
+      ]
 
-    for {test_ref, schema, expected} <- @base_schemas do
-      @schema schema
-      @expected expected
-      test "encoding #{test_ref}" do
-        expected = Map.put(@expected, :"$schema", @draft)
-        assert Zoi.to_json_schema(@schema) == expected
-      end
+      Enum.each(schemas, fn {schema, expected} ->
+        expected = Map.put(expected, :"$schema", @draft)
+        assert Zoi.to_json_schema(schema) == expected
+      end)
     end
 
     test "enconding object" do
@@ -170,6 +167,21 @@ defmodule Zoi.JSONSchemaTest do
         expected = Map.put(@expected, :"$schema", @draft)
         assert Zoi.to_json_schema(@schema) == expected
       end
+    end
+
+    test "encoding string refinements with transforms" do
+      schema =
+        Zoi.string()
+        |> Zoi.trim()
+        |> Zoi.min(3)
+        |> Zoi.max(5)
+
+      assert %{
+               "$schema": @draft,
+               type: :string,
+               minLength: 3,
+               maxLength: 5
+             } = Zoi.to_json_schema(schema)
     end
 
     @number_ranges [

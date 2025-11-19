@@ -1,11 +1,20 @@
 defmodule Zoi.Types.Array do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:inner, coerce: false]
+  use Zoi.Type.Def, fields: [:inner, :min_length, :max_length, coerce: false]
 
   def opts() do
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
+    |> Zoi.Types.Extend.new(
+      Zoi.Types.Keyword.new(
+        [
+          min_length: Zoi.Types.Integer.new(description: "Minimum length of the array."),
+          max_length: Zoi.Types.Integer.new(description: "Maximum length of the array.")
+        ],
+        strict: true
+      )
+    )
   end
 
   def new(inner, opts) do

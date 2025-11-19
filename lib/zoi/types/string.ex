@@ -64,6 +64,10 @@ defmodule Zoi.Types.String do
         {:error, Zoi.Error.greater_than_or_equal_to(:string, schema.min_length, opts)}
       end
     end
+
+    def set(schema, value) do
+      %{schema | min_length: value}
+    end
   end
 
   defimpl Zoi.Validations.Lte do
@@ -75,6 +79,10 @@ defmodule Zoi.Types.String do
       else
         {:error, Zoi.Error.less_than_or_equal_to(:string, schema.max_length, opts)}
       end
+    end
+
+    def set(schema, value) do
+      %{schema | max_length: value}
     end
   end
 
