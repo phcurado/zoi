@@ -250,6 +250,30 @@ defmodule Zoi.JSONSchemaTest do
       end
     end
 
+    test "encoding array opts min/max items" do
+      schema = Zoi.array(Zoi.integer(), min_length: 2, max_length: 4)
+
+      assert %{
+               "$schema": @draft,
+               type: :array,
+               items: %{type: :integer},
+               minItems: 2,
+               maxItems: 4
+             } = Zoi.to_json_schema(schema)
+    end
+
+    test "encoding array opts exact length" do
+      schema = Zoi.array(Zoi.integer(), length: 3)
+
+      assert %{
+               "$schema": @draft,
+               type: :array,
+               items: %{type: :integer},
+               minItems: 3,
+               maxItems: 3
+             } = Zoi.to_json_schema(schema)
+    end
+
     @date_schemas [
       {"date", Zoi.date(), %{type: :string, format: :date}},
       {"time", Zoi.time(), %{type: :string, format: :time}},

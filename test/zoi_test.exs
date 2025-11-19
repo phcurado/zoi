@@ -1476,6 +1476,91 @@ defmodule ZoiTest do
       assert {:ok, [[1, 2], [3, 4]]} == Zoi.parse(schema, [[1, 2], [3, 4]])
     end
 
+    test "array with min_length option" do
+      schema = Zoi.array(Zoi.integer(), min_length: 2)
+
+      assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1])
+      assert error.code == :greater_than_or_equal_to
+    end
+
+    test "array with max_length option" do
+      schema = Zoi.array(Zoi.integer(), max_length: 3)
+
+      assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3, 4])
+      assert error.code == :less_than_or_equal_to
+    end
+
+    test "array with length option" do
+      schema = Zoi.array(Zoi.integer(), length: 2)
+
+      assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1])
+      assert error.code == :invalid_length
+    end
+
+    test "array length/2 sets schema field when there are no effects" do
+      schema = Zoi.array(Zoi.integer()) |> Zoi.length(4)
+      assert schema.length == 4
+      refute schema.min_length
+      refute schema.max_length
+    end
+
+    test "array options length overrides min and max" do
+      schema = Zoi.array(Zoi.integer(), min_length: 1, max_length: 5, length: 2)
+      assert schema.length == 2
+      refute schema.min_length
+      refute schema.max_length
+    end
+
+    test "array validations accumulate errors from fields" do
+      schema = Zoi.array(Zoi.integer(), min_length: 3, max_length: 1)
+
+      assert {:error, [error1, error2]} = Zoi.parse(schema, [1, 2])
+
+      assert Enum.map([error1, error2], & &1.code) |> Enum.sort() ==
+               [:greater_than_or_equal_to, :less_than_or_equal_to]
+    end
+
+    test "array min after transform validates after transform" do
+      schema =
+        Zoi.array(Zoi.integer())
+        |> Zoi.transform(fn value -> Enum.reverse(value) end)
+        |> Zoi.min(2)
+
+      assert {:ok, [2, 1]} == Zoi.parse(schema, [1, 2])
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1])
+      assert error.code == :greater_than_or_equal_to
+    end
+
+    test "array max after transform validates after transform" do
+      schema =
+        Zoi.array(Zoi.integer())
+        |> Zoi.transform(fn value -> Enum.reverse(value) end)
+        |> Zoi.max(3)
+
+      assert {:ok, [3, 2, 1]} == Zoi.parse(schema, [1, 2, 3])
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3, 4])
+      assert error.code == :less_than_or_equal_to
+    end
+
+    test "array length after transform validates after transform" do
+      schema =
+        Zoi.array(Zoi.integer())
+        |> Zoi.transform(fn value -> Enum.reverse(value) end)
+        |> Zoi.length(2)
+
+      assert {:ok, [2, 1]} == Zoi.parse(schema, [1, 2])
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3])
+      assert error.code == :invalid_length
+    end
+
     test "array with nested arrays and incorrect value" do
       schema = Zoi.array(Zoi.array(Zoi.integer()))
 

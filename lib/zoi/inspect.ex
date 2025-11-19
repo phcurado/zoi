@@ -97,7 +97,15 @@ defmodule Zoi.Inspect do
   end
 
   defp inspect_array(type, inspect_opts, opts) do
-    opts = add_extra(opts, inner: inspect_type(type.inner, inspect_opts))
+    extra_fields =
+      [
+        inner: inspect_type(type.inner, inspect_opts),
+        min_length: type.min_length,
+        max_length: type.max_length,
+        length: type.length
+      ]
+
+    opts = add_extra(opts, extra_fields)
     do_inspect_type(type, inspect_opts, opts)
   end
 

@@ -141,6 +141,7 @@ defmodule Zoi.JSONSchema do
         %{
           type: :array
         }
+        |> encode_array_constraints(schema)
         |> encode_metadata(schema)
         |> encode_refinements(schema.meta)
 
@@ -149,6 +150,7 @@ defmodule Zoi.JSONSchema do
           type: :array,
           items: encode_schema(inner)
         }
+        |> encode_array_constraints(schema)
         |> encode_metadata(schema)
         |> encode_refinements(schema.meta)
     end
@@ -410,6 +412,24 @@ defmodule Zoi.JSONSchema do
     json_schema
     |> maybe_put_length(:minLength, min_length)
     |> maybe_put_length(:maxLength, max_length)
+  end
+
+  defp encode_array_constraints(json_schema, %Zoi.Types.Array{
+         length: length,
+         min_length: min_length,
+         max_length: max_length
+       }) do
+    cond do
+      length != nil ->
+        json_schema
+        |> Map.put(:minItems, length)
+        |> Map.put(:maxItems, length)
+
+      true ->
+        json_schema
+        |> maybe_put_length(:minItems, min_length)
+        |> maybe_put_length(:maxItems, max_length)
+    end
   end
 
   defp maybe_put_length(json_schema, _key, nil), do: json_schema

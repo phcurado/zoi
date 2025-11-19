@@ -64,12 +64,10 @@ defmodule Zoi.Refinements do
   end
 
   # Array
-  defp do_refine(%Zoi.Types.Array{}, input, [gte: min], opts) do
-    if length(input) >= min do
-      :ok
-    else
-      {:error, Zoi.Error.greater_than_or_equal_to(:array, min, opts)}
-    end
+  defp do_refine(%Zoi.Types.Array{} = schema, input, [gte: min], opts) do
+    schema
+    |> Zoi.Validations.Gte.set(min)
+    |> Zoi.Validations.Gte.validate(input, opts)
   end
 
   defp do_refine(%Zoi.Types.Array{}, input, [gt: gt], opts) do
@@ -88,20 +86,16 @@ defmodule Zoi.Refinements do
     end
   end
 
-  defp do_refine(%Zoi.Types.Array{}, input, [lte: max], opts) do
-    if length(input) <= max do
-      :ok
-    else
-      {:error, Zoi.Error.less_than_or_equal_to(:array, max, opts)}
-    end
+  defp do_refine(%Zoi.Types.Array{} = schema, input, [lte: max], opts) do
+    schema
+    |> Zoi.Validations.Lte.set(max)
+    |> Zoi.Validations.Lte.validate(input, opts)
   end
 
-  defp do_refine(%Zoi.Types.Array{}, input, [length: length], opts) do
-    if length(input) == length do
-      :ok
-    else
-      {:error, Zoi.Error.invalid_length(:array, length, opts)}
-    end
+  defp do_refine(%Zoi.Types.Array{} = schema, input, [length: length], opts) do
+    schema
+    |> Zoi.Validations.Length.set(length)
+    |> Zoi.Validations.Length.validate(input, opts)
   end
 
   # Numeric

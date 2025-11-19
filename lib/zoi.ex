@@ -2023,7 +2023,18 @@ defmodule Zoi do
   @doc group: "Refinements"
   @spec length(schema :: schema(), length :: non_neg_integer(), opts :: options()) ::
           schema()
-  def length(schema, length, opts \\ []) do
+  def length(schema, length, opts \\ [])
+
+  def length(%Zoi.Types.Array{} = schema, length, opts) do
+    if Enum.empty?(schema.meta.effects) do
+      Zoi.Validations.Length.set(schema, length)
+    else
+      schema
+      |> refine({Zoi.Refinements, :refine, [[length: length], opts]})
+    end
+  end
+
+  def length(schema, length, opts) do
     schema
     |> refine({Zoi.Refinements, :refine, [[length: length], opts]})
   end
@@ -2098,7 +2109,16 @@ defmodule Zoi do
 
   def gte(%Zoi.Types.String{} = schema, gte, opts) do
     if Enum.empty?(schema.meta.effects) do
-      %{schema | min_length: gte}
+      Zoi.Validations.Gte.set(schema, gte)
+    else
+      schema
+      |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
+    end
+  end
+
+  def gte(%Zoi.Types.Array{} = schema, gte, opts) do
+    if Enum.empty?(schema.meta.effects) do
+      Zoi.Validations.Gte.set(schema, gte)
     else
       schema
       |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
@@ -2172,7 +2192,16 @@ defmodule Zoi do
 
   def lte(%Zoi.Types.String{} = schema, lte, opts) do
     if Enum.empty?(schema.meta.effects) do
-      %{schema | max_length: lte}
+      Zoi.Validations.Lte.set(schema, lte)
+    else
+      schema
+      |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
+    end
+  end
+
+  def lte(%Zoi.Types.Array{} = schema, lte, opts) do
+    if Enum.empty?(schema.meta.effects) do
+      Zoi.Validations.Lte.set(schema, lte)
     else
       schema
       |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
