@@ -1,6 +1,6 @@
 defmodule Zoi.Types.String do
   @moduledoc false
-  use Zoi.Type.Def, fields: [:min_length, :max_length, coerce: false]
+  use Zoi.Type.Def, fields: [:min_length, :max_length, :length, coerce: false]
 
   def opts() do
     Zoi.Opts.meta_opts()
@@ -9,7 +9,8 @@ defmodule Zoi.Types.String do
       Zoi.Types.Keyword.new(
         [
           min_length: Zoi.Types.Integer.new(description: "Minimum length of the string."),
-          max_length: Zoi.Types.Integer.new(description: "Maximum length of the string.")
+          max_length: Zoi.Types.Integer.new(description: "Maximum length of the string."),
+          length: Zoi.Types.Integer.new(description: "Exact length of the string.")
         ],
         strict: true
       )
@@ -17,7 +18,14 @@ defmodule Zoi.Types.String do
   end
 
   def new(opts) do
-    apply_type(opts)
+    schema = apply_type(opts)
+
+    # Ensure length overrides min/max when both are present
+    if Keyword.has_key?(opts, :length) do
+      Zoi.Validations.Length.set(schema, opts[:length])
+    else
+      schema
+    end
   end
 
   defimpl Zoi.Type do
@@ -40,7 +48,7 @@ defmodule Zoi.Types.String do
 
     defp validate_constraints(schema, input, opts) do
       errors =
-        [Zoi.Validations.Gte, Zoi.Validations.Lte]
+        [Zoi.Validations.Length, Zoi.Validations.Gte, Zoi.Validations.Lte]
         |> Enum.reduce([], fn module, acc ->
           case module.validate(schema, input, opts) do
             :ok -> acc
@@ -76,7 +84,7 @@ defmodule Zoi.Types.String do
     end
 
     def set(schema, value) do
-      %{schema | min_length: value}
+      %{schema | min_length: value, length: nil}
     end
   end
 
@@ -92,7 +100,23 @@ defmodule Zoi.Types.String do
     end
 
     def set(schema, value) do
-      %{schema | max_length: value}
+      %{schema | max_length: value, length: nil}
+    end
+  end
+
+  defimpl Zoi.Validations.Length do
+    def validate(%{length: nil}, _input, _opts), do: :ok
+
+    def validate(schema, input, opts) do
+      if String.length(input) == schema.length do
+        :ok
+      else
+        {:error, Zoi.Error.invalid_length(:string, schema.length, opts)}
+      end
+    end
+
+    def set(schema, value) do
+      %{schema | length: value, min_length: nil, max_length: nil}
     end
   end
 

@@ -2025,6 +2025,15 @@ defmodule Zoi do
           schema()
   def length(schema, length, opts \\ [])
 
+  def length(%Zoi.Types.String{} = schema, length, opts) do
+    if Enum.empty?(schema.meta.effects) do
+      Zoi.Validations.Length.set(schema, length)
+    else
+      schema
+      |> refine({Zoi.Refinements, :refine, [[length: length], opts]})
+    end
+  end
+
   def length(%Zoi.Types.Array{} = schema, length, opts) do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Length.set(schema, length)

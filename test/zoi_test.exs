@@ -123,6 +123,28 @@ defmodule ZoiTest do
       assert {:error, [error]} = Zoi.parse(schema, "  hi  ")
       assert error.code == :greater_than_or_equal_to
     end
+
+    test "string with length option" do
+      schema = Zoi.string(length: 2)
+
+      assert {:ok, "hi"} = Zoi.parse(schema, "hi")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "h")
+      assert error.code == :invalid_length
+    end
+
+    test "string length/2 sets schema field when there are no effects" do
+      schema = Zoi.string() |> Zoi.length(4)
+      assert schema.length == 4
+      refute schema.min_length
+      refute schema.max_length
+    end
+
+    test "string options length overrides min and max" do
+      schema = Zoi.string(min_length: 1, max_length: 5, length: 2)
+      assert schema.length == 2
+      refute schema.min_length
+      refute schema.max_length
+    end
   end
 
   describe "integer/1" do

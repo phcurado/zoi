@@ -88,7 +88,7 @@ defmodule Zoi.Inspect do
 
   defp inspect_string(type, inspect_opts, opts) do
     extra_fields =
-      Enum.map([:min_length, :max_length], fn field ->
+      Enum.map([:min_length, :max_length, :length], fn field ->
         {field, Map.get(type, field)}
       end)
 

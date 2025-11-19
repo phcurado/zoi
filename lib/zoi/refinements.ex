@@ -28,12 +28,10 @@ defmodule Zoi.Refinements do
     |> Zoi.Validations.Lte.validate(input, opts)
   end
 
-  defp do_refine(%Zoi.Types.String{}, input, [length: length], opts) do
-    if String.length(input) == length do
-      :ok
-    else
-      {:error, Zoi.Error.invalid_length(:string, length, opts)}
-    end
+  defp do_refine(%Zoi.Types.String{} = schema, input, [length: length], opts) do
+    schema
+    |> Zoi.Validations.Length.set(length)
+    |> Zoi.Validations.Length.validate(input, opts)
   end
 
   defp do_refine(%Zoi.Types.String{}, input, [regex: regex, opts: regex_opts], opts) do

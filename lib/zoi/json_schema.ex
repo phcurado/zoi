@@ -406,12 +406,19 @@ defmodule Zoi.JSONSchema do
   end
 
   defp encode_string_constraints(json_schema, %Zoi.Types.String{
+         length: length,
          min_length: min_length,
          max_length: max_length
        }) do
-    json_schema
-    |> maybe_put_length(:minLength, min_length)
-    |> maybe_put_length(:maxLength, max_length)
+    if length do
+      json_schema
+      |> Map.put(:minLength, length)
+      |> Map.put(:maxLength, length)
+    else
+      json_schema
+      |> maybe_put_length(:minLength, min_length)
+      |> maybe_put_length(:maxLength, max_length)
+    end
   end
 
   defp encode_array_constraints(json_schema, %Zoi.Types.Array{
