@@ -413,9 +413,9 @@ defmodule Zoi.JSONSchema do
          min_length: min_length,
          max_length: max_length
        }) do
-    length = Zoi.Opts.extract_constraint_value(length)
-    min_length = Zoi.Opts.extract_constraint_value(min_length)
-    max_length = Zoi.Opts.extract_constraint_value(max_length)
+    length = Zoi.Opts.unwrap_value(length)
+    min_length = Zoi.Opts.unwrap_value(min_length)
+    max_length = Zoi.Opts.unwrap_value(max_length)
 
     if length do
       json_schema
@@ -433,9 +433,9 @@ defmodule Zoi.JSONSchema do
          min_length: min_length,
          max_length: max_length
        }) do
-    length = Zoi.Opts.extract_constraint_value(length)
-    min_length = Zoi.Opts.extract_constraint_value(min_length)
-    max_length = Zoi.Opts.extract_constraint_value(max_length)
+    length = Zoi.Opts.unwrap_value(length)
+    min_length = Zoi.Opts.unwrap_value(min_length)
+    max_length = Zoi.Opts.unwrap_value(max_length)
 
     if length do
       json_schema
@@ -453,10 +453,10 @@ defmodule Zoi.JSONSchema do
   end
 
   defp encode_numeric_constraints(json_schema, schema) do
-    gte = Zoi.Opts.extract_constraint_value(Map.get(schema, :gte))
-    lte = Zoi.Opts.extract_constraint_value(Map.get(schema, :lte))
-    gt = Zoi.Opts.extract_constraint_value(Map.get(schema, :gt))
-    lt = Zoi.Opts.extract_constraint_value(Map.get(schema, :lt))
+    gte = Zoi.Opts.unwrap_value(Map.get(schema, :gte))
+    lte = Zoi.Opts.unwrap_value(Map.get(schema, :lte))
+    gt = Zoi.Opts.unwrap_value(Map.get(schema, :gt))
+    lt = Zoi.Opts.unwrap_value(Map.get(schema, :lt))
 
     json_schema
     |> maybe_put_length(:minimum, gte)

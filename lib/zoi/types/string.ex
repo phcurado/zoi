@@ -8,14 +8,9 @@ defmodule Zoi.Types.String do
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
-      Zoi.Types.Keyword.new(
-        [
-          min_length: constraint,
-          max_length: constraint,
-          length: constraint
-        ],
-        strict: true
-      )
+      min_length: constraint,
+      max_length: constraint,
+      length: constraint
     )
   end
 

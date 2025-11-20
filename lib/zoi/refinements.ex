@@ -109,8 +109,33 @@ defmodule Zoi.Refinements do
     end
   end
 
-  # Dates
-  for date_module <- [Date, NaiveDateTime, Time, DateTime] do
+  # Date - uses protocols
+  defp do_refine(%Zoi.Types.Date{} = schema, input, [gte: min], opts) do
+    schema
+    |> Zoi.Validations.Gte.set(min, opts)
+    |> Zoi.Validations.Gte.validate(input, opts)
+  end
+
+  defp do_refine(%Zoi.Types.Date{} = schema, input, [lte: max], opts) do
+    schema
+    |> Zoi.Validations.Lte.set(max, opts)
+    |> Zoi.Validations.Lte.validate(input, opts)
+  end
+
+  defp do_refine(%Zoi.Types.Date{} = schema, input, [gt: gt], opts) do
+    schema
+    |> Zoi.Validations.Gt.set(gt, opts)
+    |> Zoi.Validations.Gt.validate(input, opts)
+  end
+
+  defp do_refine(%Zoi.Types.Date{} = schema, input, [lt: lt], opts) do
+    schema
+    |> Zoi.Validations.Lt.set(lt, opts)
+    |> Zoi.Validations.Lt.validate(input, opts)
+  end
+
+  # Dates (Time, DateTime, NaiveDateTime still use inline validation)
+  for date_module <- [NaiveDateTime, Time, DateTime] do
     @module Module.concat(Zoi.Types, date_module)
     @date_module date_module
 

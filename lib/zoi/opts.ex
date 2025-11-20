@@ -70,6 +70,38 @@ defmodule Zoi.Opts do
   ## Constraint Helpers
 
   @doc """
+  Date options schema
+  """
+  @spec date_opts() :: Zoi.Type.t()
+  def date_opts() do
+    Zoi.Types.Union.new(
+      [
+        Zoi.Types.Date.new(description: "A specific date."),
+        Zoi.Types.Tuple.new(
+          {Zoi.Types.Date.new([]),
+           Zoi.Types.Keyword.new([error: Zoi.Types.String.new([])], strict: true)},
+          description: "A specific date with custom options."
+        )
+      ],
+      []
+    )
+  end
+
+  def datetime_opts() do
+    Zoi.Types.Union.new(
+      [
+        Zoi.Types.DateTime.new(description: "A specific datetime."),
+        Zoi.Types.Tuple.new(
+          {Zoi.Types.DateTime.new([]),
+           Zoi.Types.Keyword.new([error: Zoi.Types.String.new([])], strict: true)},
+          description: "A specific datetime with custom options."
+        )
+      ],
+      []
+    )
+  end
+
+  @doc """
   Returns a schema for constraint fields that accept either an integer or a tuple {integer, [error: string]}.
   This pattern is used for min_length, max_length, length, etc.
   """
@@ -105,7 +137,7 @@ defmodule Zoi.Opts do
   Extracts just the value from a constraint field, discarding options.
   Used by JSON Schema encoder and Inspect.
   """
-  @spec extract_constraint_value(number() | {number(), keyword()} | nil) :: number() | nil
-  def extract_constraint_value({value, _opts}), do: value
-  def extract_constraint_value(value), do: value
+  @spec unwrap_value(term()) :: term()
+  def unwrap_value({value, _opts}), do: value
+  def unwrap_value(value), do: value
 end

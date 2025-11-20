@@ -9,6 +9,9 @@ defmodule Zoi.Inspect do
   def inspect_type(%Zoi.Types.String{} = type, inspect_opts, opts),
     do: inspect_string(type, inspect_opts, opts)
 
+  def inspect_type(%Zoi.Types.Integer{} = type, inspect_opts, opts),
+    do: inspect_integer(type, inspect_opts, opts)
+
   def inspect_type(%Zoi.Types.Array{} = type, inspect_opts, opts),
     do: inspect_array(type, inspect_opts, opts)
 
@@ -48,7 +51,7 @@ defmodule Zoi.Inspect do
   # Default to other types
   def inspect_type(type, inspect_opts, opts), do: do_inspect_type(type, inspect_opts, opts)
 
-  defp do_inspect_type(type, inspect_opts, opts) do
+  def do_inspect_type(type, inspect_opts, opts) do
     name = inspect_name(type)
 
     list =
@@ -89,8 +92,21 @@ defmodule Zoi.Inspect do
   defp inspect_string(type, inspect_opts, opts) do
     extra_fields =
       Enum.map([:min_length, :max_length, :length], fn field ->
-        {field, Zoi.Opts.extract_constraint_value(Map.get(type, field))}
+        {field, Zoi.Opts.unwrap_value(Map.get(type, field))}
       end)
+
+    opts = add_extra(opts, extra_fields)
+    do_inspect_type(type, inspect_opts, opts)
+  end
+
+  defp inspect_integer(type, inspect_opts, opts) do
+    extra_fields =
+      [
+        gte: Zoi.Opts.unwrap_value(type.gte),
+        lte: Zoi.Opts.unwrap_value(type.lte),
+        gt: Zoi.Opts.unwrap_value(type.gt),
+        lt: Zoi.Opts.unwrap_value(type.lt)
+      ]
 
     opts = add_extra(opts, extra_fields)
     do_inspect_type(type, inspect_opts, opts)
@@ -100,9 +116,9 @@ defmodule Zoi.Inspect do
     extra_fields =
       [
         inner: inspect_type(type.inner, inspect_opts),
-        min_length: Zoi.Opts.extract_constraint_value(type.min_length),
-        max_length: Zoi.Opts.extract_constraint_value(type.max_length),
-        length: Zoi.Opts.extract_constraint_value(type.length)
+        min_length: Zoi.Opts.unwrap_value(type.min_length),
+        max_length: Zoi.Opts.unwrap_value(type.max_length),
+        length: Zoi.Opts.unwrap_value(type.length)
       ]
 
     opts = add_extra(opts, extra_fields)

@@ -1,10 +1,16 @@
 defmodule Zoi.Types.DateTime do
   @moduledoc false
-  use Zoi.Type.Def, fields: [coerce: false]
+  use Zoi.Type.Def, fields: [:gte, :lte, :gt, :lt, coerce: false]
 
   def opts() do
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
+    |> Zoi.Types.Extend.new(
+      gte: Zoi.Opts.datetime_opts(),
+      lte: Zoi.Opts.datetime_opts(),
+      gt: Zoi.Opts.datetime_opts(),
+      lt: Zoi.Opts.datetime_opts()
+    )
   end
 
   def new(opts \\ []) do
