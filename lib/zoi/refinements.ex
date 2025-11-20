@@ -80,40 +80,32 @@ defmodule Zoi.Refinements do
     |> Zoi.Validations.Length.validate(input, opts)
   end
 
-  # Numeric
+  # Numeric types - all use protocols now
   for numeric_module <- [Integer, Float, Number] do
     @module Module.concat(Zoi.Types, numeric_module)
 
-    defp do_refine(%@module{}, input, [gte: min], opts) do
-      if input >= min do
-        :ok
-      else
-        {:error, Zoi.Error.greater_than_or_equal_to(:number, min, opts)}
-      end
+    defp do_refine(%@module{} = schema, input, [gte: min], opts) do
+      schema
+      |> Zoi.Validations.Gte.set(min, opts)
+      |> Zoi.Validations.Gte.validate(input, opts)
     end
 
-    defp do_refine(%@module{}, input, [gt: gt], opts) do
-      if input > gt do
-        :ok
-      else
-        {:error, Zoi.Error.greater_than(:number, gt, opts)}
-      end
+    defp do_refine(%@module{} = schema, input, [lte: max], opts) do
+      schema
+      |> Zoi.Validations.Lte.set(max, opts)
+      |> Zoi.Validations.Lte.validate(input, opts)
     end
 
-    defp do_refine(%@module{}, input, [lte: max], opts) do
-      if input <= max do
-        :ok
-      else
-        {:error, Zoi.Error.less_than_or_equal_to(:number, max, opts)}
-      end
+    defp do_refine(%@module{} = schema, input, [gt: gt], opts) do
+      schema
+      |> Zoi.Validations.Gt.set(gt, opts)
+      |> Zoi.Validations.Gt.validate(input, opts)
     end
 
-    defp do_refine(%@module{}, input, [lt: lt], opts) do
-      if input < lt do
-        :ok
-      else
-        {:error, Zoi.Error.less_than(:number, lt, opts)}
-      end
+    defp do_refine(%@module{} = schema, input, [lt: lt], opts) do
+      schema
+      |> Zoi.Validations.Lt.set(lt, opts)
+      |> Zoi.Validations.Lt.validate(input, opts)
     end
   end
 

@@ -94,18 +94,21 @@ defmodule Zoi.JSONSchema do
 
   defp encode_schema(%Zoi.Types.Integer{} = schema) do
     %{type: :integer}
+    |> encode_integer_constraints(schema)
     |> encode_metadata(schema)
     |> encode_refinements(schema.meta)
   end
 
   defp encode_schema(%Zoi.Types.Float{} = schema) do
     %{type: :number}
+    |> encode_numeric_constraints(schema)
     |> encode_metadata(schema)
     |> encode_refinements(schema.meta)
   end
 
   defp encode_schema(%Zoi.Types.Number{} = schema) do
     %{type: :number}
+    |> encode_numeric_constraints(schema)
     |> encode_metadata(schema)
     |> encode_refinements(schema.meta)
   end
@@ -443,6 +446,23 @@ defmodule Zoi.JSONSchema do
       |> maybe_put_length(:minItems, min_length)
       |> maybe_put_length(:maxItems, max_length)
     end
+  end
+
+  defp encode_integer_constraints(json_schema, schema) do
+    encode_numeric_constraints(json_schema, schema)
+  end
+
+  defp encode_numeric_constraints(json_schema, schema) do
+    gte = Zoi.Opts.extract_constraint_value(Map.get(schema, :gte))
+    lte = Zoi.Opts.extract_constraint_value(Map.get(schema, :lte))
+    gt = Zoi.Opts.extract_constraint_value(Map.get(schema, :gt))
+    lt = Zoi.Opts.extract_constraint_value(Map.get(schema, :lt))
+
+    json_schema
+    |> maybe_put_length(:minimum, gte)
+    |> maybe_put_length(:maximum, lte)
+    |> maybe_put_length(:exclusiveMinimum, gt)
+    |> maybe_put_length(:exclusiveMaximum, lt)
   end
 
   defp maybe_put_length(json_schema, _key, nil), do: json_schema
