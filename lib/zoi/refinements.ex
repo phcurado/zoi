@@ -18,19 +18,19 @@ defmodule Zoi.Refinements do
 
   defp do_refine(%Zoi.Types.String{} = schema, input, [gte: min], opts) do
     schema
-    |> Zoi.Validations.Gte.set(min)
+    |> Zoi.Validations.Gte.set(min, opts)
     |> Zoi.Validations.Gte.validate(input, opts)
   end
 
   defp do_refine(%Zoi.Types.String{} = schema, input, [lte: max], opts) do
     schema
-    |> Zoi.Validations.Lte.set(max)
+    |> Zoi.Validations.Lte.set(max, opts)
     |> Zoi.Validations.Lte.validate(input, opts)
   end
 
   defp do_refine(%Zoi.Types.String{} = schema, input, [length: length], opts) do
     schema
-    |> Zoi.Validations.Length.set(length)
+    |> Zoi.Validations.Length.set(length, opts)
     |> Zoi.Validations.Length.validate(input, opts)
   end
 
@@ -64,19 +64,19 @@ defmodule Zoi.Refinements do
   # Array
   defp do_refine(%Zoi.Types.Array{} = schema, input, [gte: min], opts) do
     schema
-    |> Zoi.Validations.Gte.set(min)
+    |> Zoi.Validations.Gte.set(min, opts)
     |> Zoi.Validations.Gte.validate(input, opts)
   end
 
   defp do_refine(%Zoi.Types.Array{} = schema, input, [lte: max], opts) do
     schema
-    |> Zoi.Validations.Lte.set(max)
+    |> Zoi.Validations.Lte.set(max, opts)
     |> Zoi.Validations.Lte.validate(input, opts)
   end
 
   defp do_refine(%Zoi.Types.Array{} = schema, input, [length: length], opts) do
     schema
-    |> Zoi.Validations.Length.set(length)
+    |> Zoi.Validations.Length.set(length, opts)
     |> Zoi.Validations.Length.validate(input, opts)
   end
 

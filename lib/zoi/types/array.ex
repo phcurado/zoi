@@ -4,14 +4,16 @@ defmodule Zoi.Types.Array do
   use Zoi.Type.Def, fields: [:inner, :min_length, :max_length, :length, coerce: false]
 
   def opts() do
+    constraint = Zoi.Opts.constraint_schema()
+
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
       Zoi.Types.Keyword.new(
         [
-          min_length: Zoi.Types.Integer.new(description: "Minimum length of the array."),
-          max_length: Zoi.Types.Integer.new(description: "Maximum length of the array."),
-          length: Zoi.Types.Integer.new(description: "Exact length of the array.")
+          min_length: constraint,
+          max_length: constraint,
+          length: constraint
         ],
         strict: true
       )
@@ -159,15 +161,19 @@ defmodule Zoi.Types.Array do
     def validate(%{min_length: nil}, _input, _opts), do: :ok
 
     def validate(schema, input, opts) do
-      if length(input) >= schema.min_length do
+      {min, custom_opts} = Zoi.Opts.extract_constraint(schema.min_length)
+      opts = Keyword.merge(opts, custom_opts)
+
+      if length(input) >= min do
         :ok
       else
-        {:error, Zoi.Error.greater_than_or_equal_to(:array, schema.min_length, opts)}
+        {:error, Zoi.Error.greater_than_or_equal_to(:array, min, opts)}
       end
     end
 
-    def set(schema, value) do
-      %{schema | min_length: value, length: nil}
+    def set(schema, value, opts \\ []) do
+      min_length = if opts[:error], do: {value, opts}, else: value
+      %{schema | min_length: min_length, length: nil}
     end
   end
 
@@ -175,15 +181,19 @@ defmodule Zoi.Types.Array do
     def validate(%{max_length: nil}, _input, _opts), do: :ok
 
     def validate(schema, input, opts) do
-      if length(input) <= schema.max_length do
+      {max, custom_opts} = Zoi.Opts.extract_constraint(schema.max_length)
+      opts = Keyword.merge(opts, custom_opts)
+
+      if length(input) <= max do
         :ok
       else
-        {:error, Zoi.Error.less_than_or_equal_to(:array, schema.max_length, opts)}
+        {:error, Zoi.Error.less_than_or_equal_to(:array, max, opts)}
       end
     end
 
-    def set(schema, value) do
-      %{schema | max_length: value, length: nil}
+    def set(schema, value, opts \\ []) do
+      max_length = if opts[:error], do: {value, opts}, else: value
+      %{schema | max_length: max_length, length: nil}
     end
   end
 
@@ -191,15 +201,19 @@ defmodule Zoi.Types.Array do
     def validate(%{length: nil}, _input, _opts), do: :ok
 
     def validate(schema, input, opts) do
-      if length(input) == schema.length do
+      {len, custom_opts} = Zoi.Opts.extract_constraint(schema.length)
+      opts = Keyword.merge(opts, custom_opts)
+
+      if length(input) == len do
         :ok
       else
-        {:error, Zoi.Error.invalid_length(:array, schema.length, opts)}
+        {:error, Zoi.Error.invalid_length(:array, len, opts)}
       end
     end
 
-    def set(schema, value) do
-      %{schema | length: value, min_length: nil, max_length: nil}
+    def set(schema, value, opts \\ []) do
+      length = if opts[:error], do: {value, opts}, else: value
+      %{schema | length: length, min_length: nil, max_length: nil}
     end
   end
 end

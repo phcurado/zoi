@@ -410,6 +410,10 @@ defmodule Zoi.JSONSchema do
          min_length: min_length,
          max_length: max_length
        }) do
+    length = Zoi.Opts.extract_constraint_value(length)
+    min_length = Zoi.Opts.extract_constraint_value(min_length)
+    max_length = Zoi.Opts.extract_constraint_value(max_length)
+
     if length do
       json_schema
       |> Map.put(:minLength, length)
@@ -426,6 +430,10 @@ defmodule Zoi.JSONSchema do
          min_length: min_length,
          max_length: max_length
        }) do
+    length = Zoi.Opts.extract_constraint_value(length)
+    min_length = Zoi.Opts.extract_constraint_value(min_length)
+    max_length = Zoi.Opts.extract_constraint_value(max_length)
+
     if length do
       json_schema
       |> Map.put(:minItems, length)

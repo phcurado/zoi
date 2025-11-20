@@ -66,4 +66,46 @@ defmodule Zoi.Opts do
       description: "List of values to treat as empty and skip during parsing."
     )
   end
+
+  ## Constraint Helpers
+
+  @doc """
+  Returns a schema for constraint fields that accept either an integer or a tuple {integer, [error: string]}.
+  This pattern is used for min_length, max_length, length, etc.
+  """
+  @spec constraint_schema() :: Zoi.Type.t()
+  def constraint_schema do
+    constraint_opts = Zoi.Types.Keyword.new([error: Zoi.Types.String.new([])], strict: true)
+
+    Zoi.Types.Union.new(
+      [
+        Zoi.Types.Integer.new(description: "Constraint value."),
+        Zoi.Types.Tuple.new(
+          {Zoi.Types.Integer.new([]), constraint_opts},
+          description: "Constraint value with custom options."
+        )
+      ],
+      []
+    )
+  end
+
+  @doc """
+  Extracts the value and options from a constraint field.
+  Constraints can be either a plain integer or a tuple {integer, opts}.
+  """
+  @spec extract_constraint(integer() | {integer(), keyword()} | nil) ::
+          {integer(), keyword()} | {nil, []}
+  def extract_constraint({value, opts}) when is_integer(value) and is_list(opts),
+    do: {value, opts}
+
+  def extract_constraint(value) when is_integer(value), do: {value, []}
+  def extract_constraint(nil), do: {nil, []}
+
+  @doc """
+  Extracts just the value from a constraint field, discarding options.
+  Used by JSON Schema encoder and Inspect.
+  """
+  @spec extract_constraint_value(integer() | {integer(), keyword()} | nil) :: integer() | nil
+  def extract_constraint_value({value, _opts}), do: value
+  def extract_constraint_value(value), do: value
 end

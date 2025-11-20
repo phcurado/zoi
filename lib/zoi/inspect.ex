@@ -89,7 +89,7 @@ defmodule Zoi.Inspect do
   defp inspect_string(type, inspect_opts, opts) do
     extra_fields =
       Enum.map([:min_length, :max_length, :length], fn field ->
-        {field, Map.get(type, field)}
+        {field, Zoi.Opts.extract_constraint_value(Map.get(type, field))}
       end)
 
     opts = add_extra(opts, extra_fields)
@@ -100,9 +100,9 @@ defmodule Zoi.Inspect do
     extra_fields =
       [
         inner: inspect_type(type.inner, inspect_opts),
-        min_length: type.min_length,
-        max_length: type.max_length,
-        length: type.length
+        min_length: Zoi.Opts.extract_constraint_value(type.min_length),
+        max_length: Zoi.Opts.extract_constraint_value(type.max_length),
+        length: Zoi.Opts.extract_constraint_value(type.length)
       ]
 
     opts = add_extra(opts, extra_fields)

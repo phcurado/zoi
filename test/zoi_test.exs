@@ -145,6 +145,27 @@ defmodule ZoiTest do
       refute schema.min_length
       refute schema.max_length
     end
+
+    test "constructor with tuple format for custom errors" do
+      schema = Zoi.string(min_length: {5, [error: "too short!"]})
+
+      assert {:error, [%Zoi.Error{code: :custom, message: "too short!"}]} =
+               Zoi.parse(schema, "hi")
+
+      assert {:ok, "hello"} = Zoi.parse(schema, "hello")
+    end
+
+    test "constructor with mixed tuple and plain formats" do
+      schema = Zoi.string(min_length: {3, [error: "custom min"]}, max_length: 10)
+
+      assert {:error, [%Zoi.Error{code: :custom, message: "custom min"}]} =
+               Zoi.parse(schema, "hi")
+
+      assert {:ok, "hello"} = Zoi.parse(schema, "hello")
+
+      assert {:error, [%Zoi.Error{code: :less_than_or_equal_to}]} =
+               Zoi.parse(schema, "hello world!")
+    end
   end
 
   describe "integer/1" do
@@ -1522,6 +1543,15 @@ defmodule ZoiTest do
       assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1])
       assert error.code == :invalid_length
+    end
+
+    test "constructor with tuple format for custom errors" do
+      schema = Zoi.array(Zoi.string(), min_length: {3, [error: "need at least 3"]})
+
+      assert {:error, [%Zoi.Error{code: :custom, message: "need at least 3"}]} =
+               Zoi.parse(schema, ["a", "b"])
+
+      assert {:ok, ["a", "b", "c"]} = Zoi.parse(schema, ["a", "b", "c"])
     end
 
     test "array length/2 sets schema field when there are no effects" do
