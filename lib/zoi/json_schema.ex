@@ -265,7 +265,6 @@ defmodule Zoi.JSONSchema do
   defp encode_refinements(encoded_schema, %Meta{effects: []}), do: encoded_schema
 
   defp encode_refinements(encoded_schema, %Meta{effects: effects}) do
-    # Extract only refinements from effects (ignore transforms)
     refinements =
       Enum.flat_map(effects, fn
         {:refine, refinement} -> [refinement]

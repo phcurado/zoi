@@ -36,7 +36,7 @@ defmodule Zoi.Types.String do
       coerce = Keyword.get(opts, :coerce, schema.coerce)
 
       with {:ok, parsed} <- parse_type(input, coerce, schema),
-           :ok <- validate_constraints(schema, parsed, opts) do
+           :ok <- validate_constraints(schema, parsed) do
         {:ok, parsed}
       end
     end
@@ -49,13 +49,13 @@ defmodule Zoi.Types.String do
       end
     end
 
-    defp validate_constraints(schema, input, opts) do
+    defp validate_constraints(schema, input) do
       [
         {Validations.Length, schema.length},
         {Validations.Gte, schema.min_length},
         {Validations.Lte, schema.max_length}
       ]
-      |> Validations.run_validations(schema, input, opts)
+      |> Validations.run_validations(schema, input)
     end
 
     defp error(schema) do
@@ -68,53 +68,44 @@ defmodule Zoi.Types.String do
   end
 
   defimpl Zoi.Validations.Gte do
-    def validate(schema, input, opts) do
-      {min, custom_opts} = schema.min_length
-      opts = Keyword.merge(opts, custom_opts)
-
-      if String.length(input) >= min do
-        :ok
-      else
-        {:error, Zoi.Error.greater_than_or_equal_to(:string, min, opts)}
-      end
-    end
-
     def set(schema, value, opts \\ []) do
       %{schema | min_length: {value, opts}, length: nil}
+    end
+
+    def validate(_schema, input, value, opts) do
+      if String.length(input) >= value do
+        :ok
+      else
+        {:error, Zoi.Error.greater_than_or_equal_to(:string, value, opts)}
+      end
     end
   end
 
   defimpl Zoi.Validations.Lte do
-    def validate(schema, input, opts) do
-      {max, custom_opts} = schema.max_length
-      opts = Keyword.merge(opts, custom_opts)
-
-      if String.length(input) <= max do
-        :ok
-      else
-        {:error, Zoi.Error.less_than_or_equal_to(:string, max, opts)}
-      end
-    end
-
     def set(schema, value, opts \\ []) do
       %{schema | max_length: {value, opts}, length: nil}
+    end
+
+    def validate(_schema, input, value, opts) do
+      if String.length(input) <= value do
+        :ok
+      else
+        {:error, Zoi.Error.less_than_or_equal_to(:string, value, opts)}
+      end
     end
   end
 
   defimpl Zoi.Validations.Length do
-    def validate(schema, input, opts) do
-      {length, custom_opts} = schema.length
-      opts = Keyword.merge(opts, custom_opts)
-
-      if String.length(input) == length do
-        :ok
-      else
-        {:error, Zoi.Error.invalid_length(:string, length, opts)}
-      end
-    end
-
     def set(schema, value, opts \\ []) do
       %{schema | length: {value, opts}, min_length: nil, max_length: nil}
+    end
+
+    def validate(_schema, input, value, opts) do
+      if String.length(input) == value do
+        :ok
+      else
+        {:error, Zoi.Error.invalid_length(:string, value, opts)}
+      end
     end
   end
 

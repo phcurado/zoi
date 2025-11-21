@@ -5,18 +5,20 @@ defmodule Zoi.Validations do
   @type input :: any()
   @type opts :: keyword()
 
-  @spec run_validations(list({module(), {value(), opts()}}), Zoi.Type.t(), input(), opts()) ::
+  @spec run_validations(list({module(), {value(), opts()} | nil}), Zoi.Type.t(), input()) ::
           :ok | {:error, [Zoi.Error.t()]}
-  def run_validations(validations, schema, input, opts) do
+  def run_validations(validations, schema, input) do
     validations
     |> Enum.reduce([], fn {module, constraint_value}, acc ->
-      if constraint_value == nil do
-        acc
-      else
-        case module.validate(schema, input, opts) do
-          :ok -> acc
-          {:error, error} -> [error | acc]
-        end
+      case constraint_value do
+        nil ->
+          acc
+
+        {value, opts} ->
+          case module.validate(schema, input, value, opts) do
+            :ok -> acc
+            {:error, error} -> [error | acc]
+          end
       end
     end)
     |> case do

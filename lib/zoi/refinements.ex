@@ -17,21 +17,15 @@ defmodule Zoi.Refinements do
   end
 
   defp do_refine(%Zoi.Types.String{} = schema, input, [gte: min], opts) do
-    schema
-    |> Zoi.Validations.Gte.set(min, opts)
-    |> Zoi.Validations.Gte.validate(input, opts)
+    Zoi.Validations.Gte.validate(schema, input, min, opts)
   end
 
   defp do_refine(%Zoi.Types.String{} = schema, input, [lte: max], opts) do
-    schema
-    |> Zoi.Validations.Lte.set(max, opts)
-    |> Zoi.Validations.Lte.validate(input, opts)
+    Zoi.Validations.Lte.validate(schema, input, max, opts)
   end
 
   defp do_refine(%Zoi.Types.String{} = schema, input, [length: length], opts) do
-    schema
-    |> Zoi.Validations.Length.set(length, opts)
-    |> Zoi.Validations.Length.validate(input, opts)
+    Zoi.Validations.Length.validate(schema, input, length, opts)
   end
 
   defp do_refine(%Zoi.Types.String{}, input, [regex: regex, opts: regex_opts], opts) do
@@ -63,21 +57,15 @@ defmodule Zoi.Refinements do
 
   # Array
   defp do_refine(%Zoi.Types.Array{} = schema, input, [gte: min], opts) do
-    schema
-    |> Zoi.Validations.Gte.set(min, opts)
-    |> Zoi.Validations.Gte.validate(input, opts)
+    Zoi.Validations.Gte.validate(schema, input, min, opts)
   end
 
   defp do_refine(%Zoi.Types.Array{} = schema, input, [lte: max], opts) do
-    schema
-    |> Zoi.Validations.Lte.set(max, opts)
-    |> Zoi.Validations.Lte.validate(input, opts)
+    Zoi.Validations.Lte.validate(schema, input, max, opts)
   end
 
   defp do_refine(%Zoi.Types.Array{} = schema, input, [length: length], opts) do
-    schema
-    |> Zoi.Validations.Length.set(length, opts)
-    |> Zoi.Validations.Length.validate(input, opts)
+    Zoi.Validations.Length.validate(schema, input, length, opts)
   end
 
   # Numeric types - all use protocols now
@@ -85,27 +73,19 @@ defmodule Zoi.Refinements do
     @module Module.concat(Zoi.Types, numeric_module)
 
     defp do_refine(%@module{} = schema, input, [gte: min], opts) do
-      schema
-      |> Zoi.Validations.Gte.set(min, opts)
-      |> Zoi.Validations.Gte.validate(input, opts)
+      Zoi.Validations.Gte.validate(schema, input, min, opts)
     end
 
     defp do_refine(%@module{} = schema, input, [lte: max], opts) do
-      schema
-      |> Zoi.Validations.Lte.set(max, opts)
-      |> Zoi.Validations.Lte.validate(input, opts)
+      Zoi.Validations.Lte.validate(schema, input, max, opts)
     end
 
     defp do_refine(%@module{} = schema, input, [gt: gt], opts) do
-      schema
-      |> Zoi.Validations.Gt.set(gt, opts)
-      |> Zoi.Validations.Gt.validate(input, opts)
+      Zoi.Validations.Gt.validate(schema, input, gt, opts)
     end
 
     defp do_refine(%@module{} = schema, input, [lt: lt], opts) do
-      schema
-      |> Zoi.Validations.Lt.set(lt, opts)
-      |> Zoi.Validations.Lt.validate(input, opts)
+      Zoi.Validations.Lt.validate(schema, input, lt, opts)
     end
   end
 
@@ -117,9 +97,7 @@ defmodule Zoi.Refinements do
               Zoi.Types.NaiveDateTime,
               Zoi.Types.Time
             ] do
-    schema
-    |> Zoi.Validations.Gte.set(min, opts)
-    |> Zoi.Validations.Gte.validate(input, opts)
+    Zoi.Validations.Gte.validate(schema, input, min, opts)
   end
 
   defp do_refine(%module{} = schema, input, [lte: max], opts)
@@ -129,9 +107,7 @@ defmodule Zoi.Refinements do
               Zoi.Types.NaiveDateTime,
               Zoi.Types.Time
             ] do
-    schema
-    |> Zoi.Validations.Lte.set(max, opts)
-    |> Zoi.Validations.Lte.validate(input, opts)
+    Zoi.Validations.Lte.validate(schema, input, max, opts)
   end
 
   defp do_refine(%module{} = schema, input, [gt: gt], opts)
@@ -141,9 +117,7 @@ defmodule Zoi.Refinements do
               Zoi.Types.NaiveDateTime,
               Zoi.Types.Time
             ] do
-    schema
-    |> Zoi.Validations.Gt.set(gt, opts)
-    |> Zoi.Validations.Gt.validate(input, opts)
+    Zoi.Validations.Gt.validate(schema, input, gt, opts)
   end
 
   defp do_refine(%module{} = schema, input, [lt: lt], opts)
@@ -153,35 +127,25 @@ defmodule Zoi.Refinements do
               Zoi.Types.NaiveDateTime,
               Zoi.Types.Time
             ] do
-    schema
-    |> Zoi.Validations.Lt.set(lt, opts)
-    |> Zoi.Validations.Lt.validate(input, opts)
+    Zoi.Validations.Lt.validate(schema, input, lt, opts)
   end
 
   # Decimal
   if Code.ensure_loaded?(Decimal) do
     defp do_refine(%Zoi.Types.Decimal{} = schema, input, [gte: min], opts) do
-      schema
-      |> Zoi.Validations.Gte.set(min, opts)
-      |> Zoi.Validations.Gte.validate(input, opts)
+      Zoi.Validations.Gte.validate(schema, input, min, opts)
     end
 
     defp do_refine(%Zoi.Types.Decimal{} = schema, input, [gt: gt], opts) do
-      schema
-      |> Zoi.Validations.Gt.set(gt, opts)
-      |> Zoi.Validations.Gt.validate(input, opts)
+      Zoi.Validations.Gt.validate(schema, input, gt, opts)
     end
 
     defp do_refine(%Zoi.Types.Decimal{} = schema, input, [lt: lt], opts) do
-      schema
-      |> Zoi.Validations.Lt.set(lt, opts)
-      |> Zoi.Validations.Lt.validate(input, opts)
+      Zoi.Validations.Lt.validate(schema, input, lt, opts)
     end
 
     defp do_refine(%Zoi.Types.Decimal{} = schema, input, [lte: max], opts) do
-      schema
-      |> Zoi.Validations.Lte.set(max, opts)
-      |> Zoi.Validations.Lte.validate(input, opts)
+      Zoi.Validations.Lte.validate(schema, input, max, opts)
     end
   end
 

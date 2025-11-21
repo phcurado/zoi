@@ -2118,8 +2118,7 @@ defmodule Zoi do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Gte.set(schema, gte, opts)
     else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
+      refine(schema, {Zoi.Refinements, :refine, [[gte: gte], opts]})
     end
   end
 
@@ -2149,8 +2148,7 @@ defmodule Zoi do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Gt.set(schema, gt, opts)
     else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gt: gt], opts]})
+      refine(schema, {Zoi.Refinements, :refine, [[gt: gt], opts]})
     end
   end
 
@@ -2189,8 +2187,7 @@ defmodule Zoi do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Lte.set(schema, lte, opts)
     else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
+      refine(schema, {Zoi.Refinements, :refine, [[lte: lte], opts]})
     end
   end
 
@@ -2220,8 +2217,7 @@ defmodule Zoi do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Lt.set(schema, lt, opts)
     else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lt: lt], opts]})
+      refine(schema, {Zoi.Refinements, :refine, [[lt: lt], opts]})
     end
   end
 

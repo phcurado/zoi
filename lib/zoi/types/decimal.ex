@@ -47,7 +47,7 @@ if Code.ensure_loaded?(Decimal) do
         coerce = Keyword.get(opts, :coerce, schema.coerce)
 
         with {:ok, parsed} <- parse_type(schema, input, coerce),
-             :ok <- validate_constraints(schema, parsed, opts) do
+             :ok <- validate_constraints(schema, parsed) do
           {:ok, parsed}
         end
       end
@@ -63,14 +63,14 @@ if Code.ensure_loaded?(Decimal) do
 
       defp parse_type(schema, _input, _coerce), do: error(schema)
 
-      defp validate_constraints(schema, input, opts) do
+      defp validate_constraints(schema, input) do
         [
           {Validations.Gte, schema.gte},
           {Validations.Lte, schema.lte},
           {Validations.Gt, schema.gt},
           {Validations.Lt, schema.lt}
         ]
-        |> Validations.run_validations(schema, input, opts)
+        |> Validations.run_validations(schema, input)
       end
 
       defp error(schema) do
@@ -83,70 +83,58 @@ if Code.ensure_loaded?(Decimal) do
     end
 
     defimpl Zoi.Validations.Gte do
-      def validate(schema, input, opts) do
-        {min, custom_opts} = schema.gte
-        opts = Keyword.merge(opts, custom_opts)
-
-        if Decimal.gte?(input, min) do
-          :ok
-        else
-          {:error, Zoi.Error.greater_than_or_equal_to(:number, min, opts)}
-        end
-      end
-
       def set(schema, value, opts \\ []) do
         %{schema | gte: {value, opts}}
+      end
+
+      def validate(_schema, input, value, opts) do
+        if Decimal.gte?(input, value) do
+          :ok
+        else
+          {:error, Zoi.Error.greater_than_or_equal_to(:number, value, opts)}
+        end
       end
     end
 
     defimpl Zoi.Validations.Lte do
-      def validate(schema, input, opts) do
-        {max, custom_opts} = schema.lte
-        opts = Keyword.merge(opts, custom_opts)
-
-        if Decimal.lte?(input, max) do
-          :ok
-        else
-          {:error, Zoi.Error.less_than_or_equal_to(:number, max, opts)}
-        end
-      end
-
       def set(schema, value, opts \\ []) do
         %{schema | lte: {value, opts}}
+      end
+
+      def validate(_schema, input, value, opts) do
+        if Decimal.lte?(input, value) do
+          :ok
+        else
+          {:error, Zoi.Error.less_than_or_equal_to(:number, value, opts)}
+        end
       end
     end
 
     defimpl Zoi.Validations.Gt do
-      def validate(schema, input, opts) do
-        {gt, custom_opts} = schema.gt
-        opts = Keyword.merge(opts, custom_opts)
-
-        if Decimal.gt?(input, gt) do
-          :ok
-        else
-          {:error, Zoi.Error.greater_than(:number, gt, opts)}
-        end
-      end
-
       def set(schema, value, opts \\ []) do
         %{schema | gt: {value, opts}}
+      end
+
+      def validate(_schema, input, value, opts) do
+        if Decimal.gt?(input, value) do
+          :ok
+        else
+          {:error, Zoi.Error.greater_than(:number, value, opts)}
+        end
       end
     end
 
     defimpl Zoi.Validations.Lt do
-      def validate(schema, input, opts) do
-        {lt, custom_opts} = schema.lt
-        opts = Keyword.merge(opts, custom_opts)
-
-        if Decimal.lt?(input, lt) do
-          :ok
-        else
-          {:error, Zoi.Error.less_than(:number, lt, opts)}
-        end
-      end
-
       def set(schema, value, opts \\ []) do
         %{schema | lt: {value, opts}}
+      end
+
+      def validate(_schema, input, value, opts) do
+        if Decimal.lt?(input, value) do
+          :ok
+        else
+          {:error, Zoi.Error.less_than(:number, value, opts)}
+        end
       end
     end
 
