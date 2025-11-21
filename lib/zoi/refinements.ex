@@ -111,67 +111,51 @@ defmodule Zoi.Refinements do
 
   # Date - uses protocols
   defp do_refine(%module{} = schema, input, [gte: min], opts)
-       when module in [Zoi.Types.Date, Zoi.Types.DateTime, Zoi.Types.NaiveDateTime] do
+       when module in [
+              Zoi.Types.Date,
+              Zoi.Types.DateTime,
+              Zoi.Types.NaiveDateTime,
+              Zoi.Types.Time
+            ] do
     schema
     |> Zoi.Validations.Gte.set(min, opts)
     |> Zoi.Validations.Gte.validate(input, opts)
   end
 
   defp do_refine(%module{} = schema, input, [lte: max], opts)
-       when module in [Zoi.Types.Date, Zoi.Types.DateTime, Zoi.Types.NaiveDateTime] do
+       when module in [
+              Zoi.Types.Date,
+              Zoi.Types.DateTime,
+              Zoi.Types.NaiveDateTime,
+              Zoi.Types.Time
+            ] do
     schema
     |> Zoi.Validations.Lte.set(max, opts)
     |> Zoi.Validations.Lte.validate(input, opts)
   end
 
   defp do_refine(%module{} = schema, input, [gt: gt], opts)
-       when module in [Zoi.Types.Date, Zoi.Types.DateTime, Zoi.Types.NaiveDateTime] do
+       when module in [
+              Zoi.Types.Date,
+              Zoi.Types.DateTime,
+              Zoi.Types.NaiveDateTime,
+              Zoi.Types.Time
+            ] do
     schema
     |> Zoi.Validations.Gt.set(gt, opts)
     |> Zoi.Validations.Gt.validate(input, opts)
   end
 
   defp do_refine(%module{} = schema, input, [lt: lt], opts)
-       when module in [Zoi.Types.Date, Zoi.Types.DateTime, Zoi.Types.NaiveDateTime] do
+       when module in [
+              Zoi.Types.Date,
+              Zoi.Types.DateTime,
+              Zoi.Types.NaiveDateTime,
+              Zoi.Types.Time
+            ] do
     schema
     |> Zoi.Validations.Lt.set(lt, opts)
     |> Zoi.Validations.Lt.validate(input, opts)
-  end
-
-  # Dates (Time, DateTime, NaiveDateTime still use inline validation)
-  for date_module <- [Time] do
-    @module Module.concat(Zoi.Types, date_module)
-    @date_module date_module
-
-    defp do_refine(%@module{}, input, [gte: min], opts) do
-      case @date_module.compare(input, min) do
-        :gt -> :ok
-        :eq -> :ok
-        :lt -> {:error, Zoi.Error.greater_than_or_equal_to(:date, min, opts)}
-      end
-    end
-
-    defp do_refine(%@module{}, input, [gt: gt], opts) do
-      case @date_module.compare(input, gt) do
-        :gt -> :ok
-        _ -> {:error, Zoi.Error.greater_than(:date, gt, opts)}
-      end
-    end
-
-    defp do_refine(%@module{}, input, [lte: max], opts) do
-      case @date_module.compare(input, max) do
-        :lt -> :ok
-        :eq -> :ok
-        :gt -> {:error, Zoi.Error.less_than_or_equal_to(:date, max, opts)}
-      end
-    end
-
-    defp do_refine(%@module{}, input, [lt: lt], opts) do
-      case @date_module.compare(input, lt) do
-        :lt -> :ok
-        _ -> {:error, Zoi.Error.less_than(:date, lt, opts)}
-      end
-    end
   end
 
   # Decimal

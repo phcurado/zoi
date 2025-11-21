@@ -9,19 +9,19 @@ defmodule Zoi.Types.NaiveDateTime do
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
       gte:
-        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+        Zoi.Opts.constraint_schema(Zoi.Types.NaiveDateTime.new([]),
           description: "naive datetime minimum value"
         ),
       lte:
-        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+        Zoi.Opts.constraint_schema(Zoi.Types.NaiveDateTime.new([]),
           description: "naive datetime maximum value"
         ),
       gt:
-        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+        Zoi.Opts.constraint_schema(Zoi.Types.NaiveDateTime.new([]),
           description: "naive datetime greater than value"
         ),
       lt:
-        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+        Zoi.Opts.constraint_schema(Zoi.Types.NaiveDateTime.new([]),
           description: "naive datetime less than value"
         )
     )

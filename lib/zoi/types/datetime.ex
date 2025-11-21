@@ -9,19 +9,19 @@ defmodule Zoi.Types.DateTime do
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
       gte:
-        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+        Zoi.Opts.constraint_schema(Zoi.Types.DateTime.new([]),
           description: "datetime minimum value"
         ),
       lte:
-        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+        Zoi.Opts.constraint_schema(Zoi.Types.DateTime.new([]),
           description: "datetime maximum value"
         ),
       gt:
-        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+        Zoi.Opts.constraint_schema(Zoi.Types.DateTime.new([]),
           description: "datetime greater than value"
         ),
       lt:
-        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+        Zoi.Opts.constraint_schema(Zoi.Types.DateTime.new([]),
           description: "datetime less than value"
         )
     )

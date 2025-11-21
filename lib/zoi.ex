@@ -2125,7 +2125,8 @@ defmodule Zoi do
              Zoi.Types.Number,
              Zoi.Types.Date,
              Zoi.Types.DateTime,
-             Zoi.Types.NaiveDateTime
+             Zoi.Types.NaiveDateTime,
+             Zoi.Types.Time
            ] do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Gte.set(schema, gte, opts)
@@ -2173,7 +2174,8 @@ defmodule Zoi do
              Zoi.Types.Array,
              Zoi.Types.Date,
              Zoi.Types.DateTime,
-             Zoi.Types.NaiveDateTime
+             Zoi.Types.NaiveDateTime,
+             Zoi.Types.Time
            ] do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Gt.set(schema, gt, opts)
@@ -2230,7 +2232,8 @@ defmodule Zoi do
              Zoi.Types.Number,
              Zoi.Types.Date,
              Zoi.Types.DateTime,
-             Zoi.Types.NaiveDateTime
+             Zoi.Types.NaiveDateTime,
+             Zoi.Types.Time
            ] do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Lte.set(schema, lte, opts)
@@ -2276,7 +2279,8 @@ defmodule Zoi do
              Zoi.Types.Number,
              Zoi.Types.Date,
              Zoi.Types.DateTime,
-             Zoi.Types.NaiveDateTime
+             Zoi.Types.NaiveDateTime,
+             Zoi.Types.Time
            ] do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Lt.set(schema, lt, opts)
