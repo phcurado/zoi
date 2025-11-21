@@ -2030,7 +2030,7 @@ defmodule Zoi do
       Zoi.Validations.Length.set(schema, length, opts)
     else
       schema
-      |> refine({Zoi.Refinements, :refine, [[length: length], opts]})
+      |> refine({Zoi.Validations.Length, :validate, [length, opts]})
     end
   end
 
@@ -2039,13 +2039,13 @@ defmodule Zoi do
       Zoi.Validations.Length.set(schema, length, opts)
     else
       schema
-      |> refine({Zoi.Refinements, :refine, [[length: length], opts]})
+      |> refine({Zoi.Validations.Length, :validate, [length, opts]})
     end
   end
 
   def length(schema, length, opts) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[length: length], opts]})
+    |> refine({Zoi.Validations.Length, :validate, [length, opts]})
   end
 
   @doc ~S"""
@@ -2118,7 +2118,7 @@ defmodule Zoi do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Gte.set(schema, gte, opts)
     else
-      refine(schema, {Zoi.Refinements, :refine, [[gte: gte], opts]})
+      refine(schema, {Zoi.Validations.Gte, :validate, [gte, opts]})
     end
   end
 
@@ -2148,7 +2148,7 @@ defmodule Zoi do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Gt.set(schema, gt, opts)
     else
-      refine(schema, {Zoi.Refinements, :refine, [[gt: gt], opts]})
+      refine(schema, {Zoi.Validations.Gt, :validate, [gt, opts]})
     end
   end
 
@@ -2187,7 +2187,7 @@ defmodule Zoi do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Lte.set(schema, lte, opts)
     else
-      refine(schema, {Zoi.Refinements, :refine, [[lte: lte], opts]})
+      refine(schema, {Zoi.Validations.Lte, :validate, [lte, opts]})
     end
   end
 
@@ -2217,7 +2217,7 @@ defmodule Zoi do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Lt.set(schema, lt, opts)
     else
-      refine(schema, {Zoi.Refinements, :refine, [[lt: lt], opts]})
+      refine(schema, {Zoi.Validations.Lt, :validate, [lt, opts]})
     end
   end
 
@@ -2243,7 +2243,7 @@ defmodule Zoi do
   @spec positive(schema :: schema(), opts :: options()) :: schema()
   def positive(schema, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[gt: 0], opts]})
+    |> refine({Zoi.Validations.Gt, :validate, [0, opts]})
   end
 
   @doc """
@@ -2268,7 +2268,7 @@ defmodule Zoi do
   @spec negative(schema :: schema(), opts :: options()) :: schema()
   def negative(schema, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[lt: 0], opts]})
+    |> refine({Zoi.Validations.Lt, :validate, [0, opts]})
   end
 
   @doc """
@@ -2293,7 +2293,7 @@ defmodule Zoi do
   @spec non_negative(schema :: schema(), opts :: options()) :: schema()
   def non_negative(schema, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[gte: 0], opts]})
+    |> refine({Zoi.Validations.Gte, :validate, [0, opts]})
   end
 
   @doc """

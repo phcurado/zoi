@@ -87,38 +87,33 @@ defmodule Zoi.JSONSchema do
 
   defp encode_schema(%Zoi.Types.String{} = schema) do
     %{type: :string}
-    |> encode_string_constraints(schema)
     |> encode_metadata(schema)
-    |> encode_refinements(schema.meta)
+    |> encode_refinements(schema)
   end
 
   defp encode_schema(%Zoi.Types.Integer{} = schema) do
     %{type: :integer}
-    |> encode_integer_constraints(schema)
     |> encode_metadata(schema)
-    |> encode_refinements(schema.meta)
+    |> encode_refinements(schema)
   end
 
   defp encode_schema(%Zoi.Types.Float{} = schema) do
     %{type: :number}
-    |> encode_numeric_constraints(schema)
     |> encode_metadata(schema)
-    |> encode_refinements(schema.meta)
+    |> encode_refinements(schema)
   end
 
   defp encode_schema(%Zoi.Types.Number{} = schema) do
     %{type: :number}
-    |> encode_numeric_constraints(schema)
     |> encode_metadata(schema)
-    |> encode_refinements(schema.meta)
+    |> encode_refinements(schema)
   end
 
   if Code.ensure_loaded?(Decimal) do
     defp encode_schema(%Zoi.Types.Decimal{} = schema) do
       %{type: :number}
-      |> encode_numeric_constraints(schema)
       |> encode_metadata(schema)
-      |> encode_refinements(schema.meta)
+      |> encode_refinements(schema)
     end
   end
 
@@ -142,21 +137,14 @@ defmodule Zoi.JSONSchema do
   defp encode_schema(%Zoi.Types.Array{inner: inner} = schema) do
     case inner do
       %Zoi.Types.Any{} ->
-        %{
-          type: :array
-        }
-        |> encode_array_constraints(schema)
+        %{type: :array}
         |> encode_metadata(schema)
-        |> encode_refinements(schema.meta)
+        |> encode_refinements(schema)
 
       _inner ->
-        %{
-          type: :array,
-          items: encode_schema(inner)
-        }
-        |> encode_array_constraints(schema)
+        %{type: :array, items: encode_schema(inner)}
         |> encode_metadata(schema)
-        |> encode_refinements(schema.meta)
+        |> encode_refinements(schema)
     end
   end
 
@@ -166,7 +154,7 @@ defmodule Zoi.JSONSchema do
       prefixItems: Enum.map(schema.fields, &encode_schema/1)
     }
     |> encode_metadata(schema)
-    |> encode_refinements(schema.meta)
+    |> encode_refinements(schema)
   end
 
   defp encode_schema(%Zoi.Types.Enum{} = schema) do
@@ -262,25 +250,136 @@ defmodule Zoi.JSONSchema do
     raise "Encoding not implemented for schema: #{inspect(schema)}"
   end
 
-  defp encode_refinements(encoded_schema, %Meta{effects: []}), do: encoded_schema
+  defp encode_refinements(encoded_schema, schema) do
+    # Extract constraints from struct fields and convert to protocol MFA format
+    struct_constraints = extract_struct_constraints(schema)
 
-  defp encode_refinements(encoded_schema, %Meta{effects: effects}) do
-    refinements =
-      Enum.flat_map(effects, fn
+    # Extract refinements from effects
+    effect_refinements =
+      Enum.flat_map(schema.meta.effects, fn
         {:refine, refinement} -> [refinement]
         {:transform, _transform} -> []
       end)
 
-    # Separate regex refinements from others
+    all_refinements = struct_constraints ++ effect_refinements
+
+    # Only split regex (needs special multi-pattern handling with allOf)
     {regex_refinements, other_refinements} =
-      Enum.split_with(refinements, fn
-        {_module, :refine, [[regex: _regex, opts: _regex_opts], _opts]} -> true
+      Enum.split_with(all_refinements, fn
+        {_module, :refine, [[regex: _, opts: _], _]} -> true
         _ -> false
       end)
 
-    encoded_schema
-    |> encode_non_regex_refinements(other_refinements)
+    other_refinements
+    |> Enum.reduce(encoded_schema, &encode_refinement/2)
     |> encode_regex_refinements(regex_refinements)
+  end
+
+  # Extract struct field constraints as protocol MFAs
+  defp extract_struct_constraints(%Zoi.Types.String{} = schema) do
+    []
+    |> maybe_add_constraint(Zoi.Validations.Length, schema.length)
+    |> maybe_add_constraint(Zoi.Validations.Gte, schema.min_length)
+    |> maybe_add_constraint(Zoi.Validations.Lte, schema.max_length)
+  end
+
+  defp extract_struct_constraints(%{gte: _, lte: _, gt: _, lt: _} = schema) do
+    []
+    |> maybe_add_constraint(Zoi.Validations.Gte, schema.gte)
+    |> maybe_add_constraint(Zoi.Validations.Lte, schema.lte)
+    |> maybe_add_constraint(Zoi.Validations.Gt, schema.gt)
+    |> maybe_add_constraint(Zoi.Validations.Lt, schema.lt)
+  end
+
+  defp extract_struct_constraints(%Zoi.Types.Array{} = schema) do
+    []
+    |> maybe_add_constraint(Zoi.Validations.Length, schema.length)
+    |> maybe_add_constraint(Zoi.Validations.Gte, schema.min_length)
+    |> maybe_add_constraint(Zoi.Validations.Lte, schema.max_length)
+  end
+
+  defp extract_struct_constraints(_schema), do: []
+
+  defp maybe_add_constraint(constraints, _protocol, nil), do: constraints
+
+  defp maybe_add_constraint(constraints, protocol, {value, opts}) do
+    [{protocol, :validate, [value, opts]} | constraints]
+  end
+
+  defp maybe_add_constraint(constraints, protocol, value) do
+    [{protocol, :validate, [value, []]} | constraints]
+  end
+
+  # Protocol MFAs - String
+
+  defp encode_refinement({Zoi.Validations.Gte, :validate, [value, _opts]}, %{type: :string} = json_schema) do
+    Map.put(json_schema, :minLength, value)
+  end
+
+  defp encode_refinement({Zoi.Validations.Lte, :validate, [value, _opts]}, %{type: :string} = json_schema) do
+    Map.put(json_schema, :maxLength, value)
+  end
+
+  defp encode_refinement({Zoi.Validations.Length, :validate, [value, _opts]}, %{type: :string} = json_schema) do
+    json_schema
+    |> Map.put(:minLength, value)
+    |> Map.put(:maxLength, value)
+  end
+
+  # Protocol MFAs - Numeric (integer and number)
+
+  defp encode_refinement({Zoi.Validations.Gte, :validate, [value, _opts]}, %{type: type} = json_schema)
+       when type in [:integer, :number] do
+    Map.put(json_schema, :minimum, value)
+  end
+
+  defp encode_refinement({Zoi.Validations.Gt, :validate, [value, _opts]}, %{type: type} = json_schema)
+       when type in [:integer, :number] do
+    Map.put(json_schema, :exclusiveMinimum, value)
+  end
+
+  defp encode_refinement({Zoi.Validations.Lte, :validate, [value, _opts]}, %{type: type} = json_schema)
+       when type in [:integer, :number] do
+    Map.put(json_schema, :maximum, value)
+  end
+
+  defp encode_refinement({Zoi.Validations.Lt, :validate, [value, _opts]}, %{type: type} = json_schema)
+       when type in [:integer, :number] do
+    Map.put(json_schema, :exclusiveMaximum, value)
+  end
+
+  # Protocol MFAs - Array
+
+  defp encode_refinement({Zoi.Validations.Gte, :validate, [value, _opts]}, %{type: :array} = json_schema) do
+    Map.put(json_schema, :minItems, value)
+  end
+
+  defp encode_refinement({Zoi.Validations.Gt, :validate, [value, _opts]}, %{type: :array} = json_schema) do
+    Map.put(json_schema, :minItems, value + 1)
+  end
+
+  defp encode_refinement({Zoi.Validations.Lte, :validate, [value, _opts]}, %{type: :array} = json_schema) do
+    Map.put(json_schema, :maxItems, value)
+  end
+
+  defp encode_refinement({Zoi.Validations.Lt, :validate, [value, _opts]}, %{type: :array} = json_schema) do
+    Map.put(json_schema, :maxItems, value - 1)
+  end
+
+  defp encode_refinement({Zoi.Validations.Length, :validate, [value, _opts]}, %{type: :array} = json_schema) do
+    json_schema
+    |> Map.put(:minItems, value)
+    |> Map.put(:maxItems, value)
+  end
+
+  # Legacy refinements (url, starts_with, ends_with, one_of)
+
+  defp encode_refinement({_module, :refine, [[:url], _opts]}, %{type: :string} = json_schema) do
+    Map.put(json_schema, :format, :uri)
+  end
+
+  defp encode_refinement(_refinement, json_schema) do
+    json_schema
   end
 
   defp encode_regex_refinements(json_schema, []), do: json_schema
@@ -307,160 +406,6 @@ defmodule Zoi.JSONSchema do
 
     Map.put(json_schema, :allOf, Enum.map(patterns, fn pattern -> %{pattern: pattern} end))
   end
-
-  defp encode_non_regex_refinements(json_schema, []), do: json_schema
-
-  defp encode_non_regex_refinements(json_schema, refinements) do
-    Enum.reduce(refinements, json_schema, fn
-      {_module, :refine, [func_param, _opts]}, acc ->
-        refinements_to_json_schema(acc, func_param)
-
-      _, acc ->
-        acc
-    end)
-  end
-
-  defp refinements_to_json_schema(json_schema, param) do
-    case json_schema do
-      %{type: :string} ->
-        string_refinements_to_json_schema(json_schema, param)
-
-      %{type: :number} ->
-        numeric_length_to_json_schema(json_schema, param)
-
-      %{type: :integer} ->
-        numeric_length_to_json_schema(json_schema, param)
-
-      %{type: :array} ->
-        array_length_to_json_schema(json_schema, param)
-    end
-  end
-
-  defp string_refinements_to_json_schema(json_schema, param) do
-    case param do
-      [gte: gte] ->
-        Map.put(json_schema, :minLength, gte)
-
-      [lte: lte] ->
-        Map.put(json_schema, :maxLength, lte)
-
-      [length: length] ->
-        json_schema
-        |> Map.put(:minLength, length)
-        |> Map.put(:maxLength, length)
-
-      [:url] ->
-        Map.put(json_schema, :format, :uri)
-
-      _ ->
-        json_schema
-    end
-  end
-
-  defp numeric_length_to_json_schema(json_schema, param) do
-    case param do
-      [gt: gt] ->
-        Map.put(json_schema, :exclusiveMinimum, gt)
-
-      [gte: gte] ->
-        Map.put(json_schema, :minimum, gte)
-
-      [lt: lt] ->
-        Map.put(json_schema, :exclusiveMaximum, lt)
-
-      [lte: lte] ->
-        Map.put(json_schema, :maximum, lte)
-
-        # _ ->
-        # # No other refinements exist for numbers
-        # json_schema
-    end
-  end
-
-  defp array_length_to_json_schema(json_schema, param) do
-    case param do
-      [gt: gt] ->
-        Map.put(json_schema, :minItems, gt + 1)
-
-      [gte: gte] ->
-        Map.put(json_schema, :minItems, gte)
-
-      [lt: lt] ->
-        Map.put(json_schema, :maxItems, lt - 1)
-
-      [lte: lte] ->
-        Map.put(json_schema, :maxItems, lte)
-
-      [length: length] ->
-        json_schema
-        |> Map.put(:minItems, length)
-        |> Map.put(:maxItems, length)
-
-        # _ ->
-        # # No other refinements exist for arrays
-        # json_schema
-    end
-  end
-
-  defp encode_string_constraints(json_schema, %Zoi.Types.String{
-         length: length,
-         min_length: min_length,
-         max_length: max_length
-       }) do
-    length = Zoi.Validations.unwrap_validation(length)
-    min_length = Zoi.Validations.unwrap_validation(min_length)
-    max_length = Zoi.Validations.unwrap_validation(max_length)
-
-    if length do
-      json_schema
-      |> Map.put(:minLength, length)
-      |> Map.put(:maxLength, length)
-    else
-      json_schema
-      |> maybe_put_length(:minLength, min_length)
-      |> maybe_put_length(:maxLength, max_length)
-    end
-  end
-
-  defp encode_array_constraints(json_schema, %Zoi.Types.Array{
-         length: length,
-         min_length: min_length,
-         max_length: max_length
-       }) do
-    length = Zoi.Validations.unwrap_validation(length)
-    min_length = Zoi.Validations.unwrap_validation(min_length)
-    max_length = Zoi.Validations.unwrap_validation(max_length)
-
-    if length do
-      json_schema
-      |> Map.put(:minItems, length)
-      |> Map.put(:maxItems, length)
-    else
-      json_schema
-      |> maybe_put_length(:minItems, min_length)
-      |> maybe_put_length(:maxItems, max_length)
-    end
-  end
-
-  defp encode_integer_constraints(json_schema, schema) do
-    encode_numeric_constraints(json_schema, schema)
-  end
-
-  defp encode_numeric_constraints(json_schema, schema) do
-    gte = Zoi.Validations.unwrap_validation(schema.gte)
-    lte = Zoi.Validations.unwrap_validation(schema.lte)
-    gt = Zoi.Validations.unwrap_validation(schema.gt)
-    lt = Zoi.Validations.unwrap_validation(schema.lt)
-
-    json_schema
-    |> maybe_put_length(:minimum, gte)
-    |> maybe_put_length(:maximum, lte)
-    |> maybe_put_length(:exclusiveMinimum, gt)
-    |> maybe_put_length(:exclusiveMaximum, lt)
-  end
-
-  defp maybe_put_length(json_schema, _key, nil), do: json_schema
-  defp maybe_put_length(json_schema, key, value), do: Map.put(json_schema, key, value)
 
   defp encode_metadata(json_schema, zoi_schema) do
     json_schema =

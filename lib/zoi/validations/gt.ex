@@ -22,7 +22,7 @@ end
 
 defimpl Zoi.Validations.Gt, for: Any do
   def set(schema, value, opts) do
-    Zoi.refine(schema, {Zoi.Refinements, :refine, [[gt: value], opts]})
+    Zoi.refine(schema, {Zoi.Validations.Gt, :validate, [value, opts]})
   end
 
   def validate(_schema, _input, _value, _opts), do: :ok

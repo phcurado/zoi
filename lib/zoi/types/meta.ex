@@ -61,6 +61,17 @@ defmodule Zoi.Types.Meta do
     end)
   end
 
+  # Internal validation which uses Protocols in form of MFA: {ProtocolMod, :validate, [value, opts]}
+  defp run_refinement({mod, :validate, [value, opts]}, input, errors, ctx) do
+    case apply(mod, :validate, [ctx.schema, input, value, opts]) do
+      :ok ->
+        {{:ok, input}, errors}
+
+      {:error, err} ->
+        {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+    end
+  end
+
   defp run_refinement({mod, func, args}, input, errors, ctx) do
     case apply(mod, func, [input] ++ args ++ [[ctx: ctx]]) do
       :ok ->
