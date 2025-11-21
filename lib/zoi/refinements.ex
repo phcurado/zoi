@@ -160,36 +160,28 @@ defmodule Zoi.Refinements do
 
   # Decimal
   if Code.ensure_loaded?(Decimal) do
-    defp do_refine(%Zoi.Types.Decimal{}, input, [gte: min], opts) do
-      if Decimal.gte?(input, min) do
-        :ok
-      else
-        {:error, Zoi.Error.greater_than_or_equal_to(:number, min, opts)}
-      end
+    defp do_refine(%Zoi.Types.Decimal{} = schema, input, [gte: min], opts) do
+      schema
+      |> Zoi.Validations.Gte.set(min, opts)
+      |> Zoi.Validations.Gte.validate(input, opts)
     end
 
-    defp do_refine(%Zoi.Types.Decimal{}, input, [gt: gt], opts) do
-      if Decimal.gt?(input, gt) do
-        :ok
-      else
-        {:error, Zoi.Error.greater_than(:number, gt, opts)}
-      end
+    defp do_refine(%Zoi.Types.Decimal{} = schema, input, [gt: gt], opts) do
+      schema
+      |> Zoi.Validations.Gt.set(gt, opts)
+      |> Zoi.Validations.Gt.validate(input, opts)
     end
 
-    defp do_refine(%Zoi.Types.Decimal{}, input, [lt: lt], opts) do
-      if Decimal.lt?(input, lt) do
-        :ok
-      else
-        {:error, Zoi.Error.less_than(:number, lt, opts)}
-      end
+    defp do_refine(%Zoi.Types.Decimal{} = schema, input, [lt: lt], opts) do
+      schema
+      |> Zoi.Validations.Lt.set(lt, opts)
+      |> Zoi.Validations.Lt.validate(input, opts)
     end
 
-    defp do_refine(%Zoi.Types.Decimal{}, input, [lte: max], opts) do
-      if Decimal.lte?(input, max) do
-        :ok
-      else
-        {:error, Zoi.Error.less_than_or_equal_to(:number, max, opts)}
-      end
+    defp do_refine(%Zoi.Types.Decimal{} = schema, input, [lte: max], opts) do
+      schema
+      |> Zoi.Validations.Lte.set(max, opts)
+      |> Zoi.Validations.Lte.validate(input, opts)
     end
   end
 

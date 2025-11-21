@@ -1276,10 +1276,27 @@ defmodule ZoiTest do
       end
     end
 
+    test "extend object with plain map" do
+      schema1 = Zoi.object(%{name: Zoi.string()})
+      schema2 = %{age: Zoi.integer()}
+      schema = Zoi.extend(schema1, schema2)
+
+      assert {:ok, %{name: "John", age: 30}} == Zoi.parse(schema, %{name: "John", age: 30})
+    end
+
     test "extend with keyword schema" do
       schema1 = Zoi.keyword(name: Zoi.string())
       schema2 = Zoi.keyword(age: Zoi.integer())
       schema = Zoi.extend(schema1, schema2)
+
+      assert {:ok, [name: "John", age: 30]} == Zoi.parse(schema, name: "John", age: 30)
+    end
+
+    test "extend keyword with plain keyword list" do
+      schema1 = Zoi.keyword(name: Zoi.string())
+      schema2 = [age: Zoi.integer()]
+      schema = Zoi.extend(schema1, schema2)
+
       assert {:ok, [name: "John", age: 30]} == Zoi.parse(schema, name: "John", age: 30)
     end
   end

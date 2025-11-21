@@ -116,6 +116,7 @@ defmodule Zoi.JSONSchema do
   if Code.ensure_loaded?(Decimal) do
     defp encode_schema(%Zoi.Types.Decimal{} = schema) do
       %{type: :number}
+      |> encode_numeric_constraints(schema)
       |> encode_metadata(schema)
       |> encode_refinements(schema.meta)
     end
@@ -338,14 +339,8 @@ defmodule Zoi.JSONSchema do
 
   defp string_refinements_to_json_schema(json_schema, param) do
     case param do
-      [gt: gt] ->
-        Map.put(json_schema, :minLength, gt + 1)
-
       [gte: gte] ->
         Map.put(json_schema, :minLength, gte)
-
-      [lt: lt] ->
-        Map.put(json_schema, :maxLength, lt - 1)
 
       [lte: lte] ->
         Map.put(json_schema, :maxLength, lte)

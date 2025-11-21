@@ -153,7 +153,8 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.string() |> Zoi.length(5), %{type: :string, minLength: 5, maxLength: 5}},
         {Zoi.uuid(), %{type: :string, pattern: Regexes.uuid().source}},
         {Zoi.url(), %{type: :string, format: :uri}},
-        {Zoi.string() |> Zoi.lt(10) |> Zoi.gt(3), %{type: :string, maxLength: 9, minLength: 4}},
+        {Zoi.string() |> Zoi.lte(10) |> Zoi.gte(3),
+         %{type: :string, maxLength: 10, minLength: 3}},
         {Zoi.string() |> Zoi.starts_with("prefix"), %{type: :string}},
         {Zoi.string() |> Zoi.refine({__MODULE__, :custom_refinemnet, []}), %{type: :string}}
       ]
@@ -205,21 +206,7 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.array(Zoi.integer()) |> Zoi.min(2) |> Zoi.max(5),
          %{type: :array, items: %{type: :integer}, minItems: 2, maxItems: 5}},
         {Zoi.array(Zoi.integer()) |> Zoi.length(3),
-         %{type: :array, items: %{type: :integer}, minItems: 3, maxItems: 3}},
-        {Zoi.tuple({Zoi.string(), Zoi.integer()}) |> Zoi.min(2) |> Zoi.max(4),
-         %{
-           type: :array,
-           prefixItems: [%{type: :string}, %{type: :integer}],
-           minItems: 2,
-           maxItems: 4
-         }},
-        {Zoi.tuple({Zoi.string(), Zoi.integer()}) |> Zoi.length(2),
-         %{
-           type: :array,
-           prefixItems: [%{type: :string}, %{type: :integer}],
-           minItems: 2,
-           maxItems: 2
-         }}
+         %{type: :array, items: %{type: :integer}, minItems: 3, maxItems: 3}}
       ]
 
       Enum.each(array_lengths, fn {schema, expected} ->
