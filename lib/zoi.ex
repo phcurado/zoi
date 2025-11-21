@@ -2116,61 +2116,16 @@ defmodule Zoi do
   @spec gte(schema :: schema(), min :: non_neg_integer(), opts :: options()) :: schema()
   def gte(schema, gte, opts \\ [])
 
-  def gte(%Zoi.Types.String{} = schema, gte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Gte.set(schema, gte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
-    end
-  end
-
-  def gte(%Zoi.Types.Array{} = schema, gte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Gte.set(schema, gte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
-    end
-  end
-
-  def gte(%Zoi.Types.Integer{} = schema, gte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Gte.set(schema, gte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
-    end
-  end
-
-  def gte(%Zoi.Types.Float{} = schema, gte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Gte.set(schema, gte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
-    end
-  end
-
-  def gte(%Zoi.Types.Number{} = schema, gte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Gte.set(schema, gte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
-    end
-  end
-
-  def gte(%Zoi.Types.Date{} = schema, gte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Gte.set(schema, gte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
-    end
-  end
-
-  def gte(%Zoi.Types.DateTime{} = schema, gte, opts) do
+  def gte(%module{} = schema, gte, opts)
+      when module in [
+             Zoi.Types.String,
+             Zoi.Types.Array,
+             Zoi.Types.Integer,
+             Zoi.Types.Float,
+             Zoi.Types.Number,
+             Zoi.Types.Date,
+             Zoi.Types.DateTime
+           ] do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Gte.set(schema, gte, opts)
     else
@@ -2208,43 +2163,16 @@ defmodule Zoi do
   @spec gt(schema :: schema(), gt :: non_neg_integer(), opts :: options()) :: schema()
   def gt(schema, gt, opts \\ [])
 
-  def gt(%Zoi.Types.Integer{} = schema, gt, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Gt.set(schema, gt, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gt: gt], opts]})
-    end
-  end
-
-  def gt(%Zoi.Types.Float{} = schema, gt, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Gt.set(schema, gt, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gt: gt], opts]})
-    end
-  end
-
-  def gt(%Zoi.Types.Number{} = schema, gt, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Gt.set(schema, gt, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gt: gt], opts]})
-    end
-  end
-
-  def gt(%Zoi.Types.Date{} = schema, gt, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Gt.set(schema, gt, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[gt: gt], opts]})
-    end
-  end
-
-  def gt(%Zoi.Types.DateTime{} = schema, gt, opts) do
+  def gt(%module{} = schema, gt, opts)
+      when module in [
+             Zoi.Types.Integer,
+             Zoi.Types.Float,
+             Zoi.Types.Number,
+             Zoi.Types.String,
+             Zoi.Types.Array,
+             Zoi.Types.Date,
+             Zoi.Types.DateTime
+           ] do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Gt.set(schema, gt, opts)
     else
@@ -2291,61 +2219,16 @@ defmodule Zoi do
   @spec lte(schema :: schema(), lte :: non_neg_integer(), opts :: options()) :: schema()
   def lte(schema, lte, opts \\ [])
 
-  def lte(%Zoi.Types.String{} = schema, lte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Lte.set(schema, lte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
-    end
-  end
-
-  def lte(%Zoi.Types.Array{} = schema, lte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Lte.set(schema, lte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
-    end
-  end
-
-  def lte(%Zoi.Types.Integer{} = schema, lte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Lte.set(schema, lte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
-    end
-  end
-
-  def lte(%Zoi.Types.Float{} = schema, lte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Lte.set(schema, lte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
-    end
-  end
-
-  def lte(%Zoi.Types.Number{} = schema, lte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Lte.set(schema, lte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
-    end
-  end
-
-  def lte(%Zoi.Types.Date{} = schema, lte, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Lte.set(schema, lte, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
-    end
-  end
-
-  def lte(%Zoi.Types.DateTime{} = schema, lte, opts) do
+  def lte(%module{} = schema, lte, opts)
+      when module in [
+             Zoi.Types.String,
+             Zoi.Types.Array,
+             Zoi.Types.Integer,
+             Zoi.Types.Float,
+             Zoi.Types.Number,
+             Zoi.Types.Date,
+             Zoi.Types.DateTime
+           ] do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Lte.set(schema, lte, opts)
     else
@@ -2383,43 +2266,14 @@ defmodule Zoi do
   @spec lt(schema :: schema(), lt :: non_neg_integer(), opts :: options()) :: schema()
   def lt(schema, lt, opts \\ [])
 
-  def lt(%Zoi.Types.Integer{} = schema, lt, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Lt.set(schema, lt, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lt: lt], opts]})
-    end
-  end
-
-  def lt(%Zoi.Types.Float{} = schema, lt, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Lt.set(schema, lt, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lt: lt], opts]})
-    end
-  end
-
-  def lt(%Zoi.Types.Number{} = schema, lt, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Lt.set(schema, lt, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lt: lt], opts]})
-    end
-  end
-
-  def lt(%Zoi.Types.Date{} = schema, lt, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Lt.set(schema, lt, opts)
-    else
-      schema
-      |> refine({Zoi.Refinements, :refine, [[lt: lt], opts]})
-    end
-  end
-
-  def lt(%Zoi.Types.DateTime{} = schema, lt, opts) do
+  def lt(%module{} = schema, lt, opts)
+      when module in [
+             Zoi.Types.Integer,
+             Zoi.Types.Float,
+             Zoi.Types.Number,
+             Zoi.Types.Date,
+             Zoi.Types.DateTime
+           ] do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Lt.set(schema, lt, opts)
     else
