@@ -140,33 +140,28 @@ defmodule Zoi.JSONSchemaTest do
                    end
     end
 
-    @string_patterns [
-      {"email", Zoi.email(), %{type: :string, format: :email, pattern: Regexes.email().source}},
-      {"multiple regex", Zoi.email() |> Zoi.regex(~r/@example\.com$/),
-       %{
-         type: :string,
-         allOf: [%{pattern: Regexes.email().source}, %{pattern: "@example\\.com$"}]
-       }},
-      {"min max length", Zoi.string() |> Zoi.min(3) |> Zoi.max(10),
-       %{type: :string, minLength: 3, maxLength: 10}},
-      {"exact length", Zoi.string() |> Zoi.length(5),
-       %{type: :string, minLength: 5, maxLength: 5}},
-      {"uuid", Zoi.uuid(), %{type: :string, pattern: Regexes.uuid().source}},
-      {"url", Zoi.url(), %{type: :string, format: :uri}},
-      {"lt gt", Zoi.string() |> Zoi.lt(10) |> Zoi.gt(3),
-       %{type: :string, maxLength: 9, minLength: 4}},
-      {"starts_with have no effect", Zoi.string() |> Zoi.starts_with("prefix"), %{type: :string}},
-      {"custom refinement", Zoi.string() |> Zoi.refine({__MODULE__, :custom_refinemnet, []}),
-       %{type: :string}}
-    ]
+    test "string patterns and formats" do
+      string_patterns = [
+        {Zoi.email(), %{type: :string, format: :email, pattern: Regexes.email().source}},
+        {Zoi.email() |> Zoi.regex(~r/@example\.com$/),
+         %{
+           type: :string,
+           allOf: [%{pattern: Regexes.email().source}, %{pattern: "@example\\.com$"}]
+         }},
+        {Zoi.string() |> Zoi.min(3) |> Zoi.max(10),
+         %{type: :string, minLength: 3, maxLength: 10}},
+        {Zoi.string() |> Zoi.length(5), %{type: :string, minLength: 5, maxLength: 5}},
+        {Zoi.uuid(), %{type: :string, pattern: Regexes.uuid().source}},
+        {Zoi.url(), %{type: :string, format: :uri}},
+        {Zoi.string() |> Zoi.lt(10) |> Zoi.gt(3), %{type: :string, maxLength: 9, minLength: 4}},
+        {Zoi.string() |> Zoi.starts_with("prefix"), %{type: :string}},
+        {Zoi.string() |> Zoi.refine({__MODULE__, :custom_refinemnet, []}), %{type: :string}}
+      ]
 
-    for {test_ref, schema, expected} <- @string_patterns do
-      @schema schema
-      @expected expected
-      test "encoding #{test_ref} pattern" do
-        expected = Map.put(@expected, :"$schema", @draft)
-        assert Zoi.to_json_schema(@schema) == expected
-      end
+      Enum.each(string_patterns, fn {schema, expected} ->
+        expected = Map.put(expected, :"$schema", @draft)
+        assert Zoi.to_json_schema(schema) == expected
+      end)
     end
 
     test "encoding string refinements with transforms" do
@@ -184,70 +179,53 @@ defmodule Zoi.JSONSchemaTest do
              } = Zoi.to_json_schema(schema)
     end
 
-    @number_ranges [
-      {"integer min max", Zoi.integer() |> Zoi.min(3) |> Zoi.max(10),
-       %{type: :integer, minimum: 3, maximum: 10}},
-      {"integer exclusive min max", Zoi.integer() |> Zoi.gt(3) |> Zoi.lt(10),
-       %{type: :integer, exclusiveMinimum: 3, exclusiveMaximum: 10}},
-      {"number min max", Zoi.number() |> Zoi.min(3.5) |> Zoi.max(10.5),
-       %{type: :number, minimum: 3.5, maximum: 10.5}},
-      {"number exclusive min max", Zoi.number() |> Zoi.gt(3.5) |> Zoi.lt(10.5),
-       %{type: :number, exclusiveMinimum: 3.5, exclusiveMaximum: 10.5}}
-    ]
-    for {test_ref, schema, expected} <- @number_ranges do
-      @schema schema
-      @expected expected
-      test "encoding #{test_ref} range" do
-        expected = Map.put(@expected, :"$schema", @draft)
-        assert Zoi.to_json_schema(@schema) == expected
-      end
+    test "numeric ranges" do
+      number_ranges = [
+        {Zoi.integer() |> Zoi.min(3) |> Zoi.max(10), %{type: :integer, minimum: 3, maximum: 10}},
+        {Zoi.integer() |> Zoi.gt(3) |> Zoi.lt(10),
+         %{type: :integer, exclusiveMinimum: 3, exclusiveMaximum: 10}},
+        {Zoi.number() |> Zoi.min(3.5) |> Zoi.max(10.5),
+         %{type: :number, minimum: 3.5, maximum: 10.5}},
+        {Zoi.number() |> Zoi.gt(3.5) |> Zoi.lt(10.5),
+         %{type: :number, exclusiveMinimum: 3.5, exclusiveMaximum: 10.5}},
+        {Zoi.decimal() |> Zoi.min(3.5) |> Zoi.max(10.5),
+         %{type: :number, minimum: 3.5, maximum: 10.5}},
+        {Zoi.decimal() |> Zoi.gt(3.5) |> Zoi.lt(10.5),
+         %{type: :number, exclusiveMinimum: 3.5, exclusiveMaximum: 10.5}}
+      ]
+
+      Enum.each(number_ranges, fn {schema, expected} ->
+        expected = Map.put(expected, :"$schema", @draft)
+        assert Zoi.to_json_schema(schema) == expected
+      end)
     end
 
-    @decimal_ranges [
-      {"decimal min max", Zoi.decimal() |> Zoi.min(3.5) |> Zoi.max(10.5),
-       %{type: :number, minimum: 3.5, maximum: 10.5}},
-      {"decimal exclusive min max", Zoi.decimal() |> Zoi.gt(3.5) |> Zoi.lt(10.5),
-       %{type: :number, exclusiveMinimum: 3.5, exclusiveMaximum: 10.5}}
-    ]
-    for {test_ref, schema, expected} <- @decimal_ranges do
-      @schema schema
-      @expected expected
-      test "encoding #{test_ref} range" do
-        expected = Map.put(@expected, :"$schema", @draft)
-        assert Zoi.to_json_schema(@schema) == expected
-      end
-    end
+    test "array ranges" do
+      array_lengths = [
+        {Zoi.array(Zoi.integer()) |> Zoi.min(2) |> Zoi.max(5),
+         %{type: :array, items: %{type: :integer}, minItems: 2, maxItems: 5}},
+        {Zoi.array(Zoi.integer()) |> Zoi.length(3),
+         %{type: :array, items: %{type: :integer}, minItems: 3, maxItems: 3}},
+        {Zoi.tuple({Zoi.string(), Zoi.integer()}) |> Zoi.min(2) |> Zoi.max(4),
+         %{
+           type: :array,
+           prefixItems: [%{type: :string}, %{type: :integer}],
+           minItems: 2,
+           maxItems: 4
+         }},
+        {Zoi.tuple({Zoi.string(), Zoi.integer()}) |> Zoi.length(2),
+         %{
+           type: :array,
+           prefixItems: [%{type: :string}, %{type: :integer}],
+           minItems: 2,
+           maxItems: 2
+         }}
+      ]
 
-    @array_lengths [
-      {"array min max", Zoi.array(Zoi.integer()) |> Zoi.min(2) |> Zoi.max(5),
-       %{type: :array, items: %{type: :integer}, minItems: 2, maxItems: 5}},
-      {"array exact length", Zoi.array(Zoi.integer()) |> Zoi.length(3),
-       %{type: :array, items: %{type: :integer}, minItems: 3, maxItems: 3}},
-      {"array gt lt", Zoi.array(Zoi.integer()) |> Zoi.gt(2) |> Zoi.lt(5),
-       %{type: :array, items: %{type: :integer}, minItems: 3, maxItems: 4}},
-      {"tuple min max", Zoi.tuple({Zoi.string(), Zoi.integer()}) |> Zoi.min(2) |> Zoi.max(4),
-       %{
-         type: :array,
-         prefixItems: [%{type: :string}, %{type: :integer}],
-         minItems: 2,
-         maxItems: 4
-       }},
-      {"tuple exact length", Zoi.tuple({Zoi.string(), Zoi.integer()}) |> Zoi.length(2),
-       %{
-         type: :array,
-         prefixItems: [%{type: :string}, %{type: :integer}],
-         minItems: 2,
-         maxItems: 2
-       }}
-    ]
-
-    for {test_ref, schema, expected} <- @array_lengths do
-      @schema schema
-      @expected expected
-      test "encoding #{test_ref} length" do
-        expected = Map.put(@expected, :"$schema", @draft)
-        assert Zoi.to_json_schema(@schema) == expected
-      end
+      Enum.each(array_lengths, fn {schema, expected} ->
+        expected = Map.put(expected, :"$schema", @draft)
+        assert Zoi.to_json_schema(schema) == expected
+      end)
     end
 
     test "encoding array opts min/max items" do
@@ -274,23 +252,22 @@ defmodule Zoi.JSONSchemaTest do
              } = Zoi.to_json_schema(schema)
     end
 
-    @date_schemas [
-      {"date", Zoi.date(), %{type: :string, format: :date}},
-      {"time", Zoi.time(), %{type: :string, format: :time}},
-      {"datetime", Zoi.datetime(), %{type: :string, format: :"date-time"}},
-      {"naive_datetime", Zoi.naive_datetime(), %{type: :string, format: :"date-time"}},
-      {"iso date", Zoi.ISO.date(), %{type: :string, format: :date}},
-      {"iso time", Zoi.ISO.time(), %{type: :string, format: :time}},
-      {"iso datetime", Zoi.ISO.datetime(), %{type: :string, format: :"date-time"}},
-      {"iso naive_datetime", Zoi.ISO.naive_datetime(), %{type: :string, format: :"date-time"}}
-    ]
-    for {test_ref, schema, expected} <- @date_schemas do
-      @schema schema
-      @expected expected
-      test "encoding #{test_ref} schema" do
-        expected = Map.put(@expected, :"$schema", @draft)
-        assert Zoi.to_json_schema(@schema) == expected
-      end
+    test "date schemas" do
+      date_schemas = [
+        {Zoi.date(), %{type: :string, format: :date}},
+        {Zoi.time(), %{type: :string, format: :time}},
+        {Zoi.datetime(), %{type: :string, format: :"date-time"}},
+        {Zoi.naive_datetime(), %{type: :string, format: :"date-time"}},
+        {Zoi.ISO.date(), %{type: :string, format: :date}},
+        {Zoi.ISO.time(), %{type: :string, format: :time}},
+        {Zoi.ISO.datetime(), %{type: :string, format: :"date-time"}},
+        {Zoi.ISO.naive_datetime(), %{type: :string, format: :"date-time"}}
+      ]
+
+      Enum.each(date_schemas, fn {schema, expected} ->
+        expected = Map.put(expected, :"$schema", @draft)
+        assert Zoi.to_json_schema(schema) == expected
+      end)
     end
 
     test "length in map type have no effect" do
