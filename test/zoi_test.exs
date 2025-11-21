@@ -134,14 +134,14 @@ defmodule ZoiTest do
 
     test "string length/2 sets schema field when there are no effects" do
       schema = Zoi.string() |> Zoi.length(4)
-      assert schema.length == 4
+      assert schema.length == {4, []}
       refute schema.min_length
       refute schema.max_length
     end
 
     test "string options length overrides min and max" do
       schema = Zoi.string(min_length: 1, max_length: 5, length: 2)
-      assert schema.length == 2
+      assert schema.length == {2, []}
       refute schema.min_length
       refute schema.max_length
     end
@@ -1556,14 +1556,14 @@ defmodule ZoiTest do
 
     test "array length/2 sets schema field when there are no effects" do
       schema = Zoi.array(Zoi.integer()) |> Zoi.length(4)
-      assert schema.length == 4
+      assert schema.length == {4, []}
       refute schema.min_length
       refute schema.max_length
     end
 
     test "array options length overrides min and max" do
       schema = Zoi.array(Zoi.integer(), min_length: 1, max_length: 5, length: 2)
-      assert schema.length == 2
+      assert schema.length == {2, []}
       refute schema.min_length
       refute schema.max_length
     end

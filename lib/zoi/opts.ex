@@ -69,75 +69,19 @@ defmodule Zoi.Opts do
 
   ## Constraint Helpers
 
-  @doc """
-  Date options schema
-  """
-  @spec date_opts() :: Zoi.Type.t()
-  def date_opts() do
-    Zoi.Types.Union.new(
-      [
-        Zoi.Types.Date.new(description: "A specific date."),
-        Zoi.Types.Tuple.new(
-          {Zoi.Types.Date.new([]),
-           Zoi.Types.Keyword.new([error: Zoi.Types.String.new([])], strict: true)},
-          description: "A specific date with custom options."
-        )
-      ],
-      []
-    )
-  end
-
-  def datetime_opts() do
-    Zoi.Types.Union.new(
-      [
-        Zoi.Types.DateTime.new(description: "A specific datetime."),
-        Zoi.Types.Tuple.new(
-          {Zoi.Types.DateTime.new([]),
-           Zoi.Types.Keyword.new([error: Zoi.Types.String.new([])], strict: true)},
-          description: "A specific datetime with custom options."
-        )
-      ],
-      []
-    )
-  end
-
-  @doc """
-  Returns a schema for constraint fields that accept either an integer or a tuple {integer, [error: string]}.
-  This pattern is used for min_length, max_length, length, etc.
-  """
-  @spec constraint_schema() :: Zoi.Type.t()
-  def constraint_schema do
-    constraint_opts = Zoi.Types.Keyword.new([error: Zoi.Types.String.new([])], strict: true)
+  @spec constraint_schema(Zoi.Type.t(), keyword()) :: Zoi.Type.t()
+  def constraint_schema(internal_schema, opts \\ []) do
+    custom_opts = Zoi.Types.Keyword.new([error: error()], strict: true)
 
     Zoi.Types.Union.new(
       [
-        Zoi.Types.Integer.new(description: "Constraint value."),
+        internal_schema,
         Zoi.Types.Tuple.new(
-          {Zoi.Types.Integer.new([]), constraint_opts},
-          description: "Constraint value with custom options."
+          {internal_schema, custom_opts},
+          []
         )
       ],
-      []
+      opts
     )
   end
-
-  @doc """
-  Extracts the value and options from a constraint field.
-  Constraints can be either a plain number or a tuple {number, opts}.
-  """
-  @spec extract_constraint(number() | {number(), keyword()} | nil) ::
-          {number(), keyword()} | {nil, []}
-  def extract_constraint({value, opts}) when is_number(value) and is_list(opts),
-    do: {value, opts}
-
-  def extract_constraint(value) when is_number(value), do: {value, []}
-  def extract_constraint(nil), do: {nil, []}
-
-  @doc """
-  Extracts just the value from a constraint field, discarding options.
-  Used by JSON Schema encoder and Inspect.
-  """
-  @spec unwrap_value(term()) :: term()
-  def unwrap_value({value, _opts}), do: value
-  def unwrap_value(value), do: value
 end

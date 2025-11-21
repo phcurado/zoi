@@ -2,19 +2,40 @@ defmodule Zoi.Types.Date do
   @moduledoc false
   use Zoi.Type.Def, fields: [:gte, :lte, :gt, :lt, coerce: false]
 
+  alias Zoi.Validations
+
   def opts() do
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
-      gte: Zoi.Opts.date_opts(),
-      lte: Zoi.Opts.date_opts(),
-      gt: Zoi.Opts.date_opts(),
-      lt: Zoi.Opts.date_opts()
+      gte:
+        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+          description: "date minimum value"
+        ),
+      lte:
+        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+          description: "date maximum value"
+        ),
+      gt:
+        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+          description: "date greater than value"
+        ),
+      lt:
+        Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
+          description: "date less than value"
+        )
     )
   end
 
   def new(opts \\ []) do
-    apply_type(opts)
+    {validation_opts, opts} = Keyword.split(opts, [:gte, :lte, :gt, :lt])
+
+    opts
+    |> apply_type()
+    |> Validations.maybe_set_validation(Validations.Gte, validation_opts[:gte])
+    |> Validations.maybe_set_validation(Validations.Lte, validation_opts[:lte])
+    |> Validations.maybe_set_validation(Validations.Gt, validation_opts[:gt])
+    |> Validations.maybe_set_validation(Validations.Lt, validation_opts[:lt])
   end
 
   defimpl Zoi.Type do
@@ -52,25 +73,18 @@ defmodule Zoi.Types.Date do
       error(schema)
     end
 
-    defp validate_constraints(schema, input, opts) do
-      errors =
-        [Zoi.Validations.Gte, Zoi.Validations.Lte, Zoi.Validations.Gt, Zoi.Validations.Lt]
-        |> Enum.reduce([], fn module, acc ->
-          case module.validate(schema, input, opts) do
-            :ok -> acc
-            {:error, error} -> [error | acc]
-          end
-        end)
-
-      if errors == [] do
-        :ok
-      else
-        {:error, Enum.reverse(errors)}
-      end
-    end
-
     defp error(schema) do
       {:error, Zoi.Error.invalid_type(:date, error: schema.meta.error)}
+    end
+
+    defp validate_constraints(schema, input, opts) do
+      [
+        {Validations.Gte, schema.gte},
+        {Validations.Lte, schema.lte},
+        {Validations.Gt, schema.gt},
+        {Validations.Lt, schema.lt}
+      ]
+      |> Validations.run_validations(schema, input, opts)
     end
 
     def type_spec(_schema, _opts) do
@@ -79,10 +93,8 @@ defmodule Zoi.Types.Date do
   end
 
   defimpl Zoi.Validations.Gte do
-    def validate(%{gte: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {min, custom_opts} = extract_date_constraint(schema.gte)
+      {min, custom_opts} = schema.gte
       opts = Keyword.merge(opts, custom_opts)
 
       case Date.compare(input, min) do
@@ -93,19 +105,13 @@ defmodule Zoi.Types.Date do
     end
 
     def set(schema, value, opts \\ []) do
-      gte = if opts[:error], do: {value, opts}, else: value
-      %{schema | gte: gte}
+      %{schema | gte: {value, opts}}
     end
-
-    defp extract_date_constraint({value, opts}) when is_list(opts), do: {value, opts}
-    defp extract_date_constraint(value), do: {value, []}
   end
 
   defimpl Zoi.Validations.Lte do
-    def validate(%{lte: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {max, custom_opts} = extract_date_constraint(schema.lte)
+      {max, custom_opts} = schema.lte
       opts = Keyword.merge(opts, custom_opts)
 
       case Date.compare(input, max) do
@@ -116,19 +122,13 @@ defmodule Zoi.Types.Date do
     end
 
     def set(schema, value, opts \\ []) do
-      lte = if opts[:error], do: {value, opts}, else: value
-      %{schema | lte: lte}
+      %{schema | lte: {value, opts}}
     end
-
-    defp extract_date_constraint({value, opts}) when is_list(opts), do: {value, opts}
-    defp extract_date_constraint(value), do: {value, []}
   end
 
   defimpl Zoi.Validations.Gt do
-    def validate(%{gt: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {gt, custom_opts} = extract_date_constraint(schema.gt)
+      {gt, custom_opts} = schema.gt
       opts = Keyword.merge(opts, custom_opts)
 
       case Date.compare(input, gt) do
@@ -138,19 +138,13 @@ defmodule Zoi.Types.Date do
     end
 
     def set(schema, value, opts \\ []) do
-      gt = if opts[:error], do: {value, opts}, else: value
-      %{schema | gt: gt}
+      %{schema | gt: {value, opts}}
     end
-
-    defp extract_date_constraint({value, opts}) when is_list(opts), do: {value, opts}
-    defp extract_date_constraint(value), do: {value, []}
   end
 
   defimpl Zoi.Validations.Lt do
-    def validate(%{lt: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {lt, custom_opts} = extract_date_constraint(schema.lt)
+      {lt, custom_opts} = schema.lt
       opts = Keyword.merge(opts, custom_opts)
 
       case Date.compare(input, lt) do
@@ -160,12 +154,8 @@ defmodule Zoi.Types.Date do
     end
 
     def set(schema, value, opts \\ []) do
-      lt = if opts[:error], do: {value, opts}, else: value
-      %{schema | lt: lt}
+      %{schema | lt: {value, opts}}
     end
-
-    defp extract_date_constraint({value, opts}) when is_list(opts), do: {value, opts}
-    defp extract_date_constraint(value), do: {value, []}
   end
 
   defimpl Inspect do

@@ -3,32 +3,34 @@ defmodule Zoi.Types.Array do
 
   use Zoi.Type.Def, fields: [:inner, :min_length, :max_length, :length, coerce: false]
 
-  def opts() do
-    constraint = Zoi.Opts.constraint_schema()
+  alias Zoi.Validations
 
+  def opts() do
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
-      Zoi.Types.Keyword.new(
-        [
-          min_length: constraint,
-          max_length: constraint,
-          length: constraint
-        ],
-        strict: true
-      )
+      min_length:
+        Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
+          description: "array minimum length"
+        ),
+      max_length:
+        Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
+          description: "array maximum length"
+        ),
+      length:
+        Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
+          description: "array exact length"
+        )
     )
   end
 
   def new(inner, opts) when is_struct(inner) do
-    schema = apply_type([inner: inner] ++ opts)
+    {validation_opts, opts} = Keyword.split(opts, [:min_length, :max_length, :length])
 
-    # Ensure length overrides min/max when both are present
-    if Keyword.has_key?(opts, :length) do
-      Zoi.Validations.Length.set(schema, opts[:length])
-    else
-      schema
-    end
+    apply_type([inner: inner] ++ opts)
+    |> Validations.maybe_set_validation(Validations.Gte, validation_opts[:min_length])
+    |> Validations.maybe_set_validation(Validations.Lte, validation_opts[:max_length])
+    |> Validations.maybe_set_validation(Validations.Length, validation_opts[:length])
   end
 
   def new(inner, _opts) do
@@ -106,26 +108,13 @@ defmodule Zoi.Types.Array do
       end
     end
 
-    defp validate_constraints(schema, parsed, opts) do
-      validations = [
-        fn -> Zoi.Validations.Length.validate(schema, parsed, opts) end,
-        fn -> Zoi.Validations.Gte.validate(schema, parsed, opts) end,
-        fn -> Zoi.Validations.Lte.validate(schema, parsed, opts) end
+    defp validate_constraints(schema, input, opts) do
+      [
+        {Validations.Length, schema.length},
+        {Validations.Gte, schema.min_length},
+        {Validations.Lte, schema.max_length}
       ]
-
-      errors =
-        Enum.reduce(validations, [], fn validation, acc ->
-          case validation.() do
-            :ok -> acc
-            {:error, error} -> [error | acc]
-          end
-        end)
-
-      if errors == [] do
-        :ok
-      else
-        {:error, Enum.reverse(errors)}
-      end
+      |> Validations.run_validations(schema, input, opts)
     end
 
     defp has_index_keys?(map) do
@@ -158,10 +147,8 @@ defmodule Zoi.Types.Array do
   end
 
   defimpl Zoi.Validations.Gte do
-    def validate(%{min_length: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {min, custom_opts} = Zoi.Opts.extract_constraint(schema.min_length)
+      {min, custom_opts} = schema.min_length
       opts = Keyword.merge(opts, custom_opts)
 
       if length(input) >= min do
@@ -172,16 +159,13 @@ defmodule Zoi.Types.Array do
     end
 
     def set(schema, value, opts \\ []) do
-      min_length = if opts[:error], do: {value, opts}, else: value
-      %{schema | min_length: min_length, length: nil}
+      %{schema | min_length: {value, opts}, length: nil}
     end
   end
 
   defimpl Zoi.Validations.Lte do
-    def validate(%{max_length: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {max, custom_opts} = Zoi.Opts.extract_constraint(schema.max_length)
+      {max, custom_opts} = schema.max_length
       opts = Keyword.merge(opts, custom_opts)
 
       if length(input) <= max do
@@ -192,28 +176,24 @@ defmodule Zoi.Types.Array do
     end
 
     def set(schema, value, opts \\ []) do
-      max_length = if opts[:error], do: {value, opts}, else: value
-      %{schema | max_length: max_length, length: nil}
+      %{schema | max_length: {value, opts}, length: nil}
     end
   end
 
   defimpl Zoi.Validations.Length do
-    def validate(%{length: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {len, custom_opts} = Zoi.Opts.extract_constraint(schema.length)
+      {length, custom_opts} = schema.length
       opts = Keyword.merge(opts, custom_opts)
 
-      if length(input) == len do
+      if length(input) == length do
         :ok
       else
-        {:error, Zoi.Error.invalid_length(:array, len, opts)}
+        {:error, Zoi.Error.invalid_length(:array, length, opts)}
       end
     end
 
     def set(schema, value, opts \\ []) do
-      length = if opts[:error], do: {value, opts}, else: value
-      %{schema | length: length, min_length: nil, max_length: nil}
+      %{schema | length: {value, opts}, min_length: nil, max_length: nil}
     end
   end
 end

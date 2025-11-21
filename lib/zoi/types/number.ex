@@ -2,27 +2,40 @@ defmodule Zoi.Types.Number do
   @moduledoc false
   use Zoi.Type.Def, fields: [:gte, :lte, :gt, :lt, coerce: false]
 
-  def opts() do
-    constraint = Zoi.Opts.constraint_schema()
+  alias Zoi.Validations
 
+  def opts() do
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
-      Zoi.Types.Keyword.new(
-        [
-          gte: constraint,
-          lte: constraint,
-          gt: constraint,
-          lt: constraint
-        ],
-        strict: true
-      )
+      gte:
+        Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
+          description: "number greater than or equal to"
+        ),
+      lte:
+        Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
+          description: "number less than or equal to"
+        ),
+      gt:
+        Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
+          description: "number greater than"
+        ),
+      lt:
+        Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
+          description: "number less than"
+        )
     )
   end
 
   def new(opts \\ []) do
-    opts = Keyword.merge([coerce: false], opts)
-    apply_type(opts)
+    {validation_opts, opts} = Keyword.split(opts, [:gte, :lte, :gt, :lt])
+
+    opts
+    |> apply_type()
+    |> Validations.maybe_set_validation(Validations.Gte, validation_opts[:gte])
+    |> Validations.maybe_set_validation(Validations.Lte, validation_opts[:lte])
+    |> Validations.maybe_set_validation(Validations.Gt, validation_opts[:gt])
+    |> Validations.maybe_set_validation(Validations.Lt, validation_opts[:lt])
   end
 
   defimpl Zoi.Type do
@@ -56,20 +69,13 @@ defmodule Zoi.Types.Number do
     defp parse_type(_input, _coerce, schema), do: error(schema)
 
     defp validate_constraints(schema, input, opts) do
-      errors =
-        [Zoi.Validations.Gte, Zoi.Validations.Lte, Zoi.Validations.Gt, Zoi.Validations.Lt]
-        |> Enum.reduce([], fn module, acc ->
-          case module.validate(schema, input, opts) do
-            :ok -> acc
-            {:error, error} -> [error | acc]
-          end
-        end)
-
-      if errors == [] do
-        :ok
-      else
-        {:error, Enum.reverse(errors)}
-      end
+      [
+        {Validations.Gte, schema.gte},
+        {Validations.Lte, schema.lte},
+        {Validations.Gt, schema.gt},
+        {Validations.Lt, schema.lt}
+      ]
+      |> Validations.run_validations(schema, input, opts)
     end
 
     defp error(schema) do
@@ -82,10 +88,8 @@ defmodule Zoi.Types.Number do
   end
 
   defimpl Zoi.Validations.Gte do
-    def validate(%{gte: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {min, custom_opts} = Zoi.Opts.extract_constraint(schema.gte)
+      {min, custom_opts} = schema.gte
       opts = Keyword.merge(opts, custom_opts)
 
       if input >= min do
@@ -96,16 +100,13 @@ defmodule Zoi.Types.Number do
     end
 
     def set(schema, value, opts \\ []) do
-      gte = if opts[:error], do: {value, opts}, else: value
-      %{schema | gte: gte}
+      %{schema | gte: {value, opts}}
     end
   end
 
   defimpl Zoi.Validations.Lte do
-    def validate(%{lte: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {max, custom_opts} = Zoi.Opts.extract_constraint(schema.lte)
+      {max, custom_opts} = schema.lte
       opts = Keyword.merge(opts, custom_opts)
 
       if input <= max do
@@ -116,16 +117,13 @@ defmodule Zoi.Types.Number do
     end
 
     def set(schema, value, opts \\ []) do
-      lte = if opts[:error], do: {value, opts}, else: value
-      %{schema | lte: lte}
+      %{schema | lte: {value, opts}}
     end
   end
 
   defimpl Zoi.Validations.Gt do
-    def validate(%{gt: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {gt, custom_opts} = Zoi.Opts.extract_constraint(schema.gt)
+      {gt, custom_opts} = schema.gt
       opts = Keyword.merge(opts, custom_opts)
 
       if input > gt do
@@ -136,16 +134,13 @@ defmodule Zoi.Types.Number do
     end
 
     def set(schema, value, opts \\ []) do
-      gt = if opts[:error], do: {value, opts}, else: value
-      %{schema | gt: gt}
+      %{schema | gt: {value, opts}}
     end
   end
 
   defimpl Zoi.Validations.Lt do
-    def validate(%{lt: nil}, _input, _opts), do: :ok
-
     def validate(schema, input, opts) do
-      {lt, custom_opts} = Zoi.Opts.extract_constraint(schema.lt)
+      {lt, custom_opts} = schema.lt
       opts = Keyword.merge(opts, custom_opts)
 
       if input < lt do
@@ -156,8 +151,7 @@ defmodule Zoi.Types.Number do
     end
 
     def set(schema, value, opts \\ []) do
-      lt = if opts[:error], do: {value, opts}, else: value
-      %{schema | lt: lt}
+      %{schema | lt: {value, opts}}
     end
   end
 

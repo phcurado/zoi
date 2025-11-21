@@ -90,10 +90,11 @@ defmodule Zoi.Inspect do
   end
 
   defp inspect_string(type, inspect_opts, opts) do
-    extra_fields =
-      Enum.map([:min_length, :max_length, :length], fn field ->
-        {field, Zoi.Opts.unwrap_value(Map.get(type, field))}
-      end)
+    extra_fields = [
+      min_length: Zoi.Validations.unwrap_validation(type.min_length),
+      max_length: Zoi.Validations.unwrap_validation(type.max_length),
+      length: Zoi.Validations.unwrap_validation(type.length)
+    ]
 
     opts = add_extra(opts, extra_fields)
     do_inspect_type(type, inspect_opts, opts)
@@ -102,10 +103,10 @@ defmodule Zoi.Inspect do
   defp inspect_integer(type, inspect_opts, opts) do
     extra_fields =
       [
-        gte: Zoi.Opts.unwrap_value(type.gte),
-        lte: Zoi.Opts.unwrap_value(type.lte),
-        gt: Zoi.Opts.unwrap_value(type.gt),
-        lt: Zoi.Opts.unwrap_value(type.lt)
+        gte: Zoi.Validations.unwrap_validation(type.gte),
+        lte: Zoi.Validations.unwrap_validation(type.lte),
+        gt: Zoi.Validations.unwrap_validation(type.gt),
+        lt: Zoi.Validations.unwrap_validation(type.lt)
       ]
 
     opts = add_extra(opts, extra_fields)
@@ -116,9 +117,9 @@ defmodule Zoi.Inspect do
     extra_fields =
       [
         inner: inspect_type(type.inner, inspect_opts),
-        min_length: Zoi.Opts.unwrap_value(type.min_length),
-        max_length: Zoi.Opts.unwrap_value(type.max_length),
-        length: Zoi.Opts.unwrap_value(type.length)
+        min_length: Zoi.Validations.unwrap_validation(type.min_length),
+        max_length: Zoi.Validations.unwrap_validation(type.max_length),
+        length: Zoi.Validations.unwrap_validation(type.length)
       ]
 
     opts = add_extra(opts, extra_fields)
