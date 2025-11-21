@@ -312,15 +312,24 @@ defmodule Zoi.JSONSchema do
 
   # Protocol MFAs - String
 
-  defp encode_refinement({Zoi.Validations.Gte, :validate, [value, _opts]}, %{type: :string} = json_schema) do
+  defp encode_refinement(
+         {Zoi.Validations.Gte, :validate, [value, _opts]},
+         %{type: :string} = json_schema
+       ) do
     Map.put(json_schema, :minLength, value)
   end
 
-  defp encode_refinement({Zoi.Validations.Lte, :validate, [value, _opts]}, %{type: :string} = json_schema) do
+  defp encode_refinement(
+         {Zoi.Validations.Lte, :validate, [value, _opts]},
+         %{type: :string} = json_schema
+       ) do
     Map.put(json_schema, :maxLength, value)
   end
 
-  defp encode_refinement({Zoi.Validations.Length, :validate, [value, _opts]}, %{type: :string} = json_schema) do
+  defp encode_refinement(
+         {Zoi.Validations.Length, :validate, [value, _opts]},
+         %{type: :string} = json_schema
+       ) do
     json_schema
     |> Map.put(:minLength, value)
     |> Map.put(:maxLength, value)
@@ -328,45 +337,72 @@ defmodule Zoi.JSONSchema do
 
   # Protocol MFAs - Numeric (integer and number)
 
-  defp encode_refinement({Zoi.Validations.Gte, :validate, [value, _opts]}, %{type: type} = json_schema)
+  defp encode_refinement(
+         {Zoi.Validations.Gte, :validate, [value, _opts]},
+         %{type: type} = json_schema
+       )
        when type in [:integer, :number] do
     Map.put(json_schema, :minimum, value)
   end
 
-  defp encode_refinement({Zoi.Validations.Gt, :validate, [value, _opts]}, %{type: type} = json_schema)
+  defp encode_refinement(
+         {Zoi.Validations.Gt, :validate, [value, _opts]},
+         %{type: type} = json_schema
+       )
        when type in [:integer, :number] do
     Map.put(json_schema, :exclusiveMinimum, value)
   end
 
-  defp encode_refinement({Zoi.Validations.Lte, :validate, [value, _opts]}, %{type: type} = json_schema)
+  defp encode_refinement(
+         {Zoi.Validations.Lte, :validate, [value, _opts]},
+         %{type: type} = json_schema
+       )
        when type in [:integer, :number] do
     Map.put(json_schema, :maximum, value)
   end
 
-  defp encode_refinement({Zoi.Validations.Lt, :validate, [value, _opts]}, %{type: type} = json_schema)
+  defp encode_refinement(
+         {Zoi.Validations.Lt, :validate, [value, _opts]},
+         %{type: type} = json_schema
+       )
        when type in [:integer, :number] do
     Map.put(json_schema, :exclusiveMaximum, value)
   end
 
   # Protocol MFAs - Array
 
-  defp encode_refinement({Zoi.Validations.Gte, :validate, [value, _opts]}, %{type: :array} = json_schema) do
+  defp encode_refinement(
+         {Zoi.Validations.Gte, :validate, [value, _opts]},
+         %{type: :array} = json_schema
+       ) do
     Map.put(json_schema, :minItems, value)
   end
 
-  defp encode_refinement({Zoi.Validations.Gt, :validate, [value, _opts]}, %{type: :array} = json_schema) do
+  defp encode_refinement(
+         {Zoi.Validations.Gt, :validate, [value, _opts]},
+         %{type: :array} = json_schema
+       ) do
     Map.put(json_schema, :minItems, value + 1)
   end
 
-  defp encode_refinement({Zoi.Validations.Lte, :validate, [value, _opts]}, %{type: :array} = json_schema) do
+  defp encode_refinement(
+         {Zoi.Validations.Lte, :validate, [value, _opts]},
+         %{type: :array} = json_schema
+       ) do
     Map.put(json_schema, :maxItems, value)
   end
 
-  defp encode_refinement({Zoi.Validations.Lt, :validate, [value, _opts]}, %{type: :array} = json_schema) do
+  defp encode_refinement(
+         {Zoi.Validations.Lt, :validate, [value, _opts]},
+         %{type: :array} = json_schema
+       ) do
     Map.put(json_schema, :maxItems, value - 1)
   end
 
-  defp encode_refinement({Zoi.Validations.Length, :validate, [value, _opts]}, %{type: :array} = json_schema) do
+  defp encode_refinement(
+         {Zoi.Validations.Length, :validate, [value, _opts]},
+         %{type: :array} = json_schema
+       ) do
     json_schema
     |> Map.put(:minItems, value)
     |> Map.put(:maxItems, value)
