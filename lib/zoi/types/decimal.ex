@@ -7,24 +7,30 @@ if Code.ensure_loaded?(Decimal) do
     alias Zoi.Validations
 
     def opts() do
+      error = "invalid type: expected decimal"
+
       Zoi.Opts.meta_opts()
       |> Zoi.Opts.with_coerce()
       |> Zoi.Types.Extend.new(
         gte:
-          Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-            description: "decimal greater than or equal to"
+          Zoi.Opts.constraint_schema(Zoi.Types.Decimal.new([]),
+            description: "decimal greater than or equal to",
+            error: error
           ),
         lte:
-          Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-            description: "decimal less than or equal to"
+          Zoi.Opts.constraint_schema(Zoi.Types.Decimal.new([]),
+            description: "decimal less than or equal to",
+            error: error
           ),
         gt:
-          Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-            description: "decimal greater than"
+          Zoi.Opts.constraint_schema(Zoi.Types.Decimal.new([]),
+            description: "decimal greater than",
+            error: error
           ),
         lt:
-          Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-            description: "decimal less than"
+          Zoi.Opts.constraint_schema(Zoi.Types.Decimal.new([]),
+            description: "decimal less than",
+            error: error
           )
       )
     end

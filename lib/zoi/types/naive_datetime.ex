@@ -5,24 +5,30 @@ defmodule Zoi.Types.NaiveDateTime do
   alias Zoi.Validations
 
   def opts() do
+    error = "invalid type: expected naive datetime"
+
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
       gte:
         Zoi.Opts.constraint_schema(Zoi.Types.NaiveDateTime.new([]),
-          description: "naive datetime minimum value"
+          description: "naive datetime minimum value",
+          error: error
         ),
       lte:
         Zoi.Opts.constraint_schema(Zoi.Types.NaiveDateTime.new([]),
-          description: "naive datetime maximum value"
+          description: "naive datetime maximum value",
+          error: error
         ),
       gt:
         Zoi.Opts.constraint_schema(Zoi.Types.NaiveDateTime.new([]),
-          description: "naive datetime greater than value"
+          description: "naive datetime greater than value",
+          error: error
         ),
       lt:
         Zoi.Opts.constraint_schema(Zoi.Types.NaiveDateTime.new([]),
-          description: "naive datetime less than value"
+          description: "naive datetime less than value",
+          error: error
         )
     )
   end

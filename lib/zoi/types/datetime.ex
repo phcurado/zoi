@@ -5,24 +5,30 @@ defmodule Zoi.Types.DateTime do
   alias Zoi.Validations
 
   def opts() do
+    error = "invalid type: expected datetime"
+
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
       gte:
         Zoi.Opts.constraint_schema(Zoi.Types.DateTime.new([]),
-          description: "datetime minimum value"
+          description: "datetime minimum value",
+          error: error
         ),
       lte:
         Zoi.Opts.constraint_schema(Zoi.Types.DateTime.new([]),
-          description: "datetime maximum value"
+          description: "datetime maximum value",
+          error: error
         ),
       gt:
         Zoi.Opts.constraint_schema(Zoi.Types.DateTime.new([]),
-          description: "datetime greater than value"
+          description: "datetime greater than value",
+          error: error
         ),
       lt:
         Zoi.Opts.constraint_schema(Zoi.Types.DateTime.new([]),
-          description: "datetime less than value"
+          description: "datetime less than value",
+          error: error
         )
     )
   end

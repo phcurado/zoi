@@ -6,20 +6,25 @@ defmodule Zoi.Types.Array do
   alias Zoi.Validations
 
   def opts() do
+    error = "invalid type: expected integer"
+
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
       min_length:
         Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-          description: "array minimum length"
+          description: "array minimum length",
+          error: error
         ),
       max_length:
         Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-          description: "array maximum length"
+          description: "array maximum length",
+          error: error
         ),
       length:
         Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-          description: "array exact length"
+          description: "array exact length",
+          error: error
         )
     )
   end

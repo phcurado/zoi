@@ -5,24 +5,30 @@ defmodule Zoi.Types.Time do
   alias Zoi.Validations
 
   def opts() do
+    error = "invalid type: expected time"
+
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
       gte:
         Zoi.Opts.constraint_schema(Zoi.Types.Time.new([]),
-          description: "time minimum value"
+          description: "time minimum value",
+          error: error
         ),
       lte:
         Zoi.Opts.constraint_schema(Zoi.Types.Time.new([]),
-          description: "time maximum value"
+          description: "time maximum value",
+          error: error
         ),
       gt:
         Zoi.Opts.constraint_schema(Zoi.Types.Time.new([]),
-          description: "time greater than value"
+          description: "time greater than value",
+          error: error
         ),
       lt:
         Zoi.Opts.constraint_schema(Zoi.Types.Time.new([]),
-          description: "time less than value"
+          description: "time less than value",
+          error: error
         )
     )
   end

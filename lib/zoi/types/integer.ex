@@ -6,24 +6,30 @@ defmodule Zoi.Types.Integer do
   alias Zoi.Validations
 
   def opts() do
+    error = "invalid type: expected integer"
+
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
       gte:
         Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-          description: "integer greater than or equal to"
+          description: "integer greater than or equal to",
+          error: error
         ),
       lte:
         Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-          description: "integer less than or equal to"
+          description: "integer less than or equal to",
+          error: error
         ),
       gt:
         Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-          description: "integer greater than"
+          description: "integer greater than",
+          error: error
         ),
       lt:
         Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
-          description: "integer less than"
+          description: "integer less than",
+          error: error
         )
     )
   end

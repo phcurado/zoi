@@ -6,24 +6,30 @@ defmodule Zoi.Types.Float do
   alias Zoi.Validations
 
   def opts() do
+    error = "invalid type: expected number"
+
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
       gte:
         Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
-          description: "float greater than or equal to"
+          description: "float greater than or equal to",
+          error: error
         ),
       lte:
         Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
-          description: "float less than or equal to"
+          description: "float less than or equal to",
+          error: error
         ),
       gt:
         Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
-          description: "float greater than"
+          description: "float greater than",
+          error: error
         ),
       lt:
         Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
-          description: "float less than"
+          description: "float less than",
+          error: error
         )
     )
   end

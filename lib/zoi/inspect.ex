@@ -10,7 +10,25 @@ defmodule Zoi.Inspect do
     do: inspect_string(type, inspect_opts, opts)
 
   def inspect_type(%Zoi.Types.Integer{} = type, inspect_opts, opts),
-    do: inspect_integer(type, inspect_opts, opts)
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.Float{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.Number{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.Date{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.Time{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.DateTime{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.NaiveDateTime{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
 
   def inspect_type(%Zoi.Types.Array{} = type, inspect_opts, opts),
     do: inspect_array(type, inspect_opts, opts)
@@ -100,7 +118,7 @@ defmodule Zoi.Inspect do
     do_inspect_type(type, inspect_opts, opts)
   end
 
-  defp inspect_integer(type, inspect_opts, opts) do
+  defp inspect_numeric(type, inspect_opts, opts) do
     extra_fields =
       [
         gte: Zoi.Validations.unwrap_validation(type.gte),

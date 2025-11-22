@@ -5,24 +5,30 @@ defmodule Zoi.Types.Date do
   alias Zoi.Validations
 
   def opts() do
+    error = "invalid type: expected date"
+
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
     |> Zoi.Types.Extend.new(
       gte:
         Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
-          description: "date minimum value"
+          description: "date minimum value",
+          error: error
         ),
       lte:
         Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
-          description: "date maximum value"
+          description: "date maximum value",
+          error: error
         ),
       gt:
         Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
-          description: "date greater than value"
+          description: "date greater than value",
+          error: error
         ),
       lt:
         Zoi.Opts.constraint_schema(Zoi.Types.Date.new([]),
-          description: "date less than value"
+          description: "date less than value",
+          error: error
         )
     )
   end
