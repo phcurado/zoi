@@ -306,10 +306,6 @@ defmodule Zoi.JSONSchema do
     [{protocol, :validate, [value, opts]} | constraints]
   end
 
-  defp maybe_add_constraint(constraints, protocol, value) do
-    [{protocol, :validate, [value, []]} | constraints]
-  end
-
   # Protocol MFAs - String
 
   defp encode_refinement(
@@ -379,24 +375,10 @@ defmodule Zoi.JSONSchema do
   end
 
   defp encode_refinement(
-         {Zoi.Validations.Gt, :validate, [value, _opts]},
-         %{type: :array} = json_schema
-       ) do
-    Map.put(json_schema, :minItems, value + 1)
-  end
-
-  defp encode_refinement(
          {Zoi.Validations.Lte, :validate, [value, _opts]},
          %{type: :array} = json_schema
        ) do
     Map.put(json_schema, :maxItems, value)
-  end
-
-  defp encode_refinement(
-         {Zoi.Validations.Lt, :validate, [value, _opts]},
-         %{type: :array} = json_schema
-       ) do
-    Map.put(json_schema, :maxItems, value - 1)
   end
 
   defp encode_refinement(

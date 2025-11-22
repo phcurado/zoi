@@ -2575,6 +2575,18 @@ defmodule ZoiTest do
       assert error.code == :custom
       assert Exception.message(error) == "must be > 10"
     end
+
+    test "gt after transform" do
+      schema =
+        Zoi.integer()
+        |> Zoi.transform(fn x -> x + 1 end)
+        |> Zoi.gt(10)
+
+      assert {:ok, 11} == Zoi.parse(schema, 10)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 9)
+      assert error.code == :greater_than
+      assert Exception.message(error) == "too small: must be greater than 10"
+    end
   end
 
   describe "max/2" do

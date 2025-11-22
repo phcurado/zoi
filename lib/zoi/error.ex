@@ -411,7 +411,7 @@ defmodule Zoi.Error do
         message: "too small: must be greater than 5"
       }
   """
-  @spec greater_than(:array | :number | :date, any(), keyword()) :: t()
+  @spec greater_than(:number | :date, any(), keyword()) :: t()
   def greater_than(type, min, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
@@ -420,7 +420,6 @@ defmodule Zoi.Error do
     else
       message =
         case type do
-          :array -> "too small: must be greater than %{count} item(s)"
           :number -> "too small: must be greater than %{count}"
           :date -> "too small: must be greater than %{count}"
         end
@@ -444,7 +443,7 @@ defmodule Zoi.Error do
         message: "too big: must be less than 10"
       }
   """
-  @spec less_than(:array | :number | :date, any(), keyword()) :: t()
+  @spec less_than(:number | :date, any(), keyword()) :: t()
   def less_than(type, max, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
@@ -453,7 +452,6 @@ defmodule Zoi.Error do
     else
       message =
         case type do
-          :array -> "too big: must be less than %{count} item(s)"
           :number -> "too big: must be less than %{count}"
           :date -> "too big: must be less than %{count}"
         end
