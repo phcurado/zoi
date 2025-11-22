@@ -1,38 +1,79 @@
 defmodule Zoi.Types.Float do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [coerce: false]
+  use Zoi.Type.Def, fields: [:gte, :lte, :gt, :lt, coerce: false]
+
+  alias Zoi.Validations
 
   def opts() do
+    error = "invalid type: expected number"
+
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
+    |> Zoi.Types.Extend.new(
+      gte:
+        Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
+          description: "float greater than or equal to",
+          error: error
+        ),
+      lte:
+        Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
+          description: "float less than or equal to",
+          error: error
+        ),
+      gt:
+        Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
+          description: "float greater than",
+          error: error
+        ),
+      lt:
+        Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
+          description: "float less than",
+          error: error
+        )
+    )
   end
 
   def new(opts \\ []) do
-    apply_type(opts)
+    {validation_opts, opts} = Keyword.split(opts, [:gte, :lte, :gt, :lt])
+
+    opts
+    |> apply_type()
+    |> Validations.maybe_set_validation(Validations.Gte, validation_opts[:gte])
+    |> Validations.maybe_set_validation(Validations.Lte, validation_opts[:lte])
+    |> Validations.maybe_set_validation(Validations.Gt, validation_opts[:gt])
+    |> Validations.maybe_set_validation(Validations.Lt, validation_opts[:lt])
   end
 
   defimpl Zoi.Type do
     def parse(schema, input, opts) do
       coerce = Keyword.get(opts, :coerce, schema.coerce)
 
-      cond do
-        is_float(input) ->
-          {:ok, input}
-
-        coerce and is_binary(input) ->
-          coerce_integer(schema, input)
-
-        true ->
-          error(schema)
+      with {:ok, parsed} <- parse_type(input, coerce, schema),
+           :ok <- validate_constraints(schema, parsed) do
+        {:ok, parsed}
       end
     end
 
-    defp coerce_integer(schema, input) do
+    defp parse_type(input, _coerce, _schema) when is_float(input), do: {:ok, input}
+
+    defp parse_type(input, true, schema) when is_binary(input) do
       case Float.parse(input) do
         {float, ""} -> {:ok, float}
         _error -> error(schema)
       end
+    end
+
+    defp parse_type(_input, _coerce, schema), do: error(schema)
+
+    defp validate_constraints(schema, input) do
+      [
+        {Validations.Gte, schema.gte},
+        {Validations.Lte, schema.lte},
+        {Validations.Gt, schema.gt},
+        {Validations.Lt, schema.lt}
+      ]
+      |> Validations.run_validations(schema, input)
     end
 
     defp error(schema) do
@@ -41,6 +82,62 @@ defmodule Zoi.Types.Float do
 
     def type_spec(_schema, _opts) do
       quote(do: float())
+    end
+  end
+
+  defimpl Zoi.Validations.Gte do
+    def set(schema, value, opts \\ []) do
+      %{schema | gte: {value, opts}}
+    end
+
+    def validate(_schema, input, value, opts) do
+      if input >= value do
+        :ok
+      else
+        {:error, Zoi.Error.greater_than_or_equal_to(:number, value, opts)}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.Lte do
+    def set(schema, value, opts \\ []) do
+      %{schema | lte: {value, opts}}
+    end
+
+    def validate(_schema, input, value, opts) do
+      if input <= value do
+        :ok
+      else
+        {:error, Zoi.Error.less_than_or_equal_to(:number, value, opts)}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.Gt do
+    def set(schema, value, opts \\ []) do
+      %{schema | gt: {value, opts}}
+    end
+
+    def validate(_schema, input, value, opts) do
+      if input > value do
+        :ok
+      else
+        {:error, Zoi.Error.greater_than(:number, value, opts)}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.Lt do
+    def set(schema, value, opts \\ []) do
+      %{schema | lt: {value, opts}}
+    end
+
+    def validate(_schema, input, value, opts) do
+      if input < value do
+        :ok
+      else
+        {:error, Zoi.Error.less_than(:number, value, opts)}
+      end
     end
   end
 

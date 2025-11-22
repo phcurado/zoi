@@ -6,6 +6,35 @@ defmodule Zoi.Inspect do
   @spec inspect_type(Zoi.schema(), Inspect.Opts.t(), keyword()) :: Inspect.Algebra.t()
   def inspect_type(type, inspect_opts, opts \\ [])
 
+  def inspect_type(%Zoi.Types.String{} = type, inspect_opts, opts),
+    do: inspect_string(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.Integer{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.Float{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.Number{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.Date{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.Time{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.DateTime{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  def inspect_type(%Zoi.Types.NaiveDateTime{} = type, inspect_opts, opts),
+    do: inspect_numeric(type, inspect_opts, opts)
+
+  if Code.ensure_loaded?(Decimal) do
+    def inspect_type(%Zoi.Types.Decimal{} = type, inspect_opts, opts),
+      do: inspect_numeric(type, inspect_opts, opts)
+  end
+
   def inspect_type(%Zoi.Types.Array{} = type, inspect_opts, opts),
     do: inspect_array(type, inspect_opts, opts)
 
@@ -45,7 +74,7 @@ defmodule Zoi.Inspect do
   # Default to other types
   def inspect_type(type, inspect_opts, opts), do: do_inspect_type(type, inspect_opts, opts)
 
-  defp do_inspect_type(type, inspect_opts, opts) do
+  def do_inspect_type(type, inspect_opts, opts) do
     name = inspect_name(type)
 
     list =
@@ -83,8 +112,40 @@ defmodule Zoi.Inspect do
     end
   end
 
+  defp inspect_string(type, inspect_opts, opts) do
+    extra_fields = [
+      min_length: Zoi.Validations.unwrap_validation(type.min_length),
+      max_length: Zoi.Validations.unwrap_validation(type.max_length),
+      length: Zoi.Validations.unwrap_validation(type.length)
+    ]
+
+    opts = add_extra(opts, extra_fields)
+    do_inspect_type(type, inspect_opts, opts)
+  end
+
+  defp inspect_numeric(type, inspect_opts, opts) do
+    extra_fields =
+      [
+        gte: Zoi.Validations.unwrap_validation(type.gte),
+        lte: Zoi.Validations.unwrap_validation(type.lte),
+        gt: Zoi.Validations.unwrap_validation(type.gt),
+        lt: Zoi.Validations.unwrap_validation(type.lt)
+      ]
+
+    opts = add_extra(opts, extra_fields)
+    do_inspect_type(type, inspect_opts, opts)
+  end
+
   defp inspect_array(type, inspect_opts, opts) do
-    opts = add_extra(opts, inner: inspect_type(type.inner, inspect_opts))
+    extra_fields =
+      [
+        inner: inspect_type(type.inner, inspect_opts),
+        min_length: Zoi.Validations.unwrap_validation(type.min_length),
+        max_length: Zoi.Validations.unwrap_validation(type.max_length),
+        length: Zoi.Validations.unwrap_validation(type.length)
+      ]
+
+    opts = add_extra(opts, extra_fields)
     do_inspect_type(type, inspect_opts, opts)
   end
 
@@ -211,6 +272,11 @@ defmodule Zoi.Inspect do
   end
 
   defp add_extra(opts, opts_to_add) do
-    Keyword.put(opts, :extra_fields, opts_to_add)
+    {_, val} =
+      Keyword.get_and_update(opts, :extra_fields, fn current_value ->
+        {current_value, Keyword.merge(current_value || [], opts_to_add)}
+      end)
+
+    val
   end
 end

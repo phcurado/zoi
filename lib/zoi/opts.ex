@@ -66,4 +66,22 @@ defmodule Zoi.Opts do
       description: "List of values to treat as empty and skip during parsing."
     )
   end
+
+  ## Constraint Helpers
+
+  @spec constraint_schema(Zoi.Type.t(), keyword()) :: Zoi.Type.t()
+  def constraint_schema(internal_schema, opts \\ []) do
+    custom_opts = Zoi.Types.Keyword.new([error: error()], strict: true)
+
+    Zoi.Types.Union.new(
+      [
+        internal_schema,
+        Zoi.Types.Tuple.new(
+          {internal_schema, custom_opts},
+          []
+        )
+      ],
+      opts
+    )
+  end
 end

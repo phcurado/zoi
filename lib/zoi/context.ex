@@ -50,11 +50,13 @@ defmodule Zoi.Context do
       {:ok, result} ->
         {:ok, add_parsed(ctx, result)}
 
-      {:error, error} ->
-        {:error, add_error(ctx, error)}
-
       {:error, error, partial} ->
+        # Type explicitly provided partial (Objects, Arrays, etc)
         {:error, ctx |> add_parsed(partial) |> add_error(error)}
+
+      {:error, error} ->
+        # Type didn't provide partial - preserve original input
+        {:error, ctx |> add_parsed(ctx.input) |> add_error(error)}
     end
   end
 

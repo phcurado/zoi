@@ -152,7 +152,7 @@ defmodule Zoi do
   @type input :: any()
 
   @typedoc "The result of parsing, either `{:ok, value}` or `{:error, errors}`."
-  @type result :: {:ok, any()} | {:error, [Zoi.Error.t() | binary()]}
+  @type result :: {:ok, any()} | {:error, [Zoi.Error.t()]}
 
   @typedoc "Options for parsing and schema definitions."
   @type options :: keyword()
@@ -552,13 +552,31 @@ defmodule Zoi do
       Zoi.ends_with("world")
       Zoi.regex(~r/^[a-zA-Z]+$/)
 
+  You can also pass validation constraints directly when creating a string schema:
+
+      iex> schema = Zoi.string(min_length: 2, max_length: 100)
+      iex> Zoi.parse(schema, "hello")
+      {:ok, "hello"}
+      iex> Zoi.parse(schema, "h")
+      {:error,
+       [
+         %Zoi.Error{
+           code: :greater_than_or_equal_to,
+           issue: {"too small: must have at least %{count} character(s)", [count: 2]},
+           message: "too small: must have at least 2 character(s)",
+           path: []
+         }
+       ]}
+
   Additionally it can perform data transformation:
+
       Zoi.string()
       |> Zoi.trim()
       |> Zoi.to_downcase()
       |> Zoi.to_uppercase()
 
   for coercion, you can pass the `:coerce` option:
+
       iex> Zoi.string(coerce: true) |> Zoi.parse(123)
       {:ok, "123"}
 
@@ -575,7 +593,7 @@ defmodule Zoi do
   end
 
   @doc """
-  Defines a number type schema.
+  Defines an integer type schema.
 
   ## Example
 
@@ -593,7 +611,17 @@ defmodule Zoi do
          }
        ]}
 
+  You can pass constraint options directly in the constructor:
+
+      iex> schema = Zoi.integer(gte: 0, lte: 100)
+      iex> Zoi.parse(schema, 50)
+      {:ok, 50}
+      iex> {:error, [%{code: code}]} = Zoi.parse(schema, -5)
+      iex> code
+      :greater_than_or_equal_to
+
   For coercion, you can pass the `:coerce` option:
+
       iex> Zoi.integer(coerce: true) |> Zoi.parse("42")
       {:ok, 42}
 
@@ -618,11 +646,17 @@ defmodule Zoi do
       iex> Zoi.parse(schema, 3.14)
       {:ok, 3.14}
 
-  Built-in validations for floats include:
-      Zoi.min(0.0)
-      Zoi.max(100.0)
+  You can pass constraint options directly in the constructor:
+
+      iex> schema = Zoi.float(gte: 0.0, lte: 1.0)
+      iex> Zoi.parse(schema, 0.5)
+      {:ok, 0.5}
+      iex> {:error, [%{code: code}]} = Zoi.parse(schema, 1.5)
+      iex> code
+      :less_than_or_equal_to
 
   For coercion, you can pass the `:coerce` option:
+
       iex> Zoi.float(coerce: true) |> Zoi.parse("3.14")
       {:ok, 3.14}
 
@@ -639,9 +673,10 @@ defmodule Zoi do
   end
 
   @doc """
-  Defines the numeric type schema.
+  Defines a numeric type schema.
 
-  This type is a union of `Zoi.integer()` and `Zoi.float()`, allowing you to validate both integers and floats.
+  This type accepts both integers and floats.
+
   ## Example
 
       iex> schema = Zoi.number()
@@ -659,6 +694,15 @@ defmodule Zoi do
            path: []
          }
        ]}
+
+  You can pass constraint options directly in the constructor:
+
+      iex> schema = Zoi.number(gte: 0, lte: 100)
+      iex> Zoi.parse(schema, 50.5)
+      {:ok, 50.5}
+      iex> {:error, [%{code: code}]} = Zoi.parse(schema, -1)
+      iex> code
+      :greater_than_or_equal_to
 
   ## Options
 
@@ -1649,7 +1693,17 @@ defmodule Zoi do
          }
        ]}
 
+  You can pass constraint options directly in the constructor:
+
+      iex> schema = Zoi.date(gte: ~D[2020-01-01], lte: ~D[2025-12-31])
+      iex> Zoi.parse(schema, ~D[2023-06-15])
+      {:ok, ~D[2023-06-15]}
+      iex> {:error, [%{code: code}]} = Zoi.parse(schema, ~D[2019-01-01])
+      iex> code
+      :greater_than_or_equal_to
+
   You can also specify the `:coerce` option to allow coercion from strings or integers:
+
       iex> schema = Zoi.date(coerce: true)
       iex> Zoi.parse(schema, "2000-01-01")
       {:ok, ~D[2000-01-01]}
@@ -1689,7 +1743,17 @@ defmodule Zoi do
          }
        ]}
 
+  You can pass constraint options directly in the constructor:
+
+      iex> schema = Zoi.time(gte: ~T[09:00:00], lte: ~T[17:00:00])
+      iex> Zoi.parse(schema, ~T[12:00:00])
+      {:ok, ~T[12:00:00]}
+      iex> {:error, [%{code: code}]} = Zoi.parse(schema, ~T[08:00:00])
+      iex> code
+      :greater_than_or_equal_to
+
   You can also specify the `:coerce` option to allow coercion from strings:
+
       iex> schema = Zoi.time(coerce: true)
       iex> Zoi.parse(schema, "12:34:56")
       {:ok, ~T[12:34:56]}
@@ -1712,6 +1776,7 @@ defmodule Zoi do
   This type is used to validate and parse DateTime values. It will convert the input to a `DateTime` structure.
 
   ## Example
+
       iex> schema = Zoi.datetime()
       iex> Zoi.parse(schema, ~U[2000-01-01 12:34:56Z])
       {:ok, ~U[2000-01-01 12:34:56Z]}
@@ -1726,7 +1791,17 @@ defmodule Zoi do
          }
        ]}
 
+  You can pass constraint options directly in the constructor:
+
+      iex> schema = Zoi.datetime(gte: ~U[2020-01-01 00:00:00Z])
+      iex> Zoi.parse(schema, ~U[2023-06-15 12:00:00Z])
+      {:ok, ~U[2023-06-15 12:00:00Z]}
+      iex> {:error, [%{code: code}]} = Zoi.parse(schema, ~U[2019-01-01 00:00:00Z])
+      iex> code
+      :greater_than_or_equal_to
+
   You can also specify the `:coerce` option to allow coercion from strings or integers:
+
       iex> schema = Zoi.datetime(coerce: true)
       iex> Zoi.parse(schema, "2000-01-01T12:34:56Z")
       {:ok, ~U[2000-01-01 12:34:56Z]}
@@ -1766,7 +1841,17 @@ defmodule Zoi do
          }
        ]}
 
+  You can pass constraint options directly in the constructor:
+
+      iex> schema = Zoi.naive_datetime(gte: ~N[2020-01-01 00:00:00])
+      iex> Zoi.parse(schema, ~N[2023-06-15 12:00:00])
+      {:ok, ~N[2023-06-15 12:00:00]}
+      iex> {:error, [%{code: code}]} = Zoi.parse(schema, ~N[2019-01-01 00:00:00])
+      iex> code
+      :greater_than_or_equal_to
+
   You can also specify the `:coerce` option to allow coercion from strings or integers:
+
       iex> schema = Zoi.naive_datetime(coerce: true)
       iex> Zoi.parse(schema, "2000-01-01T12:34:56")
       {:ok, ~N[2000-01-01 12:34:56]}
@@ -2006,8 +2091,11 @@ defmodule Zoi do
   @spec length(schema :: schema(), length :: non_neg_integer(), opts :: options()) ::
           schema()
   def length(schema, length, opts \\ []) do
-    schema
-    |> refine({Zoi.Refinements, :refine, [[length: length], opts]})
+    if Enum.empty?(schema.meta.effects) do
+      Zoi.Validations.Length.set(schema, length, opts)
+    else
+      refine(schema, {Zoi.Validations.Length, :validate, [length, opts]})
+    end
   end
 
   @doc ~S"""
@@ -2049,7 +2137,7 @@ defmodule Zoi do
   alias for `Zoi.gte/2`
   """
   @doc group: "Refinements"
-  @spec min(schema :: schema(), min :: non_neg_integer(), opts :: options()) :: schema()
+  @spec min(schema :: schema(), min :: number(), opts :: options()) :: schema()
   def min(schema, min, opts \\ []) do
     __MODULE__.gte(schema, min, opts)
   end
@@ -2075,10 +2163,13 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec gte(schema :: schema(), min :: non_neg_integer(), opts :: options()) :: schema()
+  @spec gte(schema :: schema(), gte :: number(), opts :: options()) :: schema()
   def gte(schema, gte, opts \\ []) do
-    schema
-    |> refine({Zoi.Refinements, :refine, [[gte: gte], opts]})
+    if Enum.empty?(schema.meta.effects) do
+      Zoi.Validations.Gte.set(schema, gte, opts)
+    else
+      refine(schema, {Zoi.Validations.Gte, :validate, [gte, opts]})
+    end
   end
 
   @doc """
@@ -2102,17 +2193,20 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec gt(schema :: schema(), gt :: non_neg_integer(), opts :: options()) :: schema()
+  @spec gt(schema :: schema(), gt :: number(), opts :: options()) :: schema()
   def gt(schema, gt, opts \\ []) do
-    schema
-    |> refine({Zoi.Refinements, :refine, [[gt: gt], opts]})
+    if Enum.empty?(schema.meta.effects) do
+      Zoi.Validations.Gt.set(schema, gt, opts)
+    else
+      refine(schema, {Zoi.Validations.Gt, :validate, [gt, opts]})
+    end
   end
 
   @doc """
   alias for `Zoi.lte/2`
   """
   @doc group: "Refinements"
-  @spec max(schema :: schema(), max :: non_neg_integer(), opts :: options()) :: schema()
+  @spec max(schema :: schema(), max :: number(), opts :: options()) :: schema()
   def max(schema, max, opts \\ []) do
     lte(schema, max, opts)
   end
@@ -2138,10 +2232,13 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec lte(schema :: schema(), lte :: non_neg_integer(), opts :: options()) :: schema()
+  @spec lte(schema :: schema(), lte :: number(), opts :: options()) :: schema()
   def lte(schema, lte, opts \\ []) do
-    schema
-    |> refine({Zoi.Refinements, :refine, [[lte: lte], opts]})
+    if Enum.empty?(schema.meta.effects) do
+      Zoi.Validations.Lte.set(schema, lte, opts)
+    else
+      refine(schema, {Zoi.Validations.Lte, :validate, [lte, opts]})
+    end
   end
 
   @doc """
@@ -2165,10 +2262,13 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec lt(schema :: schema(), lt :: non_neg_integer(), opts :: options()) :: schema()
+  @spec lt(schema :: schema(), lt :: number(), opts :: options()) :: schema()
   def lt(schema, lt, opts \\ []) do
-    schema
-    |> refine({Zoi.Refinements, :refine, [[lt: lt], opts]})
+    if Enum.empty?(schema.meta.effects) do
+      Zoi.Validations.Lt.set(schema, lt, opts)
+    else
+      refine(schema, {Zoi.Validations.Lt, :validate, [lt, opts]})
+    end
   end
 
   @doc """
@@ -2193,7 +2293,7 @@ defmodule Zoi do
   @spec positive(schema :: schema(), opts :: options()) :: schema()
   def positive(schema, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[gt: 0], opts]})
+    |> refine({Zoi.Validations.Gt, :validate, [0, opts]})
   end
 
   @doc """
@@ -2218,7 +2318,7 @@ defmodule Zoi do
   @spec negative(schema :: schema(), opts :: options()) :: schema()
   def negative(schema, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[lt: 0], opts]})
+    |> refine({Zoi.Validations.Lt, :validate, [0, opts]})
   end
 
   @doc """
@@ -2243,7 +2343,7 @@ defmodule Zoi do
   @spec non_negative(schema :: schema(), opts :: options()) :: schema()
   def non_negative(schema, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[gte: 0], opts]})
+    |> refine({Zoi.Validations.Gte, :validate, [0, opts]})
   end
 
   @doc """
