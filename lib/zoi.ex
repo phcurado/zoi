@@ -2090,29 +2090,12 @@ defmodule Zoi do
   @doc group: "Refinements"
   @spec length(schema :: schema(), length :: non_neg_integer(), opts :: options()) ::
           schema()
-  def length(schema, length, opts \\ [])
-
-  def length(%Zoi.Types.String{} = schema, length, opts) do
+  def length(schema, length, opts \\ []) do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.Length.set(schema, length, opts)
     else
-      schema
-      |> refine({Zoi.Validations.Length, :validate, [length, opts]})
+      refine(schema, {Zoi.Validations.Length, :validate, [length, opts]})
     end
-  end
-
-  def length(%Zoi.Types.Array{} = schema, length, opts) do
-    if Enum.empty?(schema.meta.effects) do
-      Zoi.Validations.Length.set(schema, length, opts)
-    else
-      schema
-      |> refine({Zoi.Validations.Length, :validate, [length, opts]})
-    end
-  end
-
-  def length(schema, length, opts) do
-    schema
-    |> refine({Zoi.Validations.Length, :validate, [length, opts]})
   end
 
   @doc ~S"""
