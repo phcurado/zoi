@@ -30,6 +30,11 @@ defmodule Zoi.Inspect do
   def inspect_type(%Zoi.Types.NaiveDateTime{} = type, inspect_opts, opts),
     do: inspect_numeric(type, inspect_opts, opts)
 
+  if Code.ensure_loaded?(Decimal) do
+    def inspect_type(%Zoi.Types.Decimal{} = type, inspect_opts, opts),
+      do: inspect_numeric(type, inspect_opts, opts)
+  end
+
   def inspect_type(%Zoi.Types.Array{} = type, inspect_opts, opts),
     do: inspect_array(type, inspect_opts, opts)
 

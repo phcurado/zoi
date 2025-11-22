@@ -166,6 +166,18 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{code: :less_than_or_equal_to}]} =
                Zoi.parse(schema, "hello world!")
     end
+
+    test "string length after transform validates after" do
+      schema =
+        Zoi.string()
+        |> Zoi.transform(&String.upcase/1)
+        |> Zoi.length(5)
+
+      assert {:ok, "HELLO"} = Zoi.parse(schema, "hello")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
+      assert error.code == :invalid_length
+    end
   end
 
   describe "integer/1" do
@@ -657,6 +669,35 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
       assert error.code == :custom
       assert Exception.message(error) == "custom union error"
+    end
+
+    test "union with gt/lt/lte/length constraints" do
+      schema = Zoi.union([Zoi.integer(), Zoi.float()]) |> Zoi.gt(3)
+      assert {:ok, 5} = Zoi.parse(schema, 5)
+      assert {:error, _} = Zoi.parse(schema, 3)
+
+      schema = Zoi.union([Zoi.integer(), Zoi.float()]) |> Zoi.lt(5)
+      assert {:ok, 3} = Zoi.parse(schema, 3)
+      assert {:error, _} = Zoi.parse(schema, 5)
+
+      schema = Zoi.union([Zoi.string(), Zoi.integer()]) |> Zoi.lte(5)
+      assert {:ok, "hello"} = Zoi.parse(schema, "hello")
+      assert {:error, _} = Zoi.parse(schema, "hello world")
+
+      schema = Zoi.union([Zoi.string(), Zoi.array(Zoi.integer())]) |> Zoi.length(3)
+      assert {:ok, "abc"} = Zoi.parse(schema, "abc")
+      assert {:error, _} = Zoi.parse(schema, "ab")
+    end
+
+    test "validation protocols fallback to Any for unsupported types" do
+      literal = Zoi.literal("test")
+      integer = Zoi.integer()
+
+      assert :ok = Zoi.Validations.Gt.validate(literal, "test", 1, [])
+      assert :ok = Zoi.Validations.Gte.validate(literal, "test", 1, [])
+      assert :ok = Zoi.Validations.Lt.validate(literal, "test", 10, [])
+      assert :ok = Zoi.Validations.Lte.validate(literal, "test", 10, [])
+      assert :ok = Zoi.Validations.Length.validate(integer, 123, 3, [])
     end
   end
 
@@ -1793,6 +1834,14 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{code: :invalid_type}]} =
                Zoi.parse(schema, %{"0" => "a", "1" => "b"})
     end
+
+    test "array with invalid inner schema raises ArgumentError" do
+      assert_raise ArgumentError,
+                   "you should use a valid Zoi schema, got: \"not a schema\"",
+                   fn ->
+                     Zoi.array("not a schema")
+                   end
+    end
   end
 
   describe "list/2" do
@@ -2770,6 +2819,18 @@ defmodule ZoiTest do
       assert error.code == :custom
       assert Exception.message(error) == "must be < 10"
     end
+
+    test "lt after transforms" do
+      schema =
+        Zoi.integer()
+        |> Zoi.transform(fn x -> x + 5 end)
+        |> Zoi.lt(10)
+
+      assert {:ok, 4} == Zoi.parse(schema, -1)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 6)
+      assert error.code == :less_than
+      assert Exception.message(error) == "too big: must be less than 10"
+    end
   end
 
   describe "length/2" do
@@ -2795,6 +2856,23 @@ defmodule ZoiTest do
       schema = Zoi.string() |> Zoi.length(5, error: "length must be %{count}")
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
       assert Exception.message(error) == "length must be 5"
+    end
+
+    test "length after transforms" do
+      schema =
+        Zoi.string()
+        |> Zoi.trim()
+        |> Zoi.length(3)
+
+      assert {:ok, "abc"} == Zoi.parse(schema, "  abc  ")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "  ab  ")
+      assert error.code == :invalid_length
+      assert Exception.message(error) == "invalid length: must have 3 character(s)"
+    end
+
+    test "length should only work on implemented protocols" do
+      schema = Zoi.literal("a") |> Zoi.length(4)
+      assert {:ok, "a"} == Zoi.parse(schema, "a")
     end
   end
 
