@@ -73,7 +73,12 @@ defmodule Zoi.Types.Codec do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      Zoi.Inspect.build(type, opts)
+      extra_fields = [
+        from: Inspect.inspect(type.from, opts),
+        to: Inspect.inspect(type.to, opts)
+      ]
+
+      Zoi.Inspect.build(type, opts, extra_fields)
     end
   end
 
