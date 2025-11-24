@@ -6,7 +6,7 @@ defprotocol Zoi.JSONSchema.Encoder do
   Metadata and effect refinements are handled by `Zoi.JSONSchema`.
   """
   @fallback_to_any true
-  @spec encode(Zoi.Types.t()) :: map()
+  @spec encode(Zoi.Type.t()) :: map()
   def encode(schema)
 end
 
