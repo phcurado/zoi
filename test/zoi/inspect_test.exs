@@ -79,4 +79,53 @@ defmodule Zoi.InspectTest do
 
     assert inspect(type) == expected
   end
+
+  describe "inspect numeric types with constraints" do
+    test "integer with gte/lte" do
+      assert inspect(Zoi.integer(gte: 0, lte: 100)) ==
+               "#Zoi.integer<coerce: false, gte: 0, lte: 100>"
+    end
+
+    test "integer with gt/lt" do
+      assert inspect(Zoi.integer(gt: 0, lt: 100)) ==
+               "#Zoi.integer<coerce: false, gt: 0, lt: 100>"
+    end
+
+    test "float with constraints" do
+      assert inspect(Zoi.float(gte: 0.0, lte: 1.0)) ==
+               "#Zoi.float<coerce: false, gte: 0.0, lte: 1.0>"
+    end
+
+    test "number with constraints" do
+      assert inspect(Zoi.number(gte: 10, lte: 100)) ==
+               "#Zoi.number<coerce: false, gte: 10, lte: 100>"
+    end
+
+    test "decimal with constraints" do
+      assert inspect(Zoi.decimal(gte: Decimal.new(0), lte: Decimal.new(100))) ==
+               "#Zoi.decimal<coerce: false, gte: Decimal.new(\"0\"), lte: Decimal.new(\"100\")>"
+    end
+  end
+
+  describe "inspect date/time types with constraints" do
+    test "date with gte/lte" do
+      assert inspect(Zoi.date(gte: ~D[2020-01-01], lte: ~D[2025-12-31])) ==
+               "#Zoi.date<coerce: false, gte: ~D[2020-01-01], lte: ~D[2025-12-31]>"
+    end
+
+    test "time with gte/lte" do
+      assert inspect(Zoi.time(gte: ~T[09:00:00], lte: ~T[17:00:00])) ==
+               "#Zoi.time<coerce: false, gte: ~T[09:00:00], lte: ~T[17:00:00]>"
+    end
+
+    test "datetime with gte" do
+      assert inspect(Zoi.datetime(gte: ~U[2020-01-01 00:00:00Z])) ==
+               "#Zoi.date_time<coerce: false, gte: ~U[2020-01-01 00:00:00Z]>"
+    end
+
+    test "naive_datetime with gte" do
+      assert inspect(Zoi.naive_datetime(gte: ~N[2020-01-01 00:00:00])) ==
+               "#Zoi.naive_date_time<coerce: false, gte: ~N[2020-01-01 00:00:00]>"
+    end
+  end
 end

@@ -1,19 +1,50 @@
 defmodule Zoi.Types.Array do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:inner, coerce: false]
+  use Zoi.Type.Def, fields: [:inner, :min_length, :max_length, :length, coerce: false]
+
+  alias Zoi.Validations
 
   def opts() do
+    error = "invalid type: expected integer"
+
     Zoi.Opts.meta_opts()
     |> Zoi.Opts.with_coerce()
+    |> Zoi.Types.Extend.new(
+      min_length:
+        Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
+          description: "array minimum length",
+          error: error
+        ),
+      max_length:
+        Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
+          description: "array maximum length",
+          error: error
+        ),
+      length:
+        Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
+          description: "array exact length",
+          error: error
+        )
+    )
   end
 
-  def new(inner, opts) do
-    apply_type(opts ++ [inner: inner])
+  def new(inner, opts) when is_struct(inner) do
+    {validation_opts, opts} = Keyword.split(opts, [:min_length, :max_length, :length])
+
+    apply_type([inner: inner] ++ opts)
+    |> Validations.maybe_set_validation(Validations.Gte, validation_opts[:min_length])
+    |> Validations.maybe_set_validation(Validations.Lte, validation_opts[:max_length])
+    |> Validations.maybe_set_validation(Validations.Length, validation_opts[:length])
+  end
+
+  def new(inner, _opts) do
+    raise ArgumentError,
+          "you should use a valid Zoi schema, got: #{inspect(inner)}"
   end
 
   defimpl Zoi.Type do
-    def parse(%Zoi.Types.Array{inner: inner}, inputs, _opts) when is_list(inputs) do
+    def parse(%Zoi.Types.Array{inner: inner} = schema, inputs, _opts) when is_list(inputs) do
       inputs
       |> Enum.with_index()
       |> Enum.reduce({[], []}, fn {input, index}, {parsed, errors} ->
@@ -28,15 +59,7 @@ defmodule Zoi.Types.Array do
             {parsed, Zoi.Errors.merge(errors, error)}
         end
       end)
-      |> then(fn {parsed, errors} ->
-        parsed = Enum.reverse(parsed)
-
-        if errors == [] do
-          {:ok, parsed}
-        else
-          {:error, errors, parsed}
-        end
-      end)
+      |> then(&finalize_result(&1, schema))
     end
 
     def parse(%Zoi.Types.Array{coerce: true} = schema, inputs, opts) when is_map(inputs) do
@@ -74,6 +97,31 @@ defmodule Zoi.Types.Array do
       end
     end
 
+    defp finalize_result({parsed, errors}, schema) do
+      parsed = Enum.reverse(parsed)
+
+      if errors == [] do
+        case validate_constraints(schema, parsed) do
+          :ok ->
+            {:ok, parsed}
+
+          {:error, new_errors} ->
+            {:error, new_errors, parsed}
+        end
+      else
+        {:error, errors, parsed}
+      end
+    end
+
+    defp validate_constraints(schema, input) do
+      [
+        {Validations.Length, schema.length},
+        {Validations.Gte, schema.min_length},
+        {Validations.Lte, schema.max_length}
+      ]
+      |> Validations.run_validations(schema, input)
+    end
+
     defp has_index_keys?(map) do
       Enum.any?(map, fn {key, _value} -> index_key?(key) end)
     end
@@ -100,6 +148,48 @@ defmodule Zoi.Types.Array do
   defimpl Inspect do
     def inspect(type, opts) do
       Zoi.Inspect.inspect_type(type, opts)
+    end
+  end
+
+  defimpl Zoi.Validations.Gte do
+    def set(schema, value, opts \\ []) do
+      %{schema | min_length: {value, opts}, length: nil}
+    end
+
+    def validate(_schema, input, value, opts) do
+      if length(input) >= value do
+        :ok
+      else
+        {:error, Zoi.Error.greater_than_or_equal_to(:array, value, opts)}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.Lte do
+    def set(schema, value, opts \\ []) do
+      %{schema | max_length: {value, opts}, length: nil}
+    end
+
+    def validate(_schema, input, value, opts) do
+      if length(input) <= value do
+        :ok
+      else
+        {:error, Zoi.Error.less_than_or_equal_to(:array, value, opts)}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.Length do
+    def set(schema, value, opts \\ []) do
+      %{schema | length: {value, opts}, min_length: nil, max_length: nil}
+    end
+
+    def validate(_schema, input, value, opts) do
+      if length(input) == value do
+        :ok
+      else
+        {:error, Zoi.Error.invalid_length(:array, value, opts)}
+      end
     end
   end
 end
