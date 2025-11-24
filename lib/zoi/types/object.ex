@@ -63,8 +63,15 @@ defmodule Zoi.Types.Object do
   end
 
   defimpl Inspect do
+    import Inspect.Algebra
+
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      fields_doc =
+        container_doc("%{", type.fields, "}", %Inspect.Opts{limit: 10}, fn
+          {key, schema}, _opts -> concat("#{key}: ", Inspect.inspect(schema, opts))
+        end)
+
+      Zoi.Inspect.build(type, opts, fields: fields_doc)
     end
   end
 end

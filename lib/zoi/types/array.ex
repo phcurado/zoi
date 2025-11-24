@@ -146,8 +146,17 @@ defmodule Zoi.Types.Array do
   end
 
   defimpl Inspect do
+    alias Zoi.Validations
+
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      extra_fields = [
+        inner: Inspect.inspect(type.inner, opts),
+        min_length: Validations.unwrap_validation(type.min_length),
+        max_length: Validations.unwrap_validation(type.max_length),
+        length: Validations.unwrap_validation(type.length)
+      ]
+
+      Zoi.Inspect.build(type, opts, extra_fields)
     end
   end
 

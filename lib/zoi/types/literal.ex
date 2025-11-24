@@ -34,7 +34,7 @@ defmodule Zoi.Types.Literal do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      Zoi.Inspect.build(type, opts, value: type.value)
     end
   end
 end

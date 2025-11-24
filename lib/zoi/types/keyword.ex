@@ -89,8 +89,21 @@ defmodule Zoi.Types.Keyword do
   end
 
   defimpl Inspect do
+    import Inspect.Algebra
+
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      fields_doc =
+        case type.fields do
+          fields when is_list(fields) ->
+            container_doc("[", fields, "]", %Inspect.Opts{limit: 10}, fn
+              {key, schema}, _opts -> concat("#{key}: ", Inspect.inspect(schema, opts))
+            end)
+
+          schema_type ->
+            Inspect.inspect(schema_type, opts)
+        end
+
+      Zoi.Inspect.build(type, opts, fields: fields_doc)
     end
   end
 end

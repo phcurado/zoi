@@ -40,7 +40,7 @@ defmodule Zoi.ISO.NaiveDateTime do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      Zoi.Inspect.build(type, opts)
     end
   end
 end

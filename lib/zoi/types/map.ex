@@ -55,7 +55,12 @@ defmodule Zoi.Types.Map do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      extra_fields = [
+        key: Inspect.inspect(type.key_type, opts),
+        value: Inspect.inspect(type.value_type, opts)
+      ]
+
+      Zoi.Inspect.build(type, opts, extra_fields)
     end
   end
 end
