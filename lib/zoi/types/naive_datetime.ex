@@ -184,6 +184,8 @@ defmodule Zoi.Types.NaiveDateTime do
     end
 
     defp maybe_add(map, _key, nil), do: map
-    defp maybe_add(map, key, {value, _opts}), do: Map.put(map, key, NaiveDateTime.to_iso8601(value))
+
+    defp maybe_add(map, key, {value, _opts}),
+      do: Map.put(map, key, NaiveDateTime.to_iso8601(value))
   end
 end
