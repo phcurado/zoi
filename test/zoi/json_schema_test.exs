@@ -192,6 +192,29 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.decimal() |> Zoi.min(3.5) |> Zoi.max(10.5),
          %{type: :number, minimum: 3.5, maximum: 10.5}},
         {Zoi.decimal() |> Zoi.gt(3.5) |> Zoi.lt(10.5),
+         %{type: :number, exclusiveMinimum: 3.5, exclusiveMaximum: 10.5}},
+        {Zoi.float() |> Zoi.min(3.5) |> Zoi.max(10.5),
+         %{type: :number, minimum: 3.5, maximum: 10.5}},
+        {Zoi.float() |> Zoi.gt(3.5) |> Zoi.lt(10.5),
+         %{type: :number, exclusiveMinimum: 3.5, exclusiveMaximum: 10.5}}
+      ]
+
+      Enum.each(number_ranges, fn {schema, expected} ->
+        expected = Map.put(expected, :"$schema", @draft)
+        assert Zoi.to_json_schema(schema) == expected
+      end)
+    end
+
+    test "numeric ranges with transforms (effects-based refinements)" do
+      # When a transform is applied first, constraints go through effects
+      number_ranges = [
+        {Zoi.integer() |> Zoi.transform(&(&1 * 2)) |> Zoi.min(3) |> Zoi.max(10),
+         %{type: :integer, minimum: 3, maximum: 10}},
+        {Zoi.integer() |> Zoi.transform(&(&1 * 2)) |> Zoi.gt(3) |> Zoi.lt(10),
+         %{type: :integer, exclusiveMinimum: 3, exclusiveMaximum: 10}},
+        {Zoi.number() |> Zoi.transform(&(&1 * 2)) |> Zoi.min(3.5) |> Zoi.max(10.5),
+         %{type: :number, minimum: 3.5, maximum: 10.5}},
+        {Zoi.number() |> Zoi.transform(&(&1 * 2)) |> Zoi.gt(3.5) |> Zoi.lt(10.5),
          %{type: :number, exclusiveMinimum: 3.5, exclusiveMaximum: 10.5}}
       ]
 
@@ -213,6 +236,35 @@ defmodule Zoi.JSONSchemaTest do
         expected = Map.put(expected, :"$schema", @draft)
         assert Zoi.to_json_schema(schema) == expected
       end)
+    end
+
+    test "array ranges with transforms (effects-based refinements)" do
+      # When a transform is applied first, constraints go through effects
+      array_lengths = [
+        {Zoi.array(Zoi.integer()) |> Zoi.transform(&Enum.reverse/1) |> Zoi.min(2) |> Zoi.max(5),
+         %{type: :array, items: %{type: :integer}, minItems: 2, maxItems: 5}},
+        {Zoi.array(Zoi.integer()) |> Zoi.transform(&Enum.reverse/1) |> Zoi.length(3),
+         %{type: :array, items: %{type: :integer}, minItems: 3, maxItems: 3}}
+      ]
+
+      Enum.each(array_lengths, fn {schema, expected} ->
+        expected = Map.put(expected, :"$schema", @draft)
+        assert Zoi.to_json_schema(schema) == expected
+      end)
+    end
+
+    test "string length with transform (effects-based refinement)" do
+      schema =
+        Zoi.string()
+        |> Zoi.trim()
+        |> Zoi.length(5)
+
+      assert %{
+               "$schema": @draft,
+               type: :string,
+               minLength: 5,
+               maxLength: 5
+             } = Zoi.to_json_schema(schema)
     end
 
     test "encoding array opts min/max items" do
@@ -255,6 +307,81 @@ defmodule Zoi.JSONSchemaTest do
         expected = Map.put(expected, :"$schema", @draft)
         assert Zoi.to_json_schema(schema) == expected
       end)
+    end
+
+    test "date schemas with constraints" do
+      min_date = ~D[2024-01-01]
+      max_date = ~D[2024-12-31]
+
+      schema = Zoi.date(gte: min_date, lte: max_date)
+
+      assert %{
+               "$schema": @draft,
+               type: :string,
+               format: :date,
+               minimum: "2024-01-01",
+               maximum: "2024-12-31"
+             } = Zoi.to_json_schema(schema)
+    end
+
+    test "date schemas with exclusive constraints" do
+      min_date = ~D[2024-01-01]
+      max_date = ~D[2024-12-31]
+
+      schema = Zoi.date(gt: min_date, lt: max_date)
+
+      assert %{
+               "$schema": @draft,
+               type: :string,
+               format: :date,
+               exclusiveMinimum: "2024-01-01",
+               exclusiveMaximum: "2024-12-31"
+             } = Zoi.to_json_schema(schema)
+    end
+
+    test "time schemas with constraints" do
+      min_time = ~T[09:00:00]
+      max_time = ~T[17:00:00]
+
+      schema = Zoi.time(gte: min_time, lte: max_time)
+
+      assert %{
+               "$schema": @draft,
+               type: :string,
+               format: :time,
+               minimum: "09:00:00",
+               maximum: "17:00:00"
+             } = Zoi.to_json_schema(schema)
+    end
+
+    test "datetime schemas with constraints" do
+      min_datetime = ~U[2024-01-01 00:00:00Z]
+      max_datetime = ~U[2024-12-31 23:59:59Z]
+
+      schema = Zoi.datetime(gte: min_datetime, lte: max_datetime)
+
+      assert %{
+               "$schema": @draft,
+               type: :string,
+               format: :"date-time",
+               minimum: "2024-01-01T00:00:00Z",
+               maximum: "2024-12-31T23:59:59Z"
+             } = Zoi.to_json_schema(schema)
+    end
+
+    test "naive_datetime schemas with constraints" do
+      min_datetime = ~N[2024-01-01 00:00:00]
+      max_datetime = ~N[2024-12-31 23:59:59]
+
+      schema = Zoi.naive_datetime(gte: min_datetime, lte: max_datetime)
+
+      assert %{
+               "$schema": @draft,
+               type: :string,
+               format: :"date-time",
+               minimum: "2024-01-01T00:00:00",
+               maximum: "2024-12-31T23:59:59"
+             } = Zoi.to_json_schema(schema)
     end
 
     test "length in map type have no effect" do

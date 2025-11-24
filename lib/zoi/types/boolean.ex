@@ -43,7 +43,11 @@ defmodule Zoi.Types.Boolean do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      Zoi.Inspect.build(type, opts)
     end
+  end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(_schema), do: %{type: :boolean}
   end
 end

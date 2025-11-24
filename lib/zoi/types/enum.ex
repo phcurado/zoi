@@ -90,7 +90,22 @@ defmodule Zoi.Types.Enum do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      symmetric_enum? = Enum.all?(type.values, fn {key, value} -> key == value end)
+
+      values =
+        if symmetric_enum? do
+          Enum.map(type.values, fn {_key, value} -> value end)
+        else
+          type.values
+        end
+
+      Zoi.Inspect.build(type, opts, values: values)
+    end
+  end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      %{type: :string, enum: Enum.map(schema.values, fn {_k, v} -> v end)}
     end
   end
 end

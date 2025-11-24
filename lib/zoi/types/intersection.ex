@@ -52,8 +52,21 @@ defmodule Zoi.Types.Intersection do
   end
 
   defimpl Inspect do
+    import Inspect.Algebra
+
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      schemas_doc =
+        container_doc("[", type.schemas, "]", %Inspect.Opts{limit: 5}, fn
+          schema, _opts -> Inspect.inspect(schema, opts)
+        end)
+
+      Zoi.Inspect.build(type, opts, schemas: schemas_doc)
+    end
+  end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      %{allOf: Enum.map(schema.schemas, &Zoi.JSONSchema.Encoder.encode/1)}
     end
   end
 end

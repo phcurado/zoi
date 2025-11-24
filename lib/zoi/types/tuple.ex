@@ -66,8 +66,24 @@ defmodule Zoi.Types.Tuple do
   end
 
   defimpl Inspect do
+    import Inspect.Algebra
+
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      fields_doc =
+        container_doc("{", type.fields, "}", %Inspect.Opts{limit: 10}, fn
+          field, _opts -> Inspect.inspect(field, opts)
+        end)
+
+      Zoi.Inspect.build(type, opts, fields: fields_doc)
+    end
+  end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      %{
+        type: :array,
+        prefixItems: Enum.map(schema.fields, &Zoi.JSONSchema.Encoder.encode/1)
+      }
     end
   end
 end

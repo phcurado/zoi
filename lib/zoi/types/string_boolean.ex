@@ -88,7 +88,8 @@ defmodule Zoi.Types.StringBoolean do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      extra_fields = [case: type.case, truthy: type.truthy, falsy: type.falsy]
+      Zoi.Inspect.build(type, opts, extra_fields)
     end
   end
 end

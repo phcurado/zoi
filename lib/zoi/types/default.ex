@@ -29,7 +29,8 @@ defmodule Zoi.Types.Default do
 
   defimpl Inspect do
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      # Default shows the inner type with a default field added
+      Zoi.Inspect.build(type.inner, opts, default: type.value)
     end
   end
 end

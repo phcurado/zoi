@@ -63,8 +63,32 @@ defmodule Zoi.Types.Object do
   end
 
   defimpl Inspect do
+    import Inspect.Algebra
+
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      fields_doc =
+        container_doc("%{", type.fields, "}", %Inspect.Opts{limit: 10}, fn
+          {key, schema}, _opts -> concat("#{key}: ", Inspect.inspect(schema, opts))
+        end)
+
+      Zoi.Inspect.build(type, opts, fields: fields_doc)
+    end
+  end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      %{
+        type: :object,
+        properties:
+          Enum.into(schema.fields, %{}, fn {key, value} ->
+            {key, Zoi.JSONSchema.Encoder.encode(value)}
+          end),
+        required:
+          Enum.flat_map(schema.fields, fn {k, v} ->
+            if Meta.required?(v.meta), do: [k], else: []
+          end),
+        additionalProperties: false
+      }
     end
   end
 end

@@ -146,9 +146,45 @@ defmodule Zoi.Types.Array do
   end
 
   defimpl Inspect do
+    alias Zoi.Validations
+
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      extra_fields = [
+        inner: Inspect.inspect(type.inner, opts),
+        min_length: Validations.unwrap_validation(type.min_length),
+        max_length: Validations.unwrap_validation(type.max_length),
+        length: Validations.unwrap_validation(type.length)
+      ]
+
+      Zoi.Inspect.build(type, opts, extra_fields)
     end
+  end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(%{inner: %Zoi.Types.Any{}} = schema) do
+      %{type: :array}
+      |> add_constraints(schema)
+    end
+
+    def encode(schema) do
+      %{type: :array, items: Zoi.JSONSchema.Encoder.encode(schema.inner)}
+      |> add_constraints(schema)
+    end
+
+    defp add_constraints(map, schema) do
+      map
+      |> maybe_add(:minItems, schema.min_length)
+      |> maybe_add(:maxItems, schema.max_length)
+      |> maybe_add_length(schema.length)
+    end
+
+    defp maybe_add(map, _key, nil), do: map
+    defp maybe_add(map, key, {value, _opts}), do: Map.put(map, key, value)
+
+    defp maybe_add_length(map, nil), do: map
+
+    defp maybe_add_length(map, {value, _opts}),
+      do: map |> Map.put(:minItems, value) |> Map.put(:maxItems, value)
   end
 
   defimpl Zoi.Validations.Gte do

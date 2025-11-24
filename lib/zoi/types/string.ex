@@ -28,7 +28,7 @@ defmodule Zoi.Types.String do
     )
   end
 
-  def new(opts) do
+  def new(opts \\ []) do
     {validation_opts, opts} = Keyword.split(opts, [:min_length, :max_length, :length])
 
     opts
@@ -162,8 +162,33 @@ defmodule Zoi.Types.String do
   end
 
   defimpl Inspect do
+    alias Zoi.Validations
+
     def inspect(type, opts) do
-      Zoi.Inspect.inspect_type(type, opts)
+      extra_fields = [
+        min_length: Validations.unwrap_validation(type.min_length),
+        max_length: Validations.unwrap_validation(type.max_length),
+        length: Validations.unwrap_validation(type.length)
+      ]
+
+      Zoi.Inspect.build(type, opts, extra_fields)
     end
+  end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      %{type: :string}
+      |> maybe_add(:minLength, schema.min_length)
+      |> maybe_add(:maxLength, schema.max_length)
+      |> maybe_add_length(schema.length)
+    end
+
+    defp maybe_add(map, _key, nil), do: map
+    defp maybe_add(map, key, {value, _opts}), do: Map.put(map, key, value)
+
+    defp maybe_add_length(map, nil), do: map
+
+    defp maybe_add_length(map, {value, _opts}),
+      do: map |> Map.put(:minLength, value) |> Map.put(:maxLength, value)
   end
 end

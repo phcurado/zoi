@@ -70,7 +70,7 @@ defmodule Zoi.JSONSchema do
   - [JSON Schema Official Website](https://json-schema.org/)
   """
 
-  alias Zoi.Types.Meta
+  alias Zoi.JSONSchema.Encoder
 
   @draft "https://json-schema.org/draft/2020-12/schema"
 
@@ -85,187 +85,22 @@ defmodule Zoi.JSONSchema do
     Map.put(encoded_schema, :"$schema", @draft)
   end
 
-  defp encode_schema(%Zoi.Types.String{} = schema) do
-    %{type: :string}
-    |> encode_metadata(schema)
-    |> encode_refinements(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Integer{} = schema) do
-    %{type: :integer}
-    |> encode_metadata(schema)
-    |> encode_refinements(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Float{} = schema) do
-    %{type: :number}
-    |> encode_metadata(schema)
-    |> encode_refinements(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Number{} = schema) do
-    %{type: :number}
-    |> encode_metadata(schema)
-    |> encode_refinements(schema)
-  end
-
-  if Code.ensure_loaded?(Decimal) do
-    defp encode_schema(%Zoi.Types.Decimal{} = schema) do
-      %{type: :number}
-      |> encode_metadata(schema)
-      |> encode_refinements(schema)
-    end
-  end
-
-  defp encode_schema(%Zoi.Types.Boolean{} = schema) do
-    %{type: :boolean}
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Literal{value: value} = schema) do
-    %{
-      const: value
-    }
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Null{} = schema) do
-    %{type: :null}
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Array{inner: inner} = schema) do
-    case inner do
-      %Zoi.Types.Any{} ->
-        %{type: :array}
-        |> encode_metadata(schema)
-        |> encode_refinements(schema)
-
-      _inner ->
-        %{type: :array, items: encode_schema(inner)}
-        |> encode_metadata(schema)
-        |> encode_refinements(schema)
-    end
-  end
-
-  defp encode_schema(%Zoi.Types.Tuple{} = schema) do
-    %{
-      type: :array,
-      prefixItems: Enum.map(schema.fields, &encode_schema/1)
-    }
-    |> encode_metadata(schema)
-    |> encode_refinements(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Enum{} = schema) do
-    %{
-      type: :string,
-      enum: Enum.map(schema.values, fn {_k, v} -> v end)
-    }
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Map{} = schema) do
-    %{
-      type: :object
-    }
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Object{} = schema) do
-    %{
-      type: :object,
-      properties:
-        Enum.into(schema.fields, %{}, fn {key, value} ->
-          {key, encode_schema(value)}
-        end),
-      required:
-        Enum.flat_map(schema.fields, fn {k, v} ->
-          if Meta.required?(v.meta) do
-            [k]
-          else
-            []
-          end
-        end),
-      additionalProperties: false
-    }
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Intersection{schemas: schemas} = schema) do
-    %{
-      allOf: Enum.map(schemas, &encode_schema/1)
-    }
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Union{schemas: schemas} = schema) do
-    %{
-      anyOf: Enum.map(schemas, &encode_schema/1)
-    }
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Date{} = schema) do
-    %{type: :string, format: :date}
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.ISO.Date{} = schema) do
-    %{type: :string, format: :date}
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.DateTime{} = schema) do
-    %{type: :string, format: :"date-time"}
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.ISO.DateTime{} = schema) do
-    %{type: :string, format: :"date-time"}
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.NaiveDateTime{} = schema) do
-    %{type: :string, format: :"date-time"}
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.ISO.NaiveDateTime{} = schema) do
-    %{type: :string, format: :"date-time"}
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.Types.Time{} = schema) do
-    %{type: :string, format: :time}
-    |> encode_metadata(schema)
-  end
-
-  defp encode_schema(%Zoi.ISO.Time{} = schema) do
-    %{type: :string, format: :time}
-    |> encode_metadata(schema)
-  end
-
   defp encode_schema(schema) do
-    raise "Encoding not implemented for schema: #{inspect(schema)}"
+    schema
+    |> Encoder.encode()
+    |> encode_metadata(schema)
+    |> encode_refinements(schema)
   end
 
   defp encode_refinements(encoded_schema, schema) do
-    # Extract constraints from struct fields and convert to protocol MFA format
-    struct_constraints = extract_struct_constraints(schema)
-
-    # Extract refinements from effects
     effect_refinements =
       Enum.flat_map(schema.meta.effects, fn
         {:refine, refinement} -> [refinement]
         {:transform, _transform} -> []
       end)
 
-    all_refinements = struct_constraints ++ effect_refinements
-
-    # Only split regex (needs special multi-pattern handling with allOf)
     {regex_refinements, other_refinements} =
-      Enum.split_with(all_refinements, fn
+      Enum.split_with(effect_refinements, fn
         {Zoi.Validations.Regex, :validate, _} -> true
         _ -> false
       end)
@@ -275,38 +110,7 @@ defmodule Zoi.JSONSchema do
     |> encode_regex_refinements(regex_refinements)
   end
 
-  # Extract struct field constraints as protocol MFAs
-  defp extract_struct_constraints(%Zoi.Types.String{} = schema) do
-    []
-    |> maybe_add_constraint(Zoi.Validations.Length, schema.length)
-    |> maybe_add_constraint(Zoi.Validations.Gte, schema.min_length)
-    |> maybe_add_constraint(Zoi.Validations.Lte, schema.max_length)
-  end
-
-  defp extract_struct_constraints(%{gte: _, lte: _, gt: _, lt: _} = schema) do
-    []
-    |> maybe_add_constraint(Zoi.Validations.Gte, schema.gte)
-    |> maybe_add_constraint(Zoi.Validations.Lte, schema.lte)
-    |> maybe_add_constraint(Zoi.Validations.Gt, schema.gt)
-    |> maybe_add_constraint(Zoi.Validations.Lt, schema.lt)
-  end
-
-  defp extract_struct_constraints(%Zoi.Types.Array{} = schema) do
-    []
-    |> maybe_add_constraint(Zoi.Validations.Length, schema.length)
-    |> maybe_add_constraint(Zoi.Validations.Gte, schema.min_length)
-    |> maybe_add_constraint(Zoi.Validations.Lte, schema.max_length)
-  end
-
-  defp extract_struct_constraints(_schema), do: []
-
-  defp maybe_add_constraint(constraints, _protocol, nil), do: constraints
-
-  defp maybe_add_constraint(constraints, protocol, {value, opts}) do
-    [{protocol, :validate, [value, opts]} | constraints]
-  end
-
-  # Protocol MFAs - String
+  # String refinements from effects
 
   defp encode_refinement(
          {Zoi.Validations.Gte, :validate, [value, _opts]},
@@ -331,7 +135,7 @@ defmodule Zoi.JSONSchema do
     |> Map.put(:maxLength, value)
   end
 
-  # Protocol MFAs - Numeric (integer and number)
+  # Numeric refinements from effects (integer and number)
 
   defp encode_refinement(
          {Zoi.Validations.Gte, :validate, [value, _opts]},
@@ -365,7 +169,7 @@ defmodule Zoi.JSONSchema do
     Map.put(json_schema, :exclusiveMaximum, value)
   end
 
-  # Protocol MFAs - Array
+  # Array refinements from effects
 
   defp encode_refinement(
          {Zoi.Validations.Gte, :validate, [value, _opts]},
