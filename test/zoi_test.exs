@@ -3601,4 +3601,168 @@ defmodule ZoiTest do
       end)
     end
   end
+
+  describe "codec/3" do
+    test "decodes and encodes values between schemas" do
+      codec =
+        Zoi.codec(
+          Zoi.ISO.date(),
+          Zoi.date(),
+          decode: fn value -> Date.from_iso8601(value) end,
+          encode: fn value -> Date.to_iso8601(value) end
+        )
+
+      assert {:ok, ~D[2025-01-15]} = Zoi.parse(codec, "2025-01-15")
+      assert {:ok, "2025-01-15"} = Zoi.encode(codec, ~D[2025-01-15])
+    end
+
+    test "handles {:ok, value} return from decode/encode functions" do
+      codec =
+        Zoi.codec(
+          Zoi.string(),
+          Zoi.integer(),
+          decode: fn value -> {:ok, String.to_integer(value)} end,
+          encode: fn value -> {:ok, Integer.to_string(value)} end
+        )
+
+      assert {:ok, 123} = Zoi.parse(codec, "123")
+      assert {:ok, "123"} = Zoi.encode(codec, 123)
+    end
+
+    test "returns error when from schema validation fails on parse" do
+      codec =
+        Zoi.codec(
+          Zoi.ISO.date(),
+          Zoi.date(),
+          decode: fn value -> Date.from_iso8601(value) end,
+          encode: fn value -> Date.to_iso8601(value) end
+        )
+
+      assert {:error, [%Zoi.Error{code: :invalid_type}]} = Zoi.parse(codec, "invalid")
+    end
+
+    test "returns error when decode function returns error" do
+      codec =
+        Zoi.codec(
+          Zoi.string(),
+          Zoi.integer(),
+          decode: fn _value -> {:error, "decode failed"} end,
+          encode: fn value -> Integer.to_string(value) end
+        )
+
+      assert {:error, [%Zoi.Error{code: :custom, message: "decode failed"}]} =
+               Zoi.parse(codec, "abc")
+    end
+
+    test "returns error when to schema validation fails on parse" do
+      codec =
+        Zoi.codec(
+          Zoi.string(),
+          Zoi.integer() |> Zoi.gte(100),
+          decode: fn value -> String.to_integer(value) end,
+          encode: fn value -> Integer.to_string(value) end
+        )
+
+      assert {:error, [%Zoi.Error{code: :greater_than_or_equal_to}]} = Zoi.parse(codec, "50")
+    end
+
+    test "returns error when to schema validation fails on encode" do
+      codec =
+        Zoi.codec(
+          Zoi.ISO.date(),
+          Zoi.date(),
+          decode: fn value -> Date.from_iso8601(value) end,
+          encode: fn value -> Date.to_iso8601(value) end
+        )
+
+      assert {:error, [%Zoi.Error{code: :invalid_type}]} = Zoi.encode(codec, "not-a-date")
+    end
+
+    test "returns error when encode function returns error" do
+      codec =
+        Zoi.codec(
+          Zoi.string(),
+          Zoi.integer(),
+          decode: fn value -> String.to_integer(value) end,
+          encode: fn _value -> {:error, "encode failed"} end
+        )
+
+      assert {:error, [%Zoi.Error{code: :custom, message: "encode failed"}]} =
+               Zoi.encode(codec, 123)
+    end
+
+    test "returns error when from schema validation fails on encode output" do
+      codec =
+        Zoi.codec(
+          Zoi.ISO.date(),
+          Zoi.date(),
+          decode: fn value -> Date.from_iso8601(value) end,
+          encode: fn _value -> "invalid-format" end
+        )
+
+      assert {:error, [%Zoi.Error{code: :invalid_type}]} = Zoi.encode(codec, ~D[2025-01-15])
+    end
+
+    test "raises ArgumentError when decode is not a function" do
+      assert_raise ArgumentError, ~r/expected :decode to be a 1-arity function/, fn ->
+        Zoi.codec(Zoi.string(), Zoi.integer(), decode: "invalid", encode: fn x -> x end)
+      end
+    end
+
+    test "raises ArgumentError when encode is not a function" do
+      assert_raise ArgumentError, ~r/expected :encode to be a 1-arity function/, fn ->
+        Zoi.codec(Zoi.string(), Zoi.integer(), decode: fn x -> x end, encode: nil)
+      end
+    end
+
+    test "type_spec returns the to schema's type spec" do
+      codec =
+        Zoi.codec(
+          Zoi.ISO.date(),
+          Zoi.date(),
+          decode: fn value -> Date.from_iso8601(value) end,
+          encode: fn value -> Date.to_iso8601(value) end
+        )
+
+      assert Zoi.type_spec(codec) == quote(do: Date.t())
+    end
+
+    test "JSON schema returns the from schema's JSON schema" do
+      codec =
+        Zoi.codec(
+          Zoi.ISO.date(),
+          Zoi.date(),
+          decode: fn value -> Date.from_iso8601(value) end,
+          encode: fn value -> Date.to_iso8601(value) end
+        )
+
+      assert Zoi.JSONSchema.Encoder.encode(codec) == %{type: :string, format: :date}
+    end
+
+    test "inspect protocol" do
+      codec =
+        Zoi.codec(
+          Zoi.ISO.date(),
+          Zoi.date(),
+          decode: fn value -> Date.from_iso8601(value) end,
+          encode: fn value -> Date.to_iso8601(value) end
+        )
+
+      assert inspect(codec) =~ "Zoi.codec"
+    end
+
+    test "encode! raises on error" do
+      codec =
+        Zoi.codec(
+          Zoi.ISO.date(),
+          Zoi.date(),
+          decode: fn value -> Date.from_iso8601(value) end,
+          encode: fn value -> Date.to_iso8601(value) end
+        )
+
+      assert_raise Zoi.ParseError, fn ->
+        Zoi.encode!(codec, "not-a-date")
+      end
+    end
+  end
 end
