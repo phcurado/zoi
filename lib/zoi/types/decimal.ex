@@ -35,7 +35,7 @@ if Code.ensure_loaded?(Decimal) do
       )
     end
 
-    def new(opts) do
+    def new(opts \\ []) do
       {validation_opts, opts} = Keyword.split(opts, [:gte, :lte, :gt, :lt])
 
       opts
@@ -157,6 +157,19 @@ if Code.ensure_loaded?(Decimal) do
 
         Zoi.Inspect.build(type, opts, extra_fields)
       end
+    end
+
+    defimpl Zoi.JSONSchema.Encoder do
+      def encode(schema) do
+        %{type: :number}
+        |> maybe_add(:minimum, schema.gte)
+        |> maybe_add(:maximum, schema.lte)
+        |> maybe_add(:exclusiveMinimum, schema.gt)
+        |> maybe_add(:exclusiveMaximum, schema.lt)
+      end
+
+      defp maybe_add(map, _key, nil), do: map
+      defp maybe_add(map, key, {value, _opts}), do: Map.put(map, key, value)
     end
   end
 end

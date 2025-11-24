@@ -63,4 +63,10 @@ defmodule Zoi.Types.Intersection do
       Zoi.Inspect.build(type, opts, schemas: schemas_doc)
     end
   end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      %{allOf: Enum.map(schema.schemas, &Zoi.JSONSchema.Encoder.encode/1)}
+    end
+  end
 end

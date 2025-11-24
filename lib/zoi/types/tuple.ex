@@ -77,4 +77,13 @@ defmodule Zoi.Types.Tuple do
       Zoi.Inspect.build(type, opts, fields: fields_doc)
     end
   end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      %{
+        type: :array,
+        prefixItems: Enum.map(schema.fields, &Zoi.JSONSchema.Encoder.encode/1)
+      }
+    end
+  end
 end

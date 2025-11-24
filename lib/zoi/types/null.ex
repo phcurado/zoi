@@ -30,4 +30,8 @@ defmodule Zoi.Types.Null do
       Zoi.Inspect.build(type, opts)
     end
   end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(_schema), do: %{type: :null}
+  end
 end

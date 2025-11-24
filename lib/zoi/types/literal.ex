@@ -37,4 +37,8 @@ defmodule Zoi.Types.Literal do
       Zoi.Inspect.build(type, opts, value: type.value)
     end
   end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema), do: %{const: schema.value}
+  end
 end

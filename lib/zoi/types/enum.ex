@@ -102,4 +102,10 @@ defmodule Zoi.Types.Enum do
       Zoi.Inspect.build(type, opts, values: values)
     end
   end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      %{type: :string, enum: Enum.map(schema.values, fn {_k, v} -> v end)}
+    end
+  end
 end

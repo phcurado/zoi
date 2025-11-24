@@ -63,4 +63,8 @@ defmodule Zoi.Types.Map do
       Zoi.Inspect.build(type, opts, extra_fields)
     end
   end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(_schema), do: %{type: :object}
+  end
 end

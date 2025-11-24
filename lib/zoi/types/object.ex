@@ -74,4 +74,21 @@ defmodule Zoi.Types.Object do
       Zoi.Inspect.build(type, opts, fields: fields_doc)
     end
   end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      %{
+        type: :object,
+        properties:
+          Enum.into(schema.fields, %{}, fn {key, value} ->
+            {key, Zoi.JSONSchema.Encoder.encode(value)}
+          end),
+        required:
+          Enum.flat_map(schema.fields, fn {k, v} ->
+            if Meta.required?(v.meta), do: [k], else: []
+          end),
+        additionalProperties: false
+      }
+    end
+  end
 end

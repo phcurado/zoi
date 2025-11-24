@@ -160,6 +160,33 @@ defmodule Zoi.Types.Array do
     end
   end
 
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(%{inner: %Zoi.Types.Any{}} = schema) do
+      %{type: :array}
+      |> add_constraints(schema)
+    end
+
+    def encode(schema) do
+      %{type: :array, items: Zoi.JSONSchema.Encoder.encode(schema.inner)}
+      |> add_constraints(schema)
+    end
+
+    defp add_constraints(map, schema) do
+      map
+      |> maybe_add(:minItems, schema.min_length)
+      |> maybe_add(:maxItems, schema.max_length)
+      |> maybe_add_length(schema.length)
+    end
+
+    defp maybe_add(map, _key, nil), do: map
+    defp maybe_add(map, key, {value, _opts}), do: Map.put(map, key, value)
+
+    defp maybe_add_length(map, nil), do: map
+
+    defp maybe_add_length(map, {value, _opts}),
+      do: map |> Map.put(:minItems, value) |> Map.put(:maxItems, value)
+  end
+
   defimpl Zoi.Validations.Gte do
     def set(schema, value, opts \\ []) do
       %{schema | min_length: {value, opts}, length: nil}

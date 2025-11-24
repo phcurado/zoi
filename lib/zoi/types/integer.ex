@@ -34,7 +34,7 @@ defmodule Zoi.Types.Integer do
     )
   end
 
-  def new(opts) do
+  def new(opts \\ []) do
     {validation_opts, opts} = Keyword.split(opts, [:gte, :lte, :gt, :lt])
 
     opts
@@ -154,5 +154,18 @@ defmodule Zoi.Types.Integer do
 
       Zoi.Inspect.build(type, opts, extra_fields)
     end
+  end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      %{type: :integer}
+      |> maybe_add(:minimum, schema.gte)
+      |> maybe_add(:maximum, schema.lte)
+      |> maybe_add(:exclusiveMinimum, schema.gt)
+      |> maybe_add(:exclusiveMaximum, schema.lt)
+    end
+
+    defp maybe_add(map, _key, nil), do: map
+    defp maybe_add(map, key, {value, _opts}), do: Map.put(map, key, value)
   end
 end

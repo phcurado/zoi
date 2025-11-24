@@ -43,4 +43,8 @@ defmodule Zoi.ISO.Date do
       Zoi.Inspect.build(type, opts)
     end
   end
+
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(_schema), do: %{type: :string, format: :date}
+  end
 end
