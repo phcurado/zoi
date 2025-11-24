@@ -266,7 +266,7 @@ defmodule Zoi.JSONSchema do
     # Only split regex (needs special multi-pattern handling with allOf)
     {regex_refinements, other_refinements} =
       Enum.split_with(all_refinements, fn
-        {_module, :refine, [[regex: _, opts: _], _]} -> true
+        {Zoi.Validations.Regex, :validate, _} -> true
         _ -> false
       end)
 
@@ -390,9 +390,10 @@ defmodule Zoi.JSONSchema do
     |> Map.put(:maxItems, value)
   end
 
-  # Legacy refinements (url, starts_with, ends_with, one_of)
-
-  defp encode_refinement({_module, :refine, [[:url], _opts]}, %{type: :string} = json_schema) do
+  defp encode_refinement(
+         {Zoi.Validations.Url, :validate, [_opts]},
+         %{type: :string} = json_schema
+       ) do
     Map.put(json_schema, :format, :uri)
   end
 
@@ -403,7 +404,7 @@ defmodule Zoi.JSONSchema do
   defp encode_regex_refinements(json_schema, []), do: json_schema
 
   defp encode_regex_refinements(%{type: :string} = json_schema, [
-         {_module, :refine, [[regex: regex, opts: _regex_opts], opts]}
+         {Zoi.Validations.Regex, :validate, [regex, _regex_opts, opts]}
        ]) do
     Keyword.fetch(opts, :format)
     |> case do
@@ -417,8 +418,8 @@ defmodule Zoi.JSONSchema do
 
   defp encode_regex_refinements(json_schema, regex_refinements) do
     patterns =
-      Enum.map(regex_refinements, fn {_module, :refine,
-                                      [[regex: regex, opts: _regex_opts], _opts]} ->
+      Enum.map(regex_refinements, fn {Zoi.Validations.Regex, :validate,
+                                      [regex, _regex_opts, _opts]} ->
         regex
       end)
 

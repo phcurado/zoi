@@ -2298,6 +2298,11 @@ defmodule ZoiTest do
       assert Exception.message(error) == "something went wrong with the url"
       assert {"something went wrong with the url", [value: "htt://google/com"]} = error.issue
     end
+
+    test "url should only work on implemented protocols" do
+      schema = Zoi.literal("a") |> Zoi.refine({Zoi.Validations.Url, :validate, [[]]})
+      assert {:ok, "a"} == Zoi.parse(schema, "a")
+    end
   end
 
   describe "ipv4/0" do
@@ -2981,6 +2986,11 @@ defmodule ZoiTest do
       assert error.code == :custom
       assert Exception.message(error) == "must be a number"
     end
+
+    test "regex should only work on implemented protocols" do
+      schema = Zoi.literal("a") |> Zoi.regex(~r/b/)
+      assert {:ok, "a"} == Zoi.parse(schema, "a")
+    end
   end
 
   describe "starts_with/2" do
@@ -3002,6 +3012,11 @@ defmodule ZoiTest do
       assert error.code == :custom
       assert Exception.message(error) == "should have prefix"
     end
+
+    test "starts_with should only work on implemented protocols" do
+      schema = Zoi.literal("a") |> Zoi.starts_with("b")
+      assert {:ok, "a"} == Zoi.parse(schema, "a")
+    end
   end
 
   describe "ends_with/2" do
@@ -3022,6 +3037,11 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "value")
       assert error.code == :custom
       assert Exception.message(error) == "should have suffix"
+    end
+
+    test "ends_with should only work on implemented protocols" do
+      schema = Zoi.literal("a") |> Zoi.ends_with("b")
+      assert {:ok, "a"} == Zoi.parse(schema, "a")
     end
   end
 
@@ -3167,11 +3187,6 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
       assert error.code == :custom
       assert Exception.message(error) == "must be longer than 3 characters"
-    end
-
-    test "refinement validation when no pattern match" do
-      schema = Zoi.string() |> Zoi.refine({Zoi.Refinements, :refine, [[], []]})
-      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
     end
 
     test "refinement with context errors" do

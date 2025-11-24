@@ -2006,7 +2006,7 @@ defmodule Zoi do
   @spec url(opts :: options()) :: schema()
   def url(opts \\ []) do
     Zoi.string()
-    |> refine({Zoi.Refinements, :refine, [[:url], opts]})
+    |> refine({Zoi.Validations.Url, :validate, [opts]})
   end
 
   @doc """
@@ -2130,7 +2130,7 @@ defmodule Zoi do
   @spec one_of(schema :: schema(), values :: list(), opts :: options()) :: schema()
   def one_of(schema, values, opts \\ []) when is_list(values) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[one_of: values], opts]})
+    |> refine({Zoi.Validations.OneOf, :validate, [values, opts]})
   end
 
   @doc """
@@ -2358,7 +2358,7 @@ defmodule Zoi do
   @spec regex(schema :: schema(), regex :: Regex.t(), opts :: options()) :: schema()
   def regex(schema, regex, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[regex: regex.source, opts: regex.opts], opts]})
+    |> refine({Zoi.Validations.Regex, :validate, [regex.source, regex.opts, opts]})
   end
 
   @doc """
@@ -2377,7 +2377,7 @@ defmodule Zoi do
   @spec starts_with(schema :: schema(), prefix :: binary(), opts :: options()) :: schema()
   def starts_with(schema, prefix, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[starts_with: prefix], opts]})
+    |> refine({Zoi.Validations.StartsWith, :validate, [prefix, opts]})
   end
 
   @doc """
@@ -2396,7 +2396,7 @@ defmodule Zoi do
   @spec ends_with(schema :: schema(), suffix :: binary(), opts :: options()) :: schema()
   def ends_with(schema, suffix, opts \\ []) do
     schema
-    |> refine({Zoi.Refinements, :refine, [[ends_with: suffix], opts]})
+    |> refine({Zoi.Validations.EndsWith, :validate, [suffix, opts]})
   end
 
   @doc """

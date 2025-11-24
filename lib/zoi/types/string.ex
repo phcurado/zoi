@@ -116,6 +116,51 @@ defmodule Zoi.Types.String do
     end
   end
 
+  defimpl Zoi.Validations.Url do
+    def validate(_schema, input, opts) do
+      uri = URI.parse(input)
+
+      if uri.scheme in ["http", "https"] and uri.host != nil do
+        :ok
+      else
+        {:error, Zoi.Error.invalid_url(input, opts)}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.StartsWith do
+    def validate(_schema, input, prefix, opts) do
+      if String.starts_with?(input, prefix) do
+        :ok
+      else
+        {:error, Zoi.Error.invalid_starting_string(prefix, opts)}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.EndsWith do
+    def validate(_schema, input, suffix, opts) do
+      if String.ends_with?(input, suffix) do
+        :ok
+      else
+        {:error, Zoi.Error.invalid_ending_string(suffix, opts)}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.Regex do
+    def validate(_schema, input, regex, regex_opts, opts) do
+      # To allow both string and regex input for regex refinement
+      regex = Regex.compile!(regex, regex_opts)
+
+      if String.match?(input, regex) do
+        :ok
+      else
+        {:error, Zoi.Error.invalid_format(regex, opts)}
+      end
+    end
+  end
+
   defimpl Inspect do
     def inspect(type, opts) do
       Zoi.Inspect.inspect_type(type, opts)
