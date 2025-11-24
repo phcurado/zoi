@@ -552,7 +552,7 @@ defmodule Zoi do
       Zoi.ends_with("world")
       Zoi.regex(~r/^[a-zA-Z]+$/)
 
-  You can also pass validation constraints directly when creating a string schema:
+  You can also pass constraint options directly in the constructor:
 
       iex> schema = Zoi.string(min_length: 2, max_length: 100)
       iex> Zoi.parse(schema, "hello")
@@ -703,6 +703,11 @@ defmodule Zoi do
       iex> {:error, [%{code: code}]} = Zoi.parse(schema, -1)
       iex> code
       :greater_than_or_equal_to
+
+  For coercion, you can pass the `:coerce` option:
+
+      iex> Zoi.number(coerce: true) |> Zoi.parse("42.5")
+      {:ok, 42.5}
 
   ## Options
 
@@ -1512,17 +1517,22 @@ defmodule Zoi do
          }
        ]}
 
-  Built-in validations for integers include:
+  You can pass constraint options directly in the constructor:
 
-      Zoi.gt(5)
-      Zoi.gte(5)
-      Zoi.lt(2)
-      Zoi.lte(2)
-      Zoi.min(2) # alias for `Zoi.gte/1`
-      Zoi.max(5) # alias for `Zoi.lte/1`
+      iex> schema = Zoi.array(Zoi.string(), min_length: 1, max_length: 5)
+      iex> Zoi.parse(schema, ["hello", "world"])
+      {:ok, ["hello", "world"]}
+      iex> {:error, [%{code: code}]} = Zoi.parse(schema, [])
+      iex> code
+      :greater_than_or_equal_to
+
+  Built-in chainable validations for arrays include:
+
+      Zoi.min(2) # alias for `Zoi.gte/2`
+      Zoi.max(5) # alias for `Zoi.lte/2`
       Zoi.length(5)
 
-  for coercion, you can pass the `:coerce` option and `Zoi` will coerce maps and tuples into the array type:
+  For coercion, you can pass the `:coerce` option and `Zoi` will coerce maps and tuples into the array type:
       iex> schema = Zoi.array(Zoi.integer(), coerce: true)
       iex> Zoi.parse(schema, %{0 => 1, 1 => 2, 2 => 3})
       {:ok, [1, 2, 3]}
@@ -1893,7 +1903,17 @@ defmodule Zoi do
            }
          ]}
 
+    You can pass constraint options directly in the constructor:
+
+        iex> schema = Zoi.decimal(gte: Decimal.new("0"), lte: Decimal.new("100"))
+        iex> Zoi.parse(schema, Decimal.new("50"))
+        {:ok, Decimal.new("50")}
+        iex> {:error, [%{code: code}]} = Zoi.parse(schema, Decimal.new("-1"))
+        iex> code
+        :greater_than_or_equal_to
+
     You can also specify the `:coerce` option to allow coercion from strings or integers:
+
         iex> schema = Zoi.decimal(coerce: true)
         iex> Zoi.parse(schema, "123.45")
         {:ok, Decimal.new("123.45")}

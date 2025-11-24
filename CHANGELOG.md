@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Protocol-based validation architecture**: All validations now use `Zoi.Validations.*` protocols instead of the centralized `Zoi.Refinements` module. This improves:
+  - **Introspection**: Constraint values stored as struct fields (e.g., `min_length: 5`) instead of opaque MFAs
+  - **Ergonomics**: Pass constraints directly in constructors: `Zoi.string(min_length: 5, max_length: 100)`
+  - **Integration**: External libraries can easily inspect schema constraints for JSON Schema, OpenAPI, etc.
+- Validation protocols: `Gte`, `Lte`, `Gt`, `Lt`, `Length`, `Url`, `Regex`, `StartsWith`, `EndsWith`, `OneOf`
+- Each type implements relevant protocols (String implements all, Integer/Float/Number implement Gte/Lte/Gt/Lt, etc.)
 - Now all types `opts` params are validated at type creation time, using `Zoi` internals, raising errors if invalid options are provided.
 
 ## 0.10.7 - 2025-11-16
