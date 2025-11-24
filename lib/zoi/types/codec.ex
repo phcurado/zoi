@@ -8,11 +8,13 @@ defmodule Zoi.Types.Codec do
     |> Zoi.Types.Extend.new(
       decode:
         Zoi.Types.Any.new(
-          description: "A 1-arity function that transforms from the `from` schema to the `to` schema."
+          description:
+            "A 1-arity function that transforms from the `from` schema to the `to` schema."
         ),
       encode:
         Zoi.Types.Any.new(
-          description: "A 1-arity function that transforms from the `to` schema to the `from` schema."
+          description:
+            "A 1-arity function that transforms from the `to` schema to the `from` schema."
         )
     )
   end

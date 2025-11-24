@@ -144,6 +144,7 @@ defmodule Zoi.Describe do
   defp parse_type_spec(%Zoi.Types.Object{}), do: "`t:map/0`"
   defp parse_type_spec(%Zoi.Types.String{}), do: "`t:String.t/0`"
   defp parse_type_spec(%Zoi.Types.StringBoolean{}), do: "`t:boolean/0` or `t:String.t/0`"
+  defp parse_type_spec(%Zoi.Types.Codec{to: to}), do: parse_type_spec(to)
 
   defp parse_type_spec(%Zoi.Types.Struct{module: module}),
     do: "struct of type `#{inspect(module)}`"
