@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.11.0 - Unreleased
+## 0.11.0 - 2025-11-24
 
 ### Changed
 
@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Validation protocols: `Gte`, `Lte`, `Gt`, `Lt`, `Length`, `Url`, `Regex`, `StartsWith`, `EndsWith`, `OneOf`
 - Each type implements relevant protocols (String implements all, Integer/Float/Number implement Gte/Lte/Gt/Lt, etc.)
 - Now all types `opts` params are validated at type creation time, using `Zoi` internals, raising errors if invalid options are provided.
+- `Zoi.gt/2` and `Zoi.lt/2` refinements will now work with `Zoi.integer()`, `Zoi.float()` and `Zoi.number()` only. `Zoi.array/2` and `Zoi.string/2` types should use `Zoi.min/2` and `Zoi.max/2` instead for length validations.
 
 ## 0.10.7 - 2025-11-16
 
