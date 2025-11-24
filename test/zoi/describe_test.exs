@@ -123,7 +123,12 @@ defmodule Zoi.DescribeTest do
           struct: Zoi.struct(SomeStruct, %{name: Zoi.string()}),
           time: Zoi.time(),
           tuple: Zoi.tuple({Zoi.integer(), Zoi.string()}),
-          union: Zoi.union([Zoi.integer(), Zoi.string()])
+          union: Zoi.union([Zoi.integer(), Zoi.string()]),
+          codec:
+            Zoi.codec(Zoi.string(), Zoi.integer(),
+              decode: fn x -> x end,
+              encode: fn x -> x end
+            )
         )
 
       formatted_description = """
@@ -176,6 +181,8 @@ defmodule Zoi.DescribeTest do
       * `:tuple` (tuple of `t:integer/0`, `t:String.t/0` values)
 
       * `:union` (`t:integer/0` or `t:String.t/0`)
+
+      * `:codec` (`t:integer/0`)
       """
 
       assert Zoi.describe(schema) == formatted_description
