@@ -49,11 +49,27 @@ defmodule Zoi.JSONSchemaTest do
                  valid: %{type: :boolean}
                },
                required: required_properties,
-               additionalProperties: false
+               additionalProperties: true
              } = Zoi.to_json_schema(schema)
 
       assert :name in required_properties
       assert :age in required_properties
+    end
+
+    test "encoding strict object sets additionalProperties to false" do
+      schema =
+        Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}, strict: true)
+
+      assert %{
+               "$schema": "https://json-schema.org/draft/2020-12/schema",
+               type: :object,
+               properties: %{
+                 name: %{type: :string},
+                 age: %{type: :integer}
+               },
+               required: _required_properties,
+               additionalProperties: false
+             } = Zoi.to_json_schema(schema)
     end
 
     test "encoding nested object" do
@@ -86,7 +102,7 @@ defmodule Zoi.JSONSchemaTest do
                      email: %{type: :string}
                    },
                    required: required_user_properties,
-                   additionalProperties: false
+                   additionalProperties: true
                  },
                  address: %{
                    type: :object,
@@ -96,7 +112,7 @@ defmodule Zoi.JSONSchemaTest do
                      zip: %{type: :string}
                    },
                    required: required_address_properties,
-                   additionalProperties: false
+                   additionalProperties: true
                  },
                  tags: %{
                    type: :array,
@@ -107,12 +123,12 @@ defmodule Zoi.JSONSchemaTest do
                        value: %{type: :string}
                      },
                      required: required_tag_properties,
-                     additionalProperties: false
+                     additionalProperties: true
                    }
                  }
                },
                required: required_schema_properties,
-               additionalProperties: false
+               additionalProperties: true
              } = Zoi.to_json_schema(schema)
 
       Enum.each([:id, :email], fn prop ->
