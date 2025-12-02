@@ -87,7 +87,7 @@ defmodule Zoi.Types.Object do
           Enum.flat_map(schema.fields, fn {k, v} ->
             if Meta.required?(v.meta), do: [k], else: []
           end),
-        additionalProperties: false
+        additionalProperties: not schema.strict
       }
     end
   end
