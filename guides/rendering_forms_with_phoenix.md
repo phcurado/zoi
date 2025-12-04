@@ -77,7 +77,7 @@ def handle_event("save", %{"user" => params}, socket) do
         {:noreply, push_navigate(socket, to: ~p"/users/#{user}")}
 
       {:error, _reason} ->
-        # You can also show changeset errors here if applicable
+        # Handle submission errors - see "Adding External Errors" section below
         {:noreply, put_flash(socket, :error, "Failed to save")}
     end
   else
@@ -252,3 +252,61 @@ defp save_user(socket, :edit, attrs) do
   end
 end
 ```
+
+## 8. Adding External Errors to Forms
+
+When your backend returns errors (e.g., from Ecto changesets or business logic), you can add them to the Zoi context so they display on the form.
+
+Since you already have the context from `Zoi.Form.parse/2`, use `Zoi.Context.add_error/2` to add errors before converting to a form:
+
+```elixir
+def handle_event("save", %{"user" => params}, socket) do
+  ctx = Zoi.Form.parse(@user_schema, params)
+
+  if ctx.valid? do
+    case Accounts.create_user(ctx.parsed) do
+      {:ok, user} ->
+        {:noreply, push_navigate(socket, to: ~p"/users/#{user}")}
+
+      {:error, :email_taken} ->
+        error = Zoi.Error.custom_error(issue: {"has already been taken", []}, path: [:email])
+        ctx = Zoi.Context.add_error(ctx, error)
+        {:noreply, assign(socket, form: to_form(ctx, as: :user, action: :validate))}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to save")}
+    end
+  else
+    {:noreply, assign(socket, form: to_form(ctx, as: :user, action: :validate))}
+  end
+end
+```
+
+### Adding Changeset Errors
+
+Ecto changeset errors use the `{msg, opts}` tuple format. Convert them to Zoi errors preserving the format for translation support (see [Localizing errors with Gettext](localizing_errors_with_gettext.md)):
+
+```elixir
+defp save_user(socket, :new, attrs, ctx) do
+  case Accounts.create_user(attrs) do
+    {:ok, user} ->
+      {:noreply,
+       socket
+       |> put_flash(:info, "User created")
+       |> push_navigate(to: ~p"/users/#{user}")}
+
+    {:error, changeset} ->
+      ctx = add_changeset_errors(changeset, ctx)
+      {:noreply, assign(socket, form: to_form(ctx, as: :user, action: :validate))}
+  end
+end
+
+defp add_changeset_errors(changeset, ctx) do
+  Enum.reduce(changeset.errors, ctx, fn {field, {msg, opts}}, acc ->
+    error = Zoi.Error.custom_error(issue: {msg, opts}, path: [field])
+    Zoi.Context.add_error(acc, error)
+  end)
+end
+```
+
+The Ecto schema might not always represent the form structure you created with Zoi, so depending on your use case, you need to map fields accordingly.

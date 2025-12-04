@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.11.1 - 2025-12-04
+
+### Added
+
+- Improved the documentation for "Rendering forms with Phoenix" guide, adding example on how to handle errors with changesets or custom errors.
+
 ## 0.11.0 - 2025-11-24
 
 ### Changed
