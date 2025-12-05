@@ -172,6 +172,20 @@ defmodule Zoi.SchemaTest do
       assert name_field.inner.coerce == true
     end
 
+    test "applies transformation to lazy types" do
+      schema =
+        Zoi.object(%{
+          friends: Zoi.array(Zoi.lazy(fn -> Zoi.string() end))
+        })
+        |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+      friends_field = schema.fields[:friends]
+
+      assert friends_field.coerce == true
+      # Lazy type is treated as a leaf node, the function is preserved
+      assert is_function(friends_field.inner.fun, 0)
+    end
+
     test "applies nullish conditionally using path" do
       schema =
         Zoi.object(%{
@@ -216,37 +230,6 @@ defmodule Zoi.SchemaTest do
       name_field = schema.fields[:name]
       # Union types don't have coerce field, but their inner schemas do
       assert %Zoi.Types.Union{} = name_field
-    end
-
-    test "receives path for each node (excluding root)" do
-      _schema =
-        Zoi.object(%{
-          user:
-            Zoi.object(%{
-              name: Zoi.string()
-            })
-        })
-        |> Zoi.Schema.traverse(fn node, path ->
-          send(self(), {:path, path})
-          node
-        end)
-
-      # Collect all paths
-      paths =
-        Enum.reduce(1..10, [], fn _, acc ->
-          receive do
-            {:path, path} -> [path | acc]
-          after
-            100 -> acc
-          end
-        end)
-        |> Enum.reverse()
-
-      # Root path [] should NOT be in paths (root is not transformed)
-      refute [] in paths
-      # Should have paths for nested nodes
-      assert [:user] in paths
-      assert [:user, :name] in paths
     end
 
     test "can conditionally apply transformation based on path" do

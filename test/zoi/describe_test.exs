@@ -1,6 +1,10 @@
 defmodule Zoi.DescribeTest do
   use ExUnit.Case, async: true
 
+  defmodule User do
+    defstruct [:name]
+  end
+
   @schema Zoi.keyword(
             type: Zoi.atom(description: "The type of the option item.") |> Zoi.required(),
             required:
@@ -45,10 +49,6 @@ defmodule Zoi.DescribeTest do
     end
 
     test "describe for struct schema" do
-      defmodule User do
-        defstruct [:name]
-      end
-
       schema =
         Zoi.struct(User, %{
           name: Zoi.string(description: "The name of the struct.")
@@ -123,7 +123,8 @@ defmodule Zoi.DescribeTest do
           struct: Zoi.struct(SomeStruct, %{name: Zoi.string()}),
           time: Zoi.time(),
           tuple: Zoi.tuple({Zoi.integer(), Zoi.string()}),
-          union: Zoi.union([Zoi.integer(), Zoi.string()])
+          union: Zoi.union([Zoi.integer(), Zoi.string()]),
+          lazy: Zoi.lazy(fn -> Zoi.string() end)
         )
 
       formatted_description = """
@@ -176,6 +177,8 @@ defmodule Zoi.DescribeTest do
       * `:tuple` (tuple of `t:integer/0`, `t:String.t/0` values)
 
       * `:union` (`t:integer/0` or `t:String.t/0`)
+
+      * `:lazy` (`t:String.t/0`)
       """
 
       assert Zoi.describe(schema) == formatted_description

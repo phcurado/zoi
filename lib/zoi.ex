@@ -1143,6 +1143,41 @@ defmodule Zoi do
   defdelegate intersection(fields, opts \\ []), to: Zoi.Types.Intersection, as: :new
 
   @doc """
+  Defines a lazy type that defers schema evaluation until parse time.
+
+  This is useful for defining recursive types where a schema needs to reference itself.
+
+  ## Example
+
+      # Define a user schema where users can have friends (other users)
+      defmodule MySchemas do
+        def user do
+          Zoi.object(%{
+            name: Zoi.string(),
+            email: Zoi.email(),
+            friends: Zoi.array(Zoi.lazy(fn -> user() end)) |> Zoi.optional()
+          })
+        end
+      end
+
+      MySchemas.user()
+      |> Zoi.parse(%{
+        name: "Alice",
+        email: "alice@example.com",
+        friends: [
+          %{name: "Bob", email: "bob@example.com"},
+          %{name: "Carol", email: "carol@example.com", friends: [
+            %{name: "Dave", email: "dave@example.com"}
+          ]}
+        ]
+      })
+      # {:ok, %{name: "Alice", email: "alice@example.com", friends: [...]}}
+  """
+  @doc group: "Encapsulated Types"
+  @spec lazy(fun :: (-> schema()), opts :: options()) :: schema()
+  defdelegate lazy(fun, opts \\ []), to: Zoi.Types.Lazy, as: :new
+
+  @doc """
   Defines a object type schema.
 
   Use `Zoi.object(fields)` to define complex objects with nested schemas:

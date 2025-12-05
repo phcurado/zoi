@@ -159,6 +159,11 @@ defmodule Zoi.Describe do
     Enum.map_join(schemas, " or ", &parse_type_spec/1)
   end
 
+  defp parse_type_spec(%Zoi.Types.Lazy{fun: fun}) do
+    schema = fun.()
+    parse_type_spec(schema)
+  end
+
   defp parse_enum_spec(value) when is_atom(value), do: "`:#{value}`"
   defp parse_enum_spec(value), do: "`#{inspect(value)}`"
 
