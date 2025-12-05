@@ -1,6 +1,10 @@
 defmodule Zoi.DescribeTest do
   use ExUnit.Case, async: true
 
+  defmodule User do
+    defstruct [:name]
+  end
+
   @schema Zoi.keyword(
             type: Zoi.atom(description: "The type of the option item.") |> Zoi.required(),
             required:
@@ -45,10 +49,6 @@ defmodule Zoi.DescribeTest do
     end
 
     test "describe for struct schema" do
-      defmodule User do
-        defstruct [:name]
-      end
-
       schema =
         Zoi.struct(User, %{
           name: Zoi.string(description: "The name of the struct.")

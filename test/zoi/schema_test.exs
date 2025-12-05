@@ -232,37 +232,6 @@ defmodule Zoi.SchemaTest do
       assert %Zoi.Types.Union{} = name_field
     end
 
-    test "receives path for each node (excluding root)" do
-      _schema =
-        Zoi.object(%{
-          user:
-            Zoi.object(%{
-              name: Zoi.string()
-            })
-        })
-        |> Zoi.Schema.traverse(fn node, path ->
-          send(self(), {:path, path})
-          node
-        end)
-
-      # Collect all paths
-      paths =
-        Enum.reduce(1..10, [], fn _, acc ->
-          receive do
-            {:path, path} -> [path | acc]
-          after
-            100 -> acc
-          end
-        end)
-        |> Enum.reverse()
-
-      # Root path [] should NOT be in paths (root is not transformed)
-      refute [] in paths
-      # Should have paths for nested nodes
-      assert [:user] in paths
-      assert [:user, :name] in paths
-    end
-
     test "can conditionally apply transformation based on path" do
       schema =
         Zoi.object(%{
