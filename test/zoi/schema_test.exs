@@ -172,6 +172,20 @@ defmodule Zoi.SchemaTest do
       assert name_field.inner.coerce == true
     end
 
+    test "applies transformation to lazy types" do
+      schema =
+        Zoi.object(%{
+          friends: Zoi.array(Zoi.lazy(fn -> Zoi.string() end))
+        })
+        |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+      friends_field = schema.fields[:friends]
+
+      assert friends_field.coerce == true
+      # Lazy type is treated as a leaf node, the function is preserved
+      assert is_function(friends_field.inner.fun, 0)
+    end
+
     test "applies nullish conditionally using path" do
       schema =
         Zoi.object(%{

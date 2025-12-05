@@ -27,7 +27,8 @@ defmodule Zoi.JSONSchemaTest do
          %{allOf: [%{type: :string}, %{const: "fixed"}]}},
         {Zoi.union([Zoi.string(), Zoi.integer()]),
          %{anyOf: [%{type: :string}, %{type: :integer}]}},
-        {Zoi.nullable(Zoi.integer()), %{anyOf: [%{type: :null}, %{type: :integer}]}}
+        {Zoi.nullable(Zoi.integer()), %{anyOf: [%{type: :null}, %{type: :integer}]}},
+        {Zoi.lazy(fn -> Zoi.string() end), %{type: :string}}
       ]
 
       Enum.each(schemas, fn {schema, expected} ->

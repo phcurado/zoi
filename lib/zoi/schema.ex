@@ -189,6 +189,13 @@ defmodule Zoi.Schema do
     |> apply_fun(path, fun)
   end
 
+  # Lazy types are treated as leaf nodes, we don't traverse into them
+  # because they may contain recursive references that would cause infinite loops.
+  # The transformation is applied to the Lazy wrapper only.
+  defp do_traverse(%Zoi.Types.Lazy{} = lazy, path, fun) do
+    apply_fun(lazy, path, fun)
+  end
+
   defp do_traverse(schema, path, fun) do
     apply_fun(schema, path, fun)
   end

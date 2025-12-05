@@ -790,6 +790,79 @@ defmodule ZoiTest do
     end
   end
 
+  describe "lazy/1" do
+    test "basic lazy evaluation" do
+      schema = Zoi.lazy(fn -> Zoi.string() end)
+
+      assert {:ok, "hello"} = Zoi.parse(schema, "hello")
+      assert {:error, _} = Zoi.parse(schema, 123)
+    end
+
+    test "recursive user schema with friends" do
+      schema = user_schema()
+
+      # User without friends
+      assert {:ok, %{name: "Alice", email: "alice@example.com"}} =
+               Zoi.parse(schema, %{name: "Alice", email: "alice@example.com"})
+
+      # User with friends
+      input = %{
+        name: "Alice",
+        email: "alice@example.com",
+        friends: [
+          %{name: "Bob", email: "bob@example.com"},
+          %{
+            name: "Carol",
+            email: "carol@example.com",
+            friends: [
+              %{name: "Dave", email: "dave@example.com"}
+            ]
+          }
+        ]
+      }
+
+      assert {:ok, result} = Zoi.parse(schema, input)
+      assert result.name == "Alice"
+      assert length(result.friends) == 2
+      assert Enum.at(result.friends, 1).friends |> Enum.at(0) |> Map.get(:name) == "Dave"
+    end
+
+    test "recursive type with validation error in nested structure" do
+      schema = user_schema_with_validation()
+
+      # Invalid nested email
+      input = %{
+        name: "Alice",
+        email: "alice@example.com",
+        friends: [
+          %{name: "Bob", email: "invalid-email"}
+        ]
+      }
+
+      assert {:error, errors} = Zoi.parse(schema, input)
+      assert length(errors) == 1
+      [error] = errors
+      assert error.path == [:friends, 0, :email]
+    end
+  end
+
+  # Helper functions for recursive schema tests
+  defp user_schema do
+    Zoi.object(%{
+      name: Zoi.string(),
+      email: Zoi.string(),
+      friends: Zoi.array(Zoi.lazy(fn -> user_schema() end)) |> Zoi.optional()
+    })
+  end
+
+  defp user_schema_with_validation do
+    Zoi.object(%{
+      name: Zoi.string(),
+      email: Zoi.email(),
+      friends: Zoi.array(Zoi.lazy(fn -> user_schema_with_validation() end)) |> Zoi.optional()
+    })
+  end
+
   describe "object/2" do
     test "object with correct value" do
       schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
@@ -3470,7 +3543,8 @@ defmodule ZoiTest do
         {Zoi.tuple({Zoi.string(), Zoi.integer(), Zoi.any()}),
          quote(do: {binary(), integer(), any()})},
         {Zoi.union([Zoi.string(), Zoi.integer(), Zoi.number()]),
-         quote(do: binary() | integer() | number())}
+         quote(do: binary() | integer() | number())},
+        {Zoi.lazy(fn -> Zoi.string() end), quote(do: term())}
       ]
 
       Enum.each(types, fn {schema, expected} ->

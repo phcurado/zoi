@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- `Zoi.lazy/1` type for deferring schema evaluation until parse time, enabling recursive and self-referencing schemas.
+
 ## 0.11.1 - 2025-12-04
 
 ### Added

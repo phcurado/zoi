@@ -47,6 +47,7 @@ defmodule Zoi.InspectTest do
        "#Zoi.tuple<fields: {#Zoi.string<coerce: false>, #Zoi.integer<coerce: false>}>"},
       {Zoi.union([Zoi.string(), Zoi.integer()]),
        "#Zoi.union<schemas: [#Zoi.string<coerce: false>, #Zoi.integer<coerce: false>]>"},
+      {Zoi.lazy(fn -> Zoi.string() end), "#Zoi.lazy<>"},
       {Zoi.ISO.date(), "#Zoi.ISO.date<>"},
       {Zoi.ISO.datetime(), "#Zoi.ISO.date_time<>"},
       {Zoi.ISO.naive_datetime(), "#Zoi.ISO.naive_date_time<>"},
