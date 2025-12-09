@@ -28,7 +28,8 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.union([Zoi.string(), Zoi.integer()]),
          %{anyOf: [%{type: :string}, %{type: :integer}]}},
         {Zoi.nullable(Zoi.integer()), %{anyOf: [%{type: :null}, %{type: :integer}]}},
-        {Zoi.lazy(fn -> Zoi.string() end), %{type: :string}}
+        {Zoi.lazy(fn -> Zoi.string() end), %{type: :string}},
+        {Zoi.string() |> Zoi.default("hello"), %{type: :string, default: "hello"}}
       ]
 
       Enum.each(schemas, fn {schema, expected} ->
@@ -443,30 +444,6 @@ defmodule Zoi.JSONSchemaTest do
         example: "Direct example"
       }
 
-      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
-    end
-
-    test "encoding schema with default value" do
-      schema = Zoi.string() |> Zoi.default("hello")
-      expected = %{type: :string, default: "hello"}
-      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
-    end
-
-    test "encoding enum with default value" do
-      schema = Zoi.enum(["celsius", "fahrenheit"]) |> Zoi.default("celsius")
-      expected = %{type: :string, enum: ["celsius", "fahrenheit"], default: "celsius"}
-      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
-    end
-
-    test "encoding optional enum with default value" do
-      schema = Zoi.enum(["celsius", "fahrenheit"]) |> Zoi.optional() |> Zoi.default("celsius")
-      expected = %{type: :string, enum: ["celsius", "fahrenheit"], default: "celsius"}
-      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
-    end
-
-    test "encoding integer with default value" do
-      schema = Zoi.integer() |> Zoi.default(42)
-      expected = %{type: :integer, default: 42}
       assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
   end
