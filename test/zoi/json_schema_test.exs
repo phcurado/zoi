@@ -28,7 +28,8 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.union([Zoi.string(), Zoi.integer()]),
          %{anyOf: [%{type: :string}, %{type: :integer}]}},
         {Zoi.nullable(Zoi.integer()), %{anyOf: [%{type: :null}, %{type: :integer}]}},
-        {Zoi.lazy(fn -> Zoi.string() end), %{type: :string}}
+        {Zoi.lazy(fn -> Zoi.string() end), %{type: :string}},
+        {Zoi.string() |> Zoi.default("hello"), %{type: :string, default: "hello"}}
       ]
 
       Enum.each(schemas, fn {schema, expected} ->
