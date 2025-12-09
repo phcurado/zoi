@@ -445,6 +445,30 @@ defmodule Zoi.JSONSchemaTest do
 
       assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
+
+    test "encoding schema with default value" do
+      schema = Zoi.string() |> Zoi.default("hello")
+      expected = %{type: :string, default: "hello"}
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
+    end
+
+    test "encoding enum with default value" do
+      schema = Zoi.enum(["celsius", "fahrenheit"]) |> Zoi.default("celsius")
+      expected = %{type: :string, enum: ["celsius", "fahrenheit"], default: "celsius"}
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
+    end
+
+    test "encoding optional enum with default value" do
+      schema = Zoi.enum(["celsius", "fahrenheit"]) |> Zoi.optional() |> Zoi.default("celsius")
+      expected = %{type: :string, enum: ["celsius", "fahrenheit"], default: "celsius"}
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
+    end
+
+    test "encoding integer with default value" do
+      schema = Zoi.integer() |> Zoi.default(42)
+      expected = %{type: :integer, default: 42}
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
+    end
   end
 
   def custom_refinement(value) do
