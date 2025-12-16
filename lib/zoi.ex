@@ -2755,4 +2755,118 @@ defmodule Zoi do
       effects ++ [{:transform, fun}]
     end)
   end
+
+  ## Codecs
+
+  @doc """
+  Creates a codec for bidirectional parsing (encode/decode).
+
+  Codecs enable data transformation in both directions - decoding transforms input
+  from the `from` schema type to the `to` schema type, while encoding does the reverse.
+
+  This is useful for building custom encoders/decoders, such as converting ISO date
+  strings to Date structs and back.
+
+  > #### Note {: .info}
+  > `Zoi` is focused on parsing (decoding). Codecs provide the foundation for
+  > anyone who wants to build their own encoders on top of `Zoi`.
+
+  ## Example
+
+      iex> date_codec = Zoi.codec(
+      ...>   Zoi.ISO.date(),
+      ...>   Zoi.date(),
+      ...>   decode: fn value -> Date.from_iso8601(value) end,
+      ...>   encode: fn value -> Date.to_iso8601(value) end
+      ...> )
+      iex> Zoi.parse(date_codec, "2025-01-15")
+      {:ok, ~D[2025-01-15]}
+      iex> Zoi.encode(date_codec, ~D[2025-01-15])
+      {:ok, "2025-01-15"}
+
+  ## Decode Flow (via `Zoi.parse/3`)
+
+  1. Validate input against the `from` schema
+  2. Apply the `decode` function
+  3. Validate the result against the `to` schema
+
+  ## Encode Flow (via `Zoi.encode/3`)
+
+  1. Validate input against the `to` schema
+  2. Apply the `encode` function
+  3. Validate the result against the `from` schema
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Codec.opts())}
+
+  The `decode` and `encode` functions can return:
+  - `value` - the transformed value (success)
+  - `{:ok, value}` - explicit success
+  - `{:error, reason}` - error with a custom message
+  """
+  @doc group: "Extensions"
+  @spec codec(from :: schema(), to :: schema(), opts :: keyword()) :: schema()
+  def codec(from, to, opts) do
+    Zoi.Types.Codec.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Codec.new(from, to)
+  end
+
+  @doc """
+  Encodes a value using a codec's encode function.
+
+  The encode flow:
+  1. Validates the input against the codec's `to` schema
+  2. Applies the `encode` function
+  3. Validates the result against the codec's `from` schema
+
+  Returns `{:ok, encoded}` or `{:error, errors}`.
+
+  ## Example
+
+      iex> date_codec = Zoi.codec(
+      ...>   Zoi.ISO.date(),
+      ...>   Zoi.date(),
+      ...>   decode: fn value -> Date.from_iso8601(value) end,
+      ...>   encode: fn value -> Date.to_iso8601(value) end
+      ...> )
+      iex> Zoi.encode(date_codec, ~D[2025-01-15])
+      {:ok, "2025-01-15"}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.encode(date_codec, "not-a-date")
+      iex> error.code
+      :invalid_type
+      iex> error.message
+      "invalid type: expected date"
+  """
+  @doc group: "Parsing"
+  @spec encode(codec :: schema(), input :: input(), opts :: options()) :: result()
+  def encode(%Zoi.Types.Codec{} = codec, input, opts \\ []) do
+    Zoi.Types.Codec.encode(codec, input, opts)
+  end
+
+  @doc """
+  Encodes a value using a codec's encode function, raising on error.
+
+  Same as `encode/3` but raises `Zoi.Error` on failure.
+
+  ## Example
+
+      iex> date_codec = Zoi.codec(
+      ...>   Zoi.ISO.date(),
+      ...>   Zoi.date(),
+      ...>   decode: fn value -> Date.from_iso8601(value) end,
+      ...>   encode: fn value -> Date.to_iso8601(value) end
+      ...> )
+      iex> Zoi.encode!(date_codec, ~D[2025-01-15])
+      "2025-01-15"
+  """
+  @doc group: "Parsing"
+  @spec encode!(codec :: schema(), input :: input(), opts :: options()) :: any()
+  def encode!(%Zoi.Types.Codec{} = codec, input, opts \\ []) do
+    case encode(codec, input, opts) do
+      {:ok, result} -> result
+      {:error, errors} -> raise Zoi.ParseError, errors: errors
+    end
+  end
 end

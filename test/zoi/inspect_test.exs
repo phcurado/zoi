@@ -51,7 +51,11 @@ defmodule Zoi.InspectTest do
       {Zoi.ISO.date(), "#Zoi.ISO.date<>"},
       {Zoi.ISO.datetime(), "#Zoi.ISO.date_time<>"},
       {Zoi.ISO.naive_datetime(), "#Zoi.ISO.naive_date_time<>"},
-      {Zoi.ISO.time(), "#Zoi.ISO.time<>"}
+      {Zoi.ISO.time(), "#Zoi.ISO.time<>"},
+      {Zoi.codec(Zoi.string(), Zoi.string(),
+         decode: fn x -> x end,
+         encode: fn x -> x end
+       ), "#Zoi.codec<from: #Zoi.string<coerce: false>, to: #Zoi.string<coerce: false>>"}
     ]
 
     Enum.each(types, fn {type, expected} ->

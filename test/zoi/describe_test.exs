@@ -124,7 +124,12 @@ defmodule Zoi.DescribeTest do
           time: Zoi.time(),
           tuple: Zoi.tuple({Zoi.integer(), Zoi.string()}),
           union: Zoi.union([Zoi.integer(), Zoi.string()]),
-          lazy: Zoi.lazy(fn -> Zoi.string() end)
+          lazy: Zoi.lazy(fn -> Zoi.string() end),
+          codec:
+            Zoi.codec(Zoi.string(), Zoi.integer(),
+              decode: fn x -> x end,
+              encode: fn x -> x end
+            )
         )
 
       formatted_description = """
@@ -179,6 +184,8 @@ defmodule Zoi.DescribeTest do
       * `:union` (`t:integer/0` or `t:String.t/0`)
 
       * `:lazy` (`t:String.t/0`)
+
+      * `:codec` (`t:integer/0`)
       """
 
       assert Zoi.describe(schema) == formatted_description

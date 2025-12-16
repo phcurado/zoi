@@ -16,7 +16,7 @@
 
 ## Installation
 
-`zoi` to your list of dependencies in `mix.exs`:
+Add `zoi` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -151,7 +151,7 @@ Which will generate:
 
 ### Errors
 
-When validation fails, `Zoi` returns a list of errors, each containing a message and the path to the invalid data. Even when erros are nested, `Zoi` will return all errors in a flattened list.
+When validation fails, `Zoi` returns a list of errors, each containing a message and the path to the invalid data. Even when errors are nested, `Zoi` will return all errors in a flattened list.
 
 ```elixir
 iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
