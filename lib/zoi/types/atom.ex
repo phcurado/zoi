@@ -1,10 +1,11 @@
 defmodule Zoi.Types.Atom do
   @moduledoc false
 
-  use Zoi.Type.Def
+  use Zoi.Type.Def, fields: [coerce: false]
 
   def opts() do
     Zoi.Opts.meta_opts()
+    |> Zoi.Opts.with_coerce()
   end
 
   def new(opts \\ []) do
@@ -16,7 +17,21 @@ defmodule Zoi.Types.Atom do
       {:ok, input}
     end
 
+    def parse(schema, input, opts) when is_binary(input) do
+      coerce = Keyword.get(opts, :coerce, schema.coerce)
+
+      if coerce do
+        {:ok, String.to_existing_atom(input)}
+      else
+        error(schema)
+      end
+    end
+
     def parse(schema, _, _) do
+      error(schema)
+    end
+
+    def error(schema) do
       {:error, Zoi.Error.invalid_type(:atom, error: schema.meta.error)}
     end
 
