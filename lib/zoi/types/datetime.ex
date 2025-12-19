@@ -101,8 +101,10 @@ defmodule Zoi.Types.DateTime do
       ]
       |> Validations.run_validations(schema, input)
     end
+  end
 
-    def type_spec(_schema, _opts) do
+  defimpl Zoi.TypeSpec do
+    def spec(_schema, _opts) do
       quote(do: DateTime.t())
     end
   end

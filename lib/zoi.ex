@@ -272,9 +272,7 @@ defmodule Zoi do
   """
   @doc group: "Parsing"
   @spec type_spec(schema :: schema(), opts :: options()) :: Macro.t()
-  def type_spec(schema, opts \\ []) do
-    Zoi.Type.type_spec(schema, opts)
-  end
+  defdelegate type_spec(schema, opts \\ []), to: Zoi.TypeSpec, as: :spec
 
   @doc """
   Retrieves the description associated with the schema.

@@ -57,9 +57,11 @@ defmodule Zoi.Types.Tuple do
         end
       end)
     end
+  end
 
-    def type_spec(%Zoi.Types.Tuple{fields: fields}, opts) do
-      field_specs = Enum.map(fields, &Zoi.Type.type_spec(&1, opts))
+  defimpl Zoi.TypeSpec do
+    def spec(%Zoi.Types.Tuple{fields: fields}, opts) do
+      field_specs = Enum.map(fields, &Zoi.TypeSpec.spec(&1, opts))
 
       {:{}, [], field_specs}
     end

@@ -12,8 +12,10 @@ defmodule Zoi.Types.Any do
 
   defimpl Zoi.Type do
     def parse(%Zoi.Types.Any{}, value, _opts), do: {:ok, value}
+  end
 
-    def type_spec(_schema, _opts) do
+  defimpl Zoi.TypeSpec do
+    def spec(_schema, _opts) do
       quote(do: any())
     end
   end

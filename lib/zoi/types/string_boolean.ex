@@ -80,8 +80,10 @@ defmodule Zoi.Types.StringBoolean do
          error: schema.meta.error
        )}
     end
+  end
 
-    def type_spec(_schema, _opts) do
+  defimpl Zoi.TypeSpec do
+    def spec(_schema, _opts) do
       quote(do: boolean())
     end
   end

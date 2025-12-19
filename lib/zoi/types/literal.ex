@@ -19,8 +19,10 @@ defmodule Zoi.Types.Literal do
         {:error, Zoi.Error.invalid_literal(value, error: schema.meta.error)}
       end
     end
+  end
 
-    def type_spec(%Zoi.Types.Literal{value: value}, _opts) do
+  defimpl Zoi.TypeSpec do
+    def spec(%Zoi.Types.Literal{value: value}, _opts) do
       case value do
         nil -> quote(do: nil)
         true -> quote(do: true)

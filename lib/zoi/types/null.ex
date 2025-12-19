@@ -19,8 +19,10 @@ defmodule Zoi.Types.Null do
     def parse(schema, _input, _opts) do
       {:error, Zoi.Error.invalid_type(nil, error: schema.meta.error)}
     end
+  end
 
-    def type_spec(_schema, _opts) do
+  defimpl Zoi.TypeSpec do
+    def spec(_schema, _opts) do
       quote(do: nil)
     end
   end

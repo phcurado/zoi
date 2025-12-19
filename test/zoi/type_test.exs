@@ -12,8 +12,10 @@ defmodule Zoi.TypeTest do
       def parse(_schema, _input, _opts) do
         {:ok, "hello"}
       end
+    end
 
-      def type_spec(_schema, _opts) do
+    defimpl Zoi.TypeSpec do
+      def spec(_schema, _opts) do
         quote(do: binary())
       end
     end
@@ -30,5 +32,11 @@ defmodule Zoi.TypeTest do
   test "type_spec with custom type" do
     schema = CustomType.new()
     assert Zoi.type_spec(schema) == quote(do: binary())
+  end
+
+  test "type_spec fallback for unimplemented type" do
+    assert_raise ArgumentError, fn ->
+      Zoi.type_spec(:unknown_schema)
+    end
   end
 end

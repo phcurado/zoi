@@ -82,8 +82,10 @@ if Code.ensure_loaded?(Decimal) do
       defp error(schema) do
         {:error, Zoi.Error.invalid_type(:decimal, error: schema.meta.error)}
       end
+    end
 
-      def type_spec(_schema, _opts) do
+    defimpl Zoi.TypeSpec do
+      def spec(_schema, _opts) do
         quote(do: Decimal.t())
       end
     end
