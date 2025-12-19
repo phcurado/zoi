@@ -2400,6 +2400,35 @@ defmodule Zoi do
   end
 
   @doc """
+  Validates that the input is a multiple of a given value.
+  This can be used for integers, floats, numbers and decimals.
+
+  ## Example
+      iex> schema = Zoi.integer() |> Zoi.multiple_of(5)
+      iex> Zoi.parse(schema, 10)
+      {:ok, 10}
+      iex> Zoi.parse(schema, 7)
+      {:error,
+       [
+         %Zoi.Error{
+           code: :not_multiple_of,
+           message: "must be a multiple of 5",
+           issue: {"must be a multiple of %{value}", [value: 5]},
+           path: []
+         }
+       ]}
+  """
+  @doc group: "Refinements"
+  @spec multiple_of(schema :: schema(), value :: number(), opts :: options()) :: schema()
+  def multiple_of(schema, value, opts \\ []) do
+    if Enum.empty?(schema.meta.effects) do
+      Zoi.Validations.MultipleOf.set(schema, value, opts)
+    else
+      refine(schema, {Zoi.Validations.MultipleOf, :validate, [value, opts]})
+    end
+  end
+
+  @doc """
   Validates that the input matches a given regex pattern.
 
   ## Example

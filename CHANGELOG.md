@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `Zoi.codec/3` for bidirectional transformations between types. Codecs enable parsing from one type to another and encoding back:
+
   ```elixir
   date_codec = Zoi.codec(
     Zoi.ISO.date(),
@@ -18,7 +19,9 @@ All notable changes to this project will be documented in this file.
   {:ok, ~D[2025-01-15]} = Zoi.parse(date_codec, "2025-01-15")
   {:ok, "2025-01-15"} = Zoi.encode(date_codec, ~D[2025-01-15])
   ```
+
 - `Zoi.encode/3` and `Zoi.encode!/3` functions to encode values using a codec's encode function.
+- `Zoi.multiple_of/3` refinement for validating that a number is a multiple of a given value. Works with `integer/0`, `float/0`, `number/0`, and `decimal/0` types:
 - `Zoi.TypeSpec` protocol for opt-in Elixir type specification generation. Custom types can now implement this protocol separately from `Zoi.Type`:
   ```elixir
   defimpl Zoi.TypeSpec do
