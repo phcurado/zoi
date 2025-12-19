@@ -2919,6 +2919,77 @@ defmodule ZoiTest do
     end
   end
 
+  describe "multiple_of/2" do
+    test "multiple_of for integer" do
+      schema = Zoi.integer() |> Zoi.multiple_of(5)
+      assert {:ok, 10} == Zoi.parse(schema, 10)
+      assert {:ok, 0} == Zoi.parse(schema, 0)
+      assert {:ok, -15} == Zoi.parse(schema, -15)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 7)
+      assert error.code == :not_multiple_of
+      assert Exception.message(error) == "must be a multiple of 5"
+      assert error.issue == {"must be a multiple of %{value}", [value: 5]}
+    end
+
+    test "multiple_of for float" do
+      schema = Zoi.float() |> Zoi.multiple_of(0.5)
+      assert {:ok, 1.5} == Zoi.parse(schema, 1.5)
+      assert {:ok, 2.0} == Zoi.parse(schema, 2.0)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 1.3)
+      assert error.code == :not_multiple_of
+      assert Exception.message(error) == "must be a multiple of 0.5"
+    end
+
+    test "multiple_of for number" do
+      schema = Zoi.number() |> Zoi.multiple_of(3)
+      assert {:ok, 9} == Zoi.parse(schema, 9)
+      assert {:ok, 6.0} == Zoi.parse(schema, 6.0)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 7)
+      assert error.code == :not_multiple_of
+      assert Exception.message(error) == "must be a multiple of 3"
+    end
+
+    test "multiple_of for decimal" do
+      schema = Zoi.decimal() |> Zoi.multiple_of(Decimal.new("0.25"))
+      assert {:ok, Decimal.new("1.25")} == Zoi.parse(schema, Decimal.new("1.25"))
+      assert {:ok, Decimal.new("0.5")} == Zoi.parse(schema, Decimal.new("0.5"))
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, Decimal.new("1.3"))
+      assert error.code == :not_multiple_of
+      assert Exception.message(error) == "must be a multiple of 0.25"
+    end
+
+    test "multiple_of via constructor option" do
+      schema = Zoi.integer(multiple_of: 7)
+      assert {:ok, 14} == Zoi.parse(schema, 14)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10)
+      assert error.code == :not_multiple_of
+    end
+
+    test "custom message" do
+      schema = Zoi.integer() |> Zoi.multiple_of(5, error: "must be divisible by %{value}")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 7)
+      assert error.code == :custom
+      assert Exception.message(error) == "must be divisible by 5"
+    end
+
+    test "multiple_of after transforms" do
+      schema =
+        Zoi.integer()
+        |> Zoi.transform(fn x -> x * 2 end)
+        |> Zoi.multiple_of(4)
+
+      assert {:ok, 8} == Zoi.parse(schema, 4)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 3)
+      assert error.code == :not_multiple_of
+      assert Exception.message(error) == "must be a multiple of 4"
+    end
+
+    test "multiple_of on unsupported type passes silently" do
+      schema = Zoi.string() |> Zoi.multiple_of(5)
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+  end
+
   describe "length/2" do
     test "length for string" do
       schema = Zoi.string() |> Zoi.length(5)

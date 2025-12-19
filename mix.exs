@@ -142,7 +142,7 @@ defmodule Zoi.MixProject do
   defp groups_for_modules do
     [
       "Main API": [Zoi, Zoi.ISO],
-      Schema: [Zoi.Schema, Zoi.Struct, Zoi.Describe],
+      Schema: [Zoi.Schema, Zoi.Struct, Zoi.TypeSpec, Zoi.Describe],
       Integrations: [Zoi.JSONSchema, Zoi.Form],
       Internals: [Zoi.Context, Zoi.Type]
     ]

@@ -1,6 +1,6 @@
 defmodule Zoi.Types.Number do
   @moduledoc false
-  use Zoi.Type.Def, fields: [:gte, :lte, :gt, :lt, coerce: false]
+  use Zoi.Type.Def, fields: [:gte, :lte, :gt, :lt, :multiple_of, coerce: false]
 
   alias Zoi.Validations
 
@@ -29,12 +29,17 @@ defmodule Zoi.Types.Number do
         Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
           description: "number less than",
           error: error
+        ),
+      multiple_of:
+        Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
+          description: "number must be multiple of",
+          error: error
         )
     )
   end
 
   def new(opts \\ []) do
-    {validation_opts, opts} = Keyword.split(opts, [:gte, :lte, :gt, :lt])
+    {validation_opts, opts} = Keyword.split(opts, [:gte, :lte, :gt, :lt, :multiple_of])
 
     opts
     |> apply_type()
@@ -42,6 +47,7 @@ defmodule Zoi.Types.Number do
     |> Validations.maybe_set_validation(Validations.Lte, validation_opts[:lte])
     |> Validations.maybe_set_validation(Validations.Gt, validation_opts[:gt])
     |> Validations.maybe_set_validation(Validations.Lt, validation_opts[:lt])
+    |> Validations.maybe_set_validation(Validations.MultipleOf, validation_opts[:multiple_of])
   end
 
   defimpl Zoi.Type do
@@ -79,7 +85,8 @@ defmodule Zoi.Types.Number do
         {Validations.Gte, schema.gte},
         {Validations.Lte, schema.lte},
         {Validations.Gt, schema.gt},
-        {Validations.Lt, schema.lt}
+        {Validations.Lt, schema.lt},
+        {Validations.MultipleOf, schema.multiple_of}
       ]
       |> Validations.run_validations(schema, input)
     end
@@ -151,6 +158,30 @@ defmodule Zoi.Types.Number do
     end
   end
 
+  defimpl Zoi.Validations.MultipleOf do
+    def set(schema, value, opts \\ []) do
+      %{schema | multiple_of: {value, opts}}
+    end
+
+    def validate(_schema, input, value, opts) when is_integer(input) do
+      if rem(input, value) == 0 do
+        :ok
+      else
+        {:error, Zoi.Error.not_multiple_of(value, opts)}
+      end
+    end
+
+    def validate(_schema, input, value, opts) do
+      quotient = input / value
+
+      if quotient == Float.floor(quotient) do
+        :ok
+      else
+        {:error, Zoi.Error.not_multiple_of(value, opts)}
+      end
+    end
+  end
+
   defimpl Inspect do
     alias Zoi.Validations
 
@@ -159,7 +190,8 @@ defmodule Zoi.Types.Number do
         gte: Validations.unwrap_validation(type.gte),
         lte: Validations.unwrap_validation(type.lte),
         gt: Validations.unwrap_validation(type.gt),
-        lt: Validations.unwrap_validation(type.lt)
+        lt: Validations.unwrap_validation(type.lt),
+        multiple_of: Validations.unwrap_validation(type.multiple_of)
       ]
 
       Zoi.Inspect.build(type, opts, extra_fields)
@@ -173,6 +205,7 @@ defmodule Zoi.Types.Number do
       |> maybe_add(:maximum, schema.lte)
       |> maybe_add(:exclusiveMinimum, schema.gt)
       |> maybe_add(:exclusiveMaximum, schema.lt)
+      |> maybe_add(:multipleOf, schema.multiple_of)
     end
 
     defp maybe_add(map, _key, nil), do: map
