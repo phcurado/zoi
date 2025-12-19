@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.13.1 - 2025-12-19
+
+### Changed
+
+- Add references on documentation of `0.13` release
+
 ## 0.13.0 - 2025-12-19
 
 ### Added
