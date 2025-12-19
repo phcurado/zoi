@@ -66,7 +66,10 @@ defmodule Zoi.Types.Keyword do
        )}
     end
 
-    def type_spec(%Zoi.Types.Keyword{fields: fields}, opts) when is_list(fields) do
+  end
+
+  defimpl Zoi.TypeSpec do
+    def spec(%Zoi.Types.Keyword{fields: fields}, opts) when is_list(fields) do
       case fields do
         [] ->
           quote(do: keyword())
@@ -75,15 +78,15 @@ defmodule Zoi.Types.Keyword do
           fields
           |> Enum.map(fn {key, type} ->
             quote do
-              {unquote(key), unquote(Zoi.Type.type_spec(type, opts))}
+              {unquote(key), unquote(Zoi.TypeSpec.spec(type, opts))}
             end
           end)
       end
     end
 
-    def type_spec(%Zoi.Types.Keyword{fields: schema}, opts) when is_struct(schema) do
+    def spec(%Zoi.Types.Keyword{fields: schema}, opts) when is_struct(schema) do
       quote do
-        [{atom(), unquote(Zoi.Type.type_spec(schema, opts))}]
+        [{atom(), unquote(Zoi.TypeSpec.spec(schema, opts))}]
       end
     end
   end

@@ -66,8 +66,11 @@ defmodule Zoi.Types.Codec do
       end
     end
 
-    def type_spec(schema, opts) do
-      Zoi.Type.type_spec(schema.to, opts)
+  end
+
+  defimpl Zoi.TypeSpec do
+    def spec(schema, opts) do
+      Zoi.TypeSpec.spec(schema.to, opts)
     end
   end
 

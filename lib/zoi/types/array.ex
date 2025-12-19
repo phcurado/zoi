@@ -89,13 +89,6 @@ defmodule Zoi.Types.Array do
       {:error, Zoi.Error.invalid_type(:array, error: schema.meta.error)}
     end
 
-    def type_spec(%Zoi.Types.Array{inner: inner}, opts) do
-      inner_spec = Zoi.Type.type_spec(inner, opts)
-
-      quote do
-        [unquote(inner_spec)]
-      end
-    end
 
     defp finalize_result({parsed, errors}, schema) do
       parsed = Enum.reverse(parsed)
@@ -142,6 +135,16 @@ defmodule Zoi.Types.Array do
     defp parse_index(key) when is_binary(key) do
       {int, _} = Integer.parse(key)
       int
+    end
+  end
+
+  defimpl Zoi.TypeSpec do
+    def spec(%Zoi.Types.Array{inner: inner}, opts) do
+      inner_spec = Zoi.TypeSpec.spec(inner, opts)
+
+      quote do
+        [unquote(inner_spec)]
+      end
     end
   end
 

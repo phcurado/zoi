@@ -43,8 +43,11 @@ defmodule Zoi.Types.Union do
       end
     end
 
-    def type_spec(%Zoi.Types.Union{schemas: schemas}, opts) do
-      Enum.map(schemas, &Zoi.Type.type_spec(&1, opts))
+  end
+
+  defimpl Zoi.TypeSpec do
+    def spec(%Zoi.Types.Union{schemas: schemas}, opts) do
+      Enum.map(schemas, &Zoi.TypeSpec.spec(&1, opts))
       |> Enum.reverse()
       |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
     end

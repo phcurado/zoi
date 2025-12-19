@@ -81,7 +81,10 @@ defmodule Zoi.Types.StringBoolean do
        )}
     end
 
-    def type_spec(_schema, _opts) do
+  end
+
+  defimpl Zoi.TypeSpec do
+    def spec(_schema, _opts) do
       quote(do: boolean())
     end
   end

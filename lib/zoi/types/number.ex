@@ -87,8 +87,10 @@ defmodule Zoi.Types.Number do
     defp error(schema) do
       {:error, Zoi.Error.invalid_type(:number, error: schema.meta.error)}
     end
+  end
 
-    def type_spec(_schema, _opts) do
+  defimpl Zoi.TypeSpec do
+    def spec(_schema, _opts) do
       quote(do: number())
     end
   end

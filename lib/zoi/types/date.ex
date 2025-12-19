@@ -93,7 +93,10 @@ defmodule Zoi.Types.Date do
       |> Validations.run_validations(schema, input)
     end
 
-    def type_spec(_schema, _opts) do
+  end
+
+  defimpl Zoi.TypeSpec do
+    def spec(_schema, _opts) do
       quote(do: Date.t())
     end
   end

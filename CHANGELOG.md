@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.13.0 - 2025-12-19
+
+### Added
+
+- `Zoi.codec/3` for bidirectional transformations between types. Codecs enable parsing from one type to another and encoding back:
+  ```elixir
+  date_codec = Zoi.codec(
+    Zoi.ISO.date(),
+    Zoi.date(),
+    decode: fn value -> Date.from_iso8601(value) end,
+    encode: fn value -> Date.to_iso8601(value) end
+  )
+
+  {:ok, ~D[2025-01-15]} = Zoi.parse(date_codec, "2025-01-15")
+  {:ok, "2025-01-15"} = Zoi.encode(date_codec, ~D[2025-01-15])
+  ```
+- `Zoi.encode/3` and `Zoi.encode!/3` functions to encode values using a codec's encode function.
+- `Zoi.TypeSpec` protocol for opt-in Elixir type specification generation. Custom types can now implement this protocol separately from `Zoi.Type`:
+  ```elixir
+  defimpl Zoi.TypeSpec do
+    def spec(_schema, _opts) do
+      quote(do: binary())
+    end
+  end
+  ```
+
+### Changed
+
+- `Zoi.JSONSchema.Encoder` for `Zoi.object/2` now respects the `strict` option. When `strict: true`, the generated JSON Schema will have `additionalProperties: false`. When `strict: false` (default), it will have `additionalProperties: true`.
+- `type_spec/2` moved from `Zoi.Type` protocol to the new `Zoi.TypeSpec` protocol. This is not a breaking change as the public API (`Zoi.type_spec/1`) remains unchanged.
+
 ## 0.12.1 - 2025-12-09
 
 ### Added

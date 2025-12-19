@@ -14,11 +14,13 @@ defmodule Zoi.Types.Lazy do
       schema = fun.()
       Zoi.parse(schema, value, opts)
     end
+  end
 
-    # Lazy types return term() for type_spec to avoid infinite recursion
-    # in recursive schemas. The actual type cannot be expressed in Elixir's
-    # type system for self-referential structures.
-    def type_spec(%Zoi.Types.Lazy{}, _opts) do
+  # Lazy types return term() for type_spec to avoid infinite recursion
+  # in recursive schemas. The actual type cannot be expressed in Elixir's
+  # type system for self-referential structures.
+  defimpl Zoi.TypeSpec do
+    def spec(%Zoi.Types.Lazy{}, _opts) do
       quote(do: term())
     end
   end

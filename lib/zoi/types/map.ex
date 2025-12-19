@@ -36,9 +36,12 @@ defmodule Zoi.Types.Map do
       {:error, Zoi.Error.invalid_type(:map, error: schema.meta.error)}
     end
 
-    def type_spec(%Zoi.Types.Map{key_type: key_type, value_type: value_type}, opts) do
-      key_spec = Zoi.Type.type_spec(key_type, opts)
-      value_spec = Zoi.Type.type_spec(value_type, opts)
+  end
+
+  defimpl Zoi.TypeSpec do
+    def spec(%Zoi.Types.Map{key_type: key_type, value_type: value_type}, opts) do
+      key_spec = Zoi.TypeSpec.spec(key_type, opts)
+      value_spec = Zoi.TypeSpec.spec(value_type, opts)
 
       # If key and value are any type, we use map() (any map)
       if key_type == Zoi.any() and value_type == Zoi.any() do

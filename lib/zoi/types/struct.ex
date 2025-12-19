@@ -61,10 +61,13 @@ defmodule Zoi.Types.Struct do
       {:error, Zoi.Error.invalid_type(:struct, error: schema.meta.error)}
     end
 
-    def type_spec(%Zoi.Types.Struct{module: module, fields: fields}, opts) do
+  end
+
+  defimpl Zoi.TypeSpec do
+    def spec(%Zoi.Types.Struct{module: module, fields: fields}, opts) do
       fields
       |> Enum.map(fn {key, type} ->
-        {key, Zoi.Type.type_spec(type, opts), type}
+        {key, Zoi.TypeSpec.spec(type, opts), type}
       end)
       |> Enum.map(fn {key, type_spec, _type} ->
         quote do: {unquote(key), unquote(type_spec)}
