@@ -43,4 +43,10 @@ defmodule Zoi.Types.Default do
       |> Map.put(:default, default_value)
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(%Zoi.Types.Default{inner: inner}) do
+      Zoi.Describe.Encoder.encode(inner)
+    end
+  end
 end

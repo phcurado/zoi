@@ -12,6 +12,6 @@ end
 
 defimpl Zoi.JSONSchema.Encoder, for: Any do
   def encode(schema) do
-    raise "Encoding not implemented for schema: #{inspect(schema)}"
+    raise ArgumentError, "Encoding not implemented for schema: #{inspect(schema)}"
   end
 end

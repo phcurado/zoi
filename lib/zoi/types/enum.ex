@@ -110,4 +110,13 @@ defmodule Zoi.Types.Enum do
       %{type: :string, enum: Enum.map(schema.values, fn {_k, v} -> v end)}
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(%{values: values}) do
+      "one of #{Enum.map_join(values, ", ", fn {_key, value} -> parse_enum_spec(value) end)}"
+    end
+
+    defp parse_enum_spec(value) when is_atom(value), do: "`:#{value}`"
+    defp parse_enum_spec(value), do: "`#{inspect(value)}`"
+  end
 end

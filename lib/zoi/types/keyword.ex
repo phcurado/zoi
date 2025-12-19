@@ -108,4 +108,8 @@ defmodule Zoi.Types.Keyword do
       Zoi.Inspect.build(type, opts, fields: fields_doc)
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`t:keyword/0`"
+  end
 end

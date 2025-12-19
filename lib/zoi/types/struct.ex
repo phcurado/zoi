@@ -110,4 +110,10 @@ defmodule Zoi.Types.Struct do
       Zoi.Inspect.build(type, opts, fields: fields_doc, module: type.module)
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(%{module: module}) do
+      "struct of type `#{inspect(module)}`"
+    end
+  end
 end

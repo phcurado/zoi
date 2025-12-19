@@ -52,4 +52,8 @@ defmodule Zoi.Types.Boolean do
   defimpl Zoi.JSONSchema.Encoder do
     def encode(_schema), do: %{type: :boolean}
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`t:boolean/0`"
+  end
 end

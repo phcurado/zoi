@@ -36,4 +36,8 @@ defmodule Zoi.Types.Null do
   defimpl Zoi.JSONSchema.Encoder do
     def encode(_schema), do: %{type: :null}
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`nil`"
+  end
 end
