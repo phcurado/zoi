@@ -42,6 +42,7 @@ defmodule Zoi.InspectTest do
       {Zoi.string(coerce: true), "#Zoi.string<coerce: true>"},
       {Zoi.string_boolean(),
        "#Zoi.string_boolean<case: \"insensitive\", truthy: [\"true\", \"1\", \"yes\", \"on\", \"y\", \"enabled\"], falsy: [\"false\", \"0\", \"no\", \"off\", \"n\", \"disabled\"]>"},
+      {Zoi.struct(MyStruct), "#Zoi.struct<coerce: false, strict: false, module: MyStruct>"},
       {Zoi.struct(MyStruct, %{name: Zoi.string()}),
        "#Zoi.struct<coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}, module: MyStruct>"},
       {Zoi.time(), "#Zoi.time<coerce: false>"},

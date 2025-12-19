@@ -1424,8 +1424,20 @@ defmodule Zoi do
   Defines a struct type schema.
   This type is similar to `Zoi.object/2`, but it is specifically designed to work with Elixir structs.
 
-  ## Example
+  When called with only a module, it validates that the input is a struct of that type without
+  validating the struct's fields. When called with a module and fields, it validates both the
+  struct type and its fields.
 
+  ## Examples
+
+      # Validate struct type only (no field validation)
+      schema = Zoi.struct(URI)
+      Zoi.parse(schema, URI.parse("https://example.com"))
+      #=> {:ok, %URI{...}}
+      Zoi.parse(schema, %{})
+      #=> {:error, [%Zoi.Error{code: :invalid_type, message: "invalid type: expected struct", ...}]}
+
+      # Validate struct with field schema
       defmodule MyApp.User do
         defstruct [:name, :age, :email]
       end
@@ -1438,7 +1450,7 @@ defmodule Zoi do
       Zoi.parse(schema, %MyApp.User{name: "Alice", age: 30, email: "alice@email.com"})
       #=> {:ok, %MyApp.User{name: "Alice", age: 30, email: "alice@email.com"}}
       Zoi.parse(schema, %{})
-      #=> {:error, "invalid type: must be a struct"}
+      #=> {:error, [%Zoi.Error{code: :invalid_type, message: "invalid type: expected struct", ...}]}
 
   By default, all fields are required, but you can make them optional by using `Zoi.optional/1`:
 
@@ -1467,8 +1479,26 @@ defmodule Zoi do
   #{Zoi.Describe.generate(Zoi.Types.Struct.opts())}
   """
   @doc group: "Complex Types"
-  @spec struct(module :: module(), fields :: map(), opts :: options()) :: schema()
-  def struct(module, fields, opts \\ []) do
+  @spec struct(module :: module(), fields :: map() | nil, opts :: options()) :: schema()
+  def struct(module, fields_or_opts \\ nil, opts \\ [])
+
+  def struct(module, nil, opts) do
+    Zoi.Types.Struct.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Struct.new(module, nil, opts)
+    end)
+  end
+
+  def struct(module, opts, []) when is_list(opts) and length(opts) > 0 do
+    Zoi.Types.Struct.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.Struct.new(module, nil, opts)
+    end)
+  end
+
+  def struct(module, fields, opts) do
     Zoi.Types.Struct.opts()
     |> parse!(opts)
     |> then(fn opts ->

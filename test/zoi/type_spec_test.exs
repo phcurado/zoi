@@ -128,6 +128,13 @@ defmodule Zoi.TypeSpecTest do
       assert left == right
     end
 
+    test "struct typespec without fields" do
+      schema = Zoi.struct(User)
+
+      assert Zoi.type_spec(schema) |> normalize_map_or_struct_ast() ==
+               quote(do: %User{}) |> normalize_map_or_struct_ast()
+    end
+
     test "extend typespec" do
       schema_1 = Zoi.object(%{age: Zoi.integer()})
       schema_2 = Zoi.object(%{name: Zoi.string()})

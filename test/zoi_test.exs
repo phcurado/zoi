@@ -1343,8 +1343,27 @@ defmodule ZoiTest do
                })
     end
 
+    test "struct without fields validates struct type only" do
+      schema = Zoi.struct(URI)
+
+      uri = URI.parse("https://example.com")
+      assert {:ok, ^uri} = Zoi.parse(schema, uri)
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{host: "example.com"})
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected struct"
+
+      assert {:error, [%Zoi.Error{}]} = Zoi.parse(schema, Date.utc_today())
+    end
+
+    test "struct without fields with opts" do
+      schema = Zoi.struct(URI, coerce: true)
+      assert schema.coerce == true
+      assert schema.fields == nil
+    end
+
     test "struct not a map" do
-      assert_raise ArgumentError, "struct must receive a map", fn ->
+      assert_raise ArgumentError, "struct must receive a map or nil", fn ->
         Zoi.struct(User, "not a map")
       end
     end

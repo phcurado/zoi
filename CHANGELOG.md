@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `Zoi.function/1` type for validating function values with optional arity constraint:
+- `Zoi.function/1` type for validating function values with optional arity constraint
+- `Zoi.struct/1` now accepts just a module to validate struct type without field validation
 
 ## 0.13.1 - 2025-12-19
 
