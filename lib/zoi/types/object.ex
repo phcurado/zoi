@@ -95,4 +95,8 @@ defmodule Zoi.Types.Object do
       }
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`t:map/0`"
+  end
 end

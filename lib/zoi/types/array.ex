@@ -230,4 +230,10 @@ defmodule Zoi.Types.Array do
       end
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(%{inner: inner}) do
+      "list of #{Zoi.Describe.Encoder.encode(inner)}"
+    end
+  end
 end

@@ -69,4 +69,8 @@ defmodule Zoi.Types.Map do
   defimpl Zoi.JSONSchema.Encoder do
     def encode(_schema), do: %{type: :object}
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`t:map/0`"
+  end
 end

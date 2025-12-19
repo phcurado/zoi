@@ -87,6 +87,7 @@ defmodule Zoi.Describe do
   * `:role` (one of `"Admin"`, `"User"`) - Required. The role of the user.
   """
 
+  alias Zoi.Describe.Encoder
   alias Zoi.Types.Meta
 
   @doc false
@@ -109,65 +110,8 @@ defmodule Zoi.Describe do
   end
 
   defp parse_field({key, schema}) do
-    "* `:#{key}` (#{parse_type_spec(schema)})#{parse_value(schema)}"
+    "* `:#{key}` (#{Encoder.encode(schema)})#{parse_value(schema)}"
   end
-
-  defp parse_type_spec(%Zoi.Types.Any{}), do: "`t:term/0`"
-  defp parse_type_spec(%Zoi.Types.Array{inner: inner}), do: "list of #{parse_type_spec(inner)}"
-  defp parse_type_spec(%Zoi.Types.Atom{}), do: "`t:atom/0`"
-  defp parse_type_spec(%Zoi.Types.Boolean{}), do: "`t:boolean/0`"
-  defp parse_type_spec(%Zoi.Types.Date{}), do: "`t:Date.t/0`"
-  defp parse_type_spec(%Zoi.Types.DateTime{}), do: "`t:DateTime.t/0`"
-
-  if Code.ensure_loaded?(Decimal) do
-    defp parse_type_spec(%Zoi.Types.Decimal{}), do: "`t:Decimal.t/0`"
-  end
-
-  defp parse_type_spec(%Zoi.Types.Default{inner: inner}), do: parse_type_spec(inner)
-
-  defp parse_type_spec(%Zoi.Types.Enum{values: values}),
-    do: "one of #{Enum.map_join(values, ", ", fn {_key, value} -> parse_enum_spec(value) end)}"
-
-  defp parse_type_spec(%Zoi.Types.Float{}), do: "`t:float/0`"
-  defp parse_type_spec(%Zoi.Types.Function{}), do: "`t:function/0`"
-  defp parse_type_spec(%Zoi.Types.Integer{}), do: "`t:integer/0`"
-
-  defp parse_type_spec(%Zoi.Types.Intersection{schemas: schemas}) do
-    Enum.map_join(schemas, " and ", &parse_type_spec/1)
-  end
-
-  defp parse_type_spec(%Zoi.Types.Keyword{}), do: "`t:keyword/0`"
-  defp parse_type_spec(%Zoi.Types.Literal{value: value}), do: "`#{inspect(value)}`"
-  defp parse_type_spec(%Zoi.Types.Map{}), do: "`t:map/0`"
-  defp parse_type_spec(%Zoi.Types.NaiveDateTime{}), do: "`t:NaiveDateTime.t/0`"
-  defp parse_type_spec(%Zoi.Types.Null{}), do: "`nil`"
-  defp parse_type_spec(%Zoi.Types.Number{}), do: "`t:number/0`"
-  defp parse_type_spec(%Zoi.Types.Object{}), do: "`t:map/0`"
-  defp parse_type_spec(%Zoi.Types.String{}), do: "`t:String.t/0`"
-  defp parse_type_spec(%Zoi.Types.StringBoolean{}), do: "`t:boolean/0` or `t:String.t/0`"
-  defp parse_type_spec(%Zoi.Types.Codec{to: to}), do: parse_type_spec(to)
-
-  defp parse_type_spec(%Zoi.Types.Struct{module: module}),
-    do: "struct of type `#{inspect(module)}`"
-
-  defp parse_type_spec(%Zoi.Types.Time{}), do: "`t:Time.t/0`"
-
-  defp parse_type_spec(%Zoi.Types.Tuple{fields: fields}) do
-    field_types = Enum.map_join(fields, ", ", &parse_type_spec/1)
-    "tuple of #{field_types} values"
-  end
-
-  defp parse_type_spec(%Zoi.Types.Union{schemas: schemas}) do
-    Enum.map_join(schemas, " or ", &parse_type_spec/1)
-  end
-
-  defp parse_type_spec(%Zoi.Types.Lazy{fun: fun}) do
-    schema = fun.()
-    parse_type_spec(schema)
-  end
-
-  defp parse_enum_spec(value) when is_atom(value), do: "`:#{value}`"
-  defp parse_enum_spec(value), do: "`#{inspect(value)}`"
 
   defp parse_value(schema) do
     prefix = " - "

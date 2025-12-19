@@ -37,4 +37,11 @@ defmodule Zoi.Types.Lazy do
       Zoi.JSONSchema.Encoder.encode(schema)
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(%Zoi.Types.Lazy{fun: fun}) do
+      schema = fun.()
+      Zoi.Describe.Encoder.encode(schema)
+    end
+  end
 end

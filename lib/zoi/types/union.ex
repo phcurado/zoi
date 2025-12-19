@@ -70,4 +70,10 @@ defmodule Zoi.Types.Union do
       %{anyOf: Enum.map(schema.schemas, &Zoi.JSONSchema.Encoder.encode/1)}
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(%{schemas: schemas}) do
+      Enum.map_join(schemas, " or ", &Zoi.Describe.Encoder.encode/1)
+    end
+  end
 end

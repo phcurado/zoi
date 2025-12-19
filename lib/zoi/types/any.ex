@@ -25,4 +25,8 @@ defmodule Zoi.Types.Any do
       Zoi.Inspect.build(type, opts)
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`t:term/0`"
+  end
 end

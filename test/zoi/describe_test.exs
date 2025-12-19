@@ -193,5 +193,13 @@ defmodule Zoi.DescribeTest do
 
       assert Zoi.describe(schema) == formatted_description
     end
+
+    test "raise if encoder is not implemented for schema" do
+      assert_raise ArgumentError,
+                   "Describe.Encoder not implemented for schema: %{unsupported: true}",
+                   fn ->
+                     Zoi.Describe.Encoder.encode(%{unsupported: true})
+                   end
+    end
   end
 end

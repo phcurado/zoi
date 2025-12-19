@@ -94,4 +94,8 @@ defmodule Zoi.Types.StringBoolean do
       Zoi.Inspect.build(type, opts, extra_fields)
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`t:boolean/0` or `t:String.t/0`"
+  end
 end

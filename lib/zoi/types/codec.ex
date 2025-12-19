@@ -89,4 +89,10 @@ defmodule Zoi.Types.Codec do
       Zoi.JSONSchema.Encoder.encode(schema.from)
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(%{to: to}) do
+      Zoi.Describe.Encoder.encode(to)
+    end
+  end
 end

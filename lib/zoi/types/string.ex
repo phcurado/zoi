@@ -193,4 +193,8 @@ defmodule Zoi.Types.String do
     defp maybe_add_length(map, {value, _opts}),
       do: map |> Map.put(:minLength, value) |> Map.put(:maxLength, value)
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`t:String.t/0`"
+  end
 end

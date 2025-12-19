@@ -71,4 +71,10 @@ defmodule Zoi.Types.Intersection do
       %{allOf: Enum.map(schema.schemas, &Zoi.JSONSchema.Encoder.encode/1)}
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(%{schemas: schemas}) do
+      Enum.map_join(schemas, " and ", &Zoi.Describe.Encoder.encode/1)
+    end
+  end
 end

@@ -180,4 +180,8 @@ defmodule Zoi.Types.Time do
     defp maybe_add(map, _key, nil), do: map
     defp maybe_add(map, key, {value, _opts}), do: Map.put(map, key, Time.to_iso8601(value))
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`t:Time.t/0`"
+  end
 end

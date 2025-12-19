@@ -181,4 +181,8 @@ defmodule Zoi.Types.Date do
     defp maybe_add(map, _key, nil), do: map
     defp maybe_add(map, key, {value, _opts}), do: Map.put(map, key, Date.to_iso8601(value))
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`t:Date.t/0`"
+  end
 end

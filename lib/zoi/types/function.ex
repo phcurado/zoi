@@ -50,4 +50,8 @@ defmodule Zoi.Types.Function do
       Zoi.Inspect.build(type, opts, arity: type.arity)
     end
   end
+
+  defimpl Zoi.Describe.Encoder do
+    def encode(_schema), do: "`t:function/0`"
+  end
 end
