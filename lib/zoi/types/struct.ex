@@ -7,6 +7,16 @@ defmodule Zoi.Types.Struct do
     Zoi.Opts.complex_type_opts()
   end
 
+  def new(module, nil, opts) do
+    opts =
+      Keyword.merge(
+        [strict: false, coerce: false],
+        opts
+      )
+
+    apply_type(opts ++ [module: module, fields: nil])
+  end
+
   def new(module, fields, opts) when is_map(fields) or is_list(fields) do
     fields =
       fields
@@ -34,10 +44,15 @@ defmodule Zoi.Types.Struct do
   end
 
   def new(_module, _fields, _opts) do
-    raise ArgumentError, "struct must receive a map"
+    raise ArgumentError, "struct must receive a map or nil"
   end
 
   defimpl Zoi.Type do
+    # When fields is nil, just validate the struct type without field validation
+    def parse(%Zoi.Types.Struct{module: module, fields: nil}, %module{} = input, _opts) do
+      {:ok, input}
+    end
+
     def parse(%Zoi.Types.Struct{module: module} = struct, %module{} = input, opts) do
       input = Map.from_struct(input)
 
@@ -63,6 +78,10 @@ defmodule Zoi.Types.Struct do
   end
 
   defimpl Zoi.TypeSpec do
+    def spec(%Zoi.Types.Struct{module: module, fields: nil}, _opts) do
+      quote(do: %unquote(module){})
+    end
+
     def spec(%Zoi.Types.Struct{module: module, fields: fields}, opts) do
       fields
       |> Enum.map(fn {key, type} ->
@@ -77,6 +96,10 @@ defmodule Zoi.Types.Struct do
 
   defimpl Inspect do
     import Inspect.Algebra
+
+    def inspect(%{fields: nil} = type, opts) do
+      Zoi.Inspect.build(type, opts, module: type.module)
+    end
 
     def inspect(type, opts) do
       fields_doc =
