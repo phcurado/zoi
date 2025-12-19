@@ -159,7 +159,7 @@ defmodule Zoi.Types.Integer do
       if rem(input, value) == 0 do
         :ok
       else
-        {:error, Zoi.Error.not_multiple_of(value, opts)}
+        {:error, Zoi.Error.multiple_of(value, opts)}
       end
     end
   end

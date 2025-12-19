@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.13.2 - Unreleased
+
+### Added
+
+- `Zoi.function/1` type for validating function values with optional arity constraint:
+
 ## 0.13.1 - 2025-12-19
 
 ### Changed

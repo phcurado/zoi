@@ -129,6 +129,7 @@ defmodule Zoi.Describe do
     do: "one of #{Enum.map_join(values, ", ", fn {_key, value} -> parse_enum_spec(value) end)}"
 
   defp parse_type_spec(%Zoi.Types.Float{}), do: "`t:float/0`"
+  defp parse_type_spec(%Zoi.Types.Function{}), do: "`t:function/0`"
   defp parse_type_spec(%Zoi.Types.Integer{}), do: "`t:integer/0`"
 
   defp parse_type_spec(%Zoi.Types.Intersection{schemas: schemas}) do
