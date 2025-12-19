@@ -91,7 +91,6 @@ defmodule Zoi.Types.Time do
       ]
       |> Validations.run_validations(schema, input)
     end
-
   end
 
   defimpl Zoi.TypeSpec do

@@ -89,7 +89,6 @@ defmodule Zoi.Types.Array do
       {:error, Zoi.Error.invalid_type(:array, error: schema.meta.error)}
     end
 
-
     defp finalize_result({parsed, errors}, schema) do
       parsed = Enum.reverse(parsed)
 

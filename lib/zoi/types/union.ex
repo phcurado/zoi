@@ -42,7 +42,6 @@ defmodule Zoi.Types.Union do
         {:error, type_error}
       end
     end
-
   end
 
   defimpl Zoi.TypeSpec do

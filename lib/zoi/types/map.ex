@@ -35,7 +35,6 @@ defmodule Zoi.Types.Map do
     def parse(schema, _, _) do
       {:error, Zoi.Error.invalid_type(:map, error: schema.meta.error)}
     end
-
   end
 
   defimpl Zoi.TypeSpec do

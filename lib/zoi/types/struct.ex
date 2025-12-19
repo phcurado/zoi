@@ -60,7 +60,6 @@ defmodule Zoi.Types.Struct do
     def parse(schema, _, _) do
       {:error, Zoi.Error.invalid_type(:struct, error: schema.meta.error)}
     end
-
   end
 
   defimpl Zoi.TypeSpec do

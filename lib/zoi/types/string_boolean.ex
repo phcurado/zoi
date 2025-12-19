@@ -80,7 +80,6 @@ defmodule Zoi.Types.StringBoolean do
          error: schema.meta.error
        )}
     end
-
   end
 
   defimpl Zoi.TypeSpec do

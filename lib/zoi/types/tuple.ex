@@ -57,7 +57,6 @@ defmodule Zoi.Types.Tuple do
         end
       end)
     end
-
   end
 
   defimpl Zoi.TypeSpec do

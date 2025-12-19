@@ -69,7 +69,6 @@ defmodule Zoi.Types.Enum do
     defp error(schema) do
       {:error, Zoi.Error.invalid_enum_value(schema.values, error: schema.meta.error)}
     end
-
   end
 
   defimpl Zoi.TypeSpec do

@@ -65,7 +65,6 @@ defmodule Zoi.Types.Codec do
         decoded -> {:ok, decoded}
       end
     end
-
   end
 
   defimpl Zoi.TypeSpec do

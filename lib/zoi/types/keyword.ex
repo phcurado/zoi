@@ -65,7 +65,6 @@ defmodule Zoi.Types.Keyword do
          error: schema.meta.error
        )}
     end
-
   end
 
   defimpl Zoi.TypeSpec do

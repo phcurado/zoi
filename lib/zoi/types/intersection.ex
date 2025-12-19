@@ -42,7 +42,6 @@ defmodule Zoi.Types.Intersection do
         {:error, type_error}
       end
     end
-
   end
 
   # There is no direct representation of a intersection in Elixir types, so we use union `|`
