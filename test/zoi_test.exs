@@ -434,6 +434,84 @@ defmodule ZoiTest do
     end
   end
 
+  describe "function/1" do
+    test "function with correct value" do
+      assert {:ok, func} = Zoi.parse(Zoi.function(), fn -> :ok end)
+      assert is_function(func, 0)
+
+      assert {:ok, func} = Zoi.parse(Zoi.function(), fn x -> x end)
+      assert is_function(func, 1)
+
+      assert {:ok, func} = Zoi.parse(Zoi.function(), &String.upcase/1)
+      assert is_function(func, 1)
+    end
+
+    test "function with arity constraint" do
+      schema = Zoi.function(arity: 2)
+
+      assert {:ok, func} = Zoi.parse(schema, fn a, b -> a + b end)
+      assert is_function(func, 2)
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, fn -> :ok end)
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected function of arity 2"
+    end
+
+    test "function with incorrect value" do
+      wrong_values = ["hello", 123, 1.5, :atom, true, false, %{}, []]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.function(), value)
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected function"
+      end
+    end
+
+    test "function with arity and incorrect value" do
+      schema = Zoi.function(arity: 1)
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a function")
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected function of arity 1"
+    end
+
+    test "function with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.function(error: "must be a callback"), "not a function")
+
+      assert error.code == :custom
+      assert Exception.message(error) == "must be a callback"
+    end
+
+    test "function with arity and custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.function(arity: 2, error: "must be a binary callback"), fn -> :ok end)
+
+      assert error.code == :custom
+      assert Exception.message(error) == "must be a binary callback"
+    end
+
+    test "function with invalid arity option" do
+      assert_raise Zoi.ParseError,
+                   "Parsing error:\n\ninvalid type: expected integer, at arity\n",
+                   fn ->
+                     Zoi.function(arity: "two")
+                   end
+
+      assert_raise Zoi.ParseError,
+                   "Parsing error:\n\ninvalid type: expected integer, at arity\n",
+                   fn ->
+                     Zoi.function(arity: 1.5)
+                   end
+
+      assert_raise Zoi.ParseError,
+                   "Parsing error:\n\ntoo small: must be at least 0, at arity\n",
+                   fn ->
+                     Zoi.function(arity: -1)
+                   end
+    end
+  end
+
   describe "optional/2" do
     test "optional with correct value" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.optional(Zoi.string()), "hello")
@@ -2926,7 +3004,7 @@ defmodule ZoiTest do
       assert {:ok, 0} == Zoi.parse(schema, 0)
       assert {:ok, -15} == Zoi.parse(schema, -15)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 7)
-      assert error.code == :not_multiple_of
+      assert error.code == :multiple_of
       assert Exception.message(error) == "must be a multiple of 5"
       assert error.issue == {"must be a multiple of %{value}", [value: 5]}
     end
@@ -2936,7 +3014,7 @@ defmodule ZoiTest do
       assert {:ok, 1.5} == Zoi.parse(schema, 1.5)
       assert {:ok, 2.0} == Zoi.parse(schema, 2.0)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 1.3)
-      assert error.code == :not_multiple_of
+      assert error.code == :multiple_of
       assert Exception.message(error) == "must be a multiple of 0.5"
     end
 
@@ -2945,7 +3023,7 @@ defmodule ZoiTest do
       assert {:ok, 9} == Zoi.parse(schema, 9)
       assert {:ok, 6.0} == Zoi.parse(schema, 6.0)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 7)
-      assert error.code == :not_multiple_of
+      assert error.code == :multiple_of
       assert Exception.message(error) == "must be a multiple of 3"
     end
 
@@ -2954,7 +3032,7 @@ defmodule ZoiTest do
       assert {:ok, Decimal.new("1.25")} == Zoi.parse(schema, Decimal.new("1.25"))
       assert {:ok, Decimal.new("0.5")} == Zoi.parse(schema, Decimal.new("0.5"))
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, Decimal.new("1.3"))
-      assert error.code == :not_multiple_of
+      assert error.code == :multiple_of
       assert Exception.message(error) == "must be a multiple of 0.25"
     end
 
@@ -2962,7 +3040,7 @@ defmodule ZoiTest do
       schema = Zoi.integer(multiple_of: 7)
       assert {:ok, 14} == Zoi.parse(schema, 14)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10)
-      assert error.code == :not_multiple_of
+      assert error.code == :multiple_of
     end
 
     test "custom message" do
@@ -2980,7 +3058,7 @@ defmodule ZoiTest do
 
       assert {:ok, 8} == Zoi.parse(schema, 4)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 3)
-      assert error.code == :not_multiple_of
+      assert error.code == :multiple_of
       assert Exception.message(error) == "must be a multiple of 4"
     end
 

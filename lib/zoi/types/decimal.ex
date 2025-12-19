@@ -164,7 +164,7 @@ if Code.ensure_loaded?(Decimal) do
         if Decimal.eq?(remainder, Decimal.new(0)) do
           :ok
         else
-          {:error, Zoi.Error.not_multiple_of(value, opts)}
+          {:error, Zoi.Error.multiple_of(value, opts)}
         end
       end
     end

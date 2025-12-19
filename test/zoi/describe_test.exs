@@ -109,6 +109,7 @@ defmodule Zoi.DescribeTest do
           enum: Zoi.enum(a: "A", b: "B"),
           enum_atom: Zoi.enum([:a, :b]),
           float: Zoi.float(),
+          function: Zoi.function(),
           integer: Zoi.integer(),
           intersection: Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
           keyword: Zoi.keyword(Zoi.string()),
@@ -152,6 +153,8 @@ defmodule Zoi.DescribeTest do
       * `:enum_atom` (one of `:a`, `:b`)
 
       * `:float` (`t:float/0`)
+
+      * `:function` (`t:function/0`)
 
       * `:integer` (`t:integer/0`)
 

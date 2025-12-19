@@ -33,6 +33,7 @@ defmodule Zoi.TypeSpecTest do
         {Zoi.enum(red: "Red", green: "Green", blue: "Blue"), quote(do: :red | :green | :blue)},
         {Zoi.enum(one: 1, two: 2, three: 3), quote(do: :one | :two | :three)},
         {Zoi.float(), quote(do: float())},
+        {Zoi.function(), quote(do: function())},
         {Zoi.integer(), quote(do: integer())},
         {Zoi.intersection([Zoi.string(), Zoi.atom()]), quote(do: binary() | atom())},
         {Zoi.literal(nil), quote(do: nil)},

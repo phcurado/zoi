@@ -904,7 +904,9 @@ defmodule Zoi do
 
   @doc """
   Defines a nil type schema.
+
   This schema only accepts `nil` as valid input.
+
   ## Example
 
       iex> schema = Zoi.null()
@@ -931,6 +933,46 @@ defmodule Zoi do
     Zoi.Types.Null.opts()
     |> parse!(opts)
     |> Zoi.Types.Null.new()
+  end
+
+  @doc """
+  Defines a function type schema.
+
+  This schema only accepts function values as valid input. Use the `arity` option
+  to require a specific function arity.
+
+  ## Examples
+
+      iex> schema = Zoi.function()
+      iex> {:ok, func} = Zoi.parse(schema, fn -> :ok end)
+      iex> is_function(func)
+      true
+
+      iex> schema = Zoi.function(arity: 2)
+      iex> {:ok, func} = Zoi.parse(schema, fn _, _ -> :ok end)
+      iex> is_function(func, 2)
+      true
+      iex> Zoi.parse(schema, "not_a_function")
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected function of arity 2",
+           issue: {"invalid type: expected function of arity 2", [type: :function]},
+           path: []
+         }
+       ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Function.opts())}
+  """
+  @doc group: "Basic Types"
+  @spec function(opts :: options()) :: schema()
+  def function(opts \\ []) do
+    Zoi.Types.Function.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Function.new()
   end
 
   @doc """
@@ -2411,7 +2453,7 @@ defmodule Zoi do
       {:error,
        [
          %Zoi.Error{
-           code: :not_multiple_of,
+           code: :multiple_of,
            message: "must be a multiple of 5",
            issue: {"must be a multiple of %{value}", [value: 5]},
            path: []

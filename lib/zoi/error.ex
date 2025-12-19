@@ -26,7 +26,7 @@ defmodule Zoi.Error do
     - `:greater_than_or_equal_to`
     - `:invalid_length`
     - `:invalid_format`
-    - `:not_multiple_of`
+    - `:multiple_of`
     - `:custom`
 
   ## Example
@@ -605,25 +605,25 @@ defmodule Zoi.Error do
   end
 
   @doc """
-  Creates a not_multiple_of error for the given value.
+  Creates a multiple_of error for the given value.
 
   ## Example
-      iex> Zoi.Error.not_multiple_of(5)
+      iex> Zoi.Error.multiple_of(5)
       %Zoi.Error{
-        code: :not_multiple_of,
+        code: :multiple_of,
         issue: {"must be a multiple of %{value}", [value: 5]},
         message: "must be a multiple of 5"
       }
   """
-  @spec not_multiple_of(number(), keyword()) :: t()
-  def not_multiple_of(value, opts \\ []) do
+  @spec multiple_of(number(), keyword()) :: t()
+  def multiple_of(value, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
       custom_error(issue: {msg, [value: value]})
     else
       new(
-        code: :not_multiple_of,
+        code: :multiple_of,
         issue: {"must be a multiple of %{value}", [value: value]},
         path: opts[:path] || []
       )

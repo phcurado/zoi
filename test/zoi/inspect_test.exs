@@ -15,6 +15,8 @@ defmodule Zoi.InspectTest do
       {Zoi.enum([:a, :b, :c]), "#Zoi.enum<coerce: false, values: [:a, :b, :c]>"},
       {Zoi.enum(a: "a", b: "b"), "#Zoi.enum<coerce: false, values: [a: \"a\", b: \"b\"]>"},
       {Zoi.float(), "#Zoi.float<coerce: false>"},
+      {Zoi.function(), "#Zoi.function<>"},
+      {Zoi.function(arity: 2), "#Zoi.function<arity: 2>"},
       {Zoi.integer(), "#Zoi.integer<coerce: false>"},
       {Zoi.intersection([Zoi.number(), Zoi.float()]),
        "#Zoi.intersection<schemas: [#Zoi.number<coerce: false>, #Zoi.float<coerce: false>]>"},
