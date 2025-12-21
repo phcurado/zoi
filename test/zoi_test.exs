@@ -937,9 +937,9 @@ defmodule ZoiTest do
     })
   end
 
-  describe "object/2" do
-    test "object with correct value" do
-      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+  describe "map/2" do
+    test "map with correct value" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
 
       assert {:ok, %{name: "John", age: 30}} ==
                Zoi.parse(schema, %{
@@ -948,14 +948,14 @@ defmodule ZoiTest do
                })
     end
 
-    test "object not a map" do
-      assert_raise ArgumentError, "object must receive a map", fn ->
-        Zoi.object("not a map")
+    test "map not a map" do
+      assert_raise ArgumentError, "expected a map with field definitions", fn ->
+        Zoi.map("not a map")
       end
     end
 
-    test "object with missing required field" do
-      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+    test "map with missing required field" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
 
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{
@@ -966,8 +966,8 @@ defmodule ZoiTest do
       assert error.path == [:age]
     end
 
-    test "object with incorrect values" do
-      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+    test "map with incorrect values" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
 
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{
@@ -979,8 +979,8 @@ defmodule ZoiTest do
       assert error.path == [:age]
     end
 
-    test "object with string key" do
-      schema = Zoi.object(%{"name" => Zoi.string(), "age" => Zoi.integer()})
+    test "map with string key" do
+      schema = Zoi.map(%{"name" => Zoi.string(), "age" => Zoi.integer()})
 
       assert {:ok, %{"name" => "John", "age" => 30}} ==
                Zoi.parse(schema, %{
@@ -989,9 +989,9 @@ defmodule ZoiTest do
                })
     end
 
-    test "object with optional field" do
+    test "map with optional field" do
       schema =
-        Zoi.object(%{name: Zoi.string(), age: Zoi.optional(Zoi.integer())})
+        Zoi.map(%{name: Zoi.string(), age: Zoi.optional(Zoi.integer())})
 
       assert {:ok, %{name: "John"}} ==
                Zoi.parse(schema, %{
@@ -999,18 +999,18 @@ defmodule ZoiTest do
                })
     end
 
-    test "object with non-map input" do
-      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+    test "map with non-map input" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
 
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
       assert error.code == :invalid_type
-      assert Exception.message(error) == "invalid type: expected object"
+      assert Exception.message(error) == "invalid type: expected map"
     end
 
-    test "object with nested object" do
+    test "map with nested map" do
       schema =
-        Zoi.object(%{
-          user: Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}),
+        Zoi.map(%{
+          user: Zoi.map(%{name: Zoi.string(), age: Zoi.integer()}),
           active: Zoi.boolean()
         })
 
@@ -1065,13 +1065,13 @@ defmodule ZoiTest do
       assert error.path == [:user, :age]
     end
 
-    test "object with strict keys" do
+    test "map with strict keys" do
       schema =
-        Zoi.object(
+        Zoi.map(
           %{
             name: Zoi.string(),
-            address: Zoi.optional(Zoi.object(%{street: Zoi.optional(Zoi.string())})),
-            phone: Zoi.optional(Zoi.object(%{number: Zoi.optional(Zoi.string())}, strict: true))
+            address: Zoi.optional(Zoi.map(%{street: Zoi.optional(Zoi.string())})),
+            phone: Zoi.optional(Zoi.map(%{number: Zoi.optional(Zoi.string())}, strict: true))
           },
           strict: true
         )
@@ -1105,8 +1105,8 @@ defmodule ZoiTest do
              ]
     end
 
-    test "object with string keys and input with atom keys" do
-      schema = Zoi.object(%{"name" => Zoi.string(), "age" => Zoi.integer()})
+    test "map with string keys and input with atom keys" do
+      schema = Zoi.map(%{"name" => Zoi.string(), "age" => Zoi.integer()})
 
       assert {:error, errors} =
                Zoi.parse(schema, %{name: "John", age: 30})
@@ -1117,16 +1117,16 @@ defmodule ZoiTest do
       end
     end
 
-    test "object with coercion on string keys and input with atom keys" do
-      schema = Zoi.object(%{"name" => Zoi.string(), "age" => Zoi.integer()}, coerce: true)
+    test "map with coercion on string keys and input with atom keys" do
+      schema = Zoi.map(%{"name" => Zoi.string(), "age" => Zoi.integer()}, coerce: true)
 
       assert {:ok, %{"age" => 30, "name" => "John"}} ==
                Zoi.parse(schema, %{name: "John", age: 30})
     end
 
-    test "object with empty_values set" do
+    test "map with empty_values set" do
       schema =
-        Zoi.object(
+        Zoi.map(
           %{
             name: Zoi.string(),
             age: Zoi.integer()
@@ -1152,6 +1152,98 @@ defmodule ZoiTest do
       assert Exception.message(error) == "is required"
       assert error.path == [:age]
     end
+
+    test "key/value map with correct values" do
+      schema = Zoi.map(Zoi.string(), Zoi.integer(coerce: true))
+
+      assert {:ok, %{"key1" => 1, "key2" => 2}} ==
+               Zoi.parse(schema, %{"key1" => 1, "key2" => "2"})
+    end
+
+    test "key/value map with incorrect key type" do
+      schema = Zoi.map(Zoi.string(), Zoi.integer())
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{:key_1 => 1, "key2" => 2})
+
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected string"
+      assert error.path == [:key_1]
+    end
+
+    test "key/value map with incorrect value type" do
+      schema = Zoi.map(Zoi.string(), Zoi.integer())
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{"key1" => "not an integer", "key2" => 2})
+
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected integer"
+      assert error.path == ["key1"]
+    end
+
+    test "free map" do
+      schema = Zoi.map()
+
+      assert {:ok, %{"key1" => "value1", "key2" => 2}} ==
+               Zoi.parse(schema, %{"key1" => "value1", "key2" => 2})
+    end
+
+    test "key/value map with invalid types" do
+      assert_raise ArgumentError, "expected a map with valid key and type definitions", fn ->
+        Zoi.map("not a type", "not a type")
+      end
+    end
+
+    test "key/value map with non-map input" do
+      schema = Zoi.map(Zoi.string(), Zoi.integer())
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected map"
+    end
+
+    test "key/value map with atom keys" do
+      schema = Zoi.map(Zoi.atom(), Zoi.any())
+      assert {:ok, %{name: "John", age: 30}} == Zoi.parse(schema, %{name: "John", age: 30})
+
+      assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
+               Zoi.parse(schema, %{"name" => "John", "age" => 30})
+
+      assert error1.code == :invalid_type
+      assert Exception.message(error1) == "invalid type: expected atom"
+      assert error1.path == ["age"]
+
+      assert error2.code == :invalid_type
+      assert Exception.message(error2) == "invalid type: expected atom"
+      assert error2.path == ["name"]
+    end
+
+    test "key/value map with union type" do
+      schema =
+        Zoi.map(
+          Zoi.union([Zoi.atom(), Zoi.string()],
+            error: "invalid type: must be an atom or a string"
+          ),
+          Zoi.union([Zoi.string(), Zoi.integer()])
+        )
+
+      assert {:ok, %{name: "John", age: 30}} == Zoi.parse(schema, %{name: "John", age: 30})
+
+      assert {:ok, %{"name" => "John", "age" => 30}} ==
+               Zoi.parse(schema, %{"name" => "John", "age" => 30})
+
+      assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
+               Zoi.parse(schema, %{1 => 123, "age" => :atom})
+
+      assert error1.code == :custom
+      assert Exception.message(error1) == "invalid type: must be an atom or a string"
+      assert error1.path == [1]
+
+      assert error2.code == :invalid_type
+      assert Exception.message(error2) == "invalid type: expected integer"
+      assert error2.path == ["age"]
+    end
   end
 
   describe "keyword/2" do
@@ -1160,6 +1252,20 @@ defmodule ZoiTest do
 
       assert {:ok, []} == Zoi.parse(schema, [])
       assert {:ok, [name: "John", age: 30]} == Zoi.parse(schema, name: "John", age: 30)
+    end
+
+    test "keyword with default applies for missing key" do
+      schema = Zoi.keyword(refresh_interval: Zoi.integer() |> Zoi.default(840_000))
+
+      assert {:ok, [refresh_interval: 840_000]} == Zoi.parse(schema, [])
+      assert {:ok, [refresh_interval: 840_000]} == Zoi.parse(schema, refresh_interval: nil)
+    end
+
+    test "keyword with optional default skips missing key" do
+      schema = Zoi.keyword(refresh_interval: Zoi.optional(Zoi.default(Zoi.integer(), 840_000)))
+
+      assert {:ok, []} == Zoi.parse(schema, [])
+      assert {:ok, [refresh_interval: 840_000]} == Zoi.parse(schema, refresh_interval: nil)
     end
 
     test "keyword not a keyword list" do
@@ -1478,7 +1584,7 @@ defmodule ZoiTest do
       schema1 = Zoi.object(%{name: Zoi.string()})
       schema2 = Zoi.string()
 
-      assert_raise ArgumentError, "must be an object", fn ->
+      assert_raise ArgumentError, "must be an object or keyword", fn ->
         Zoi.extend(schema1, schema2)
       end
     end
@@ -1505,94 +1611,6 @@ defmodule ZoiTest do
       schema = Zoi.extend(schema1, schema2)
 
       assert {:ok, [name: "John", age: 30]} == Zoi.parse(schema, name: "John", age: 30)
-    end
-  end
-
-  describe "map/3" do
-    test "map with correct values" do
-      schema = Zoi.map(Zoi.string(), Zoi.integer(coerce: true))
-
-      assert {:ok, %{"key1" => 1, "key2" => 2}} ==
-               Zoi.parse(schema, %{"key1" => 1, "key2" => "2"})
-    end
-
-    test "map with incorrect key type" do
-      schema = Zoi.map(Zoi.string(), Zoi.integer())
-
-      assert {:error, [%Zoi.Error{} = error]} =
-               Zoi.parse(schema, %{:key_1 => 1, "key2" => 2})
-
-      assert error.code == :invalid_type
-      assert Exception.message(error) == "invalid type: expected string"
-      assert error.path == [:key_1]
-    end
-
-    test "map with incorrect value type" do
-      schema = Zoi.map(Zoi.string(), Zoi.integer())
-
-      assert {:error, [%Zoi.Error{} = error]} =
-               Zoi.parse(schema, %{"key1" => "not an integer", "key2" => 2})
-
-      assert error.code == :invalid_type
-      assert Exception.message(error) == "invalid type: expected integer"
-      assert error.path == ["key1"]
-    end
-
-    test "free map" do
-      schema = Zoi.map()
-
-      assert {:ok, %{"key1" => "value1", "key2" => 2}} ==
-               Zoi.parse(schema, %{"key1" => "value1", "key2" => 2})
-    end
-
-    test "map with non-map input" do
-      schema = Zoi.map(Zoi.string(), Zoi.integer())
-
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
-      assert error.code == :invalid_type
-      assert Exception.message(error) == "invalid type: expected map"
-    end
-
-    test "map with atom keys" do
-      schema = Zoi.map(Zoi.atom(), Zoi.any())
-      assert {:ok, %{name: "John", age: 30}} == Zoi.parse(schema, %{name: "John", age: 30})
-
-      assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
-               Zoi.parse(schema, %{"name" => "John", "age" => 30})
-
-      assert error1.code == :invalid_type
-      assert Exception.message(error1) == "invalid type: expected atom"
-      assert error1.path == ["age"]
-
-      assert error2.code == :invalid_type
-      assert Exception.message(error2) == "invalid type: expected atom"
-      assert error2.path == ["name"]
-    end
-
-    test "map with union type" do
-      schema =
-        Zoi.map(
-          Zoi.union([Zoi.atom(), Zoi.string()],
-            error: "invalid type: must be an atom or a string"
-          ),
-          Zoi.union([Zoi.string(), Zoi.integer()])
-        )
-
-      assert {:ok, %{name: "John", age: 30}} == Zoi.parse(schema, %{name: "John", age: 30})
-
-      assert {:ok, %{"name" => "John", "age" => 30}} ==
-               Zoi.parse(schema, %{"name" => "John", "age" => 30})
-
-      assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
-               Zoi.parse(schema, %{1 => 123, "age" => :atom})
-
-      assert error1.code == :custom
-      assert Exception.message(error1) == "invalid type: must be an atom or a string"
-      assert error1.path == [1]
-
-      assert error2.code == :invalid_type
-      assert Exception.message(error2) == "invalid type: expected integer"
-      assert error2.path == ["age"]
     end
   end
 

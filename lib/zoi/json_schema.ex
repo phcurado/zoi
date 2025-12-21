@@ -6,7 +6,7 @@ defmodule Zoi.JSONSchema do
 
   ## Example
 
-      iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+      iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
       iex> Zoi.to_json_schema(schema)
       %{
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -34,7 +34,7 @@ defmodule Zoi.JSONSchema do
     - `Zoi.array/1`
     - `Zoi.tuple/1`
     - `Zoi.enum/1`
-    - `Zoi.map/0`
+    - `Zoi.map/2`
     - `Zoi.object/1`
     - `Zoi.intersection/1`
     - `Zoi.union/1`

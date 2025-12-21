@@ -2,9 +2,9 @@ defmodule Zoi do
   @moduledoc """
   `Zoi` is a schema validation library for Elixir, designed to provide a simple and flexible way to define and validate data.
 
-  It allows you to create schemas for various data types, including strings, integers, booleans, and complex objects, with built-in support for validations like minimum and maximum values, regex patterns, and email formats.
+  It allows you to create schemas for various data types, including strings, integers, booleans, and complex maps, with built-in support for validations like minimum and maximum values, regex patterns, and email formats.
 
-      user = Zoi.object(%{
+      user = Zoi.map(%{
         name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
         age: Zoi.integer() |> Zoi.min(18) |> Zoi.max(120),
         email: Zoi.email()
@@ -245,10 +245,10 @@ defmodule Zoi do
   This will generate the following type specification:
       @type t :: binary()
 
-  This also applies to complex types, such as `Zoi.object/2`:
+  This also applies to complex types, such as `Zoi.map/2`:
 
       defmodule MyApp.User do
-        @schema Zoi.object(%{
+        @schema Zoi.map(%{
           name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
           age: Zoi.integer() |> Zoi.optional(),
           email: Zoi.email()
@@ -305,7 +305,7 @@ defmodule Zoi do
   As an example, you can define a schema as it follows:
 
       defmodule MyApp.UserSchema do
-        @schema Zoi.object(
+        @schema Zoi.map(
                   %{
                     name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
                     age: Zoi.integer() |> Zoi.optional()
@@ -347,7 +347,7 @@ defmodule Zoi do
   You can also add an example helper that can be used on own elixir docs:
 
       defmodule MyApp.UserSchema do
-        @schema Zoi.object(
+        @schema Zoi.map(
                   %{
                     name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
                     age: Zoi.integer() |> Zoi.optional()
@@ -393,7 +393,7 @@ defmodule Zoi do
   For nested schemas, use `Zoi.Schema.traverse/2` to enable coercion on child fields.
   Note that traverse only applies to nested fields, not the root schema:
 
-      iex> schema = Zoi.object(%{age: Zoi.integer()}) |> Zoi.Schema.traverse(&Zoi.coerce/1) |> Zoi.coerce()
+      iex> schema = Zoi.map(%{age: Zoi.integer()}) |> Zoi.Schema.traverse(&Zoi.coerce/1) |> Zoi.coerce()
       iex> Zoi.parse(schema, %{"age" => "25"})
       {:ok, %{age: 25}}
   """
@@ -431,7 +431,7 @@ defmodule Zoi do
       %{__errors__: ["invalid type: must be a string"]}
 
   Errors without a path are considered top-level errors and are grouped under `:__errors__`.
-  This is how `Zoi` also handles errors when `Zoi.object/2` is used with `:strict` option, where unrecognized keys are added to the `:__errors__` key.
+  This is how `Zoi` also handles errors when `Zoi.map/2` is used with `:strict` option, where unrecognized keys are added to the `:__errors__` key.
   """
   @doc group: "Parsing"
   @spec treefy_errors([Zoi.Error.t()]) :: map()
@@ -976,11 +976,11 @@ defmodule Zoi do
   end
 
   @doc """
-  Makes the schema optional for the `Zoi.object/2` and `Zoi.keyword/2` types.
+  Makes the schema optional for the `Zoi.map/2` and `Zoi.keyword/2` types.
 
   ## Example
 
-      iex> schema = Zoi.object(%{name: Zoi.string() |> Zoi.optional()})
+      iex> schema = Zoi.map(%{name: Zoi.string() |> Zoi.optional()})
       iex> Zoi.parse(schema, %{})
       {:ok, %{}}
   """
@@ -989,7 +989,7 @@ defmodule Zoi do
   defdelegate optional(inner), to: Zoi.Types.Optional, as: :new
 
   @doc """
-  Makes the schema required for the `Zoi.object/2` and `Zoi.keyword/2` types.
+  Makes the schema required for the `Zoi.map/2` and `Zoi.keyword/2` types.
 
   ## Example
 
@@ -1024,10 +1024,10 @@ defmodule Zoi do
   defdelegate nullable(inner, opts \\ []), to: Zoi.Types.Nullable, as: :new
 
   @doc """
-  Makes the schema optional and nullable for the `Zoi.object/2` and `Zoi.keyword/2` types.
+  Makes the schema optional and nullable for the `Zoi.map/2` and `Zoi.keyword/2` types.
 
   ## Example
-      iex> schema = Zoi.object(%{name: Zoi.string() |> Zoi.nullish()})
+      iex> schema = Zoi.map(%{name: Zoi.string() |> Zoi.nullish()})
       iex> Zoi.parse(schema, %{})
       {:ok, %{}}
       iex> Zoi.parse(schema, %{name: nil})
@@ -1192,7 +1192,7 @@ defmodule Zoi do
       # Define a user schema where users can have friends (other users)
       defmodule MySchemas do
         def user do
-          Zoi.object(%{
+          Zoi.map(%{
             name: Zoi.string(),
             email: Zoi.email(),
             friends: Zoi.array(Zoi.lazy(fn -> user() end)) |> Zoi.optional()
@@ -1218,138 +1218,26 @@ defmodule Zoi do
   defdelegate lazy(fun, opts \\ []), to: Zoi.Types.Lazy, as: :new
 
   @doc """
-  Defines a object type schema.
+  Alias for field-based `Zoi.map/2`.
 
-  Use `Zoi.object(fields)` to define complex objects with nested schemas:
+  This function exists for familiarity with Zod's API. It creates the same
+  field-based map schema as `Zoi.map(%{...})`.
 
-      iex> user_schema = Zoi.object(%{
-      ...> name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
-      ...> age: Zoi.integer() |> Zoi.min(18) |> Zoi.max(120),
-      ...> email: Zoi.email()
-      ...> })
-      iex> Zoi.parse(user_schema, %{name: "Alice", age: 30, email: "alice@email.com"})
-      {:ok, %{name: "Alice", age: 30, email: "alice@email.com"}}
+  See `Zoi.map/2` for full documentation.
 
-  By default all fields are required, but you can make them optional by using `Zoi.optional/1`:
+  ## Example
 
-      iex> user_schema = Zoi.object(%{
-      ...> name: Zoi.string() |> Zoi.optional(),
-      ...> age: Zoi.integer() |> Zoi.optional(),
-      ...> email: Zoi.email() |> Zoi.optional()
-      ...> })
-      iex> Zoi.parse(user_schema, %{name: "Alice"})
-      {:ok, %{name: "Alice"}}
-
-  By default, unrecognized keys will be removed from the parsed data. If you want to not allow unrecognized keys, use the `:strict` option:
-
-      iex> schema = Zoi.object(%{name: Zoi.string()}, strict: true)
+      iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
       iex> Zoi.parse(schema, %{name: "Alice", age: 30})
-      {:error,
-       [
-         %Zoi.Error{
-           code: :unrecognized_key,
-           message: "unrecognized key: age",
-           issue: {"unrecognized key: %{key}", [key: :age]},
-           path: []
-         }
-       ]}
-
-  ## String keys and Atom keys
-
-  Objects can be declared using string keys too, this would set the expectation that the param data is also using string keys:
-
-      iex> schema = Zoi.object(%{"name" => Zoi.string()})
-      iex> Zoi.parse(schema, %{"name" => "Alice"})
-      {:ok, %{"name" => "Alice"}}
-      iex> Zoi.parse(schema, %{name: "Alice"})
-      {:error,
-       [
-         %Zoi.Error{
-           code: :required,
-           message: "is required",
-           issue: {"is required", [key: "name"]},
-           path: ["name"]
-         }
-       ]}
-
-  It's possible coerce the keys to atoms using the `:coerce` option:
-
-      iex> schema = Zoi.object(%{name: Zoi.string()}, coerce: true)
-      iex> Zoi.parse(schema, %{"name" => "Alice"})
-      {:ok, %{name: "Alice"}}
-
-  Which will automatically convert string keys to atom keys.
-
-
-  ## Nullable vs Optional fields
-
-  The `Zoi.optional/1` function makes a field optional, meaning it can be omitted from the input data. If the field is not present, it will not be included in the parsed result.
-  The `Zoi.nullable/1` function allows a field to be `nil`, meaning it can be explicitly set to `nil` in the input data. If the field is set to `nil`, it will be included in the parsed result as `nil`.
-
-      iex> schema = Zoi.object(%{name: Zoi.string() |> Zoi.optional(), age: Zoi.integer() |> Zoi.nullable()})
-      iex> Zoi.parse(schema, %{name: "Alice", age: nil})
-      {:ok, %{name: "Alice", age: nil}}
-      iex> Zoi.parse(schema, %{name: "Alice"})
-      {:error,
-       [
-         %Zoi.Error{
-           code: :required,
-           message: "is required",
-           issue: {"is required", [key: :age]},
-           path: [:age]
-         }
-       ]}
-
-  ## Optional vs Default fields
-
-  There are two options to define the behaviour of a field being optional and with a default value:
-  1. If the field is not present in the input data OR `nil`, it will be included in the parsed result with the default value.
-  2. If the field not present in the input data, it will not be included on the parsed result. If the value is `nil`, it will be included in the parsed result with the default value.
-
-  The order you encapsulate the type matters, to implement the first option, the encapsulation should be `Zoi.default(Zoi.optional(type, default_value))`:
-
-      iex> schema = Zoi.object(%{name: Zoi.default(Zoi.optional(Zoi.string()), "default value")})
-      iex> Zoi.parse(schema, %{})
-      {:ok, %{name: "default value"}}
-      iex> Zoi.parse(schema, %{name: nil})
-      {:ok, %{name: "default value"}}
-
-  The second option is implemented by encapsulating the type as `Zoi.optional(Zoi.default(type, default_value))`:
-
-      iex> schema = Zoi.object(%{name: Zoi.optional(Zoi.default(Zoi.string(), "default value"))})
-      iex> Zoi.parse(schema, %{})
-      {:ok, %{}}
-      iex> Zoi.parse(schema, %{name: nil})
-      {:ok, %{name: "default value"}}
-
-  ## Required definition
-
-  By default, all fields are required and if the field is absent in the input data, a validation error will be raised.
-  You can customize absent values in your object definition, defining what values should be considered absent using the `:empty_values` option:
-
-      iex> schema = Zoi.object(%{name: Zoi.string()}, empty_values: [nil, ""])
-      iex> Zoi.parse(schema, %{name: ""})
-      {:error,
-       [
-         %Zoi.Error{
-           code: :required,
-           message: "is required",
-           issue: {"is required", [key: :name]},
-           path: [:name]
-         }
-       ]}
-
-  ## Options
-
-  #{Zoi.Describe.generate(Zoi.Types.Object.opts())}
+      {:ok, %{name: "Alice", age: 30}}
   """
   @doc group: "Complex Types"
   @spec object(fields :: map(), opts :: options()) :: schema()
   def object(fields, opts \\ []) do
-    Zoi.Types.Object.opts()
+    Zoi.Types.Map.opts()
     |> parse!(opts)
     |> then(fn opts ->
-      Zoi.Types.Object.new(fields, opts)
+      Zoi.Types.Map.new(fields, opts)
     end)
   end
 
@@ -1422,7 +1310,7 @@ defmodule Zoi do
 
   @doc """
   Defines a struct type schema.
-  This type is similar to `Zoi.object/2`, but it is specifically designed to work with Elixir structs.
+  This type is similar to `Zoi.map/2`, but it is specifically designed to work with Elixir structs.
 
   When called with only a module, it validates that the input is a struct of that type without
   validating the struct's fields. When called with a module and fields, it validates both the
@@ -1507,12 +1395,12 @@ defmodule Zoi do
   end
 
   @doc """
-  Extends two object type schemas into one.
-  This function merges the fields of two object schemas. If there are overlapping fields, the fields from the second schema will override those from the first.
+  Extends two map type schemas into one.
+  This function merges the fields of two map schemas. If there are overlapping fields, the fields from the second schema will override those from the first.
 
   ## Example
-      iex> user = Zoi.object(%{name: Zoi.string()})
-      iex> role = Zoi.object(%{role: Zoi.enum([:admin,:user])})
+      iex> user = Zoi.map(%{name: Zoi.string()})
+      iex> role = Zoi.map(%{role: Zoi.enum([:admin,:user])})
       iex> user_with_role = Zoi.extend(user, role)
       iex> Zoi.parse(user_with_role, %{name: "Alice", role: :admin})
       {:ok, %{name: "Alice", role: :admin}}
@@ -1523,9 +1411,10 @@ defmodule Zoi do
   defdelegate extend(schema1, schema2, opts \\ []), to: Zoi.Types.Extend, as: :new
 
   @doc """
-  Defines a map type schema.
+  Defines a map type schema with a defined key and value type.
 
   ## Example
+
       iex> schema = Zoi.map(Zoi.string(), Zoi.integer())
       iex> Zoi.parse(schema, %{"a" => 1, "b" => 2})
       {:ok, %{"a" => 1, "b" => 2}}
@@ -1546,29 +1435,133 @@ defmodule Zoi do
   """
   @doc group: "Complex Types"
   @spec map(key :: schema(), type :: schema(), opts :: options()) :: schema()
-  def map(key, type, opts \\ []) do
+  def map(key, value, opts) do
     Zoi.Types.Map.opts()
     |> parse!(opts)
     |> then(fn opts ->
-      Zoi.Types.Map.new(key, type, opts)
+      Zoi.Types.Map.new(key, value, opts)
     end)
   end
 
   @doc """
-  Defines a map type schema with `Zoi.any()` type.
+  Defines a map type schema with structured fields
 
-  This type is the same as creating the following map:
-      Zoi.map(Zoi.any(), Zoi.any())
+  Similar to Elixir's type system where `%{key: type}` defines a map with specific fields.
+  Fields are required by default, following Elixir's semantics.
+
+      iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
+      iex> Zoi.parse(schema, %{name: "John", age: 30})
+      {:ok, %{name: "John", age: 30}}
+
+  Use `Zoi.optional/1` for optional fields:
+
+      iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.optional(Zoi.integer())})
+      iex> Zoi.parse(schema, %{name: "John"})
+      {:ok, %{name: "John"}}
+
+  Missing required fields return an error:
+
+      iex> schema = Zoi.map(%{name: Zoi.string()})
+      iex> Zoi.parse(schema, %{})
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: :name]},
+           path: [:name]
+         }
+       ]}
+
+  By default, unrecognized keys will be removed from the parsed data. Use `:strict` to reject them:
+
+      iex> schema = Zoi.map(%{name: Zoi.string()}, strict: true)
+      iex> Zoi.parse(schema, %{name: "Alice", age: 30})
+      {:error,
+       [
+         %Zoi.Error{
+           code: :unrecognized_key,
+           message: "unrecognized key: age",
+           issue: {"unrecognized key: %{key}", [key: :age]},
+           path: []
+         }
+       ]}
+
+  ### String keys and Atom keys
+
+  Maps can use string keys, expecting string keys in input:
+
+      iex> schema = Zoi.map(%{"name" => Zoi.string()})
+      iex> Zoi.parse(schema, %{"name" => "Alice"})
+      {:ok, %{"name" => "Alice"}}
+
+  Use `:coerce` to convert string keys to atoms:
+
+      iex> schema = Zoi.map(%{name: Zoi.string()}, coerce: true)
+      iex> Zoi.parse(schema, %{"name" => "Alice"})
+      {:ok, %{name: "Alice"}}
+
+  ### Optional vs Default fields
+
+  The order of encapsulation matters for optional fields with defaults:
+
+  Option 1 - `Zoi.default(Zoi.optional(...))`: Apply default when missing OR nil:
+
+      iex> schema = Zoi.map(%{name: Zoi.default(Zoi.optional(Zoi.string()), "default")})
+      iex> Zoi.parse(schema, %{})
+      {:ok, %{name: "default"}}
+
+  Option 2 - `Zoi.optional(Zoi.default(...))`: Skip when missing, apply default on nil:
+
+      iex> schema = Zoi.map(%{name: Zoi.optional(Zoi.default(Zoi.string(), "default"))})
+      iex> Zoi.parse(schema, %{})
+      {:ok, %{}}
+      iex> Zoi.parse(schema, %{name: nil})
+      {:ok, %{name: "default"}}
+
+  ### Empty values
+
+  Customize which values are treated as "missing" with `:empty_values`:
+
+      iex> schema = Zoi.map(%{name: Zoi.string()}, empty_values: [nil, ""])
+      iex> Zoi.parse(schema, %{name: ""})
+      {:error,
+       [
+         %Zoi.Error{
+           code: :required,
+           message: "is required",
+           issue: {"is required", [key: :name]},
+           path: [:name]
+         }
+       ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Map.opts())}
   """
   @doc group: "Complex Types"
-  @spec map(opts :: options()) :: schema()
-  def map(opts \\ []) do
+  @spec map(fields :: map(), opts :: options()) :: schema()
+  def map(fields, opts) when is_list(opts) do
     Zoi.Types.Map.opts()
     |> parse!(opts)
     |> then(fn opts ->
-      Zoi.Types.Map.new(Zoi.any(), Zoi.any(), opts)
+      Zoi.Types.Map.new(fields, opts)
     end)
   end
+
+  def map(key_type, value_type) when is_struct(key_type) and is_struct(value_type) do
+    map(key_type, value_type, [])
+  end
+
+  def map(key_type, value_type), do: map(key_type, value_type, [])
+
+  @doc false
+  def map(opts) when is_list(opts), do: map(Zoi.any(), Zoi.any(), opts)
+
+  def map(fields), do: map(fields, [])
+
+  @doc false
+  def map(), do: map([])
 
   @doc """
   Defines a tuple type schema.
@@ -2654,7 +2647,7 @@ defmodule Zoi do
         defstruct [:name, :age]
       end
 
-      schema = Zoi.object(%{
+      schema = Zoi.map(%{
         name: Zoi.string(),
         age: Zoi.integer()
       })

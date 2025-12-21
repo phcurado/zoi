@@ -96,7 +96,7 @@ defmodule Zoi.Describe do
     Enum.map_join(fields, "\n\n", &parse_field/1) <> "\n"
   end
 
-  def generate(%Zoi.Types.Object{fields: fields}) do
+  def generate(%Zoi.Types.Map{fields: fields}) do
     Enum.map_join(fields, "\n\n", &parse_field/1) <> "\n"
   end
 

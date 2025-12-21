@@ -18,10 +18,10 @@ defmodule Zoi.Form do
   Phoenix sends form inputs.
   """
   @spec prepare(Zoi.schema()) :: Zoi.schema()
-  def prepare(%Zoi.Types.Object{} = obj) do
+  def prepare(%Zoi.Types.Map{} = obj) do
     obj
     |> Zoi.Schema.traverse(fn
-      %Zoi.Types.Object{} = inner_obj ->
+      %Zoi.Types.Map{} = inner_obj ->
         apply_object_defaults(inner_obj)
 
       %Zoi.Types.Struct{} = struct ->
@@ -42,7 +42,7 @@ defmodule Zoi.Form do
   def prepare(%Zoi.Types.Struct{} = struct) do
     struct
     |> Zoi.Schema.traverse(fn
-      %Zoi.Types.Object{} = obj ->
+      %Zoi.Types.Map{} = obj ->
         apply_object_defaults(obj)
 
       %Zoi.Types.Struct{} = inner_struct ->
@@ -73,7 +73,7 @@ defmodule Zoi.Form do
   """
   @spec parse(schema :: Zoi.schema(), input :: Zoi.input(), opts :: Zoi.options()) ::
           Zoi.Context.t()
-  def parse(%Zoi.Types.Object{} = obj, input, opts \\ []) do
+  def parse(%Zoi.Types.Map{} = obj, input, opts \\ []) do
     # Normalize input to convert LiveView map arrays to lists
     normalized_input = normalize_input(obj, input)
 
@@ -84,7 +84,7 @@ defmodule Zoi.Form do
   end
 
   # Recursively normalize input based on schema structure
-  defp normalize_input(%Zoi.Types.Object{fields: fields}, input) when is_map(input) do
+  defp normalize_input(%Zoi.Types.Map{fields: fields}, input) when is_map(input) do
     Enum.reduce(fields, input, fn {key, type}, acc ->
       key_str = to_string(key)
 
@@ -103,7 +103,7 @@ defmodule Zoi.Form do
     Enum.map(list, &normalize_value(inner, &1))
   end
 
-  defp normalize_value(%Zoi.Types.Object{} = obj, value) when is_map(value) do
+  defp normalize_value(%Zoi.Types.Map{} = obj, value) when is_map(value) do
     normalize_input(obj, value)
   end
 
@@ -148,7 +148,7 @@ defmodule Zoi.Form do
     int
   end
 
-  defp apply_object_defaults(%Zoi.Types.Object{} = obj) do
+  defp apply_object_defaults(%Zoi.Types.Map{} = obj) do
     %{obj | coerce: true, empty_values: @form_empty_values}
   end
 

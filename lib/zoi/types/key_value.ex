@@ -1,10 +1,7 @@
 defmodule Zoi.Types.KeyValue do
   @moduledoc false
-  # Shared parsing logic for Zoi.Types.Object and Zoi.Types.Keyword
 
-  alias Zoi.Types.Meta
-
-  def parse(%Zoi.Types.Object{} = type, input, opts) when is_map(input) do
+  def parse(%Zoi.Types.Map{} = type, input, opts) when is_map(input) do
     input
     |> Map.to_list()
     |> do_parse_pairs(type, opts)
@@ -133,11 +130,14 @@ defmodule Zoi.Types.KeyValue do
 
   defp handle_missing_field(field_schema, field_key, parsed, errors) do
     cond do
-      Meta.optional?(field_schema.meta) ->
+      field_schema.meta.required == false ->
         {parsed, errors}
 
       default?(field_schema) ->
         {[{field_key, field_schema.value} | parsed], errors}
+
+      field_schema.meta.required == nil ->
+        {parsed, errors}
 
       true ->
         required_error = Zoi.Error.required(field_key, path: [field_key])
