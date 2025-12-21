@@ -71,7 +71,7 @@ defmodule Zoi.Schema do
     do_traverse_root(schema, fun)
   end
 
-  defp do_traverse_root(%Zoi.Types.Object{fields: fields} = obj, fun) do
+  defp do_traverse_root(%Zoi.Types.Map{fields: fields} = obj, fun) when is_list(fields) do
     transformed_fields =
       Enum.map(fields, fn {key, type} ->
         {key, do_traverse(type, [key], fun)}
@@ -105,7 +105,7 @@ defmodule Zoi.Schema do
 
   defp do_traverse_root(schema, _fun), do: schema
 
-  defp do_traverse(%Zoi.Types.Object{fields: fields} = obj, path, fun) do
+  defp do_traverse(%Zoi.Types.Map{fields: fields} = obj, path, fun) when is_list(fields) do
     transformed_fields =
       Enum.map(fields, fn {key, type} ->
         {key, do_traverse(type, path ++ [key], fun)}

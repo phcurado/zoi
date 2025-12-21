@@ -196,7 +196,7 @@ if Code.ensure_loaded?(Phoenix.HTML) do
 
     # Determine if a field in the object schema is an array type
     # This is crucial for deciding whether to create multiple forms (array) or single form (object)
-    defp array_field?(%Zoi.Types.Object{fields: fields}, field) when is_atom(field) do
+    defp array_field?(%Zoi.Types.Map{fields: fields}, field) when is_atom(field) do
       case get_field_schema(fields, field) do
         %Zoi.Types.Array{} -> true
         %Zoi.Types.Default{inner: inner} -> array_field_inner?(inner)
@@ -207,7 +207,7 @@ if Code.ensure_loaded?(Phoenix.HTML) do
     defp array_field?(_, _), do: false
 
     # Get field schema from fields (keyword list structure)
-    # Note: Object fields are always stored as a list after construction
+    # Note: Map fields are always stored as a list after construction
     defp get_field_schema(fields, field) when is_list(fields), do: Keyword.get(fields, field)
 
     # Recursively check if inner type is an array (for wrapped types like Default)

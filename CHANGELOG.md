@@ -2,13 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.13.2 - Unreleased
+## 0.14.0 - Unreleased
 
 ### Added
 
+- `Zoi.map/2` now supports field-based mode with `%{field: type}` notation, following Elixir's type system where fields are required by default
 - `Zoi.function/1` type for validating function values with optional arity constraint
 - `Zoi.struct/1` now accepts just a module to validate struct type without field validation
 - `Zoi.Describe.Encoder` protocol for generating human-readable type descriptions
+
+### Changed
+
+- `Zoi.object/2` is now an alias for field-based `Zoi.map/2`. Both functions work identically
+- `Zoi.Types.Object` has been consolidated into `Zoi.Types.Map`. The `Zoi.object/2` API remains unchanged
+- `Zoi.keyword/2` default behavior: defaults now apply correctly when parsing keyword list with missing keys
 
 ## 0.13.1 - 2025-12-19
 

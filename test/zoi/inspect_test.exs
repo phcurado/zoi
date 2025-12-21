@@ -36,7 +36,9 @@ defmodule Zoi.InspectTest do
        "#Zoi.union<required: false, schemas: [#Zoi.null<>, #Zoi.string<coerce: false>]>"},
       {Zoi.number(), "#Zoi.number<coerce: false>"},
       {Zoi.object(%{name: Zoi.string()}),
-       "#Zoi.object<coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>"},
+       "#Zoi.map<coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>"},
+      {Zoi.map(%{name: Zoi.string()}),
+       "#Zoi.map<coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>"},
       {Zoi.optional(Zoi.string()), "#Zoi.string<required: false, coerce: false>"},
       {Zoi.required(Zoi.string()), "#Zoi.string<required: true, coerce: false>"},
       {Zoi.string(coerce: true), "#Zoi.string<coerce: true>"},
@@ -68,13 +70,13 @@ defmodule Zoi.InspectTest do
 
   test "inspect nested types" do
     type =
-      Zoi.object(%{
-        nest: Zoi.object(%{name: Zoi.string()})
+      Zoi.map(%{
+        nest: Zoi.map(%{name: Zoi.string()})
       })
 
     expected =
-      "#Zoi.object<coerce: false, strict: false, fields: %{" <>
-        "nest: #Zoi.object<required: true, coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>" <>
+      "#Zoi.map<coerce: false, strict: false, fields: %{" <>
+        "nest: #Zoi.map<required: true, coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>" <>
         "}>"
 
     assert inspect(type) == expected
