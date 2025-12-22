@@ -2,8 +2,12 @@ defmodule ZoiTest do
   use ExUnit.Case, async: true
   doctest Zoi
 
+  defmodule Role do
+    defstruct [:name]
+  end
+
   defmodule User do
-    defstruct [:name, :age]
+    defstruct [:name, :age, :role]
   end
 
   describe "parse/3" do
@@ -1005,6 +1009,49 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
       assert error.code == :invalid_type
       assert Exception.message(error) == "invalid type: expected map"
+    end
+
+    test "map with struct input" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ~T[12:34:56])
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected map"
+    end
+
+    test "map with coerce accepts struct" do
+      schema = Zoi.map(%{hour: Zoi.integer(), minute: Zoi.integer()}, coerce: true)
+
+      assert {:ok, %{hour: 12, minute: 34}} = Zoi.parse(schema, ~T[12:34:56])
+    end
+
+    test "map with coerce accepts nested structs" do
+      schema =
+        Zoi.map(
+          %{
+            name: Zoi.string(),
+            role: Zoi.map(%{name: Zoi.string()}, coerce: true)
+          },
+          coerce: true
+        )
+
+      user = %User{name: "John", role: %Role{name: "admin"}}
+
+      assert {:ok, %{name: "John", role: %{name: "admin"}}} = Zoi.parse(schema, user)
+    end
+
+    test "map key/value with coerce accepts struct" do
+      schema =
+        Zoi.map(
+          Zoi.atom(),
+          Zoi.union([Zoi.integer(), Zoi.tuple({Zoi.integer(), Zoi.integer()}), Zoi.atom()]),
+          coerce: true
+        )
+
+      assert {:ok, result} = Zoi.parse(schema, ~T[12:34:56])
+      assert result.hour == 12
+      assert result.minute == 34
+      assert result.second == 56
     end
 
     test "map with nested map" do
@@ -2125,6 +2172,61 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, :orange)
       assert error.code == :custom
       assert Exception.message(error) == "custom enum error of apple, banana, cherry"
+    end
+  end
+
+  describe "json/1" do
+    test "json with string value" do
+      schema = Zoi.json()
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+    end
+
+    test "json with number value" do
+      schema = Zoi.json()
+      assert {:ok, 42} == Zoi.parse(schema, 42)
+      assert {:ok, 3.14} == Zoi.parse(schema, 3.14)
+    end
+
+    test "json with boolean value" do
+      schema = Zoi.json()
+      assert {:ok, true} == Zoi.parse(schema, true)
+      assert {:ok, false} == Zoi.parse(schema, false)
+    end
+
+    test "json with null value" do
+      schema = Zoi.json()
+      assert {:ok, nil} == Zoi.parse(schema, nil)
+    end
+
+    test "json with array value" do
+      schema = Zoi.json()
+      assert {:ok, [1, "two", true]} == Zoi.parse(schema, [1, "two", true])
+    end
+
+    test "json with object value" do
+      schema = Zoi.json()
+
+      assert {:ok, %{"name" => "John", "age" => 30}} ==
+               Zoi.parse(schema, %{"name" => "John", "age" => 30})
+    end
+
+    test "json with deeply nested value" do
+      schema = Zoi.json()
+
+      value = %{
+        "data" => [
+          1,
+          %{"nested" => true, "items" => [1, 2, 3]}
+        ]
+      }
+
+      assert {:ok, ^value} = Zoi.parse(schema, value)
+    end
+
+    test "json with invalid value" do
+      schema = Zoi.json()
+      assert {:error, _} = Zoi.parse(schema, {:tuple, "value"})
+      assert {:error, _} = Zoi.parse(schema, ~T[12:34:56])
     end
   end
 

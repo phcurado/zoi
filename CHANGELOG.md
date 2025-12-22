@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - `Zoi.function/1` type for validating function values with optional arity constraint
 - `Zoi.struct/1` now accepts just a module to validate struct type without field validation
 - `Zoi.Describe.Encoder` protocol for generating human-readable type descriptions
+- `Zoi.json/1` type for validating any JSON-compatible value (string, number, boolean, null, array, or object with string keys)
+- `Zoi.map/2` now accepts `coerce: true` option to convert structs to maps via `Map.from_struct/1`, enabling validation of database structs for API output
 
 ### Changed
 

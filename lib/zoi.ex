@@ -1781,6 +1781,25 @@ defmodule Zoi do
   end
 
   @doc """
+  Defines a JSON type schema.
+
+  Type that is a union of all valid JSON types:
+
+      Zoi.union([
+        Zoi.null(),
+        Zoi.boolean(),
+        Zoi.number(),
+        Zoi.string(),
+        Zoi.array(Zoi.lazy(fn -> Zoi.json() end)),
+        Zoi.map(Zoi.string(), Zoi.lazy(fn -> Zoi.json() end))
+      ])
+
+  """
+  @doc group: "Complex Types"
+  @spec json(opts :: options()) :: schema()
+  defdelegate json(opts \\ []), to: Zoi.Types.JSON, as: :new
+
+  @doc """
   Defines a date type schema.
 
   This type is used to validate and parse date values. It will convert the input to a `Date` structure.

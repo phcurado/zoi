@@ -48,11 +48,12 @@ defmodule Zoi.Types.Map do
 
   defimpl Zoi.Type do
     def parse(%Zoi.Types.Map{fields: fields} = type, input, opts)
-        when is_list(fields) and is_map(input) do
+        when is_list(fields) and is_map(input) and not is_struct(input) do
       Zoi.Types.KeyValue.parse(type, input, opts)
     end
 
-    def parse(%Zoi.Types.Map{} = schema, input, _opts) when is_map(input) do
+    def parse(%Zoi.Types.Map{} = schema, input, _opts)
+        when is_map(input) and not is_struct(input) do
       Enum.reduce(input, {%{}, []}, fn {key, value}, {input, errors} ->
         with {:ok, key_parsed} <- Zoi.parse(schema.key_type, key),
              {:ok, value_parsed} <- Zoi.parse(schema.value_type, value) do
@@ -70,6 +71,16 @@ defmodule Zoi.Types.Map do
           {:error, errors, parsed}
         end
       end)
+    end
+
+    def parse(%Zoi.Types.Map{fields: fields, coerce: true} = type, input, opts)
+        when is_list(fields) and is_struct(input) do
+      parse(type, Map.from_struct(input), opts)
+    end
+
+    def parse(%Zoi.Types.Map{coerce: true} = schema, input, opts)
+        when is_struct(input) do
+      parse(schema, Map.from_struct(input), opts)
     end
 
     def parse(schema, _, _) do
