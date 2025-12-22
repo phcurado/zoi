@@ -6,7 +6,7 @@ The OpenAPI Specification define a standard interface for HTTP APIs. The 3.1 ver
 You can define a `Zoi` schema for a user resource:
 
 ```elixir
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   id: Zoi.integer() |> Zoi.min(1),
   name: Zoi.string() |> Zoi.min(1) |> Zoi.max(100),
   age: Zoi.optional(Zoi.integer() |> Zoi.min(0))
@@ -46,7 +46,7 @@ defmodule MyAppWeb.UserController do
   use MyAppWeb, :controller
   use Oaskit.Controller
 
-  @user_schema Zoi.object(%{
+  @user_schema Zoi.map(%{
     id: Zoi.integer() |> Zoi.min(1),
     name: Zoi.string() |> Zoi.min(1) |> Zoi.max(100),
     age: Zoi.optional(Zoi.integer() |> Zoi.min(0))

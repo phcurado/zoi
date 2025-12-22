@@ -35,7 +35,7 @@ defmodule Zoi.InspectTest do
       {Zoi.nullish(Zoi.string()),
        "#Zoi.union<required: false, schemas: [#Zoi.null<>, #Zoi.string<coerce: false>]>"},
       {Zoi.number(), "#Zoi.number<coerce: false>"},
-      {Zoi.object(%{name: Zoi.string()}),
+      {Zoi.map(%{name: Zoi.string()}),
        "#Zoi.map<coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>"},
       {Zoi.map(%{name: Zoi.string()}),
        "#Zoi.map<coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>"},

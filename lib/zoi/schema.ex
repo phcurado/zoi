@@ -12,7 +12,7 @@ defmodule Zoi.Schema do
   ## Examples
 
       # Enable coercion on all types
-      schema = Zoi.object(%{
+      schema = Zoi.map(%{
         name: Zoi.string(),
         age: Zoi.integer()
       })
@@ -23,7 +23,7 @@ defmodule Zoi.Schema do
       |> Zoi.Schema.traverse(&Zoi.nullish/1)
 
       # Conditional transformation based on field path
-      schema = Zoi.object(%{
+      schema = Zoi.map(%{
         password: Zoi.string(),
         email: Zoi.string()
       })

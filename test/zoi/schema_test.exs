@@ -4,7 +4,7 @@ defmodule Zoi.SchemaTest do
   describe "traverse/2" do
     test "enables coercion on nested fields" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string(),
           age: Zoi.integer(),
           active: Zoi.boolean()
@@ -21,12 +21,12 @@ defmodule Zoi.SchemaTest do
 
     test "applies transformation to deeply nested objects" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           user:
-            Zoi.object(%{
+            Zoi.map(%{
               name: Zoi.string(),
               address:
-                Zoi.object(%{
+                Zoi.map(%{
                   street: Zoi.string(),
                   zip: Zoi.integer()
                 })
@@ -49,7 +49,7 @@ defmodule Zoi.SchemaTest do
 
     test "applies transformation to arrays" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string()),
           counts: Zoi.array(Zoi.integer())
         })
@@ -66,8 +66,8 @@ defmodule Zoi.SchemaTest do
 
     test "applies transformation to nested arrays" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{name: Zoi.string()}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{name: Zoi.string()}))
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
 
@@ -80,7 +80,7 @@ defmodule Zoi.SchemaTest do
 
     test "applies transformation to unions" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           value: Zoi.union([Zoi.string(), Zoi.integer()])
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
@@ -94,7 +94,7 @@ defmodule Zoi.SchemaTest do
 
     test "applies transformation to intersections" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           value: Zoi.intersection([Zoi.string(), Zoi.string() |> Zoi.min(2)])
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
@@ -108,7 +108,7 @@ defmodule Zoi.SchemaTest do
 
     test "applies transformation to maps" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           metadata: Zoi.map(Zoi.string(), Zoi.integer())
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
@@ -122,7 +122,7 @@ defmodule Zoi.SchemaTest do
 
     test "applies transformation to tuples" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           pair: Zoi.tuple({Zoi.string(), Zoi.integer()})
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
@@ -136,7 +136,7 @@ defmodule Zoi.SchemaTest do
 
     test "applies transformation to keywords" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           opts: Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
@@ -162,7 +162,7 @@ defmodule Zoi.SchemaTest do
 
     test "applies transformation to default wrappers" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.default("unknown")
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
@@ -174,7 +174,7 @@ defmodule Zoi.SchemaTest do
 
     test "applies transformation to lazy types" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           friends: Zoi.array(Zoi.lazy(fn -> Zoi.string() end))
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
@@ -188,7 +188,7 @@ defmodule Zoi.SchemaTest do
 
     test "applies nullish conditionally using path" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string(),
           age: Zoi.integer()
         })
@@ -211,7 +211,7 @@ defmodule Zoi.SchemaTest do
 
     test "can chain multiple transformations" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string(),
           age: Zoi.integer()
         })
@@ -234,11 +234,11 @@ defmodule Zoi.SchemaTest do
 
     test "can conditionally apply transformation based on path" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           password: Zoi.string(),
           email: Zoi.string(),
           profile:
-            Zoi.object(%{
+            Zoi.map(%{
               password: Zoi.string(),
               bio: Zoi.string()
             })
@@ -268,7 +268,7 @@ defmodule Zoi.SchemaTest do
 
     test "make all fields nullable with coercion" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string(),
           age: Zoi.integer(),
           tags: Zoi.array(Zoi.string())
@@ -291,7 +291,7 @@ defmodule Zoi.SchemaTest do
 
     test "apply transformations conditionally based on path" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           password: Zoi.string(),
           email: Zoi.string(),
           age: Zoi.integer()
@@ -318,11 +318,11 @@ defmodule Zoi.SchemaTest do
 
     test "apply coercion everywhere like Form.prepare" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string(),
           age: Zoi.integer(),
           user:
-            Zoi.object(%{
+            Zoi.map(%{
               email: Zoi.string()
             })
         })

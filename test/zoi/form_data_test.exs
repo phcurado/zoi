@@ -6,7 +6,7 @@ defmodule Zoi.FormDataTest do
   describe "Phoenix.HTML.FormData implementation" do
     test "converts context to form with params and errors" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.min(3),
           email: Zoi.email()
         })
@@ -30,7 +30,7 @@ defmodule Zoi.FormDataTest do
 
     test "preserves params even when validation fails" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.min(3)
         })
         |> Zoi.Form.prepare()
@@ -48,7 +48,7 @@ defmodule Zoi.FormDataTest do
 
     test "returns validated data when valid" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.min(3),
           age: Zoi.integer()
         })
@@ -69,9 +69,9 @@ defmodule Zoi.FormDataTest do
   describe "nested forms for objects" do
     test "builds nested form for object field" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           profile:
-            Zoi.object(%{
+            Zoi.map(%{
               bio: Zoi.string() |> Zoi.max(100)
             })
         })
@@ -89,9 +89,9 @@ defmodule Zoi.FormDataTest do
 
     test "shows nested object errors" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           profile:
-            Zoi.object(%{
+            Zoi.map(%{
               bio: Zoi.string() |> Zoi.max(10)
             })
         })
@@ -111,9 +111,9 @@ defmodule Zoi.FormDataTest do
 
     test "nested object with array params" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           profile:
-            Zoi.object(%{
+            Zoi.map(%{
               bio: Zoi.string() |> Zoi.max(10)
             })
         })
@@ -133,10 +133,10 @@ defmodule Zoi.FormDataTest do
   describe "nested forms for arrays" do
     test "builds multiple forms for array of objects" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           addresses:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 street: Zoi.string(),
                 city: Zoi.string()
               })
@@ -170,7 +170,7 @@ defmodule Zoi.FormDataTest do
 
     test "handles empty arrays" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -186,10 +186,10 @@ defmodule Zoi.FormDataTest do
 
     test "shows errors for specific array items" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           addresses:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 street: Zoi.string() |> Zoi.min(5),
                 zip: Zoi.integer(coerce: true)
               })
@@ -225,10 +225,10 @@ defmodule Zoi.FormDataTest do
   describe "partial parsing with arrays" do
     test "preserves valid entries when siblings fail" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           items:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 name: Zoi.string() |> Zoi.min(2),
                 price: Zoi.integer(coerce: true)
               })
@@ -266,8 +266,8 @@ defmodule Zoi.FormDataTest do
   describe "form numeric key map format" do
     test "handles maps with numeric string keys" do
       schema =
-        Zoi.object(%{
-          tags: Zoi.array(Zoi.object(%{label: Zoi.string()}))
+        Zoi.map(%{
+          tags: Zoi.array(Zoi.map(%{label: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 
@@ -291,8 +291,8 @@ defmodule Zoi.FormDataTest do
 
     test "preserves correct order with numeric keys" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{value: Zoi.string()}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{value: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 
@@ -315,8 +315,8 @@ defmodule Zoi.FormDataTest do
 
     test "ignores Phoenix metadata keys like _persistent_id" do
       schema =
-        Zoi.object(%{
-          addresses: Zoi.array(Zoi.object(%{city: Zoi.string()}))
+        Zoi.map(%{
+          addresses: Zoi.array(Zoi.map(%{city: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 
@@ -339,8 +339,8 @@ defmodule Zoi.FormDataTest do
 
     test "handles single object map without numeric keys" do
       schema =
-        Zoi.object(%{
-          tags: Zoi.array(Zoi.object(%{name: Zoi.string()}))
+        Zoi.map(%{
+          tags: Zoi.array(Zoi.map(%{name: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 
@@ -365,7 +365,7 @@ defmodule Zoi.FormDataTest do
   describe "dynamic array manipulation" do
     test "adding items works by updating params" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -386,8 +386,8 @@ defmodule Zoi.FormDataTest do
 
     test "removing items works by updating params" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{name: Zoi.string()}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{name: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 
@@ -418,7 +418,7 @@ defmodule Zoi.FormDataTest do
   describe "form action modes" do
     test "errors are empty when action is :ignore" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.min(5)
         })
         |> Zoi.Form.prepare()
@@ -435,7 +435,7 @@ defmodule Zoi.FormDataTest do
 
     test "errors are shown when action is :validate" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           email: Zoi.email()
         })
         |> Zoi.Form.prepare()
@@ -453,8 +453,8 @@ defmodule Zoi.FormDataTest do
   describe "scope_nested edge cases" do
     test "handles non-map data and params" do
       schema =
-        Zoi.object(%{
-          user: Zoi.object(%{name: Zoi.string()})
+        Zoi.map(%{
+          user: Zoi.map(%{name: Zoi.string()})
         })
         |> Zoi.Form.prepare()
 
@@ -469,8 +469,8 @@ defmodule Zoi.FormDataTest do
 
     test "handles keyword list in data" do
       schema =
-        Zoi.object(%{
-          opts: Zoi.object(%{name: Zoi.string()})
+        Zoi.map(%{
+          opts: Zoi.map(%{name: Zoi.string()})
         })
         |> Zoi.Form.prepare()
 
@@ -487,8 +487,8 @@ defmodule Zoi.FormDataTest do
 
     test "handles atom keys in params" do
       schema =
-        Zoi.object(%{
-          user: Zoi.object(%{name: Zoi.string()})
+        Zoi.map(%{
+          user: Zoi.map(%{name: Zoi.string()})
         })
         |> Zoi.Form.prepare()
 
@@ -506,8 +506,8 @@ defmodule Zoi.FormDataTest do
 
     test "handles missing nested fields" do
       schema =
-        Zoi.object(%{
-          user: Zoi.object(%{name: Zoi.string()}) |> Zoi.optional()
+        Zoi.map(%{
+          user: Zoi.map(%{name: Zoi.string()}) |> Zoi.optional()
         })
         |> Zoi.Form.prepare()
 
@@ -523,7 +523,7 @@ defmodule Zoi.FormDataTest do
   describe "list_or_empty_maps edge cases" do
     test "handles non-list non-map values" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           items: Zoi.array(Zoi.string()) |> Zoi.optional()
         })
         |> Zoi.Form.prepare()
@@ -539,8 +539,8 @@ defmodule Zoi.FormDataTest do
 
     test "handles single map without numeric keys" do
       schema =
-        Zoi.object(%{
-          tags: Zoi.array(Zoi.object(%{label: Zoi.string()}))
+        Zoi.map(%{
+          tags: Zoi.array(Zoi.map(%{label: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 
@@ -564,7 +564,7 @@ defmodule Zoi.FormDataTest do
   describe "input_value variations" do
     test "retrieves value from params with string key" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string()
         })
         |> Zoi.Form.prepare()
@@ -578,7 +578,7 @@ defmodule Zoi.FormDataTest do
 
     test "retrieves value from parsed when not in params" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           age: Zoi.integer()
         })
         |> Zoi.Form.prepare()
@@ -594,7 +594,7 @@ defmodule Zoi.FormDataTest do
 
     test "retrieves value from input when not in params or parsed" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.min(10)
         })
         |> Zoi.Form.prepare()
@@ -611,7 +611,7 @@ defmodule Zoi.FormDataTest do
 
     test "returns nil for missing fields" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.optional()
         })
         |> Zoi.Form.prepare()
@@ -626,7 +626,7 @@ defmodule Zoi.FormDataTest do
   describe "form errors" do
     test "hides errors when action is :ignore" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.min(5),
           email: Zoi.email()
         })
@@ -641,7 +641,7 @@ defmodule Zoi.FormDataTest do
 
     test "shows top-level errors" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.min(3)
         })
         |> Zoi.Form.prepare()
@@ -655,7 +655,7 @@ defmodule Zoi.FormDataTest do
     test "handles base errors" do
       # This would require a schema that produces base-level errors
       # For now, just verify the error handling path exists
-      schema = Zoi.object(%{name: Zoi.string()}) |> Zoi.Form.prepare()
+      schema = Zoi.map(%{name: Zoi.string()}) |> Zoi.Form.prepare()
       ctx = Zoi.Form.parse(schema, %{"name" => "test"})
 
       form = FormData.to_form(ctx, as: :user)
@@ -666,7 +666,7 @@ defmodule Zoi.FormDataTest do
 
   describe "input_validations" do
     test "returns empty list" do
-      schema = Zoi.object(%{name: Zoi.string()}) |> Zoi.Form.prepare()
+      schema = Zoi.map(%{name: Zoi.string()}) |> Zoi.Form.prepare()
       ctx = Zoi.Form.parse(schema, %{"name" => "test"})
       form = FormData.to_form(ctx, as: :user)
 
@@ -678,7 +678,7 @@ defmodule Zoi.FormDataTest do
   describe "name override" do
     test "uses custom name with :as option" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -692,7 +692,7 @@ defmodule Zoi.FormDataTest do
     end
 
     test "handles nil name" do
-      schema = Zoi.object(%{name: Zoi.string()}) |> Zoi.Form.prepare()
+      schema = Zoi.map(%{name: Zoi.string()}) |> Zoi.Form.prepare()
       ctx = Zoi.Form.parse(schema, %{"name" => "test"})
 
       # Create form without :as
@@ -704,10 +704,10 @@ defmodule Zoi.FormDataTest do
   describe "complex nested structures" do
     test "handles nested objects within arrays" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           departments:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 name: Zoi.string(),
                 budget: Zoi.integer(coerce: true)
               })
@@ -742,11 +742,11 @@ defmodule Zoi.FormDataTest do
 
     test "handles multiple levels of nesting" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           user:
-            Zoi.object(%{
+            Zoi.map(%{
               profile:
-                Zoi.object(%{
+                Zoi.map(%{
                   age: Zoi.integer(coerce: true)
                 })
             })
@@ -776,7 +776,7 @@ defmodule Zoi.FormDataTest do
   describe "array field detection with Default wrapper" do
     test "detects array field wrapped in Default" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string()) |> Zoi.default([])
         })
         |> Zoi.Form.prepare()
@@ -792,7 +792,7 @@ defmodule Zoi.FormDataTest do
 
     test "detects nested Default wrappers around arrays" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           items: Zoi.array(Zoi.string()) |> Zoi.default([]) |> Zoi.default([])
         })
         |> Zoi.Form.prepare()
@@ -809,8 +809,8 @@ defmodule Zoi.FormDataTest do
   describe "map params with integer keys" do
     test "handles maps with integer keys in params" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{value: Zoi.string()}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{value: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 
@@ -833,7 +833,7 @@ defmodule Zoi.FormDataTest do
 
     test "handles mixed integer and string numeric keys" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -857,8 +857,8 @@ defmodule Zoi.FormDataTest do
   describe "base-level errors in nested forms" do
     test "shows base errors for nested object" do
       schema =
-        Zoi.object(%{
-          profile: Zoi.object(%{name: Zoi.string()})
+        Zoi.map(%{
+          profile: Zoi.map(%{name: Zoi.string()})
         })
         |> Zoi.Form.prepare()
 
@@ -875,8 +875,8 @@ defmodule Zoi.FormDataTest do
 
     test "shows base errors for array items" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{name: Zoi.string()}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{name: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 
@@ -896,8 +896,8 @@ defmodule Zoi.FormDataTest do
   describe "ensure_map edge cases" do
     test "converts keyword list to map" do
       schema =
-        Zoi.object(%{
-          opts: Zoi.object(%{name: Zoi.string()})
+        Zoi.map(%{
+          opts: Zoi.map(%{name: Zoi.string()})
         })
         |> Zoi.Form.prepare()
 
@@ -916,8 +916,8 @@ defmodule Zoi.FormDataTest do
 
     test "uses fallback for non-map non-keyword values" do
       schema =
-        Zoi.object(%{
-          user: Zoi.object(%{name: Zoi.string()})
+        Zoi.map(%{
+          user: Zoi.map(%{name: Zoi.string()})
         })
         |> Zoi.Form.prepare()
 
@@ -936,7 +936,7 @@ defmodule Zoi.FormDataTest do
 
   describe "form id generation" do
     test "generates id from name by default" do
-      schema = Zoi.object(%{name: Zoi.string()}) |> Zoi.Form.prepare()
+      schema = Zoi.map(%{name: Zoi.string()}) |> Zoi.Form.prepare()
       ctx = Zoi.Form.parse(schema, %{"name" => "test"})
 
       form = FormData.to_form(ctx, as: :user)
@@ -944,7 +944,7 @@ defmodule Zoi.FormDataTest do
     end
 
     test "accepts custom id" do
-      schema = Zoi.object(%{name: Zoi.string()}) |> Zoi.Form.prepare()
+      schema = Zoi.map(%{name: Zoi.string()}) |> Zoi.Form.prepare()
       ctx = Zoi.Form.parse(schema, %{"name" => "test"})
 
       form = FormData.to_form(ctx, as: :user, id: "custom_id")
@@ -952,7 +952,7 @@ defmodule Zoi.FormDataTest do
     end
 
     test "raises on non-binary id" do
-      schema = Zoi.object(%{name: Zoi.string()}) |> Zoi.Form.prepare()
+      schema = Zoi.map(%{name: Zoi.string()}) |> Zoi.Form.prepare()
       ctx = Zoi.Form.parse(schema, %{"name" => "test"})
 
       assert_raise ArgumentError, ~r/:id option in form_for must be a binary/, fn ->
@@ -961,7 +961,7 @@ defmodule Zoi.FormDataTest do
     end
 
     test "uses name as fallback when id is nil" do
-      schema = Zoi.object(%{name: Zoi.string()}) |> Zoi.Form.prepare()
+      schema = Zoi.map(%{name: Zoi.string()}) |> Zoi.Form.prepare()
       ctx = Zoi.Form.parse(schema, %{"name" => "test"})
 
       # When id is nil, it falls back to name
@@ -970,7 +970,7 @@ defmodule Zoi.FormDataTest do
     end
 
     test "allows nil id when name is also nil" do
-      schema = Zoi.object(%{name: Zoi.string()}) |> Zoi.Form.prepare()
+      schema = Zoi.map(%{name: Zoi.string()}) |> Zoi.Form.prepare()
       ctx = Zoi.Form.parse(schema, %{"name" => "test"})
 
       # Both id and name are nil
@@ -982,7 +982,7 @@ defmodule Zoi.FormDataTest do
   describe "nested form without parent name" do
     test "uses field name directly when parent has no name" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -1003,10 +1003,10 @@ defmodule Zoi.FormDataTest do
   describe "error filtering" do
     test "filters errors by nested path correctly" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           users:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 name: Zoi.string() |> Zoi.min(3),
                 email: Zoi.email()
               })
@@ -1036,8 +1036,8 @@ defmodule Zoi.FormDataTest do
 
     test "filters out errors from other array indices" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{value: Zoi.integer(coerce: true)}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{value: Zoi.integer(coerce: true)}))
         })
         |> Zoi.Form.prepare()
 
@@ -1060,7 +1060,7 @@ defmodule Zoi.FormDataTest do
 
     test "handles errors with non-atom/non-string keys in path" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           items: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -1078,7 +1078,7 @@ defmodule Zoi.FormDataTest do
   describe "data and params mismatch in nested forms" do
     test "handles data length greater than params length" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -1096,7 +1096,7 @@ defmodule Zoi.FormDataTest do
 
     test "handles params length greater than data length" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -1117,7 +1117,7 @@ defmodule Zoi.FormDataTest do
   describe "input_value with ctx.input field" do
     test "retrieves from ctx.input when not in params or parsed" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.min(10)
         })
         |> Zoi.Form.prepare()
@@ -1137,7 +1137,7 @@ defmodule Zoi.FormDataTest do
   describe "real-world form scenarios" do
     test "handles form submission with extra fields not in schema" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.min(3),
           email: Zoi.email()
         })
@@ -1162,22 +1162,22 @@ defmodule Zoi.FormDataTest do
 
     test "handles complex e-commerce order form with nested validation errors" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           customer:
-            Zoi.object(%{
+            Zoi.map(%{
               name: Zoi.string() |> Zoi.min(3),
               email: Zoi.email(),
               phone: Zoi.string() |> Zoi.min(10)
             }),
           shipping_address:
-            Zoi.object(%{
+            Zoi.map(%{
               street: Zoi.string() |> Zoi.min(5),
               city: Zoi.string() |> Zoi.min(2),
               zip: Zoi.string() |> Zoi.length(5)
             }),
           items:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 product_id: Zoi.string(),
                 quantity: Zoi.integer() |> Zoi.min(1),
                 price: Zoi.float() |> Zoi.min(0.01)
@@ -1240,7 +1240,7 @@ defmodule Zoi.FormDataTest do
 
     test "handles partial form submission with optional fields" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.min(3),
           email: Zoi.email(),
           phone: Zoi.string() |> Zoi.optional(),
@@ -1269,7 +1269,7 @@ defmodule Zoi.FormDataTest do
 
     test "handles blog post form with tags and categories" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           title: Zoi.string() |> Zoi.min(5) |> Zoi.max(100),
           content: Zoi.string() |> Zoi.min(50),
           tags: Zoi.array(Zoi.string() |> Zoi.min(2)),
@@ -1302,7 +1302,7 @@ defmodule Zoi.FormDataTest do
     test "handles user profile form with progressive disclosure" do
       # Simulates a form where sections are shown/hidden based on user input
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           account_type: Zoi.enum(["personal", "business"]),
           name: Zoi.string() |> Zoi.min(3),
           # Business-only fields (optional if personal)
@@ -1311,7 +1311,7 @@ defmodule Zoi.FormDataTest do
           # Contact info
           addresses:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 type: Zoi.enum(["home", "work", "billing"]),
                 street: Zoi.string(),
                 city: Zoi.string(),
@@ -1364,10 +1364,10 @@ defmodule Zoi.FormDataTest do
   describe "action propagation to nested forms" do
     test "propagates action to nested forms" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           addresses:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 street: Zoi.string() |> Zoi.min(5)
               })
             )
@@ -1390,8 +1390,8 @@ defmodule Zoi.FormDataTest do
 
     test "propagates :ignore action to nested forms but errors still present" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{name: Zoi.string() |> Zoi.min(5)}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{name: Zoi.string() |> Zoi.min(5)}))
         })
         |> Zoi.Form.prepare()
 
@@ -1414,7 +1414,7 @@ defmodule Zoi.FormDataTest do
   describe "edge cases in list_or_empty_maps with params" do
     test "handles params as empty map for array field" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -1432,8 +1432,8 @@ defmodule Zoi.FormDataTest do
 
     test "handles params with non-list value for non-array field" do
       schema =
-        Zoi.object(%{
-          user: Zoi.object(%{name: Zoi.string()})
+        Zoi.map(%{
+          user: Zoi.map(%{name: Zoi.string()})
         })
         |> Zoi.Form.prepare()
 
@@ -1449,12 +1449,12 @@ defmodule Zoi.FormDataTest do
   describe "nested object errors with deeper paths" do
     test "handles deeply nested validation errors" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           user:
-            Zoi.object(%{
+            Zoi.map(%{
               name: Zoi.string() |> Zoi.min(3),
               profile:
-                Zoi.object(%{
+                Zoi.map(%{
                   age: Zoi.integer(coerce: true)
                 })
             })
@@ -1487,7 +1487,7 @@ defmodule Zoi.FormDataTest do
   describe "params with both string and atom keys" do
     test "prefers string key in params over atom key" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string()
         })
         |> Zoi.Form.prepare()
@@ -1504,7 +1504,7 @@ defmodule Zoi.FormDataTest do
 
     test "falls back to input with atom keys when field not in params or parsed" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string()
         })
         |> Zoi.Form.prepare()
@@ -1529,7 +1529,7 @@ defmodule Zoi.FormDataTest do
   describe "non-standard field types" do
     test "handles field that is not in schema" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string()
         })
         |> Zoi.Form.prepare()
@@ -1548,12 +1548,12 @@ defmodule Zoi.FormDataTest do
   describe "error paths with numeric indices" do
     test "handles deeply nested array structures with errors" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           departments:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 name: Zoi.string(),
-                teams: Zoi.array(Zoi.object(%{name: Zoi.string() |> Zoi.min(3)}))
+                teams: Zoi.array(Zoi.map(%{name: Zoi.string() |> Zoi.min(3)}))
               })
             )
         })
@@ -1589,7 +1589,7 @@ defmodule Zoi.FormDataTest do
   describe "array_field_inner? with non-array Default types" do
     test "detects non-array fields wrapped in Default" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string() |> Zoi.default(""),
           tags: Zoi.array(Zoi.string()) |> Zoi.default([])
         })
@@ -1611,8 +1611,8 @@ defmodule Zoi.FormDataTest do
   describe "list_or_empty_maps with non-list non-empty maps" do
     test "wraps single map in list for nested forms" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{name: Zoi.string()}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{name: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 

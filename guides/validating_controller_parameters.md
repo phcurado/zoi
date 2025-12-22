@@ -40,7 +40,7 @@ defmodule MyAppWeb.UserController do
 
   alias MyApp.Users
 
-  @user_params Zoi.object(%{
+  @user_params Zoi.map(%{
     name: Zoi.string(),
     email: Zoi.email() |> Zoi.min(4) |> Zoi.max(100),
     age: Zoi.integer(coerce: true) |> Zoi.min(18) |> Zoi.max(100)
@@ -88,7 +88,7 @@ possible validations:
 - Validate sort against allowed fields
 
 ```elixir
-@query_schema Zoi.object(%{
+@query_schema Zoi.map(%{
   page: Zoi.default(Zoi.integer(coerce: true) |> Zoi.min(1), 1),
   limit: Zoi.default(Zoi.integer(coerce: true) |> Zoi.min(1) |> Zoi.max(100), 10),
   sort: Zoi.optional(Zoi.string() |> Zoi.enum(["published_at", "-published_at"]))

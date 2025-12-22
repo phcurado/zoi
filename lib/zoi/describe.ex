@@ -7,7 +7,7 @@ defmodule Zoi.Describe do
 
   ## Usage
 
-  To generate descriptions, you just need to call `Zoi.describe/1` for the `Zoi.keyword/2` or `Zoi.object/2` schema.
+  To generate descriptions, you just need to call `Zoi.describe/1` for the `Zoi.keyword/2` or `Zoi.map/2` schema.
 
       defmodule MyApp.Config do
         @schema Zoi.keyword([
@@ -73,10 +73,10 @@ defmodule Zoi.Describe do
         # ...
       end
 
-  The same pattern will work for `Zoi.object/2` and `Zoi.struct/3` schemas as well, since you may also use them to define a structured map input.
+  The same pattern will work for `Zoi.map/2` and `Zoi.struct/3` schemas as well, since you may also use them to define a structured map input.
 
-      schema = Zoi.object(%{
-        name: Zoi.email(description: "The email address."), 
+      schema = Zoi.map(%{
+        name: Zoi.email(description: "The email address."),
         role: Zoi.enum([admin: "Admin", user: "User"], description: "The role of the user." )
       })
       Zoi.describe(schema)
