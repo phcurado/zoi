@@ -34,7 +34,7 @@ defmodule Zoi.ContextTest do
     end
 
     test "add_path/2" do
-      schema = Zoi.object(%{name: Zoi.string()})
+      schema = Zoi.map(%{name: Zoi.string()})
       context = Context.new(schema, "test input")
       path = [:name]
       updated_context = Context.add_path(context, path)

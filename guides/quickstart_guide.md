@@ -26,7 +26,7 @@ schema = Zoi.integer() |> Zoi.min(1) |> Zoi.max(100)
 # Email schema
 schema = Zoi.email()
 # Object schema with nested fields
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   name: Zoi.string() |> Zoi.regex(~r/^[a-zA-Z ]+$/),
   age: Zoi.integer() |> Zoi.min(0),
   email: Zoi.email()
@@ -40,7 +40,7 @@ schema = Zoi.array(Zoi.integer() |> Zoi.min(0)) |> Zoi.min(2)
 You can validate data against your defined schemas using the `Zoi.parse/2` function:
 
 ```elixir
-iex> schema = Zoi.object(%{
+iex> schema = Zoi.map(%{
 ...>   name: Zoi.string() |> Zoi.regex(~r/^[a-zA-Z ]+$/),
 ...>   age: Zoi.integer() |> Zoi.min(0),
 ...>   email: Zoi.email()

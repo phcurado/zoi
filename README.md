@@ -61,7 +61,7 @@ You can also validate structured maps:
 
 ```elixir
 # Validate a structured data in a map
-iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
+iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
 iex> Zoi.parse(schema, %{name: "John", age: 30, email: "john@email.com"})
 {:ok, %{name: "John", age: 30, email: "john@email.com"}}
 iex> {:error, errors} = Zoi.parse(schema, %{email: "invalid-email"})
@@ -126,11 +126,11 @@ This will generate the following type specification:
 @type t :: binary()
 ```
 
-This also applies to complex types, such as `Zoi.object/2`:
+This also applies to complex types, such as `Zoi.map/2`:
 
 ```elixir
 defmodule MyApp.User do
-  @schema Zoi.object(%{
+  @schema Zoi.map(%{
     name: Zoi.string() |> Zoi.min(2) |> Zoi.max(100),
     age: Zoi.integer() |> Zoi.optional(),
     email: Zoi.email()
@@ -154,7 +154,7 @@ Which will generate:
 When validation fails, `Zoi` returns a list of errors, each containing a message and the path to the invalid data. Even when errors are nested, `Zoi` will return all errors in a flattened list.
 
 ```elixir
-iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
 iex> Zoi.parse(schema, %{name: 123, age: "thirty"})
 {:error,
  [
@@ -177,7 +177,7 @@ You can view the error in a map format using the `Zoi.treefy_errors/1` function:
 
 ```elixir
 
-iex> schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()})
+iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
 iex> {:error, errors} = Zoi.parse(schema, %{name: 123, age: "thirty"})
 iex> Zoi.treefy_errors(errors)
 %{
@@ -208,7 +208,7 @@ iex> Zoi.parse(schema, :hi)
 
 ```elixir
 # Define schema inline
-@user_schema Zoi.object(%{
+@user_schema Zoi.map(%{
   name: Zoi.string() |> Zoi.min(3),
   email: Zoi.email()
 }) |> Zoi.Form.prepare()
@@ -258,7 +258,7 @@ You can use this feature to create self-documenting schemas, with example and te
 
 ```elixir
 defmodule MyApp.UserSchema do
-  @schema Zoi.object(
+  @schema Zoi.map(
             %{
             name: Zoi.string(description: "The user first name") |> Zoi.min(2) |> Zoi.max(100),
             age: Zoi.integer(description: "The user age") |> Zoi.optional()

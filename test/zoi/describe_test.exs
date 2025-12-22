@@ -31,11 +31,11 @@ defmodule Zoi.DescribeTest do
 
     test "simple docs for a object schema" do
       schema =
-        Zoi.object(
+        Zoi.map(%{
           name: Zoi.string(description: "The name of the person."),
           age: Zoi.integer(description: "The age of the person.") |> Zoi.default(0),
           email: Zoi.string(description: "The email address.") |> Zoi.optional()
-        )
+        })
 
       formatted_description = """
       * `:name` (`t:String.t/0`) - Required. The name of the person.
@@ -73,16 +73,16 @@ defmodule Zoi.DescribeTest do
 
     test "describe for nested schemas" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           user:
-            Zoi.object(
+            Zoi.map(
               %{
                 id: Zoi.integer(description: "The user ID."),
                 profile:
-                  Zoi.object(
+                  Zoi.map(%{
                     bio: Zoi.string(description: "The user bio.") |> Zoi.optional(),
                     website: Zoi.string(description: "The user website.") |> Zoi.optional()
-                  )
+                  })
               },
               description: "The user information."
             )
@@ -118,7 +118,7 @@ defmodule Zoi.DescribeTest do
           naivedatetime: Zoi.naive_datetime(),
           null: Zoi.null(),
           number: Zoi.number(),
-          object: Zoi.object(name: Zoi.string()),
+          object: Zoi.map(%{name: Zoi.string()}),
           string: Zoi.string(),
           stringboolean: Zoi.string_boolean(),
           struct: Zoi.struct(SomeStruct, %{name: Zoi.string()}),

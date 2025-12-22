@@ -40,7 +40,7 @@ defmodule Zoi.JSONSchemaTest do
 
     test "enconding object" do
       schema =
-        Zoi.object(%{name: Zoi.string(), age: Zoi.integer(), valid: Zoi.optional(Zoi.boolean())})
+        Zoi.map(%{name: Zoi.string(), age: Zoi.integer(), valid: Zoi.optional(Zoi.boolean())})
 
       assert %{
                "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -60,7 +60,7 @@ defmodule Zoi.JSONSchemaTest do
 
     test "encoding strict object sets additionalProperties to false" do
       schema =
-        Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}, strict: true)
+        Zoi.map(%{name: Zoi.string(), age: Zoi.integer()}, strict: true)
 
       assert %{
                "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -76,17 +76,17 @@ defmodule Zoi.JSONSchemaTest do
 
     test "encoding nested object" do
       schema =
-        Zoi.object(%{
-          user: Zoi.object(%{id: Zoi.integer(), email: Zoi.string()}),
+        Zoi.map(%{
+          user: Zoi.map(%{id: Zoi.integer(), email: Zoi.string()}),
           address:
-            Zoi.object(%{
+            Zoi.map(%{
               street: Zoi.string(),
               city: Zoi.string(),
               zip: Zoi.string()
             }),
           tags:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 name: Zoi.string() |> Zoi.trim(),
                 value: Zoi.string()
               })

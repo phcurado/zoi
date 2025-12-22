@@ -534,14 +534,14 @@ defmodule ZoiTest do
     end
 
     test "optional with default value" do
-      schema = Zoi.object(%{name: Zoi.optional(Zoi.default(Zoi.string(), "no name"))})
+      schema = Zoi.map(%{name: Zoi.optional(Zoi.default(Zoi.string(), "no name"))})
       assert {:ok, %{}} == Zoi.parse(schema, %{})
 
       assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{name: nil})
     end
 
     test "default with optional value" do
-      schema = Zoi.object(%{name: Zoi.default(Zoi.optional(Zoi.string()), "no name")})
+      schema = Zoi.map(%{name: Zoi.default(Zoi.optional(Zoi.string()), "no name")})
 
       assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{})
     end
@@ -586,7 +586,7 @@ defmodule ZoiTest do
     end
 
     test "nullish with missing value on object" do
-      schema = Zoi.object(%{name: Zoi.nullish(Zoi.string())})
+      schema = Zoi.map(%{name: Zoi.nullish(Zoi.string())})
       assert {:ok, %{}} == Zoi.parse(schema, %{})
       assert {:ok, %{name: nil}} == Zoi.parse(schema, %{name: nil})
       assert {:ok, %{name: "hello"}} == Zoi.parse(schema, %{name: "hello"})
@@ -624,7 +624,7 @@ defmodule ZoiTest do
 
     test "optional with default value" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name:
             Zoi.optional(
               Zoi.default(
@@ -922,7 +922,7 @@ defmodule ZoiTest do
 
   # Helper functions for recursive schema tests
   defp user_schema do
-    Zoi.object(%{
+    Zoi.map(%{
       name: Zoi.string(),
       email: Zoi.string(),
       friends: Zoi.array(Zoi.lazy(fn -> user_schema() end)) |> Zoi.optional()
@@ -930,7 +930,7 @@ defmodule ZoiTest do
   end
 
   defp user_schema_with_validation do
-    Zoi.object(%{
+    Zoi.map(%{
       name: Zoi.string(),
       email: Zoi.email(),
       friends: Zoi.array(Zoi.lazy(fn -> user_schema_with_validation() end)) |> Zoi.optional()
@@ -1396,7 +1396,7 @@ defmodule ZoiTest do
     test "keyword value schema keeps previously parsed entries when another fails" do
       schema =
         Zoi.keyword(
-          Zoi.object(%{
+          Zoi.map(%{
             label: Zoi.string(),
             priority: Zoi.integer(coerce: true)
           })
@@ -1553,8 +1553,8 @@ defmodule ZoiTest do
 
   describe "extend/3" do
     test "extend with correct value" do
-      schema1 = Zoi.object(%{name: Zoi.string()})
-      schema2 = Zoi.object(%{age: Zoi.integer()})
+      schema1 = Zoi.map(%{name: Zoi.string()})
+      schema2 = Zoi.map(%{age: Zoi.integer()})
       schema = Zoi.extend(schema1, schema2)
 
       assert {:ok, %{name: "John", age: 30}} ==
@@ -1565,8 +1565,8 @@ defmodule ZoiTest do
     end
 
     test "extend with incorrect value" do
-      schema1 = Zoi.object(%{name: Zoi.string()})
-      schema2 = Zoi.object(%{age: Zoi.integer()})
+      schema1 = Zoi.map(%{name: Zoi.string()})
+      schema2 = Zoi.map(%{age: Zoi.integer()})
       schema = Zoi.extend(schema1, schema2)
 
       assert {:error, [%Zoi.Error{} = error]} =
@@ -1581,7 +1581,7 @@ defmodule ZoiTest do
     end
 
     test "extend with non-object schema" do
-      schema1 = Zoi.object(%{name: Zoi.string()})
+      schema1 = Zoi.map(%{name: Zoi.string()})
       schema2 = Zoi.string()
 
       assert_raise ArgumentError, "must be an object or keyword", fn ->
@@ -1590,7 +1590,7 @@ defmodule ZoiTest do
     end
 
     test "extend object with plain map" do
-      schema1 = Zoi.object(%{name: Zoi.string()})
+      schema1 = Zoi.map(%{name: Zoi.string()})
       schema2 = %{age: Zoi.integer()}
       schema = Zoi.extend(schema1, schema2)
 
@@ -3387,12 +3387,12 @@ defmodule ZoiTest do
 
   describe "to_struct/2" do
     test "valid struct conversion" do
-      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
       assert {:ok, %User{name: "Alice", age: 30}} == Zoi.parse(schema, %{name: "Alice", age: 30})
     end
 
     test "invalid struct conversion" do
-      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
 
       assert {:error, [%Zoi.Error{} = error]} =
                Zoi.parse(schema, %{name: "Alice", age: "not an integer"})
@@ -3401,7 +3401,7 @@ defmodule ZoiTest do
     end
 
     test "struct conversion with missing fields" do
-      schema = Zoi.object(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()}) |> Zoi.to_struct(User)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{name: "Alice"})
       assert error.code == :required
       assert Exception.message(error) == "is required"
@@ -3591,12 +3591,12 @@ defmodule ZoiTest do
 
     test "object with deeply nested object" do
       schema =
-        Zoi.object(
+        Zoi.map(
           %{
             user:
-              Zoi.object(%{
+              Zoi.map(%{
                 profile:
-                  Zoi.object(%{
+                  Zoi.map(%{
                     email: Zoi.email() |> Zoi.min(4),
                     age: Zoi.integer(),
                     numbers: Zoi.array(Zoi.integer())
@@ -3737,7 +3737,7 @@ defmodule ZoiTest do
         Zoi.keyword([name: Zoi.string(), age: Zoi.integer()],
           example: [name: "example", age: 123]
         ),
-        Zoi.object(%{name: Zoi.string(), age: Zoi.integer()},
+        Zoi.map(%{name: Zoi.string(), age: Zoi.integer()},
           example: %{name: "example", age: 123}
         ),
         Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()},
@@ -3759,7 +3759,7 @@ defmodule ZoiTest do
         Zoi.integer(),
         Zoi.float(),
         Zoi.boolean(),
-        Zoi.object(%{}),
+        Zoi.map(%{}),
         Zoi.array(Zoi.string())
       ]
 

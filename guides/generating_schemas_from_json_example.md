@@ -82,7 +82,7 @@ defmodule ZoiJsonCodegen do
          {k, build_schema_ast(vv)}
        end)}
 
-    quote(do: Zoi.object(unquote(map_ast)))
+    quote(do: Zoi.map(unquote(map_ast)))
   end
 
   defp build_schema_ast(v) when is_list(v) do
@@ -119,15 +119,15 @@ defmodule MyApp.ExternalApiResponse do
   @moduledoc false
 
   def schema() do
-    Zoi.object(%{
+    Zoi.map(%{
       "data" =>
-        Zoi.object(%{
+        Zoi.map(%{
           "description" => Zoi.string(),
           "end_date" => Zoi.string(),
           "id" => Zoi.string(),
           "link" => Zoi.string(),
           "meta" =>
-            Zoi.object(%{
+            Zoi.map(%{
               "id" => Zoi.integer(),
               "name" => Zoi.string(),
               "slug" => Zoi.string(),
@@ -140,7 +140,7 @@ defmodule MyApp.ExternalApiResponse do
           "winner_count" => Zoi.integer()
         }),
       "status" =>
-        Zoi.object(%{
+        Zoi.map(%{
           "error_code" => Zoi.integer(),
           "error_message" => Zoi.string(),
           "timestamp" => Zoi.string()

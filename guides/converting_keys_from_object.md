@@ -22,11 +22,11 @@ defmodule MyApp.User do
   @moduledoc false
 
   def schema() do
-    Zoi.object(%{
+    Zoi.map(%{
       "firstName" => Zoi.string(),
       "lastName" => Zoi.string(),
       "address" =>
-        Zoi.object(%{
+        Zoi.map(%{
           "streetAddress" => Zoi.string(),
           "city" => Zoi.string()
         })
@@ -59,7 +59,7 @@ defmodule MyApp.User do
   @moduledoc false
 
   def schema() do
-    Zoi.object(%{
+    Zoi.map(%{
       "@name" => Zoi.string(),
       "__last_name__" => Zoi.string()
     })

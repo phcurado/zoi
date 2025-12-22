@@ -8,7 +8,7 @@ defmodule Zoi.FormTest do
   describe "Zoi.Form.prepare/1" do
     test "enables coercion on object" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           age: Zoi.integer()
         })
         |> Zoi.Form.prepare()
@@ -19,8 +19,8 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on nested objects" do
       schema =
-        Zoi.object(%{
-          user: Zoi.object(%{age: Zoi.integer()})
+        Zoi.map(%{
+          user: Zoi.map(%{age: Zoi.integer()})
         })
         |> Zoi.Form.prepare()
 
@@ -30,7 +30,7 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on arrays" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.integer())
         })
         |> Zoi.Form.prepare()
@@ -41,8 +41,8 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on nested arrays" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{name: Zoi.string()}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{name: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 
@@ -53,7 +53,7 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on keyword fields" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           opts: Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
         })
         |> Zoi.Form.prepare()
@@ -64,7 +64,7 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on keyword with schema value" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           opts: Zoi.keyword(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -77,7 +77,7 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on maps" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           data: Zoi.map(Zoi.string(), Zoi.integer())
         })
         |> Zoi.Form.prepare()
@@ -90,7 +90,7 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on tuples" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           coords: Zoi.tuple({Zoi.float(), Zoi.float()})
         })
         |> Zoi.Form.prepare()
@@ -104,7 +104,7 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on unions" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           value: Zoi.union([Zoi.string(), Zoi.integer()])
         })
         |> Zoi.Form.prepare()
@@ -116,9 +116,8 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on intersections" do
       schema =
-        Zoi.object(%{
-          value:
-            Zoi.intersection([Zoi.object(%{a: Zoi.string()}), Zoi.object(%{b: Zoi.string()})])
+        Zoi.map(%{
+          value: Zoi.intersection([Zoi.map(%{a: Zoi.string()}), Zoi.map(%{b: Zoi.string()})])
         })
         |> Zoi.Form.prepare()
 
@@ -130,7 +129,7 @@ defmodule Zoi.FormTest do
     test "enables coercion on struct types" do
       schema =
         Zoi.struct(TestUser, %{
-          user: Zoi.object(%{name: Zoi.string()})
+          user: Zoi.map(%{name: Zoi.string()})
         })
         |> Zoi.Form.prepare()
 
@@ -140,7 +139,7 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on nested struct types" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           account:
             Zoi.struct(TestUser, %{
               name: Zoi.string()
@@ -154,7 +153,7 @@ defmodule Zoi.FormTest do
 
     test "enables coercion on default wrapped types" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           age: Zoi.integer() |> Zoi.default(0)
         })
         |> Zoi.Form.prepare()
@@ -201,7 +200,7 @@ defmodule Zoi.FormTest do
   describe "parse/2" do
     test "normalizes single-level array from map to list" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -221,7 +220,7 @@ defmodule Zoi.FormTest do
 
     test "normalizes nested arrays" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           matrix: Zoi.array(Zoi.array(Zoi.integer()))
         })
         |> Zoi.Form.prepare()
@@ -247,9 +246,9 @@ defmodule Zoi.FormTest do
 
     test "normalizes arrays within objects" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           user:
-            Zoi.object(%{
+            Zoi.map(%{
               tags: Zoi.array(Zoi.string())
             })
         })
@@ -268,10 +267,10 @@ defmodule Zoi.FormTest do
 
     test "normalizes arrays of objects with arrays" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           users:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 tags: Zoi.array(Zoi.string())
               })
             )
@@ -295,7 +294,7 @@ defmodule Zoi.FormTest do
 
     test "handles empty map as empty list" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -308,7 +307,7 @@ defmodule Zoi.FormTest do
 
     test "handles already-normalized lists" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -321,8 +320,8 @@ defmodule Zoi.FormTest do
 
     test "handles single map without numeric keys as single-item list" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{name: Zoi.string()}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{name: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 
@@ -340,8 +339,8 @@ defmodule Zoi.FormTest do
 
     test "preserves non-array map fields" do
       schema =
-        Zoi.object(%{
-          user: Zoi.object(%{name: Zoi.string()}),
+        Zoi.map(%{
+          user: Zoi.map(%{name: Zoi.string()}),
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -359,7 +358,7 @@ defmodule Zoi.FormTest do
 
     test "handles nil values" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string()) |> Zoi.optional()
         })
         |> Zoi.Form.prepare()
@@ -372,7 +371,7 @@ defmodule Zoi.FormTest do
 
     test "handles missing fields" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string()) |> Zoi.optional()
         })
         |> Zoi.Form.prepare()
@@ -385,7 +384,7 @@ defmodule Zoi.FormTest do
 
     test "normalizes arrays with default wrapper" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string()) |> Zoi.default([])
         })
         |> Zoi.Form.prepare()
@@ -401,7 +400,7 @@ defmodule Zoi.FormTest do
 
     test "sorts numeric keys correctly" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           items: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -423,7 +422,7 @@ defmodule Zoi.FormTest do
 
     test "ignores non-numeric keys when numeric keys present" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           items: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -444,7 +443,7 @@ defmodule Zoi.FormTest do
 
     test "handles integer keys" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           items: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -463,7 +462,7 @@ defmodule Zoi.FormTest do
 
     test "handles non-map input gracefully" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           tags: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -475,7 +474,7 @@ defmodule Zoi.FormTest do
 
     test "handles mixed values in map_to_list" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           items: Zoi.array(Zoi.string())
         })
         |> Zoi.Form.prepare()
@@ -495,13 +494,13 @@ defmodule Zoi.FormTest do
 
     test "normalizes deeply nested structure" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           level1:
             Zoi.array(
-              Zoi.object(%{
+              Zoi.map(%{
                 level2:
                   Zoi.array(
-                    Zoi.object(%{
+                    Zoi.map(%{
                       level3: Zoi.array(Zoi.string())
                     })
                   )
@@ -535,8 +534,8 @@ defmodule Zoi.FormTest do
 
     test "handles mixed object and keyword schemas" do
       schema =
-        Zoi.object(%{
-          items: Zoi.array(Zoi.object(%{name: Zoi.string()}))
+        Zoi.map(%{
+          items: Zoi.array(Zoi.map(%{name: Zoi.string()}))
         })
         |> Zoi.Form.prepare()
 

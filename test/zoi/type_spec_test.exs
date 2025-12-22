@@ -78,7 +78,7 @@ defmodule Zoi.TypeSpecTest do
 
     test "object typespec" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           name: Zoi.string(),
           age: Zoi.nullish(Zoi.integer()),
           address: Zoi.optional(Zoi.string())
@@ -93,13 +93,13 @@ defmodule Zoi.TypeSpecTest do
                  }
                )
 
-      schema = Zoi.object(%{})
+      schema = Zoi.map(%{})
       assert Zoi.type_spec(schema) == quote(do: %{})
     end
 
     test "object with string keys typespec should return generic map" do
       schema =
-        Zoi.object(%{
+        Zoi.map(%{
           "name" => Zoi.string(),
           "age" => Zoi.integer()
         })
@@ -136,8 +136,8 @@ defmodule Zoi.TypeSpecTest do
     end
 
     test "extend typespec" do
-      schema_1 = Zoi.object(%{age: Zoi.integer()})
-      schema_2 = Zoi.object(%{name: Zoi.string()})
+      schema_1 = Zoi.map(%{age: Zoi.integer()})
+      schema_2 = Zoi.map(%{name: Zoi.string()})
 
       schema = Zoi.extend(schema_1, schema_2)
 

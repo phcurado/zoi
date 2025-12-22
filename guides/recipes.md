@@ -1,6 +1,6 @@
 # Recipes
 
-- [Using `Zoi.object/2` with string or atom keys](#using-zoijobject2-with-string-or-atom-keys)
+- [Using `Zoi.map/2` with string or atom keys](#using-zoijobject2-with-string-or-atom-keys)
 - [Applying coercion globally in the schema](#applying-coercion-globally-in-the-schema)
 - [Applying nullable or nullish or optional globally in the schema](#applying-nullable-or-nullish-or-optional-globally-in-the-schema)
 - [Generalizing types](#generalizing-types)
@@ -8,13 +8,13 @@
 - [Conditional fields](#conditional-fields)
 - [Creating a user registration schema](#creating-a-user-registration-schema)
 
-## Using `Zoi.object/2` with string or atom keys
+## Using `Zoi.map/2` with string or atom keys
 
-When defining object schemas with `Zoi.object/2`, you can use either string keys or atom keys for the fields. Both approaches are supported but differ in how parsing will work:
+When defining object schemas with `Zoi.map/2`, you can use either string keys or atom keys for the fields. Both approaches are supported but differ in how parsing will work:
 
 ```elixir
 # Using atom keys
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   name: Zoi.string(),
   age: Zoi.integer()
 })
@@ -46,7 +46,7 @@ If you want to parse data with string keys, you can define the schema with strin
 
 ```elixir
 # Using string keys
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   "name" => Zoi.string(),
   "age" => Zoi.integer()
 })
@@ -68,10 +68,10 @@ Zoi.parse(schema, %{"name" => "Alice", "age" => 30}, coerce: true)
 It can be a tedious task to add the `coerce: true` in every type in your schema. To simplify this, you can apply a traverse function that sets the `coerce: true` option for all types in your schema. Here's how you can do it:
 
 ```elixir
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   name: Zoi.string(),
   age: Zoi.integer(),
-  address: Zoi.object(%{
+  address: Zoi.map(%{
     street: Zoi.string(),
     city: Zoi.string()
   })
@@ -85,7 +85,7 @@ This will make all fields in the schema to coerce to its declared type.
 Similar to coercion, you can apply any transformation into the traverse function:
 
 ```elixir
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   name: Zoi.string(),
   age: Zoi.integer()
 }) |> Zoi.Schema.traverse(fn node ->
@@ -103,7 +103,7 @@ In your application, you might have multiple schemas that share common fields. I
 defmodule MyApp.ZoiTypes do
 
   def user_info() do
-    Zoi.object(%{
+    Zoi.map(%{
       name: Zoi.string(description: "user full name"),
       email: Zoi.email(description: "user email address")
     })
@@ -122,7 +122,7 @@ defmodule MyApp.ZoiTypes do
 end
 
 # Using the generalized types in your schemas
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   user: MyApp.ZoiTypes.user_info(),
   prefered_currency: MyApp.ZoiTypes.supported_currencies(),
   user_type: MyApp.ZoiTypes.user_types()
@@ -141,7 +141,7 @@ Zoi.parse(schema, %{
 You can provide custom error messages for your validations using the `refine` function. This is useful when you want to give more specific feedback to users based on business logic.
 
 ```elixir
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   age: Zoi.integer()
 }) |> Zoi.refine(fn data ->
   if data.age >= 18 do
@@ -169,7 +169,7 @@ Zoi.parse(schema, %{age: 21})
 You can also target specific fields in your error messages by using the `path` option:
 
 ```elixir
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   username: Zoi.string()
 }) |> Zoi.refine(fn data ->
   if String.contains?(data.username, " ") do
@@ -201,7 +201,7 @@ Zoi.parse(schema, %{username: "john doe"})
 You can use `refine` to require fields only when another field has a specific value.
 
 ```elixir
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   account_type: Zoi.enum(["personal", "business"]),
   company_name: Zoi.string() |> Zoi.optional(),
   tax_id: Zoi.string() |> Zoi.optional()
@@ -239,7 +239,7 @@ Zoi.parse(schema, %{account_type: "business", company_name: "Acme Corp", tax_id:
 Common example is having a user registration schema, that requires a valid email address and password with confirmation.
 
 ```elixir
-schema = Zoi.object(%{
+schema = Zoi.map(%{
   email: Zoi.email(description: "User email address"),
   password: Zoi.string() |> Zoi.min(8),
   password_confirmation: Zoi.string()

@@ -10,7 +10,7 @@ First, define your validation schema inline using `Zoi.Form.prepare/1`:
 defmodule MyAppWeb.UserLive.FormComponent do
   use MyAppWeb, :live_view
 
-  @user_schema Zoi.object(%{
+  @user_schema Zoi.map(%{
     name: Zoi.string() |> Zoi.min(3),
     email: Zoi.email(),
     age: Zoi.integer() |> Zoi.min(18) |> Zoi.optional()
@@ -93,11 +93,11 @@ end
 Add nested addresses to your schema:
 
 ```elixir
-@user_schema Zoi.object(%{
+@user_schema Zoi.map(%{
   name: Zoi.string() |> Zoi.min(3),
   email: Zoi.email(),
   addresses: Zoi.array(
-    Zoi.object(%{
+    Zoi.map(%{
       street: Zoi.string() |> Zoi.min(5),
       city: Zoi.string(),
       zip: Zoi.string() |> Zoi.length(5)

@@ -35,7 +35,6 @@ defmodule Zoi.JSONSchema do
     - `Zoi.tuple/1`
     - `Zoi.enum/1`
     - `Zoi.map/2`
-    - `Zoi.object/1`
     - `Zoi.intersection/1`
     - `Zoi.union/1`
     - `Zoi.nullable/1`
