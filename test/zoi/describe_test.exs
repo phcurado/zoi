@@ -41,7 +41,10 @@ defmodule Zoi.DescribeTest do
 
       # Map key order is not guaranteed across Elixir versions, so check each entry
       assert result =~ "* `:name` (`t:String.t/0`) - Required. The name of the person."
-      assert result =~ "* `:age` (`t:integer/0`) - Required. The age of the person. The default value is `0`."
+
+      assert result =~
+               "* `:age` (`t:integer/0`) - Required. The age of the person. The default value is `0`."
+
       assert result =~ "* `:email` (`t:String.t/0`) - The email address."
     end
 
