@@ -9,7 +9,7 @@ defmodule Zoi.Types.JSON do
         Zoi.number(),
         Zoi.boolean(),
         Zoi.array(Zoi.lazy(fn -> Zoi.Types.JSON.new(opts) end)),
-        Zoi.map(Zoi.string(), Zoi.lazy(fn -> Zoi.Types.JSON.new(opts) end))
+        Zoi.map(Zoi.string(), Zoi.lazy(fn -> Zoi.Types.JSON.new(opts) end), [])
       ],
       opts
     )
