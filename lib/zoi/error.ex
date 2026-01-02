@@ -81,7 +81,6 @@ defmodule Zoi.Error do
   end
 
   def new(opts) when is_list(opts) do
-    Keyword.validate!(opts, [:code, :issue, :path, :message])
     {msg, opts} = Keyword.pop(opts, :message)
 
     if msg do
@@ -120,17 +119,9 @@ defmodule Zoi.Error do
   end
 
   defp render_message_from_issue({issue, opts}) do
-    parsed_opts =
-      Enum.map(opts, fn {k, v} ->
-        {to_string(k), v}
-      end)
-      |> Enum.into(%{})
-
     message =
-      Regex.replace(~r"%{(\w+)}", issue, fn _, key ->
-        parsed_opts
-        |> Map.get(key)
-        |> parse_message_type()
+      Enum.reduce(opts, issue, fn {key, value}, acc ->
+        String.replace(acc, "%{#{key}}", parse_message_type(value))
       end)
 
     {message, {issue, opts}}
