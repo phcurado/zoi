@@ -169,7 +169,7 @@ defmodule Zoi.Types.Array do
     end
 
     def encode(schema) do
-      %{type: :array, items: Zoi.JSONSchema.Encoder.encode(schema.inner)}
+      %{type: :array, items: Zoi.JSONSchema.encode_schema(schema.inner)}
       |> add_constraints(schema)
     end
 

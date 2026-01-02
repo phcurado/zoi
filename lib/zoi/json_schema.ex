@@ -80,15 +80,17 @@ defmodule Zoi.JSONSchema do
     |> add_dialect()
   end
 
-  defp add_dialect(encoded_schema) do
-    Map.put(encoded_schema, :"$schema", @draft)
-  end
-
-  defp encode_schema(schema) do
+  @doc false
+  @spec encode_schema(Zoi.schema()) :: map()
+  def encode_schema(schema) do
     schema
     |> Encoder.encode()
     |> encode_metadata(schema)
     |> encode_refinements(schema)
+  end
+
+  defp add_dialect(encoded_schema) do
+    Map.put(encoded_schema, :"$schema", @draft)
   end
 
   defp encode_refinements(encoded_schema, schema) do
