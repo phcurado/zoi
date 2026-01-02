@@ -60,15 +60,19 @@ defmodule Zoi.Types.Map do
           {Map.put(input, key_parsed, value_parsed), errors}
         else
           {:error, err} ->
-            error = Enum.map(err, &Zoi.Error.prepend_path(&1, [key]))
-            {input, Zoi.Errors.merge(errors, error)}
+            new_errors =
+              Enum.reduce(err, errors, fn e, acc ->
+                [Zoi.Error.prepend_path(e, [key]) | acc]
+              end)
+
+            {input, new_errors}
         end
       end)
       |> then(fn {parsed, errors} ->
         if errors == [] do
           {:ok, parsed}
         else
-          {:error, errors, parsed}
+          {:error, Enum.reverse(errors), parsed}
         end
       end)
     end

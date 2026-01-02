@@ -55,8 +55,12 @@ defmodule Zoi.Types.Array do
             {[value | parsed], errors}
 
           {:error, err} ->
-            error = Enum.map(err, &Zoi.Error.prepend_path(&1, [index]))
-            {parsed, Zoi.Errors.merge(errors, error)}
+            new_errors =
+              Enum.reduce(err, errors, fn e, acc ->
+                [Zoi.Error.prepend_path(e, [index]) | acc]
+              end)
+
+            {parsed, new_errors}
         end
       end)
       |> then(&finalize_result(&1, schema))
@@ -101,7 +105,7 @@ defmodule Zoi.Types.Array do
             {:error, new_errors, parsed}
         end
       else
-        {:error, errors, parsed}
+        {:error, Enum.reverse(errors), parsed}
       end
     end
 
