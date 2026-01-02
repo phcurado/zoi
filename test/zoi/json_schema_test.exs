@@ -74,6 +74,36 @@ defmodule Zoi.JSONSchemaTest do
              } = Zoi.to_json_schema(schema)
     end
 
+    test "encoding nested string patterns and refinements" do
+      schema =
+        Zoi.map(%{
+          uuid: Zoi.uuid(),
+          name: Zoi.string(),
+          email: Zoi.email()
+        })
+
+      result = Zoi.to_json_schema(schema)
+
+      uuid_pattern = Regexes.uuid().source
+      email_pattern = Regexes.email().source
+
+      assert %{
+               "$schema": @draft,
+               type: :object,
+               properties: %{
+                 uuid: %{type: :string, pattern: ^uuid_pattern},
+                 name: %{type: :string},
+                 email: %{type: :string, format: :email, pattern: ^email_pattern}
+               },
+               required: required_properties,
+               additionalProperties: true
+             } = result
+
+      assert :uuid in required_properties
+      assert :name in required_properties
+      assert :email in required_properties
+    end
+
     test "encoding nested object" do
       schema =
         Zoi.map(%{

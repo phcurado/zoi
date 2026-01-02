@@ -86,7 +86,7 @@ defmodule Zoi.Types.Codec do
 
   defimpl Zoi.JSONSchema.Encoder do
     def encode(schema) do
-      Zoi.JSONSchema.Encoder.encode(schema.from)
+      Zoi.JSONSchema.encode_schema(schema.from)
     end
   end
 

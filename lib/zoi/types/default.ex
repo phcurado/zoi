@@ -39,7 +39,7 @@ defmodule Zoi.Types.Default do
   defimpl Zoi.JSONSchema.Encoder do
     def encode(%Zoi.Types.Default{inner: inner, value: default_value}) do
       inner
-      |> Zoi.JSONSchema.Encoder.encode()
+      |> Zoi.JSONSchema.encode_schema()
       |> Map.put(:default, default_value)
     end
   end

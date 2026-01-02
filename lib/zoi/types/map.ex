@@ -157,7 +157,7 @@ defmodule Zoi.Types.Map do
         type: :object,
         properties:
           Enum.into(fields, %{}, fn {key, value} ->
-            {key, Zoi.JSONSchema.Encoder.encode(value)}
+            {key, Zoi.JSONSchema.encode_schema(value)}
           end),
         required:
           Enum.flat_map(fields, fn {k, v} ->
