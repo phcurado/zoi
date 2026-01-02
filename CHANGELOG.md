@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.14.1 - 2026-01-02
+
+### Changed
+
+- `Zoi.to_json_schema/1` now preserves string refinements (pattern, format) when encoding nested schemas inside `Zoi.map/2`, `Zoi.array/1`, `Zoi.lazy/1`, `Zoi.default/2`, and `Zoi.codec/3`. Previously, types like `Zoi.uuid()` and `Zoi.email()` would lose their regex pattern when nested inside an object.
+
 ## 0.14.0 - 2025-12-22
 
 ### Added
