@@ -110,6 +110,11 @@ defmodule Zoi.DescribeTest do
           enum_atom: Zoi.enum([:a, :b]),
           float: Zoi.float(),
           function: Zoi.function(),
+          pid: Zoi.pid(),
+          module: Zoi.module(),
+          reference: Zoi.reference(),
+          port: Zoi.port(),
+          macro: Zoi.macro(),
           integer: Zoi.integer(),
           intersection: Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
           keyword: Zoi.keyword(Zoi.string()),
@@ -155,6 +160,16 @@ defmodule Zoi.DescribeTest do
       * `:float` (`t:float/0`)
 
       * `:function` (`t:function/0`)
+
+      * `:pid` (`t:pid/0`)
+
+      * `:module` (`t:module/0`)
+
+      * `:reference` (`t:reference/0`)
+
+      * `:port` (`t:port/0`)
+
+      * `:macro` (`t:Macro.t/0`)
 
       * `:integer` (`t:integer/0`)
 

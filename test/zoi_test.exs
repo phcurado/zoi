@@ -516,6 +516,142 @@ defmodule ZoiTest do
     end
   end
 
+  describe "pid/1" do
+    test "pid with correct value" do
+      pid = self()
+      assert {:ok, ^pid} = Zoi.parse(Zoi.pid(), pid)
+    end
+
+    test "pid with incorrect value" do
+      wrong_values = ["hello", 123, 1.5, :atom, true, false, %{}, []]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.pid(), value)
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected pid"
+      end
+    end
+
+    test "pid with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.pid(error: "must be a process id"), :not_pid)
+
+      assert error.code == :custom
+      assert Exception.message(error) == "must be a process id"
+    end
+  end
+
+  describe "module/1" do
+    test "module with correct value" do
+      assert {:ok, String} = Zoi.parse(Zoi.module(), String)
+      assert {:ok, Enum} = Zoi.parse(Zoi.module(), Enum)
+      assert {:ok, Zoi} = Zoi.parse(Zoi.module(), Zoi)
+    end
+
+    test "module with incorrect value" do
+      wrong_values = ["hello", 123, 1.5, :atom, true, false, %{}, [], self()]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.module(), value)
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected module"
+      end
+    end
+
+    test "module with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.module(error: "must be a module"), :not_module)
+
+      assert error.code == :custom
+      assert Exception.message(error) == "must be a module"
+    end
+  end
+
+  describe "reference/1" do
+    test "reference with correct value" do
+      ref = make_ref()
+      assert {:ok, ^ref} = Zoi.parse(Zoi.reference(), ref)
+    end
+
+    test "reference with incorrect value" do
+      wrong_values = ["hello", 123, 1.5, :atom, true, false, %{}, [], self()]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.reference(), value)
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected reference"
+      end
+    end
+
+    test "reference with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.reference(error: "must be a reference"), :not_ref)
+
+      assert error.code == :custom
+      assert Exception.message(error) == "must be a reference"
+    end
+  end
+
+  describe "port/1" do
+    test "port with correct value" do
+      # Open a port for testing
+      port = Port.open({:spawn, "cat"}, [:binary])
+
+      try do
+        assert {:ok, ^port} = Zoi.parse(Zoi.port(), port)
+      after
+        Port.close(port)
+      end
+    end
+
+    test "port with incorrect value" do
+      wrong_values = ["hello", 123, 1.5, :atom, true, false, %{}, [], self()]
+
+      for value <- wrong_values do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.port(), value)
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected port"
+      end
+    end
+
+    test "port with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.port(error: "must be a port"), :not_port)
+
+      assert error.code == :custom
+      assert Exception.message(error) == "must be a port"
+    end
+  end
+
+  describe "macro/1" do
+    test "macro with valid quoted expressions" do
+      assert {:ok, :atom} = Zoi.parse(Zoi.macro(), :atom)
+      assert {:ok, 123} = Zoi.parse(Zoi.macro(), 123)
+      assert {:ok, "string"} = Zoi.parse(Zoi.macro(), "string")
+      assert {:ok, [1, 2, 3]} = Zoi.parse(Zoi.macro(), [1, 2, 3])
+
+      ast = quote(do: String.t())
+      assert {:ok, ^ast} = Zoi.parse(Zoi.macro(), ast)
+
+      ast = quote(do: pos_integer())
+      assert {:ok, ^ast} = Zoi.parse(Zoi.macro(), ast)
+    end
+
+    test "macro with incorrect value" do
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.macro(), %{invalid: :ast})
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected macro"
+    end
+
+    test "macro with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(Zoi.macro(error: "must be quoted expression"), %{})
+
+      assert error.code == :custom
+      assert Exception.message(error) == "must be quoted expression"
+    end
+  end
+
   describe "optional/2" do
     test "optional with correct value" do
       assert {:ok, "hello"} == Zoi.parse(Zoi.optional(Zoi.string()), "hello")

@@ -34,6 +34,11 @@ defmodule Zoi.TypeSpecTest do
         {Zoi.enum(one: 1, two: 2, three: 3), quote(do: :one | :two | :three)},
         {Zoi.float(), quote(do: float())},
         {Zoi.function(), quote(do: function())},
+        {Zoi.pid(), quote(do: pid())},
+        {Zoi.module(), quote(do: module())},
+        {Zoi.reference(), quote(do: reference())},
+        {Zoi.port(), quote(do: port())},
+        {Zoi.macro(), quote(do: Macro.t())},
         {Zoi.integer(), quote(do: integer())},
         {Zoi.intersection([Zoi.string(), Zoi.atom()]), quote(do: binary() | atom())},
         {Zoi.literal(nil), quote(do: nil)},
@@ -148,6 +153,33 @@ defmodule Zoi.TypeSpecTest do
                    required(:name) => binary()
                  }
                )
+    end
+
+    test "custom typespec overrides generated type" do
+      schema = Zoi.any(typespec: quote(do: pos_integer()))
+      assert Zoi.type_spec(schema) == quote(do: pos_integer())
+    end
+
+    test "custom typespec with integer validation" do
+      schema = Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer()))
+
+      assert {:ok, 0} = Zoi.parse(schema, 0)
+      assert {:ok, 42} = Zoi.parse(schema, 42)
+      assert {:error, _} = Zoi.parse(schema, -1)
+      assert Zoi.type_spec(schema) == quote(do: non_neg_integer())
+    end
+
+    test "custom typespec with function signature" do
+      schema = Zoi.function(arity: 1, typespec: quote(do: (String.t() -> boolean())))
+
+      assert {:ok, func} = Zoi.parse(schema, &is_binary/1)
+      assert is_function(func, 1)
+      assert Zoi.type_spec(schema) == quote(do: (String.t() -> boolean()))
+    end
+
+    test "nil typespec uses default generated type" do
+      schema = Zoi.string()
+      assert Zoi.type_spec(schema) == quote(do: binary())
     end
   end
 
