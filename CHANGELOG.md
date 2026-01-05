@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.15.0 - 2026-01-05
+
+### Added
+
+- `Zoi.pid/1` type for validating pid values
+- `Zoi.module/1` type for validating module values
+- `Zoi.reference/1` type for validating reference values
+- `Zoi.port/1` type for validating port values
+- `Zoi.macro/1` type for validating quoted expressions (Macro.t())
+- `typespec` option for all types to override generated typespec:
+  ```elixir
+  Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer()))
+  Zoi.any(typespec: quote(do: pos_integer()))
+  ```
+
 ## 0.14.1 - 2026-01-02
 
 ### Changed

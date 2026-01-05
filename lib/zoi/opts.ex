@@ -29,7 +29,8 @@ defmodule Zoi.Opts do
         description: description(),
         example: example(),
         metadata: metadata(),
-        error: error()
+        error: error(),
+        typespec: typespec()
       ],
       strict: true
     )
@@ -59,6 +60,10 @@ defmodule Zoi.Opts do
 
   defp example() do
     Zoi.Types.Any.new(description: "Example value for the schema.")
+  end
+
+  defp typespec() do
+    Zoi.Types.Macro.new(description: "Custom typespec to override generated type.")
   end
 
   defp empty_values() do

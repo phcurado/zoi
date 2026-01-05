@@ -11,7 +11,8 @@ defmodule Zoi.Types.Meta do
           required: boolean(),
           description: binary() | nil,
           example: Zoi.input(),
-          metadata: [keyword()]
+          metadata: [keyword()],
+          typespec: Macro.t() | nil
         }
 
   @struct_fields [
@@ -20,7 +21,8 @@ defmodule Zoi.Types.Meta do
     required: nil,
     error: nil,
     description: nil,
-    example: nil
+    example: nil,
+    typespec: nil
   ]
   @struct_keys Keyword.keys(@struct_fields)
 

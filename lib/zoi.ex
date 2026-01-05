@@ -272,7 +272,12 @@ defmodule Zoi do
   """
   @doc group: "Parsing"
   @spec type_spec(schema :: schema(), opts :: options()) :: Macro.t()
-  defdelegate type_spec(schema, opts \\ []), to: Zoi.TypeSpec, as: :spec
+  def type_spec(schema, opts \\ []) do
+    case schema do
+      %{meta: %{typespec: typespec}} when not is_nil(typespec) -> typespec
+      _ -> Zoi.TypeSpec.spec(schema, opts)
+    end
+  end
 
   @doc """
   Retrieves the description associated with the schema.
@@ -973,6 +978,162 @@ defmodule Zoi do
     Zoi.Types.Function.opts()
     |> parse!(opts)
     |> Zoi.Types.Function.new()
+  end
+
+  @doc """
+  Defines a pid type schema.
+
+  ## Example
+
+      iex> schema = Zoi.pid()
+      iex> {:ok, pid} = Zoi.parse(schema, self())
+      iex> is_pid(pid)
+      true
+      iex> Zoi.parse(schema, :not_pid)
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected pid",
+           issue: {"invalid type: expected pid", [type: :pid]},
+           path: []
+         }
+       ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Pid.opts())}
+  """
+  @doc group: "Basic Types"
+  @spec pid(opts :: options()) :: schema()
+  def pid(opts \\ []) do
+    Zoi.Types.Pid.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Pid.new()
+  end
+
+  @doc """
+  Defines a module type schema.
+
+  ## Example
+
+      iex> schema = Zoi.module()
+      iex> Zoi.parse(schema, SomeModule)
+      {:ok, SomeModule}
+      iex> Zoi.parse(schema, :not_a_module)
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected module",
+           issue: {"invalid type: expected module", [type: :module]},
+           path: []
+         }
+       ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Module.opts())}
+  """
+  @doc group: "Basic Types"
+  @spec module(opts :: options()) :: schema()
+  def module(opts \\ []) do
+    Zoi.Types.Module.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Module.new()
+  end
+
+  @doc """
+  Defines a reference type schema.
+
+  ## Example
+
+      iex> schema = Zoi.reference()
+      iex> {:ok, ref} = Zoi.parse(schema, make_ref())
+      iex> is_reference(ref)
+      true
+      iex> Zoi.parse(schema, :not_a_ref)
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected reference",
+           issue: {"invalid type: expected reference", [type: :reference]},
+           path: []
+         }
+       ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Reference.opts())}
+  """
+  @doc group: "Basic Types"
+  @spec reference(opts :: options()) :: schema()
+  def reference(opts \\ []) do
+    Zoi.Types.Reference.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Reference.new()
+  end
+
+  @doc """
+  Defines a port type schema.
+
+  ## Example
+
+      iex> schema = Zoi.port()
+      iex> Zoi.parse(schema, :not_a_port)
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected port",
+           issue: {"invalid type: expected port", [type: :port]},
+           path: []
+         }
+       ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Port.opts())}
+  """
+  @doc group: "Basic Types"
+  @spec port(opts :: options()) :: schema()
+  def port(opts \\ []) do
+    Zoi.Types.Port.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Port.new()
+  end
+
+  @doc """
+  Defines a macro type schema for validating quoted expressions (Macro.t()).
+
+  ## Example
+
+      iex> schema = Zoi.macro()
+      iex> {:ok, ast} = Zoi.parse(schema, quote(do: String.t()))
+      iex> Macro.to_string(ast)
+      "String.t()"
+      iex> Zoi.parse(schema, %{invalid: :ast})
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected macro",
+           issue: {"invalid type: expected macro", [type: :macro]},
+           path: []
+         }
+       ]}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.Macro.opts())}
+  """
+  @doc group: "Basic Types"
+  @spec macro(opts :: options()) :: schema()
+  def macro(opts \\ []) do
+    Zoi.Types.Macro.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Macro.new()
   end
 
   @doc """
