@@ -231,8 +231,8 @@ socket |> assign(:form, form)
 """
 ```
 
-- See **[Rendering forms with Phoenix](https://hexdocs.pm/zoi/rendering_forms_with_phoenix.html)** for a complete LiveView example.
-- See **[Localizing errors with Gettext](https://hexdocs.pm/zoi/localizing_errors_with_gettext.html)** for translation support.
+- See [Rendering forms with Phoenix](https://hexdocs.pm/zoi/rendering_forms_with_phoenix.html) for a complete LiveView example.
+- See [Localizing errors with Gettext](https://hexdocs.pm/zoi/localizing_errors_with_gettext.html) for translation support.
 
 ### Metadata
 
