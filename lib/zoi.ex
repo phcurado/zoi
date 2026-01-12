@@ -1344,6 +1344,67 @@ defmodule Zoi do
   defdelegate intersection(fields, opts \\ []), to: Zoi.Types.Intersection, as: :new
 
   @doc """
+  Defines a tagged union (discriminated union) type schema.
+
+  A tagged union uses a discriminator field to determine which schema to validate against.
+  This is more efficient than a regular union because it looks at a specific field value
+  first, then validates against only the matching schema improving error clarity and performance.
+
+  ## Example
+
+      iex> cat_schema = Zoi.map(%{
+      ...>   type: Zoi.literal("cat"),
+      ...>   meow: Zoi.string()
+      ...> })
+      iex> dog_schema = Zoi.map(%{
+      ...>   type: Zoi.literal("dog"),
+      ...>   bark: Zoi.string()
+      ...> })
+      iex> schema = Zoi.tagged_union(:type, [cat_schema, dog_schema])
+      iex> Zoi.parse(schema, %{type: "cat", meow: "meow"})
+      {:ok, %{type: "cat", meow: "meow"}}
+      iex> Zoi.parse(schema, %{type: "dog", bark: "woof"})
+      {:ok, %{type: "dog", bark: "woof"}}
+      iex> Zoi.parse(schema, %{type: "bird", chirp: "tweet"})
+      {:error,
+       [
+         %Zoi.Error{
+           code: :custom,
+           message: "unknown tag value 'bird' for discriminator 'type'",
+           issue: {"unknown tag value '%{value}' for discriminator '%{tag}'",
+            [tag: :type, value: "bird"]},
+           path: []
+         }
+       ]}
+
+  All schemas must be map types and must have the tag field defined:
+
+      iex> success = Zoi.map(%{
+      ...>   status: Zoi.literal("success"),
+      ...>   data: Zoi.string()
+      ...> })
+      iex> error = Zoi.map(%{
+      ...>   status: Zoi.literal("error"),
+      ...>   message: Zoi.string()
+      ...> })
+      iex> schema = Zoi.tagged_union(:status, [success, error])
+      iex> Zoi.parse(schema, %{status: "success", data: "result"})
+      {:ok, %{status: "success", data: "result"}}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.TaggedUnion.opts())}
+  """
+  @doc group: "Encapsulated Types"
+  @spec tagged_union(tag :: atom() | binary(), schemas :: [schema()], opts :: options()) ::
+          schema()
+  def tagged_union(tag, schemas, opts \\ []) do
+    Zoi.Types.TaggedUnion.opts()
+    |> parse!(opts)
+    |> then(fn opts -> Zoi.Types.TaggedUnion.new(tag, schemas, opts) end)
+  end
+
+  @doc """
   Defines a lazy type that defers schema evaluation until parse time.
 
   This is useful for defining recursive types where a schema needs to reference itself.
@@ -1450,7 +1511,7 @@ defmodule Zoi do
   ## Flexible keys and values
 
   You can also define a keyword schema that accepts non structured keys, by just declaring the value type:
-    
+
       iex> schema = Zoi.keyword(Zoi.string())
       iex> Zoi.parse(schema, [a: "hello", b: "world"])
       {:ok, [a: "hello", b: "world"]}
@@ -2225,7 +2286,7 @@ defmodule Zoi do
       iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-email")
       iex> error.message
       "invalid email format"
-      
+
 
   It uses a regex pattern to validate the email format, which checks for a standard email structure including local part, domain, and top-level domain:
       ~r/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i
@@ -2246,7 +2307,7 @@ defmodule Zoi do
 
   or adding your own custom regex:
 
-      Zoi.email(pattern: ~r/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)  
+      Zoi.email(pattern: ~r/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
   """
   @doc group: "Formats"
   @spec email(opts :: options()) :: schema()
@@ -2849,7 +2910,7 @@ defmodule Zoi do
   Refinements execute in chain order along with transformations, allowing flexible composition.
   The refinement function validates the data at its position in the chain and should return `:ok` for valid data or `{:error, reason}` for invalid data.
 
-      iex> schema = Zoi.string() |> Zoi.refine(fn value -> 
+      iex> schema = Zoi.string() |> Zoi.refine(fn value ->
       ...>   if String.length(value) > 5, do: :ok, else: {:error, "must be longer than 5 characters"}
       ...> end)
       iex> Zoi.parse(schema, "hello")
@@ -2892,7 +2953,7 @@ defmodule Zoi do
          }
        ]}
 
-  ## mfa 
+  ## mfa
 
   You can also pass a `mfa` (module, function, args) to the `Zoi.refine/2` function. This is recommended if
   you are declaring schemas during compile time:
@@ -2905,7 +2966,7 @@ defmodule Zoi do
         def validate(value, opts \\ []) do
           if String.length(value) > 5 do
             :ok
-          else 
+          else
             {:error, "must be longer than 5 characters"}
           end
         end

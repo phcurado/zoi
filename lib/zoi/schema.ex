@@ -173,6 +173,17 @@ defmodule Zoi.Schema do
     |> apply_fun(path, fun)
   end
 
+  defp do_traverse(%Zoi.Types.TaggedUnion{schemas: schemas} = tagged_union, path, fun) do
+    transformed_schemas =
+      Map.new(schemas, fn {key, schema} ->
+        {key, do_traverse(schema, path, fun)}
+      end)
+
+    tagged_union
+    |> Map.put(:schemas, transformed_schemas)
+    |> apply_fun(path, fun)
+  end
+
   defp do_traverse(%Zoi.Types.Union{schemas: schemas} = union, path, fun) do
     transformed_schemas = Enum.map(schemas, &do_traverse(&1, path, fun))
 
