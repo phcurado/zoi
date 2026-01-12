@@ -59,7 +59,13 @@ Zoi.parse(schema, %{"name" => "Alice", "age" => 30})
 Alternatively, you may choose to allow your schema to process either string or atom keys when declaring the schema with atom keys. This can be done using the `coerce: true` option. Considering the first schema defined with atom keys:
 
 ```elixir
-Zoi.parse(schema, %{"name" => "Alice", "age" => 30}, coerce: true)
+schema = Zoi.map(%{
+  name: Zoi.string(),
+  age: Zoi.integer()
+}, coerce: true)
+
+# Parsing with string keys
+Zoi.parse(schema, %{"name" => "Alice", "age" => 30})
 # => {:ok, %{name: "Alice", age: 30}}
 ```
 
