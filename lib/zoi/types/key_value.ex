@@ -38,18 +38,13 @@ defmodule Zoi.Types.KeyValue do
     end
   end
 
-  # One straight-line function:
-  # 1) choose a key normalizer (identity/to_string)
-  # 2) build a lookup map of input
-  # 3) compute unknown-key errors (if strict)
-  # 4) walk declared schema fields in order
-  # 5) finalize container + merge errors
   defp do_parse_pairs(
          input_pairs,
          %_{fields: schema_fields, strict: strict?, coerce: coerce?, empty_values: empty_values},
          opts
        )
        when is_list(schema_fields) do
+    coerce? = Keyword.get(opts, :coerce, coerce?)
     normalize_key = normalize_key_fun(coerce?)
 
     input_lookup =

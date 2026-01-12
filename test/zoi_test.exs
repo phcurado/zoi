@@ -1190,6 +1190,20 @@ defmodule ZoiTest do
       assert result.second == 56
     end
 
+    test "map with coerce on string and atom keys" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()}, coerce: true)
+
+      assert {:ok, %{name: "John", age: 30}} ==
+               Zoi.parse(schema, %{"name" => "John", "age" => 30})
+    end
+
+    test "map with coerce on string and atom keys during parsing time" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
+
+      assert {:ok, %{name: "John", age: 30}} ==
+               Zoi.parse(schema, %{"name" => "John", "age" => 30}, coerce: true)
+    end
+
     test "map with nested map" do
       schema =
         Zoi.map(%{
