@@ -5,7 +5,7 @@ defprotocol Zoi.Validations.Regex do
 
   @spec validate(Zoi.schema(), Zoi.input(), term(), keyword(), Zoi.options()) ::
           :ok | {:error, Zoi.Error.t()}
-  def validate(schema, input, value, regex_opts, opts \\ [])
+  def validate(schema, input, value, regex_opts, opts)
 end
 
 defimpl Zoi.Validations.Regex, for: Any do

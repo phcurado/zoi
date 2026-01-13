@@ -9,7 +9,7 @@ defprotocol Zoi.Validations.MultipleOf do
   Custom error messages can be passed via opts[:error].
   """
   @spec set(Zoi.schema(), term(), Zoi.options()) :: Zoi.schema()
-  def set(schema, value, opts \\ [])
+  def set(schema, value, opts)
 
   @doc """
   Validates input is a multiple of the given value.
@@ -18,7 +18,7 @@ defprotocol Zoi.Validations.MultipleOf do
   """
   @spec validate(Zoi.schema(), Zoi.input(), term(), Zoi.options()) ::
           :ok | {:error, Zoi.Error.t()}
-  def validate(schema, input, value, opts \\ [])
+  def validate(schema, input, value, opts)
 end
 
 defimpl Zoi.Validations.MultipleOf, for: Any do
