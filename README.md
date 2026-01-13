@@ -10,6 +10,8 @@
 
 `Zoi` is a schema validation library for Elixir, designed to provide a simple and flexible way to define and validate data.
 
+## Sponsors
+
 💜 If you or your company benefit from Zoi, consider [becoming a sponsor](https://github.com/sponsors/phcurado). It helps keep the project active and benefits the Elixir ecosystem.
 
 ## Installation
