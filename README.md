@@ -8,15 +8,9 @@
 [![HexDocs.pm](https://img.shields.io/badge/Docs-HexDocs-blue)](https://hexdocs.pm/zoi)
 [![License](https://img.shields.io/hexpm/l/zoi.svg)](https://hex.pm/packages/zoi)
 
----
-
-## Sponsors
+`Zoi` is a schema validation library for Elixir, designed to provide a simple and flexible way to define and validate data.
 
 💜 If you or your company benefit from Zoi, consider [becoming a sponsor](https://github.com/sponsors/phcurado). It helps keep the project active and benefits the Elixir ecosystem.
-
----
-
-`Zoi` is a schema validation library for Elixir, designed to provide a simple and flexible way to define and validate data.
 
 ## Installation
 
