@@ -92,18 +92,34 @@ defmodule Zoi.SchemaTest do
       assert integer_schema.coerce == true
     end
 
-    test "applies transformation to tagged_unions" do
+    test "applies transformation to discriminated_unions" do
       schema =
         Zoi.object(%{
           value:
-            Zoi.tagged_union(:type, [
-              Zoi.object(%{type: Zoi.literal("a"), value: Zoi.string()}),
-              Zoi.object(%{type: Zoi.literal("b"), value: Zoi.integer()})
+            Zoi.discriminated_union(:type, [
+              Zoi.map(%{type: Zoi.literal("a"), value: Zoi.string()}),
+              Zoi.map(%{type: Zoi.literal("b"), value: Zoi.integer()})
             ])
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
 
       %{"a" => schema_a, "b" => schema_b} = schema.fields[:value].schemas
+      assert schema_a.coerce == true
+      assert schema_b.coerce == true
+    end
+
+    test "supports discriminated_union as root schema" do
+      discriminated_union =
+        Zoi.discriminated_union(
+          :type,
+          [
+            Zoi.map(%{type: Zoi.literal("a"), value: Zoi.string()}),
+            Zoi.map(%{type: Zoi.literal("b"), value: Zoi.integer()})
+          ])
+        |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+      assert discriminated_union.coerce == false
+      %{"a" => schema_a, "b" => schema_b} = discriminated_union.schemas
       assert schema_a.coerce == true
       assert schema_b.coerce == true
     end

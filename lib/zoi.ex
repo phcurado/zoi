@@ -1344,9 +1344,9 @@ defmodule Zoi do
   defdelegate intersection(fields, opts \\ []), to: Zoi.Types.Intersection, as: :new
 
   @doc """
-  Defines a tagged union (discriminated union) type schema.
+  Defines a discriminated union type schema.
 
-  A tagged union uses a discriminator field to determine which schema to validate against.
+  A discriminated union uses a discriminator field to determine which schema to validate against.
   This is more efficient than a regular union because it looks at a specific field value
   first, then validates against only the matching schema improving error clarity and performance.
 
@@ -1360,7 +1360,7 @@ defmodule Zoi do
       ...>   type: Zoi.literal("dog"),
       ...>   bark: Zoi.string()
       ...> })
-      iex> schema = Zoi.tagged_union(:type, [cat_schema, dog_schema])
+      iex> schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
       iex> Zoi.parse(schema, %{type: "cat", meow: "meow"})
       {:ok, %{type: "cat", meow: "meow"}}
       iex> Zoi.parse(schema, %{type: "dog", bark: "woof"})
@@ -1370,14 +1370,14 @@ defmodule Zoi do
        [
          %Zoi.Error{
            code: :custom,
-           message: "unknown tag value 'bird' for discriminator 'type'",
-           issue: {"unknown tag value '%{value}' for discriminator '%{tag}'",
-            [tag: :type, value: "bird"]},
+           message: "unknown discriminator 'bird' for field 'type'",
+           issue: {"unknown discriminator '%{value}' for field '%{field}'",
+            [field: :type, value: "bird"]},
            path: []
          }
        ]}
 
-  All schemas must be map types and must have the tag field defined:
+  All schemas must be map types and must have the discriminator field defined:
 
       iex> success = Zoi.map(%{
       ...>   status: Zoi.literal("success"),
@@ -1387,21 +1387,25 @@ defmodule Zoi do
       ...>   status: Zoi.literal("error"),
       ...>   message: Zoi.string()
       ...> })
-      iex> schema = Zoi.tagged_union(:status, [success, error])
+      iex> schema = Zoi.discriminated_union(:status, [success, error])
       iex> Zoi.parse(schema, %{status: "success", data: "result"})
       {:ok, %{status: "success", data: "result"}}
 
   ## Options
 
-  #{Zoi.Describe.generate(Zoi.Types.TaggedUnion.opts())}
+  #{Zoi.Describe.generate(Zoi.Types.DiscriminatedUnion.opts())}
   """
   @doc group: "Encapsulated Types"
-  @spec tagged_union(tag :: atom() | binary(), schemas :: [schema()], opts :: options()) ::
+  @spec discriminated_union(
+          discriminator :: atom() | binary(),
+          schemas :: [schema()],
+          opts :: options()
+        ) ::
           schema()
-  def tagged_union(tag, schemas, opts \\ []) do
-    Zoi.Types.TaggedUnion.opts()
+  def discriminated_union(discriminator, schemas, opts \\ []) do
+    Zoi.Types.DiscriminatedUnion.opts()
     |> parse!(opts)
-    |> then(fn opts -> Zoi.Types.TaggedUnion.new(tag, schemas, opts) end)
+    |> then(fn opts -> Zoi.Types.DiscriminatedUnion.new(discriminator, schemas, opts) end)
   end
 
   @doc """

@@ -130,8 +130,8 @@ defmodule Zoi.DescribeTest do
           time: Zoi.time(),
           tuple: Zoi.tuple({Zoi.integer(), Zoi.string()}),
           union: Zoi.union([Zoi.integer(), Zoi.string()]),
-          tagged_union:
-            Zoi.tagged_union(
+          discriminated_union:
+            Zoi.discriminated_union(
               :type,
               [
                 Zoi.map(%{type: Zoi.literal("a")}),
@@ -209,7 +209,7 @@ defmodule Zoi.DescribeTest do
 
       * `:union` (`t:integer/0` or `t:String.t/0`)
 
-      * `:tagged_union` (`t:map/0`)
+      * `:discriminated_union` (`t:map/0`)
 
       * `:lazy` (`t:String.t/0`)
 
