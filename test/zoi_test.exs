@@ -1004,6 +1004,227 @@ defmodule ZoiTest do
     end
   end
 
+  describe "discriminated_union/3" do
+    test "discriminated_union with correct values" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      assert {:ok, %{type: "cat", meow: "meow"}} ==
+               Zoi.parse(schema, %{type: "cat", meow: "meow"})
+
+      assert {:ok, %{type: "dog", bark: "woof"}} ==
+               Zoi.parse(schema, %{type: "dog", bark: "woof"})
+    end
+
+    test "discriminated_union with string tag" do
+      cat_schema = Zoi.map(%{"type" => Zoi.literal("cat"), "meow" => Zoi.string()})
+      dog_schema = Zoi.map(%{"type" => Zoi.literal("dog"), "bark" => Zoi.string()})
+      schema = Zoi.discriminated_union("type", [cat_schema, dog_schema])
+
+      assert {:ok, %{"type" => "cat", "meow" => "meow"}} ==
+               Zoi.parse(schema, %{"type" => "cat", "meow" => "meow"})
+
+      assert {:ok, %{"type" => "dog", "bark" => "woof"}} ==
+               Zoi.parse(schema, %{"type" => "dog", "bark" => "woof"})
+    end
+
+    test "discriminated_union with missing tag" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{meow: "meow"})
+      assert error.code == :required
+      assert Exception.message(error) == "is required"
+      assert error.path == [:type]
+    end
+
+    test "discriminated_union with unknown tag value" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{type: "bird", chirp: "tweet"})
+      assert error.code == :custom
+
+      assert Exception.message(error) ==
+               "unknown discriminator 'bird' for field 'type'"
+    end
+
+    test "discriminated_union with incorrect type" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not a map")
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected map"
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 123)
+      assert error.code == :invalid_type
+    end
+
+    test "discriminated_union with field validation" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string(min_length: 3)})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{type: "cat", meow: "hi"})
+
+      assert error.code == :greater_than_or_equal_to
+      assert error.path == [:meow]
+      assert Exception.message(error) == "too small: must have at least 3 character(s)"
+    end
+
+    test "discriminated_union with multiple schemas" do
+      schemas =
+        for i <- 1..5 do
+          Zoi.map(%{type: Zoi.literal("type#{i}"), value: Zoi.integer()})
+        end
+
+      schema = Zoi.discriminated_union(:type, schemas)
+
+      for i <- 1..5 do
+        assert {:ok, %{type: "type#{i}", value: i}} ==
+                 Zoi.parse(schema, %{type: "type#{i}", value: i})
+      end
+
+      assert {:error, [%Zoi.Error{}]} = Zoi.parse(schema, %{type: "type6", value: 6})
+    end
+
+    test "discriminated_union custom error" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+
+      schema =
+        Zoi.discriminated_union(:type, [cat_schema, dog_schema], error: "invalid animal type")
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{type: "bird", chirp: "tweet"})
+
+      assert error.code == :custom
+      assert Exception.message(error) == "invalid animal type"
+    end
+
+    test "discriminated_union type with transforms" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+
+      schema =
+        Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+        |> Zoi.transform(fn value -> Map.put(value, :transformed, true) end)
+
+      assert {:ok, %{type: "cat", meow: "meow", transformed: true}} ==
+               Zoi.parse(schema, %{type: "cat", meow: "meow"})
+    end
+
+    test "discriminated_union type with refinements" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+
+      schema =
+        Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+        |> Zoi.refine(fn
+          %{type: "cat", meow: "silent"} -> {:error, "cats cannot be silent"}
+          _ -> :ok
+        end)
+
+      assert {:ok, %{type: "cat", meow: "meow"}} ==
+               Zoi.parse(schema, %{type: "cat", meow: "meow"})
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{type: "cat", meow: "silent"})
+
+      assert error.code == :custom
+      assert Exception.message(error) == "cats cannot be silent"
+    end
+
+    test "discriminated_union with atom key and coerce accepts string keys" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()}, coerce: true)
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()}, coerce: true)
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema], coerce: true)
+
+      assert {:ok, %{type: "cat", meow: "meow"}} ==
+               Zoi.parse(schema, %{"type" => "cat", "meow" => "meow"})
+    end
+
+    test "discriminated_union with string key and coerce accepts atom keys" do
+      cat_schema = Zoi.map(%{"type" => Zoi.literal("cat"), "meow" => Zoi.string()}, coerce: true)
+      dog_schema = Zoi.map(%{"type" => Zoi.literal("dog"), "bark" => Zoi.string()}, coerce: true)
+      schema = Zoi.discriminated_union("type", [cat_schema, dog_schema], coerce: true)
+
+      assert {:ok, %{"type" => "dog", "bark" => "woof"}} ==
+               Zoi.parse(schema, %{type: "dog", bark: "woof"})
+    end
+
+    test "discriminated_union with single or no schemas" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+
+      assert_raise ArgumentError,
+                   "discriminated_union must receive a field (atom or string) and at least 2 schemas",
+                   fn ->
+                     Zoi.discriminated_union(:type, [cat_schema])
+                   end
+
+      assert_raise ArgumentError,
+                   "discriminated_union must receive a field (atom or string) and at least 2 schemas",
+                   fn ->
+                     Zoi.discriminated_union(:type, [])
+                   end
+    end
+
+    test "discriminated_union raises when schema is not an map" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+
+      assert_raise ArgumentError, ~r/all schemas in discriminated_union must be map types/, fn ->
+        Zoi.discriminated_union(:type, [cat_schema, Zoi.string()])
+      end
+    end
+
+    test "discriminated_union raises when schema missing tag field" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{name: Zoi.string(), bark: Zoi.string()})
+
+      assert_raise ArgumentError,
+                   ~r/all schemas must have the field 'type' defined/,
+                   fn ->
+                     Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+                   end
+    end
+
+    test "discriminated_union raises when tag field is duplicated" do
+      cat1_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      cat2_schema = Zoi.map(%{type: Zoi.literal("cat"), bark: Zoi.string()})
+
+      assert_raise ArgumentError,
+                   ~r/duplicate discriminator 'cat' found in discriminated_union schemas/,
+                   fn ->
+                     Zoi.discriminated_union(:type, [cat1_schema, cat2_schema])
+                   end
+    end
+
+    test "discriminated_union with description" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+
+      schema =
+        Zoi.discriminated_union(:type, [cat_schema, dog_schema], description: "Animal type union")
+
+      assert Zoi.description(schema) == "Animal type union"
+    end
+
+    test "discriminated_union with example" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      example = %{type: "cat", meow: "meow"}
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema], example: example)
+
+      assert Zoi.example(schema) == example
+    end
+  end
+
   describe "lazy/1" do
     test "basic lazy evaluation" do
       schema = Zoi.lazy(fn -> Zoi.string() end)

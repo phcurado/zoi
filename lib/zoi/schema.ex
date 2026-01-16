@@ -103,6 +103,18 @@ defmodule Zoi.Schema do
     Map.put(keyword, :fields, do_traverse(schema, [], fun))
   end
 
+  defp do_traverse_root(
+         %Zoi.Types.DiscriminatedUnion{schemas: schemas} = discriminated_union,
+         fun
+       ) do
+    transformed_schemas =
+      Map.new(schemas, fn {key, schema} ->
+        {key, do_traverse(schema, [], fun)}
+      end)
+
+    Map.put(discriminated_union, :schemas, transformed_schemas)
+  end
+
   defp do_traverse_root(schema, _fun), do: schema
 
   defp do_traverse(%Zoi.Types.Map{fields: fields} = obj, path, fun) when is_list(fields) do
@@ -170,6 +182,21 @@ defmodule Zoi.Schema do
 
     tuple
     |> Map.put(:fields, transformed_fields)
+    |> apply_fun(path, fun)
+  end
+
+  defp do_traverse(
+         %Zoi.Types.DiscriminatedUnion{schemas: schemas} = discriminated_union,
+         path,
+         fun
+       ) do
+    transformed_schemas =
+      Map.new(schemas, fn {key, schema} ->
+        {key, do_traverse(schema, path, fun)}
+      end)
+
+    discriminated_union
+    |> Map.put(:schemas, transformed_schemas)
     |> apply_fun(path, fun)
   end
 

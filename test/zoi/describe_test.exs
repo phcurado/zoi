@@ -130,6 +130,14 @@ defmodule Zoi.DescribeTest do
           time: Zoi.time(),
           tuple: Zoi.tuple({Zoi.integer(), Zoi.string()}),
           union: Zoi.union([Zoi.integer(), Zoi.string()]),
+          discriminated_union:
+            Zoi.discriminated_union(
+              :type,
+              [
+                Zoi.map(%{type: Zoi.literal("a")}),
+                Zoi.map(%{type: Zoi.literal("b")})
+              ]
+            ),
           lazy: Zoi.lazy(fn -> Zoi.string() end),
           codec:
             Zoi.codec(Zoi.string(), Zoi.integer(),
@@ -200,6 +208,8 @@ defmodule Zoi.DescribeTest do
       * `:tuple` (tuple of `t:integer/0`, `t:String.t/0` values)
 
       * `:union` (`t:integer/0` or `t:String.t/0`)
+
+      * `:discriminated_union` (`t:map/0`)
 
       * `:lazy` (`t:String.t/0`)
 

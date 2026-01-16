@@ -181,6 +181,26 @@ defmodule Zoi.TypeSpecTest do
       schema = Zoi.string()
       assert Zoi.type_spec(schema) == quote(do: binary())
     end
+
+    test "discriminated_union typespec" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      result = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
+
+      # Normalize expected schemas
+      cat_spec =
+        quote(do: %{required(:type) => "cat", required(:meow) => binary()})
+        |> normalize_map_or_struct_ast()
+
+      dog_spec =
+        quote(do: %{required(:type) => "dog", required(:bark) => binary()})
+        |> normalize_map_or_struct_ast()
+
+      # Check that both schemas are present in a union (order as it was given to discriminated_union)
+      assert result == {:|, [], [cat_spec, dog_spec]}
+    end
   end
 
   defp normalize_map_or_struct_ast(ast) do
