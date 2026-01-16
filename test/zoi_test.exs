@@ -1086,9 +1086,10 @@ defmodule ZoiTest do
 
       schema = Zoi.discriminated_union(:type, schemas)
 
-      assert {:ok, %{type: "type1", value: 1}} == Zoi.parse(schema, %{type: "type1", value: 1})
-      assert {:ok, %{type: "type3", value: 3}} == Zoi.parse(schema, %{type: "type3", value: 3})
-      assert {:ok, %{type: "type5", value: 5}} == Zoi.parse(schema, %{type: "type5", value: 5})
+      for i <- 1..5 do
+        assert {:ok, %{type: "type#{i}", value: i}} ==
+                 Zoi.parse(schema, %{type: "type#{i}", value: i})
+      end
 
       assert {:error, [%Zoi.Error{}]} = Zoi.parse(schema, %{type: "type6", value: 6})
     end

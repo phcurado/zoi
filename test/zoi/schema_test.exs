@@ -115,7 +115,8 @@ defmodule Zoi.SchemaTest do
           [
             Zoi.map(%{type: Zoi.literal("a"), value: Zoi.string()}),
             Zoi.map(%{type: Zoi.literal("b"), value: Zoi.integer()})
-          ])
+          ]
+        )
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
 
       assert discriminated_union.coerce == false
