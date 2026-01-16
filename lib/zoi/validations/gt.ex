@@ -9,7 +9,7 @@ defprotocol Zoi.Validations.Gt do
   Custom error messages can be passed via opts[:error].
   """
   @spec set(Zoi.schema(), term(), Zoi.options()) :: Zoi.schema()
-  def set(schema, value, opts \\ [])
+  def set(schema, value, opts)
 
   @doc """
   Validates the input against the constraint value.
@@ -17,7 +17,7 @@ defprotocol Zoi.Validations.Gt do
   """
   @spec validate(Zoi.schema(), Zoi.input(), term(), Zoi.options()) ::
           :ok | {:error, Zoi.Error.t()}
-  def validate(schema, input, value, opts \\ [])
+  def validate(schema, input, value, opts)
 end
 
 defimpl Zoi.Validations.Gt, for: Any do

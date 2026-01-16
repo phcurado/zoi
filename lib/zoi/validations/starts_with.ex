@@ -5,7 +5,7 @@ defprotocol Zoi.Validations.StartsWith do
 
   @spec validate(Zoi.schema(), Zoi.input(), term(), Zoi.options()) ::
           :ok | {:error, Zoi.Error.t()}
-  def validate(schema, input, value, opts \\ [])
+  def validate(schema, input, value, opts)
 end
 
 defimpl Zoi.Validations.StartsWith, for: Any do

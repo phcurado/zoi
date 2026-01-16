@@ -35,7 +35,7 @@ defmodule Zoi.Validations do
   end
 
   def maybe_set_validation(schema, module, value) do
-    module.set(schema, value)
+    module.set(schema, value, [])
   end
 
   @spec unwrap_validation(value()) :: value()

@@ -5,7 +5,7 @@ defprotocol Zoi.Validations.OneOf do
 
   @spec validate(Zoi.schema(), Zoi.input(), list(), Zoi.options()) ::
           :ok | {:error, Zoi.Error.t()}
-  def validate(schema, input, values, opts \\ [])
+  def validate(schema, input, values, opts)
 end
 
 defimpl Zoi.Validations.OneOf, for: Any do
