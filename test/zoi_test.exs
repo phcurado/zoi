@@ -1194,6 +1194,17 @@ defmodule ZoiTest do
                    end
     end
 
+    test "discriminated_union raises when tag field is not a literal type" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.string(), bark: Zoi.string()})
+
+      assert_raise ArgumentError,
+                   ~r/field 'type' must be a literal type/,
+                   fn ->
+                     Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+                   end
+    end
+
     test "discriminated_union raises when tag field is duplicated" do
       cat1_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
       cat2_schema = Zoi.map(%{type: Zoi.literal("cat"), bark: Zoi.string()})

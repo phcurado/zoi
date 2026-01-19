@@ -73,6 +73,25 @@ defmodule Zoi.InspectTest do
     end)
   end
 
+  test "inspect discriminated_union" do
+    type =
+      Zoi.discriminated_union(:type, [
+        Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()}),
+        Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      ])
+
+    result = inspect(type)
+
+    assert result =~ "#Zoi.discriminated_union<"
+    assert result =~ "coerce: false"
+    assert result =~ "field: \":type\""
+    assert result =~ "schemas: ["
+    assert result =~ "type: #Zoi.literal<required: true, value: \"cat\">"
+    assert result =~ "meow: #Zoi.string<required: true, coerce: false>"
+    assert result =~ "type: #Zoi.literal<required: true, value: \"dog\">"
+    assert result =~ "bark: #Zoi.string<required: true, coerce: false>"
+  end
+
   test "inspect nested types" do
     type =
       Zoi.map(%{
