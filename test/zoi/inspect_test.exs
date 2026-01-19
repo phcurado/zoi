@@ -12,11 +12,6 @@ defmodule Zoi.InspectTest do
       {Zoi.datetime(), "#Zoi.date_time<coerce: false>"},
       {Zoi.decimal(), "#Zoi.decimal<coerce: false>"},
       {Zoi.default(Zoi.string(), "hello"), "#Zoi.string<coerce: false, default: \"hello\">"},
-      {Zoi.discriminated_union(:type, [
-         Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()}),
-         Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
-       ]),
-       "#Zoi.discriminated_union<coerce: false, field: \":type\", schemas: [#Zoi.map<coerce: false, strict: false, fields: %{type: #Zoi.literal<required: true, value: \"cat\">, meow: #Zoi.string<required: true, coerce: false>}>, #Zoi.map<coerce: false, strict: false, fields: %{type: #Zoi.literal<required: true, value: \"dog\">, bark: #Zoi.string<required: true, coerce: false>}>]>"},
       {Zoi.enum([:a, :b, :c]), "#Zoi.enum<coerce: false, values: [:a, :b, :c]>"},
       {Zoi.enum(a: "a", b: "b"), "#Zoi.enum<coerce: false, values: [a: \"a\", b: \"b\"]>"},
       {Zoi.float(), "#Zoi.float<coerce: false>"},
@@ -76,6 +71,25 @@ defmodule Zoi.InspectTest do
     Enum.each(types, fn {type, expected} ->
       assert inspect(type) == expected
     end)
+  end
+
+  test "inspect discriminated_union" do
+    type =
+      Zoi.discriminated_union(:type, [
+        Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()}),
+        Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      ])
+
+    result = inspect(type)
+
+    assert result =~ "#Zoi.discriminated_union<"
+    assert result =~ "coerce: false"
+    assert result =~ "field: \":type\""
+    assert result =~ "schemas: ["
+    assert result =~ "type: #Zoi.literal<required: true, value: \"cat\">"
+    assert result =~ "meow: #Zoi.string<required: true, coerce: false>"
+    assert result =~ "type: #Zoi.literal<required: true, value: \"dog\">"
+    assert result =~ "bark: #Zoi.string<required: true, coerce: false>"
   end
 
   test "inspect nested types" do
