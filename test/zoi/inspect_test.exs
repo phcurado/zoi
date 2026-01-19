@@ -12,6 +12,11 @@ defmodule Zoi.InspectTest do
       {Zoi.datetime(), "#Zoi.date_time<coerce: false>"},
       {Zoi.decimal(), "#Zoi.decimal<coerce: false>"},
       {Zoi.default(Zoi.string(), "hello"), "#Zoi.string<coerce: false, default: \"hello\">"},
+      {Zoi.discriminated_union(:type, [
+         Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()}),
+         Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+       ]),
+       "#Zoi.discriminated_union<coerce: false, field: \":type\", schemas: [#Zoi.map<coerce: false, strict: false, fields: %{type: #Zoi.literal<required: true, value: \"cat\">, meow: #Zoi.string<required: true, coerce: false>}>, #Zoi.map<coerce: false, strict: false, fields: %{type: #Zoi.literal<required: true, value: \"dog\">, bark: #Zoi.string<required: true, coerce: false>}>]>"},
       {Zoi.enum([:a, :b, :c]), "#Zoi.enum<coerce: false, values: [:a, :b, :c]>"},
       {Zoi.enum(a: "a", b: "b"), "#Zoi.enum<coerce: false, values: [a: \"a\", b: \"b\"]>"},
       {Zoi.float(), "#Zoi.float<coerce: false>"},

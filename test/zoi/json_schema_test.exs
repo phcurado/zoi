@@ -492,6 +492,28 @@ defmodule Zoi.JSONSchemaTest do
 
       assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
+
+    test "encoding discriminated_union" do
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      result = Zoi.to_json_schema(schema)
+
+      assert %{
+               "$schema": @draft,
+               oneOf: [cat_json_schema, dog_json_schema],
+               discriminator: %{
+                 propertyName: "type"
+               }
+             } = result
+
+      assert %{type: :object, properties: %{type: %{const: "cat"}, meow: %{type: :string}}} =
+               cat_json_schema
+
+      assert %{type: :object, properties: %{type: %{const: "dog"}, bark: %{type: :string}}} =
+               dog_json_schema
+    end
   end
 
   def custom_refinement(value) do

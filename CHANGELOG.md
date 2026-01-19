@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.16.0 - 2026-01-19
+
+### Added
+
+- `Zoi.tagged_union/2` type for creating tagged/discriminated unions (#138)
+
+### Changed
+
+- Add sponsor section to documentation (#140)
+- Fix Elixir 1.20 deprecation warnings (#141)
+- Fix string keys parsing on maps when coercion is enabled (#139)
+
 ## 0.15.0 - 2026-01-05
 
 ### Added
