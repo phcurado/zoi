@@ -2,7 +2,7 @@ defmodule Zoi.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/phcurado/zoi"
-  @version "0.15.0"
+  @version "0.16.0"
 
   def project do
     [
