@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `Zoi.discriminated_union/2` type for creating discriminated unions (#138)
+- `Zoi.discriminated_union/3` type for creating discriminated unions (#138)
 
 ### Changed
 
