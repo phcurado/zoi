@@ -1290,9 +1290,47 @@ defmodule ZoiTest do
       [error] = errors
       assert error.path == [:friends, 0, :email]
     end
+
+    test "lazy with MFA tuple" do
+      schema = Zoi.lazy({__MODULE__, :mfa_string_schema, []})
+
+      assert {:ok, "hello"} = Zoi.parse(schema, "hello")
+      assert {:error, _} = Zoi.parse(schema, 123)
+    end
+
+    test "lazy with MFA tuple and args" do
+      schema = Zoi.lazy({__MODULE__, :mfa_min_schema, [5]})
+
+      assert {:ok, "hello"} = Zoi.parse(schema, "hello")
+      assert {:error, _} = Zoi.parse(schema, "hi")
+    end
+
+    test "recursive schema using MFA tuple" do
+      schema = mfa_user_schema()
+
+      input = %{
+        name: "Alice",
+        friends: [
+          %{name: "Bob", friends: []}
+        ]
+      }
+
+      assert {:ok, result} = Zoi.parse(schema, input)
+      assert result.name == "Alice"
+      assert hd(result.friends).name == "Bob"
+    end
   end
 
-  # Helper functions for recursive schema tests
+  def mfa_string_schema, do: Zoi.string()
+  def mfa_min_schema(min), do: Zoi.string() |> Zoi.min(min)
+
+  def mfa_user_schema do
+    Zoi.map(%{
+      name: Zoi.string(),
+      friends: Zoi.array(Zoi.lazy({__MODULE__, :mfa_user_schema, []})) |> Zoi.optional()
+    })
+  end
+
   defp user_schema do
     Zoi.map(%{
       name: Zoi.string(),

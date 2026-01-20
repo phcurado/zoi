@@ -1438,9 +1438,13 @@ defmodule Zoi do
         ]
       })
       # {:ok, %{name: "Alice", email: "alice@example.com", friends: [...]}}
+
+  You can also define a MFA in case you need to use the lazy type during compile time:
+
+      Zoi.lazy({mod, func, args})
   """
   @doc group: "Encapsulated Types"
-  @spec lazy(fun :: (-> schema()), opts :: options()) :: schema()
+  @spec lazy(fun :: (-> schema()) | {module(), atom(), list()}, opts :: options()) :: schema()
   defdelegate lazy(fun, opts \\ []), to: Zoi.Types.Lazy, as: :new
 
   @doc """

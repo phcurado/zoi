@@ -29,6 +29,7 @@ defmodule Zoi.JSONSchemaTest do
          %{anyOf: [%{type: :string}, %{type: :integer}]}},
         {Zoi.nullable(Zoi.integer()), %{anyOf: [%{type: :null}, %{type: :integer}]}},
         {Zoi.lazy(fn -> Zoi.string() end), %{type: :string}},
+        {Zoi.lazy({__MODULE__, :mfa_string_schema, []}), %{type: :string}},
         {Zoi.string() |> Zoi.default("hello"), %{type: :string, default: "hello"}}
       ]
 
@@ -523,4 +524,6 @@ defmodule Zoi.JSONSchemaTest do
       {:error, "must be valid"}
     end
   end
+
+  def mfa_string_schema, do: Zoi.string()
 end

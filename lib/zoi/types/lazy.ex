@@ -3,13 +3,24 @@ defmodule Zoi.Types.Lazy do
 
   use Zoi.Type.Def, fields: [:fun]
 
-  def new(fun, opts \\ []) when is_function(fun, 0) do
+  def new(fun, opts) when is_function(fun, 0) do
     opts
     |> Keyword.merge(fun: fun)
     |> apply_type()
   end
 
+  def new({_mod, _func, _args} = mfa, opts) do
+    opts
+    |> Keyword.merge(fun: mfa)
+    |> apply_type()
+  end
+
   defimpl Zoi.Type do
+    def parse(%Zoi.Types.Lazy{fun: {mod, func, args}}, value, opts) do
+      schema = apply(mod, func, args)
+      Zoi.parse(schema, value, opts)
+    end
+
     def parse(%Zoi.Types.Lazy{fun: fun}, value, opts) do
       schema = fun.()
       Zoi.parse(schema, value, opts)
@@ -17,8 +28,6 @@ defmodule Zoi.Types.Lazy do
   end
 
   # Lazy types return term() for type_spec to avoid infinite recursion
-  # in recursive schemas. The actual type cannot be expressed in Elixir's
-  # type system for self-referential structures.
   defimpl Zoi.TypeSpec do
     def spec(%Zoi.Types.Lazy{}, _opts) do
       quote(do: term())
@@ -32,6 +41,11 @@ defmodule Zoi.Types.Lazy do
   end
 
   defimpl Zoi.JSONSchema.Encoder do
+    def encode(%Zoi.Types.Lazy{fun: {mod, func, args}}) do
+      schema = apply(mod, func, args)
+      Zoi.JSONSchema.encode_schema(schema)
+    end
+
     def encode(%Zoi.Types.Lazy{fun: fun}) do
       schema = fun.()
       Zoi.JSONSchema.encode_schema(schema)
@@ -39,6 +53,11 @@ defmodule Zoi.Types.Lazy do
   end
 
   defimpl Zoi.Describe.Encoder do
+    def encode(%Zoi.Types.Lazy{fun: {mod, func, args}}) do
+      schema = apply(mod, func, args)
+      Zoi.Describe.Encoder.encode(schema)
+    end
+
     def encode(%Zoi.Types.Lazy{fun: fun}) do
       schema = fun.()
       Zoi.Describe.Encoder.encode(schema)
