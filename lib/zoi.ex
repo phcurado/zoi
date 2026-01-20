@@ -1444,7 +1444,7 @@ defmodule Zoi do
       Zoi.lazy({mod, func, args})
   """
   @doc group: "Encapsulated Types"
-  @spec lazy(fun :: (-> schema()), opts :: options()) :: schema()
+  @spec lazy(fun :: (-> schema()) | {module(), atom(), list()}, opts :: options()) :: schema()
   defdelegate lazy(fun, opts \\ []), to: Zoi.Types.Lazy, as: :new
 
   @doc """
