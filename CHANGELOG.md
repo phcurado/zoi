@@ -2,11 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- `Zoi.lazy/1` now supports MFA tuples `{module, function, args}` in addition to anonymous functions. This enables lazy schemas to be stored in module attributes and used at compile time:
+
+  ```elixir
+  # MFA tuple, can be sued runtime and compiletime
+  @schema Zoi.lazy({MyModule, :user_schema, []})
+
+  # Anonymous function, can be used runtime but not compiletime (like module attributes)
+  Zoi.lazy(fn -> user_schema() end)
+  ```
+
 ## 0.16.0 - 2026-01-19
 
 ### Added
 
-- `Zoi.tagged_union/2` type for creating tagged/discriminated unions (#138)
+- `Zoi.discriminated_union/2` type for creating discriminated unions (#138)
 
 ### Changed
 
