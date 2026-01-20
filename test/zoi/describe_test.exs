@@ -139,6 +139,7 @@ defmodule Zoi.DescribeTest do
               ]
             ),
           lazy: Zoi.lazy(fn -> Zoi.string() end),
+          lazy_mfa: Zoi.lazy({__MODULE__, :mfa_string_schema, []}),
           codec:
             Zoi.codec(Zoi.string(), Zoi.integer(),
               decode: fn x -> x end,
@@ -213,6 +214,8 @@ defmodule Zoi.DescribeTest do
 
       * `:lazy` (`t:String.t/0`)
 
+      * `:lazy_mfa` (`t:String.t/0`)
+
       * `:codec` (`t:integer/0`)
       """
 
@@ -227,4 +230,6 @@ defmodule Zoi.DescribeTest do
                    end
     end
   end
+
+  def mfa_string_schema, do: Zoi.string()
 end

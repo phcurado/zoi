@@ -8,8 +8,8 @@ defmodule Zoi.Types.JSON do
         Zoi.null(),
         Zoi.number(),
         Zoi.boolean(),
-        Zoi.array(Zoi.lazy(fn -> Zoi.Types.JSON.new(opts) end)),
-        Zoi.map(Zoi.string(), Zoi.lazy(fn -> Zoi.Types.JSON.new(opts) end), [])
+        Zoi.array(Zoi.lazy({Zoi.Types.JSON, :new, [opts]})),
+        Zoi.map(Zoi.string(), Zoi.lazy({Zoi.Types.JSON, :new, [opts]}), [])
       ],
       opts
     )
