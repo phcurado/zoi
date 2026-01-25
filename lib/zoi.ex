@@ -436,7 +436,7 @@ defmodule Zoi do
       %{__errors__: ["invalid type: must be a string"]}
 
   Errors without a path are considered top-level errors and are grouped under `:__errors__`.
-  This is how `Zoi` also handles errors when `Zoi.map/2` is used with `:strict` option, where unrecognized keys are added to the `:__errors__` key.
+  This is how `Zoi` also handles errors when `Zoi.map/2` is used with `unrecognized_keys: :error` option, where unrecognized keys are added to the `:__errors__` key.
   """
   @doc group: "Parsing"
   @spec treefy_errors([Zoi.Error.t()]) :: map()
@@ -1488,9 +1488,9 @@ defmodule Zoi do
          }
        ]}
 
-  By default, unrecognized keys will be removed from the parsed data. If you want to not allow unrecognized keys, use the `:strict` option:
+  By default, unrecognized keys will be removed from the parsed data. If you want to reject unrecognized keys, use `unrecognized_keys: :error`:
 
-      iex> schema = Zoi.keyword([name: Zoi.string()], strict: true)
+      iex> schema = Zoi.keyword([name: Zoi.string()], unrecognized_keys: :error)
       iex> Zoi.parse(schema, [name: "Alice", age: 30])
       {:error,
        [
@@ -1703,9 +1703,9 @@ defmodule Zoi do
          }
        ]}
 
-  By default, unrecognized keys will be removed from the parsed data. Use `:strict` to reject them:
+  By default, unrecognized keys will be removed from the parsed data. Use `unrecognized_keys: :error` to reject them:
 
-      iex> schema = Zoi.map(%{name: Zoi.string()}, strict: true)
+      iex> schema = Zoi.map(%{name: Zoi.string()}, unrecognized_keys: :error)
       iex> Zoi.parse(schema, %{name: "Alice", age: 30})
       {:error,
        [

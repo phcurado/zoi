@@ -1572,6 +1572,63 @@ defmodule ZoiTest do
              ]
     end
 
+    test "map with strict false" do
+      schema =
+        Zoi.map(
+          %{name: Zoi.string(), age: Zoi.integer()},
+          strict: false
+        )
+
+      assert {:ok, %{name: "John", age: 30}} ==
+               Zoi.parse(schema, %{name: "John", age: 30, extra: "ignored"})
+    end
+
+    test "map with unrecognized_keys :strip" do
+      schema =
+        Zoi.map(
+          %{name: Zoi.string(), age: Zoi.integer()},
+          unrecognized_keys: :strip
+        )
+
+      assert {:ok, %{name: "John", age: 30}} ==
+               Zoi.parse(schema, %{name: "John", age: 30, extra: "ignored"})
+    end
+
+    test "map with unrecognized_keys :error" do
+      schema =
+        Zoi.map(
+          %{
+            name: Zoi.string(),
+            nested: Zoi.optional(Zoi.map(%{value: Zoi.string()}, unrecognized_keys: :error))
+          },
+          unrecognized_keys: :error
+        )
+
+      assert {:ok, %{name: "John"}} == Zoi.parse(schema, %{name: "John"})
+
+      assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
+               Zoi.parse(schema, %{name: "John", extra: "value", nested: %{value: "ok", bad: "x"}})
+
+      assert error1.code == :unrecognized_key
+      assert Exception.message(error1) == "unrecognized key: bad"
+      assert error1.path == [:nested]
+
+      assert error2.code == :unrecognized_key
+      assert Exception.message(error2) == "unrecognized key: extra"
+      assert error2.path == []
+    end
+
+    test "map with unrecognized_keys :preserve" do
+      schema =
+        Zoi.map(
+          %{name: Zoi.string(), age: Zoi.integer()},
+          unrecognized_keys: :preserve
+        )
+
+      assert {:ok, %{name: "John", age: 30, extra: "kept", another: 123}} ==
+               Zoi.parse(schema, %{name: "John", age: 30, extra: "kept", another: 123})
+    end
+
     test "map with string keys and input with atom keys" do
       schema = Zoi.map(%{"name" => Zoi.string(), "age" => Zoi.integer()})
 
@@ -1839,6 +1896,66 @@ defmodule ZoiTest do
              ]
     end
 
+    test "keyword with strict false" do
+      schema =
+        Zoi.keyword(
+          [name: Zoi.string(), age: Zoi.integer()],
+          strict: false
+        )
+
+      assert {:ok, [name: "John", age: 30]} ==
+               Zoi.parse(schema, name: "John", age: 30, extra: "ignored")
+    end
+
+    test "keyword with unrecognized_keys :strip" do
+      schema =
+        Zoi.keyword(
+          [name: Zoi.string(), age: Zoi.integer()],
+          unrecognized_keys: :strip
+        )
+
+      assert {:ok, [name: "John", age: 30]} ==
+               Zoi.parse(schema, name: "John", age: 30, extra: "ignored")
+    end
+
+    test "keyword with unrecognized_keys :error" do
+      schema =
+        Zoi.keyword(
+          [
+            name: Zoi.string(),
+            nested: Zoi.optional(Zoi.keyword([value: Zoi.string()], unrecognized_keys: :error))
+          ],
+          unrecognized_keys: :error
+        )
+
+      assert {:ok, [name: "John"]} == Zoi.parse(schema, name: "John")
+
+      assert {:error, [%Zoi.Error{} = error1, %Zoi.Error{} = error2]} =
+               Zoi.parse(schema, name: "John", extra: "value", nested: [value: "ok", bad: "x"])
+
+      assert error1.code == :unrecognized_key
+      assert Exception.message(error1) == "unrecognized key: bad"
+      assert error1.path == [:nested]
+
+      assert error2.code == :unrecognized_key
+      assert Exception.message(error2) == "unrecognized key: extra"
+      assert error2.path == []
+    end
+
+    test "keyword with unrecognized_keys :preserve" do
+      schema =
+        Zoi.keyword(
+          [name: Zoi.string(), age: Zoi.integer()],
+          unrecognized_keys: :preserve
+        )
+
+      assert {:ok, result} = Zoi.parse(schema, name: "John", age: 30, extra: "kept", another: 123)
+      assert result[:name] == "John"
+      assert result[:age] == 30
+      assert result[:extra] == "kept"
+      assert result[:another] == 123
+    end
+
     test "keyword with flexible keys" do
       schema = Zoi.keyword(Zoi.string())
       assert {:ok, []} == Zoi.parse(schema, [])
@@ -1935,6 +2052,18 @@ defmodule ZoiTest do
       assert schema.fields == nil
     end
 
+    test "struct without fields with strict false" do
+      schema = Zoi.struct(URI, strict: false)
+      assert schema.unrecognized_keys == :strip
+      assert schema.fields == nil
+    end
+
+    test "struct without fields with strict true" do
+      schema = Zoi.struct(URI, strict: true)
+      assert schema.unrecognized_keys == :error
+      assert schema.fields == nil
+    end
+
     test "struct not a map" do
       assert_raise ArgumentError, "struct must receive a map or nil", fn ->
         Zoi.struct(User, "not a map")
@@ -2015,6 +2144,76 @@ defmodule ZoiTest do
       assert_raise ArgumentError, "all keys in struct must be atoms", fn ->
         Zoi.struct(User, %{"name" => Zoi.string(), age: Zoi.integer()})
       end
+    end
+
+    test "struct with unrecognized_keys :preserve raises error" do
+      assert_raise ArgumentError,
+                   "unrecognized_keys: :preserve is not supported for structs",
+                   fn ->
+                     Zoi.struct(User, %{name: Zoi.string()}, unrecognized_keys: :preserve)
+                   end
+    end
+
+    test "struct with strict false" do
+      schema =
+        Zoi.struct(
+          User,
+          %{name: Zoi.string(), age: Zoi.integer()},
+          strict: false,
+          coerce: true
+        )
+
+      assert {:ok, %User{name: "John", age: 30}} ==
+               Zoi.parse(schema, %{name: "John", age: 30, extra: "ignored"})
+    end
+
+    test "struct with unrecognized_keys :strip" do
+      schema =
+        Zoi.struct(
+          User,
+          %{name: Zoi.string(), age: Zoi.integer()},
+          unrecognized_keys: :strip,
+          coerce: true
+        )
+
+      assert {:ok, %User{name: "John", age: 30}} ==
+               Zoi.parse(schema, %{name: "John", age: 30, extra: "ignored"})
+    end
+
+    test "struct with unrecognized_keys :error" do
+      schema =
+        Zoi.struct(
+          User,
+          %{name: Zoi.string(), age: Zoi.integer()},
+          unrecognized_keys: :error,
+          coerce: true
+        )
+
+      assert {:ok, %User{name: "John", age: 30}} ==
+               Zoi.parse(schema, %{name: "John", age: 30})
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{name: "John", age: 30, extra: "value"})
+
+      assert error.code == :unrecognized_key
+      assert Exception.message(error) == "unrecognized key: extra"
+      assert error.path == []
+    end
+
+    test "struct with coerce and invalid value" do
+      schema =
+        Zoi.struct(
+          User,
+          %{name: Zoi.string(), age: Zoi.integer()},
+          coerce: true
+        )
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{name: "John", age: "not an integer"})
+
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected integer"
+      assert error.path == [:age]
     end
   end
 

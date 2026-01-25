@@ -27,7 +27,7 @@ defmodule Zoi.Inspect do
   end
 
   defp type_common_fields(type) do
-    Enum.map([:coerce, :strict], &{&1, Map.get(type, &1)})
+    Enum.map([:coerce, :unrecognized_keys], &{&1, Map.get(type, &1)})
   end
 
   defp inspect_name(type) do

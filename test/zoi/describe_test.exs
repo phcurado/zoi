@@ -61,6 +61,21 @@ defmodule Zoi.DescribeTest do
       assert Zoi.describe(schema) == formatted_description
     end
 
+    test "describe for deprecated fields" do
+      schema =
+        Zoi.keyword(
+          old_name: Zoi.string(deprecated: "Use :new_name instead."),
+          new_name: Zoi.string(description: "The new name.")
+        )
+
+      result = Zoi.describe(schema)
+
+      assert result =~
+               "* `:old_name` (`t:String.t/0`) - *This option is deprecated. Use :new_name instead.*"
+
+      assert result =~ "* `:new_name` (`t:String.t/0`) - The new name."
+    end
+
     test "describe should raise for unsupported schemas" do
       schema = Zoi.array(Zoi.integer())
 

@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Struct do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:module, :fields, :strict, :coerce, empty_values: []]
+  use Zoi.Type.Def, fields: [:module, :fields, :unrecognized_keys, :coerce, empty_values: []]
 
   def opts() do
     Zoi.Opts.complex_type_opts()
@@ -9,18 +9,16 @@ defmodule Zoi.Types.Struct do
 
   def new(module, nil, opts) do
     opts =
-      Keyword.merge(
-        [strict: false, coerce: false],
-        opts
-      )
+      opts
+      |> resolve_unrecognized_keys()
+      |> Keyword.put_new(:coerce, false)
 
     apply_type(opts ++ [module: module, fields: nil])
   end
 
   def new(module, fields, opts) when is_map(fields) or is_list(fields) do
     fields =
-      fields
-      |> Enum.map(fn {key, type} ->
+      Enum.map(fields, fn {key, type} ->
         if type.meta.required == nil do
           {key, Zoi.required(type)}
         else
@@ -35,16 +33,31 @@ defmodule Zoi.Types.Struct do
     end
 
     opts =
-      Keyword.merge(
-        [strict: false, coerce: false],
-        opts
-      )
+      opts
+      |> resolve_unrecognized_keys()
+      |> Keyword.put_new(:coerce, false)
 
     apply_type(opts ++ [module: module, fields: fields])
   end
 
   def new(_module, _fields, _opts) do
     raise ArgumentError, "struct must receive a map or nil"
+  end
+
+  defp resolve_unrecognized_keys(opts) do
+    opts =
+      case {opts[:unrecognized_keys], opts[:strict]} do
+        {nil, nil} -> Keyword.put(opts, :unrecognized_keys, :strip)
+        {nil, true} -> opts |> Keyword.delete(:strict) |> Keyword.put(:unrecognized_keys, :error)
+        {nil, false} -> opts |> Keyword.delete(:strict) |> Keyword.put(:unrecognized_keys, :strip)
+        {_, _} -> Keyword.delete(opts, :strict)
+      end
+
+    if opts[:unrecognized_keys] == :preserve do
+      raise ArgumentError, "unrecognized_keys: :preserve is not supported for structs"
+    end
+
+    opts
   end
 
   defimpl Zoi.Type do

@@ -119,6 +119,7 @@ defmodule Zoi.Describe do
     description =
       schema
       |> check_required()
+      |> check_deprecated(schema)
       |> check_description(schema)
 
     if description == "" do
@@ -133,6 +134,13 @@ defmodule Zoi.Describe do
       "Required. "
     else
       ""
+    end
+  end
+
+  defp check_deprecated(str, schema) do
+    case Meta.deprecated(schema.meta) do
+      nil -> str
+      message -> str <> "*This option is deprecated. #{String.trim(message)}* "
     end
   end
 
