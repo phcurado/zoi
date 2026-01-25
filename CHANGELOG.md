@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- `unrecognized_keys` option for `Zoi.map/2`, `Zoi.keyword/2`, and `Zoi.struct/3` to control how unrecognized keys are handled:
+  - `:strip` (default) - removes unrecognized keys from the output
+  - `:error` - returns an error when unrecognized keys are present
+  - `:preserve` - keeps unrecognized keys in the output without validation (not available for structs)
+- `deprecated` option for schema fields to emit deprecation warnings when the field is used. `Zoi.describe/1` will also include the deprecation message in the generated documentation
+
+### Changed
+
+- `strict` option is now deprecated in favor of `unrecognized_keys`. Use `unrecognized_keys: :error` instead of `strict: true`
+
 ## 0.16.1 - 2026-01-20
 
 ### Added

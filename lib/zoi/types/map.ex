@@ -1,7 +1,8 @@
 defmodule Zoi.Types.Map do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:key_type, :value_type, :fields, :strict, :coerce, empty_values: []]
+  use Zoi.Type.Def,
+    fields: [:key_type, :value_type, :fields, :unrecognized_keys, :coerce, empty_values: []]
 
   alias Zoi.Types.Meta
 
@@ -20,10 +21,9 @@ defmodule Zoi.Types.Map do
       end)
 
     opts =
-      Keyword.merge(
-        [strict: false, coerce: false],
-        opts
-      )
+      opts
+      |> resolve_unrecognized_keys()
+      |> Keyword.put_new(:coerce, false)
 
     apply_type(opts ++ [fields: fields])
   end
@@ -34,16 +34,24 @@ defmodule Zoi.Types.Map do
 
   def new(key_type, value_type, opts) when is_struct(key_type) do
     opts =
-      Keyword.merge(
-        [strict: false, coerce: false],
-        opts
-      )
+      opts
+      |> resolve_unrecognized_keys()
+      |> Keyword.put_new(:coerce, false)
 
     apply_type(Keyword.merge(opts, key_type: key_type, value_type: value_type))
   end
 
   def new(_key_value, _value_type, _opts) do
     raise ArgumentError, "expected a map with valid key and type definitions"
+  end
+
+  defp resolve_unrecognized_keys(opts) do
+    case {opts[:unrecognized_keys], opts[:strict]} do
+      {nil, nil} -> Keyword.put(opts, :unrecognized_keys, :strip)
+      {nil, true} -> opts |> Keyword.delete(:strict) |> Keyword.put(:unrecognized_keys, :error)
+      {nil, false} -> opts |> Keyword.delete(:strict) |> Keyword.put(:unrecognized_keys, :strip)
+      {_, _} -> Keyword.delete(opts, :strict)
+    end
   end
 
   defimpl Zoi.Type do
@@ -167,7 +175,7 @@ defmodule Zoi.Types.Map do
           Enum.flat_map(fields, fn {k, v} ->
             if Meta.required?(v.meta), do: [k], else: []
           end),
-        additionalProperties: not schema.strict
+        additionalProperties: schema.unrecognized_keys != :error
       }
     end
 

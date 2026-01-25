@@ -24,7 +24,7 @@ defmodule Zoi.Types.StringBoolean do
             )
             |> Zoi.Types.Default.new(["false", "0", "no", "off", "n", "disabled"])
         ],
-        strict: true
+        unrecognized_keys: :error
       )
     )
   end

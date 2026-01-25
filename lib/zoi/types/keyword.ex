@@ -1,7 +1,7 @@
 defmodule Zoi.Types.Keyword do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:fields, :strict, :coerce, empty_values: []]
+  use Zoi.Type.Def, fields: [:fields, :unrecognized_keys, :coerce, empty_values: []]
 
   def opts() do
     Zoi.Opts.complex_type_opts()
@@ -9,16 +9,24 @@ defmodule Zoi.Types.Keyword do
 
   def new(fields, opts) when is_list(fields) or is_struct(fields) do
     opts =
-      Keyword.merge(
-        [strict: false, coerce: false],
-        opts
-      )
+      opts
+      |> resolve_unrecognized_keys()
+      |> Keyword.put_new(:coerce, false)
 
     apply_type(opts ++ [fields: fields])
   end
 
   def new(_fields, _opts) do
     raise ArgumentError, "keyword must receive a keyword list"
+  end
+
+  defp resolve_unrecognized_keys(opts) do
+    case {opts[:unrecognized_keys], opts[:strict]} do
+      {nil, nil} -> Keyword.put(opts, :unrecognized_keys, :strip)
+      {nil, true} -> opts |> Keyword.delete(:strict) |> Keyword.put(:unrecognized_keys, :error)
+      {nil, false} -> opts |> Keyword.delete(:strict) |> Keyword.put(:unrecognized_keys, :strip)
+      {_, _} -> Keyword.delete(opts, :strict)
+    end
   end
 
   defimpl Zoi.Type do

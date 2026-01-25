@@ -26,9 +26,9 @@ defmodule Zoi.InspectTest do
       {Zoi.intersection([Zoi.number(), Zoi.float()]),
        "#Zoi.intersection<schemas: [#Zoi.number<coerce: false>, #Zoi.float<coerce: false>]>"},
       {Zoi.keyword(Zoi.string()),
-       "#Zoi.keyword<coerce: false, strict: false, fields: #Zoi.string<coerce: false>>"},
+       "#Zoi.keyword<coerce: false, unrecognized_keys: :strip, fields: #Zoi.string<coerce: false>>"},
       {Zoi.keyword(name: Zoi.string(), age: Zoi.integer()),
-       "#Zoi.keyword<coerce: false, strict: false, fields: [name: #Zoi.string<coerce: false>, age: #Zoi.integer<coerce: false>]>"},
+       "#Zoi.keyword<coerce: false, unrecognized_keys: :strip, fields: [name: #Zoi.string<coerce: false>, age: #Zoi.integer<coerce: false>]>"},
       {Zoi.literal("hello"), "#Zoi.literal<value: \"hello\">"},
       {Zoi.map(Zoi.string(), Zoi.integer()),
        "#Zoi.map<key: #Zoi.string<coerce: false>, value: #Zoi.integer<coerce: false>>"},
@@ -41,17 +41,18 @@ defmodule Zoi.InspectTest do
        "#Zoi.union<required: false, schemas: [#Zoi.null<>, #Zoi.string<coerce: false>]>"},
       {Zoi.number(), "#Zoi.number<coerce: false>"},
       {Zoi.map(%{name: Zoi.string()}),
-       "#Zoi.map<coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>"},
+       "#Zoi.map<coerce: false, unrecognized_keys: :strip, fields: %{name: #Zoi.string<required: true, coerce: false>}>"},
       {Zoi.map(%{name: Zoi.string()}),
-       "#Zoi.map<coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>"},
+       "#Zoi.map<coerce: false, unrecognized_keys: :strip, fields: %{name: #Zoi.string<required: true, coerce: false>}>"},
       {Zoi.optional(Zoi.string()), "#Zoi.string<required: false, coerce: false>"},
       {Zoi.required(Zoi.string()), "#Zoi.string<required: true, coerce: false>"},
       {Zoi.string(coerce: true), "#Zoi.string<coerce: true>"},
       {Zoi.string_boolean(),
        "#Zoi.string_boolean<case: \"insensitive\", truthy: [\"true\", \"1\", \"yes\", \"on\", \"y\", \"enabled\"], falsy: [\"false\", \"0\", \"no\", \"off\", \"n\", \"disabled\"]>"},
-      {Zoi.struct(MyStruct), "#Zoi.struct<coerce: false, strict: false, module: MyStruct>"},
+      {Zoi.struct(MyStruct),
+       "#Zoi.struct<coerce: false, unrecognized_keys: :strip, module: MyStruct>"},
       {Zoi.struct(MyStruct, %{name: Zoi.string()}),
-       "#Zoi.struct<coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}, module: MyStruct>"},
+       "#Zoi.struct<coerce: false, unrecognized_keys: :strip, fields: %{name: #Zoi.string<required: true, coerce: false>}, module: MyStruct>"},
       {Zoi.time(), "#Zoi.time<coerce: false>"},
       {Zoi.tuple({Zoi.string(), Zoi.integer()}),
        "#Zoi.tuple<fields: {#Zoi.string<coerce: false>, #Zoi.integer<coerce: false>}>"},
@@ -99,8 +100,8 @@ defmodule Zoi.InspectTest do
       })
 
     expected =
-      "#Zoi.map<coerce: false, strict: false, fields: %{" <>
-        "nest: #Zoi.map<required: true, coerce: false, strict: false, fields: %{name: #Zoi.string<required: true, coerce: false>}>" <>
+      "#Zoi.map<coerce: false, unrecognized_keys: :strip, fields: %{" <>
+        "nest: #Zoi.map<required: true, coerce: false, unrecognized_keys: :strip, fields: %{name: #Zoi.string<required: true, coerce: false>}>" <>
         "}>"
 
     assert inspect(type) == expected

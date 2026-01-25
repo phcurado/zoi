@@ -12,7 +12,8 @@ defmodule Zoi.Types.Meta do
           description: binary() | nil,
           example: Zoi.input(),
           metadata: [keyword()],
-          typespec: Macro.t() | nil
+          typespec: Macro.t() | nil,
+          deprecated: binary() | nil
         }
 
   @struct_fields [
@@ -22,7 +23,8 @@ defmodule Zoi.Types.Meta do
     error: nil,
     description: nil,
     example: nil,
-    typespec: nil
+    typespec: nil,
+    deprecated: nil
   ]
   @struct_keys Keyword.keys(@struct_fields)
 
@@ -158,4 +160,7 @@ defmodule Zoi.Types.Meta do
   def optional?(%__MODULE__{} = meta) do
     not required?(meta)
   end
+
+  @spec deprecated(t()) :: binary() | nil
+  def deprecated(%__MODULE__{deprecated: deprecated}), do: deprecated
 end
