@@ -92,7 +92,7 @@ defmodule Zoi.Types.Tuple do
   defimpl Zoi.Describe.Encoder do
     def encode(%{fields: fields}) do
       types = Enum.map_join(fields, ", ", &Zoi.Describe.Encoder.encode/1)
-      "tuple of #{types} values"
+      "{#{types}}"
     end
   end
 end
