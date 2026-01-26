@@ -177,9 +177,9 @@ defmodule Zoi.DescribeTest do
 
       * `:decimal` (`t:Decimal.t/0`)
 
-      * `:enum` (one of `"A"`, `"B"`)
+      * `:enum` (`"A"` | `"B"`)
 
-      * `:enum_atom` (one of `:a`, `:b`)
+      * `:enum_atom` (`:a` | `:b`)
 
       * `:float` (`t:float/0`)
 
@@ -221,9 +221,9 @@ defmodule Zoi.DescribeTest do
 
       * `:time` (`t:Time.t/0`)
 
-      * `:tuple` (tuple of `t:integer/0`, `t:String.t/0` values)
+      * `:tuple` ({`t:integer/0`, `t:String.t/0`})
 
-      * `:union` (`t:integer/0` or `t:String.t/0`)
+      * `:union` (`t:integer/0` | `t:String.t/0`)
 
       * `:discriminated_union` (`t:map/0`)
 
@@ -243,6 +243,28 @@ defmodule Zoi.DescribeTest do
                    fn ->
                      Zoi.Describe.Encoder.encode(%{unsupported: true})
                    end
+    end
+
+    test "multi-line description is properly indented" do
+      schema =
+        Zoi.keyword(
+          option:
+            Zoi.string(
+              description: """
+              First line of description.
+              Second line here.
+              Third line too.
+              """
+            )
+        )
+
+      expected = """
+      * `:option` (`t:String.t/0`) - First line of description.
+        Second line here.
+        Third line too.
+      """
+
+      assert Zoi.describe(schema) == expected
     end
   end
 

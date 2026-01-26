@@ -109,6 +109,16 @@ defmodule Zoi.Types.KeyValue do
 
         :preserve ->
           {unknown_pairs ++ parsed, collected_errors}
+
+        {:preserve, {key_schema, value_schema}} ->
+          validate_preserve_schema(
+            unknown_pairs,
+            key_schema,
+            value_schema,
+            parsed,
+            collected_errors,
+            opts
+          )
       end
 
     if errors == [] do
@@ -175,6 +185,19 @@ defmodule Zoi.Types.KeyValue do
 
       message ->
         IO.warn("#{inspect(field_key)} is deprecated: #{message}", Macro.Env.stacktrace(__ENV__))
+    end
+  end
+
+  defp validate_preserve_schema(unknown_pairs, key_schema, value_schema, parsed, errors, opts) do
+    unknown_map = Map.new(unknown_pairs)
+    temp_schema = Zoi.map(key_schema, value_schema)
+
+    case Zoi.Type.parse(temp_schema, unknown_map, opts) do
+      {:ok, validated_map} ->
+        {Map.to_list(validated_map) ++ parsed, errors}
+
+      {:error, new_errors, _partial} ->
+        {parsed, Zoi.Errors.merge(errors, new_errors)}
     end
   end
 end

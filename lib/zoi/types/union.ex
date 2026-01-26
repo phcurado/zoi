@@ -73,7 +73,7 @@ defmodule Zoi.Types.Union do
 
   defimpl Zoi.Describe.Encoder do
     def encode(%{schemas: schemas}) do
-      Enum.map_join(schemas, " or ", &Zoi.Describe.Encoder.encode/1)
+      Enum.map_join(schemas, " | ", &Zoi.Describe.Encoder.encode/1)
     end
   end
 end

@@ -9,9 +9,22 @@ defmodule Zoi.Opts do
       Zoi.Types.Keyword.new(
         [
           unrecognized_keys:
-            Zoi.Types.Enum.new([:strip, :error, :preserve],
-              description:
-                "How to handle unrecognized keys: :strip (default) removes them, :error rejects them, :preserve keeps them."
+            Zoi.Types.Union.new(
+              [
+                Zoi.Types.Enum.new([:strip, :error, :preserve]),
+                Zoi.Types.Tuple.new(
+                  {Zoi.Types.Literal.new(:preserve, []),
+                   Zoi.Types.Tuple.new({Zoi.Types.Any.new(), Zoi.Types.Any.new()}, [])},
+                  []
+                )
+              ],
+              description: """
+              How to handle unrecognized keys:
+              - `:strip` (default) - removes unrecognized keys
+              - `:error` - returns error on unrecognized keys
+              - `:preserve` - keeps unrecognized keys as-is
+              - `{:preserve, {key_schema, value_schema}}` - preserves and validates both keys and values
+              """
             ),
           strict:
             Zoi.Types.Boolean.new(

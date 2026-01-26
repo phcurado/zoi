@@ -151,7 +151,17 @@ defmodule Zoi.Describe do
   defp check_description(str, schema) do
     case schema.meta.description do
       nil -> str
-      description -> str <> description
+      description -> str <> indent_doc(description)
+    end
+  end
+
+  defp indent_doc(text) do
+    text
+    |> String.trim_trailing()
+    |> String.split("\n")
+    |> case do
+      [single_line] -> single_line
+      [head | tail] -> Enum.join([head | Enum.map(tail, &("  " <> &1))], "\n")
     end
   end
 end

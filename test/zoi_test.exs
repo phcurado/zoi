@@ -1629,6 +1629,40 @@ defmodule ZoiTest do
                Zoi.parse(schema, %{name: "John", age: 30, extra: "kept", another: 123})
     end
 
+    test "map with unrecognized_keys {:preserve, {key_schema, value_schema}} validates unknown values" do
+      schema =
+        Zoi.map(
+          %{name: Zoi.string()},
+          unrecognized_keys: {:preserve, {Zoi.any(), Zoi.integer()}}
+        )
+
+      assert {:ok, %{name: "John", extra: 123, another: 456}} ==
+               Zoi.parse(schema, %{name: "John", extra: 123, another: 456})
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{name: "John", extra: "not an integer"})
+
+      assert error.code == :invalid_type
+      assert error.path == [:extra]
+    end
+
+    test "map with unrecognized_keys {:preserve, {key_schema, value_schema}} validates both" do
+      schema =
+        Zoi.map(
+          %{"name" => Zoi.string()},
+          unrecognized_keys: {:preserve, {Zoi.string(), Zoi.integer()}}
+        )
+
+      assert {:ok, %{"name" => "John", "extra" => 123}} ==
+               Zoi.parse(schema, %{"name" => "John", "extra" => 123})
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, %{"name" => "John", 123 => 456})
+
+      assert error.code == :invalid_type
+      assert Exception.message(error) =~ "expected string"
+    end
+
     test "map with string keys and input with atom keys" do
       schema = Zoi.map(%{"name" => Zoi.string(), "age" => Zoi.integer()})
 
@@ -1956,6 +1990,25 @@ defmodule ZoiTest do
       assert result[:another] == 123
     end
 
+    test "keyword with unrecognized_keys {:preserve, {key_schema, value_schema}} validates unknown values" do
+      schema =
+        Zoi.keyword(
+          [name: Zoi.string()],
+          unrecognized_keys: {:preserve, {Zoi.any(), Zoi.integer()}}
+        )
+
+      assert {:ok, result} = Zoi.parse(schema, name: "John", extra: 123, another: 456)
+      assert result[:name] == "John"
+      assert result[:extra] == 123
+      assert result[:another] == 456
+
+      assert {:error, [%Zoi.Error{} = error]} =
+               Zoi.parse(schema, name: "John", extra: "not an integer")
+
+      assert error.code == :invalid_type
+      assert error.path == [:extra]
+    end
+
     test "keyword with flexible keys" do
       schema = Zoi.keyword(Zoi.string())
       assert {:ok, []} == Zoi.parse(schema, [])
@@ -2151,6 +2204,16 @@ defmodule ZoiTest do
                    "unrecognized_keys: :preserve is not supported for structs",
                    fn ->
                      Zoi.struct(User, %{name: Zoi.string()}, unrecognized_keys: :preserve)
+                   end
+    end
+
+    test "struct with unrecognized_keys {:preserve, {key_schema, value_schema}} raises error" do
+      assert_raise ArgumentError,
+                   "unrecognized_keys: {:preserve, schema} is not supported for structs",
+                   fn ->
+                     Zoi.struct(User, %{name: Zoi.string()},
+                       unrecognized_keys: {:preserve, {Zoi.any(), Zoi.integer()}}
+                     )
                    end
     end
 

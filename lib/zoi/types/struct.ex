@@ -53,8 +53,15 @@ defmodule Zoi.Types.Struct do
         {_, _} -> Keyword.delete(opts, :strict)
       end
 
-    if opts[:unrecognized_keys] == :preserve do
-      raise ArgumentError, "unrecognized_keys: :preserve is not supported for structs"
+    case opts[:unrecognized_keys] do
+      :preserve ->
+        raise ArgumentError, "unrecognized_keys: :preserve is not supported for structs"
+
+      {:preserve, _} ->
+        raise ArgumentError, "unrecognized_keys: {:preserve, schema} is not supported for structs"
+
+      _ ->
+        :ok
     end
 
     opts
