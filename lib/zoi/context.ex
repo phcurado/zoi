@@ -37,6 +37,8 @@ defmodule Zoi.Context do
   @doc false
   @spec parse(t(), opts :: Zoi.options()) :: t()
   def parse(%__MODULE__{} = ctx, opts \\ []) do
+    maybe_warn_deprecated(ctx.schema, ctx.path)
+
     with {:ok, ctx} <- parse_type(ctx, opts),
          {:ok, ctx} <- run_effects(ctx) do
       %{ctx | valid?: true}
@@ -44,6 +46,24 @@ defmodule Zoi.Context do
       {:error, ctx} -> ctx
     end
   end
+
+  defp maybe_warn_deprecated(%Zoi.Types.Default{inner: inner}, path) do
+    maybe_warn_deprecated(inner, path)
+  end
+
+  defp maybe_warn_deprecated(schema, path) do
+    case Meta.deprecated(schema.meta) do
+      nil ->
+        :ok
+
+      message ->
+        field_name = format_path(path)
+        IO.warn("#{field_name} is deprecated: #{message}", Macro.Env.stacktrace(__ENV__))
+    end
+  end
+
+  defp format_path([]), do: "schema"
+  defp format_path(path), do: inspect(List.last(path))
 
   defp parse_type(ctx, opts) do
     case Zoi.Type.parse(ctx.schema, ctx.input, opts) do

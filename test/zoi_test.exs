@@ -4735,4 +4735,24 @@ defmodule ZoiTest do
       end
     end
   end
+
+  describe "deprecated option" do
+    import ExUnit.CaptureIO
+
+    test "top-level schema deprecation emits warning" do
+      schema = Zoi.string(deprecated: "use integer instead")
+
+      warning = capture_io(:stderr, fn -> Zoi.parse(schema, "hello") end)
+
+      assert warning =~ "schema is deprecated: use integer instead"
+    end
+
+    test "map field deprecation emits warning with field name" do
+      schema = Zoi.map(%{old_field: Zoi.string(deprecated: "use new_field instead")})
+
+      warning = capture_io(:stderr, fn -> Zoi.parse(schema, %{old_field: "value"}) end)
+
+      assert warning =~ ":old_field is deprecated: use new_field instead"
+    end
+  end
 end
