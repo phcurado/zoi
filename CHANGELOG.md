@@ -6,17 +6,18 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `unrecognized_keys` option for `Zoi.map/2`, `Zoi.keyword/2`, and `Zoi.struct/3` to control how unrecognized keys are handled:
+- `unrecognized_keys` option for `Zoi.map/2`, `Zoi.object/2`, `Zoi.keyword/2`, and `Zoi.struct/3` to control how unrecognized keys are handled:
   - `:strip` (default) - removes unrecognized keys from the output
   - `:error` - returns an error when unrecognized keys are present
   - `:preserve` - keeps unrecognized keys in the output without validation (not available for structs)
   - `{:preserve, {key_schema, value_schema}}` - preserves unrecognized keys and validates them against the given schemas (not available for structs)
-- `deprecated` option for schema fields to emit deprecation warnings when the field is used. `Zoi.describe/1` will also include the deprecation message in the generated documentation
+- `deprecated` option for all schema types to emit deprecation warnings during parsing. `Zoi.describe/1` will also include the deprecation message in the generated documentation
 - Multi-line description support in `Zoi.describe/1` with proper indentation
 
 ### Changed
 
 - `strict` option is now deprecated in favor of `unrecognized_keys`. Use `unrecognized_keys: :error` instead of `strict: true`
+- `Zoi.extend/3` now uses options from schema1 instead of merging options from both schemas
 - Improved `Zoi.Describe.Encoder` output format:
   - Enum now uses `|` separator instead of "one of"
   - Union now uses `|` separator instead of "or"

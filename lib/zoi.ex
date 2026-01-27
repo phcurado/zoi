@@ -1627,6 +1627,7 @@ defmodule Zoi do
   @doc """
   Extends two map type schemas into one.
   This function merges the fields of two map schemas. If there are overlapping fields, the fields from the second schema will override those from the first.
+  Options are inherited from schema1.
 
   ## Example
       iex> user = Zoi.map(%{name: Zoi.string()})

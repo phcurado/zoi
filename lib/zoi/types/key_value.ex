@@ -70,8 +70,6 @@ defmodule Zoi.Types.KeyValue do
             handle_missing_field(field_schema, field_key, parsed, errors)
 
           {:ok, raw_value} ->
-            maybe_warn_deprecated(field_schema, field_key)
-
             if raw_value in empty_values do
               handle_missing_field(field_schema, field_key, parsed, errors)
             else
@@ -175,18 +173,6 @@ defmodule Zoi.Types.KeyValue do
 
   defp default?(%Zoi.Types.Default{}), do: true
   defp default?(_), do: false
-
-  defp maybe_warn_deprecated(field_schema, field_key) do
-    alias Zoi.Types.Meta
-
-    case Meta.deprecated(field_schema.meta) do
-      nil ->
-        :ok
-
-      message ->
-        IO.warn("#{inspect(field_key)} is deprecated: #{message}", Macro.Env.stacktrace(__ENV__))
-    end
-  end
 
   defp validate_preserve_schema(unknown_pairs, key_schema, value_schema, parsed, errors, opts) do
     unknown_map = Map.new(unknown_pairs)

@@ -5,18 +5,16 @@ defmodule Zoi.Types.Extend do
 
   def new(
         %Zoi.Types.Map{fields: fields1} = schema1,
-        %Zoi.Types.Map{fields: fields2} = schema2,
+        %Zoi.Types.Map{fields: fields2},
         _opts
       )
       when is_list(fields1) and is_list(fields2) do
     fields = Keyword.merge(fields1, fields2)
-    coerce = schema1.coerce || schema2.coerce
-    empty_values = schema1.empty_values || schema2.empty_values
 
     Zoi.Types.Map.new(Map.new(fields),
       unrecognized_keys: schema1.unrecognized_keys,
-      coerce: coerce,
-      empty_values: empty_values
+      coerce: schema1.coerce,
+      empty_values: schema1.empty_values
     )
   end
 
@@ -33,13 +31,11 @@ defmodule Zoi.Types.Extend do
 
   def new(%Zoi.Types.Keyword{} = schema1, %Zoi.Types.Keyword{} = schema2, _opts) do
     fields = Keyword.merge(schema1.fields, schema2.fields)
-    coerce = schema1.coerce || schema2.coerce
-    empty_values = schema1.empty_values || schema2.empty_values
 
     Zoi.Types.Keyword.new(fields,
       unrecognized_keys: schema1.unrecognized_keys,
-      coerce: coerce,
-      empty_values: empty_values
+      coerce: schema1.coerce,
+      empty_values: schema1.empty_values
     )
   end
 

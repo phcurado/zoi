@@ -137,6 +137,10 @@ defmodule Zoi.Describe do
     end
   end
 
+  defp check_deprecated(str, %Zoi.Types.Default{inner: inner}) do
+    check_deprecated(str, inner)
+  end
+
   defp check_deprecated(str, schema) do
     case Meta.deprecated(schema.meta) do
       nil -> str
