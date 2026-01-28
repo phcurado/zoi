@@ -58,7 +58,7 @@ defmodule Zoi.Context do
 
       message ->
         field_name = format_path(path)
-        IO.warn("#{field_name} is deprecated: #{message}", Macro.Env.stacktrace(__ENV__))
+        IO.warn("#{field_name} is deprecated: #{message}")
     end
   end
 
