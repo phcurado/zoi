@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
   - `:preserve` - keeps unrecognized keys in the output without validation (not available for structs)
   - `{:preserve, {key_schema, value_schema}}` - preserves unrecognized keys and validates them against the given schemas (not available for structs)
 - `deprecated` option for all schema types to emit deprecation warnings during parsing. `Zoi.describe/1` will also include the deprecation message in the generated documentation
+- `Zoi.to_json_schema/1` now emits `deprecated: true` when a schema is marked as deprecated
 - Multi-line description support in `Zoi.describe/1` with proper indentation
 
 ### Changed

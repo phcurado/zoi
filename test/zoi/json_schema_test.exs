@@ -474,6 +474,17 @@ defmodule Zoi.JSONSchemaTest do
       assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
 
+    test "parse schema deprecated" do
+      schema = Zoi.string(deprecated: "Use another field")
+
+      expected = %{
+        type: :string,
+        deprecated: true
+      }
+
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
+    end
+
     test "prioritize direct options over metadata" do
       schema =
         Zoi.string(
