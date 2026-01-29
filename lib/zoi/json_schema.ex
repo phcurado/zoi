@@ -44,7 +44,8 @@ defmodule Zoi.JSONSchema do
     - `Zoi.time/0` and `Zoi.ISO.time/0`
 
   ## Metadata
-  `Zoi.to_json_schema/1` can also incorporate `description` and `example` metadata into the resulting JSON Schema:
+  `Zoi.to_json_schema/1` can also incorporate `description`, `example`, and `deprecated` metadata
+  into the resulting JSON Schema:
 
   ```elixir
   iex> schema = Zoi.string(description: "A simple string", example: "Hello, World!")
@@ -54,6 +55,19 @@ defmodule Zoi.JSONSchema do
     type: :string,
     description: "A simple string",
     example: "Hello, World!"
+  }
+  ```
+
+  When a schema is marked as deprecated, the generated JSON Schema will include
+  `deprecated: true` (the deprecation message itself is not part of JSON Schema):
+
+  ```elixir
+  iex> schema = Zoi.string(deprecated: "Use another field")
+  iex> Zoi.to_json_schema(schema)
+  %{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    type: :string,
+    deprecated: true
   }
   ```
 
@@ -70,6 +84,7 @@ defmodule Zoi.JSONSchema do
   """
 
   alias Zoi.JSONSchema.Encoder
+  alias Zoi.Types.Meta
 
   @draft "https://json-schema.org/draft/2020-12/schema"
 
@@ -236,6 +251,7 @@ defmodule Zoi.JSONSchema do
       json_schema
       |> maybe_add_metadata(:description, Zoi.description(zoi_schema))
       |> maybe_add_metadata(:example, Zoi.example(zoi_schema))
+      |> maybe_add_deprecated(zoi_schema.meta)
 
     Enum.reduce(Zoi.metadata(zoi_schema), json_schema, fn
       {:description, description}, acc ->
@@ -252,6 +268,14 @@ defmodule Zoi.JSONSchema do
   defp maybe_add_metadata(json_schema, key, value) do
     if value do
       Map.put(json_schema, key, value)
+    else
+      json_schema
+    end
+  end
+
+  defp maybe_add_deprecated(json_schema, meta) do
+    if Meta.deprecated?(meta) do
+      Map.put_new(json_schema, :deprecated, true)
     else
       json_schema
     end

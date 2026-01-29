@@ -163,4 +163,9 @@ defmodule Zoi.Types.Meta do
 
   @spec deprecated(t()) :: binary() | nil
   def deprecated(%__MODULE__{deprecated: deprecated}), do: deprecated
+
+  @spec deprecated?(t()) :: boolean()
+  def deprecated?(%__MODULE__{deprecated: deprecated}) do
+    deprecated not in [nil, false]
+  end
 end
