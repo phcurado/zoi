@@ -9,7 +9,7 @@ Add `zoi` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:zoi, "~> 0.16"}
+    {:zoi, "~> 0.17"}
   ]
 end
 ```

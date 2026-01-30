@@ -21,7 +21,7 @@ Add `zoi` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:zoi, "~> 0.16"}
+    {:zoi, "~> 0.17"}
   ]
 end
 ```
@@ -236,10 +236,11 @@ socket |> assign(:form, form)
 
 ### Metadata
 
-`Zoi` supports 3 types of metadata:
+`Zoi` supports 4 types of metadata:
 
 - `description`: Description of the schema.
 - `example`: An example value that conforms to the schema.
+- `deprecated`: Mark the schema as deprecated, it will emit a warning when parsing.
 - `metadata`: A keyword list of arbitrary metadata.
 
 You can use in all types, for example:
@@ -261,6 +262,7 @@ defmodule MyApp.UserSchema do
   @schema Zoi.map(
             %{
             name: Zoi.string(description: "The user first name") |> Zoi.min(2) |> Zoi.max(100),
+            first_name: Zoi.string(deprecated: "Please use `name` instead"),
             age: Zoi.integer(description: "The user age") |> Zoi.optional()
             },
             description: "A user schema with name and optional age",
