@@ -4481,7 +4481,13 @@ defmodule ZoiTest do
         Zoi.string_boolean(description: "description"),
         Zoi.time(description: "description"),
         Zoi.tuple({Zoi.string(), Zoi.integer(), Zoi.any()}, description: "description"),
-        Zoi.union([Zoi.integer(), Zoi.float()], description: "description")
+        Zoi.union([Zoi.integer(), Zoi.float()], description: "description"),
+        Zoi.email(description: "description"),
+        Zoi.url(description: "description"),
+        Zoi.uuid(description: "description"),
+        Zoi.ipv4(description: "description"),
+        Zoi.ipv6(description: "description"),
+        Zoi.hex(description: "description")
       ]
 
       Enum.each(types, fn schema ->
@@ -4526,7 +4532,13 @@ defmodule ZoiTest do
         ),
         Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()},
           example: %User{name: "example", age: 123}
-        )
+        ),
+        Zoi.email(example: "test@test.com"),
+        Zoi.url(example: "https://example.com"),
+        Zoi.uuid(example: "550e8400-e29b-41d4-a716-446655440000"),
+        Zoi.ipv4(example: "127.0.0.1"),
+        Zoi.ipv6(example: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+        Zoi.hex(example: "a3c113")
       ]
 
       Enum.each(types, fn schema ->

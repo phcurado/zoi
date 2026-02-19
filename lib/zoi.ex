@@ -2321,10 +2321,10 @@ defmodule Zoi do
   @doc group: "Formats"
   @spec email(opts :: options()) :: schema()
   def email(opts \\ []) do
-    regex = Keyword.get(opts, :pattern, Regexes.email())
+    {pattern, opts} = Keyword.pop(opts, :pattern, Regexes.email())
 
-    Zoi.string()
-    |> regex(regex,
+    Zoi.string(opts)
+    |> regex(pattern,
       format: :email,
       error: opts[:error],
       internal_message: "invalid email format"
@@ -2351,8 +2351,10 @@ defmodule Zoi do
   @doc group: "Formats"
   @spec uuid(opts :: options()) :: schema()
   def uuid(opts \\ []) do
-    Zoi.string()
-    |> regex(Regexes.uuid(opts),
+    {version, opts} = Keyword.pop(opts, :version)
+
+    Zoi.string(opts)
+    |> regex(Regexes.uuid(version: version),
       error: opts[:error],
       internal_message: "invalid UUID format"
     )
@@ -2373,7 +2375,7 @@ defmodule Zoi do
   @doc group: "Formats"
   @spec url(opts :: options()) :: schema()
   def url(opts \\ []) do
-    Zoi.string()
+    Zoi.string(opts)
     |> refine({Zoi.Validations.Url, :validate, [opts]})
   end
 
@@ -2389,7 +2391,7 @@ defmodule Zoi do
   @doc group: "Formats"
   @spec ipv4(opts :: options()) :: schema()
   def ipv4(opts \\ []) do
-    Zoi.string()
+    Zoi.string(opts)
     |> regex(Regexes.ipv4(),
       error: opts[:error],
       internal_message: "invalid IPv4 address"
@@ -2408,7 +2410,7 @@ defmodule Zoi do
   @doc group: "Formats"
   @spec ipv6(opts :: options()) :: schema()
   def ipv6(opts \\ []) do
-    Zoi.string()
+    Zoi.string(opts)
     |> regex(Regexes.ipv6(),
       error: opts[:error],
       internal_message: "invalid IPv6 address"
@@ -2427,7 +2429,7 @@ defmodule Zoi do
   @doc group: "Formats"
   @spec hex(opts :: options()) :: schema()
   def hex(opts \\ []) do
-    Zoi.string()
+    Zoi.string(opts)
     |> regex(Regexes.hex(),
       error: opts[:error],
       internal_message: "invalid hex format"
