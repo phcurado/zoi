@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.17.1 - 2026-02-19
+
+### Changed
+
+- `Zoi.email/1` now forwards `description`, `example`, `metadata` and `deprecated` options to the underlying string schema
+- `Zoi.url/1` now forwards `description`, `example`, `metadata` and `deprecated` options to the underlying string schema
+- `Zoi.uuid/1` now forwards `description`, `example`, `metadata` and `deprecated` options to the underlying string schema
+- `Zoi.ipv4/1` now forwards `description`, `example`, `metadata` and `deprecated` options to the underlying string schema
+- `Zoi.ipv6/1` now forwards `description`, `example`, `metadata` and `deprecated` options to the underlying string schema
+- `Zoi.hex/1` now forwards `description`, `example`, `metadata` and `deprecated` options to the underlying string schema
+
 ## 0.17.0 - 2026-01-30
 
 ### Added
