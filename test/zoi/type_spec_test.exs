@@ -235,6 +235,32 @@ defmodule Zoi.TypeSpecTest do
     assert left == right
   end
 
+  test "struct typespec does not duplicate nil for already nilable fields" do
+    schema =
+      Zoi.struct(User, %{
+        name: Zoi.string(),
+        age: Zoi.nullish(Zoi.integer())
+      })
+
+    left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
+
+    right =
+      quote(do: %User{age: nil | integer(), name: binary()})
+      |> normalize_map_or_struct_ast()
+
+    assert left == right
+  end
+
+  test "nil default typespec is nilable" do
+    schema = Zoi.default(Zoi.integer(), nil)
+    assert Zoi.type_spec(schema) == quote(do: nil | integer())
+  end
+
+  test "nil default typespec does not duplicate nil" do
+    schema = Zoi.default(Zoi.nullish(Zoi.integer()), nil)
+    assert Zoi.type_spec(schema) == quote(do: nil | integer())
+  end
+
   defp normalize_map_or_struct_ast(ast) do
     Macro.postwalk(ast, fn
       {:%{}, meta, pairs} when is_list(pairs) ->
