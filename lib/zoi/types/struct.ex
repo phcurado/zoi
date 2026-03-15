@@ -98,6 +98,8 @@ defmodule Zoi.Types.Struct do
   end
 
   defimpl Zoi.TypeSpec do
+    alias Zoi.Types.Meta
+
     def spec(%Zoi.Types.Struct{module: module, fields: nil}, _opts) do
       quote(do: %unquote(module){})
     end
@@ -107,8 +109,11 @@ defmodule Zoi.Types.Struct do
       |> Enum.map(fn {key, type} ->
         {key, Zoi.TypeSpec.spec(type, opts), type}
       end)
-      |> Enum.map(fn {key, type_spec, _type} ->
-        quote do: {unquote(key), unquote(type_spec)}
+      |> Enum.map(fn {key, type_spec, type} ->
+        case Meta.required?(type.meta) do
+          true -> quote do: {unquote(key), unquote(type_spec)}
+          _ -> quote do: {unquote(key), nil | unquote(type_spec)}
+        end
       end)
       |> then(&quote(do: %unquote(module){unquote_splicing(&1)}))
     end

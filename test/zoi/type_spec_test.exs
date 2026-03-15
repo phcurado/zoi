@@ -203,6 +203,38 @@ defmodule Zoi.TypeSpecTest do
     end
   end
 
+  test "struct typespec makes optional fields nilable" do
+    schema =
+      Zoi.struct(User, %{
+        name: Zoi.string(),
+        age: Zoi.optional(Zoi.integer())
+      })
+
+    left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
+
+    right =
+      quote(do: %User{age: nil | integer(), name: binary()})
+      |> normalize_map_or_struct_ast()
+
+    assert left == right
+  end
+
+  test "struct typespec with nil default is nilable" do
+    schema =
+      Zoi.struct(User, %{
+        name: Zoi.string(),
+        age: Zoi.default(Zoi.optional(Zoi.integer()), nil)
+      })
+
+    left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
+
+    right =
+      quote(do: %User{age: nil | integer(), name: binary()})
+      |> normalize_map_or_struct_ast()
+
+    assert left == right
+  end
+
   defp normalize_map_or_struct_ast(ast) do
     Macro.postwalk(ast, fn
       {:%{}, meta, pairs} when is_list(pairs) ->
