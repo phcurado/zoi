@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `Zoi.type_spec/1` for `Zoi.struct/3` now resolves optional fields as nilable
+- `Zoi.type_spec/1` for `Zoi.struct/3` now resolves optional fields as `nil`
 - `Zoi.type_spec/1` for `Zoi.default/3` with `nil` value now resolves as nilable
 
 ## 0.17.1 - 2026-02-19
