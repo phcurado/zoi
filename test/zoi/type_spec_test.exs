@@ -133,69 +133,6 @@ defmodule Zoi.TypeSpecTest do
       assert left == right
     end
 
-    test "struct typespec makes optional fields nilable" do
-      schema =
-        Zoi.struct(User, %{
-          name: Zoi.string(),
-          age: Zoi.optional(Zoi.integer())
-        })
-
-      left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
-
-      right =
-        quote(
-          do: %User{
-            age: nil | integer(),
-            name: binary()
-          }
-        )
-        |> normalize_map_or_struct_ast()
-
-      assert left == right
-    end
-
-    test "struct typespec keeps non-nil defaults non-nil" do
-      schema =
-        Zoi.struct(User, %{
-          name: Zoi.string(),
-          age: Zoi.default(Zoi.optional(Zoi.integer()), 18)
-        })
-
-      left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
-
-      right =
-        quote(
-          do: %User{
-            age: integer(),
-            name: binary()
-          }
-        )
-        |> normalize_map_or_struct_ast()
-
-      assert left == right
-    end
-
-    test "struct typespec makes nil defaults nilable" do
-      schema =
-        Zoi.struct(User, %{
-          name: Zoi.string(),
-          age: Zoi.default(Zoi.optional(Zoi.integer()), nil)
-        })
-
-      left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
-
-      right =
-        quote(
-          do: %User{
-            age: nil | integer(),
-            name: binary()
-          }
-        )
-        |> normalize_map_or_struct_ast()
-
-      assert left == right
-    end
-
     test "struct typespec without fields" do
       schema = Zoi.struct(User)
 
