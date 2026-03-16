@@ -108,7 +108,7 @@ defmodule Zoi.Types.Struct do
       fields
       |> Enum.map(fn {key, type} ->
         type = maybe_nil(type)
-        type_spec = Zoi.type_spec(type, opts)
+        type_spec = Zoi.TypeSpec.spec(type, opts)
         quote do: {unquote(key), unquote(type_spec)}
       end)
       |> then(&quote(do: %unquote(module){unquote_splicing(&1)}))

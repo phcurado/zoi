@@ -109,7 +109,7 @@ defmodule Zoi.Types.Map do
     def spec(%Zoi.Types.Map{fields: fields}, opts) when is_list(fields) do
       fields
       |> Enum.map(fn {key, type} ->
-        {key, Zoi.type_spec(type, opts), type}
+        {key, Zoi.TypeSpec.spec(type, opts), type}
       end)
       |> Enum.map(fn {key, type_spec, type} ->
         case Meta.required?(type.meta) do
@@ -122,8 +122,8 @@ defmodule Zoi.Types.Map do
 
     def spec(%Zoi.Types.Map{key_type: key_type, value_type: value_type}, opts)
         when is_struct(key_type) do
-      key_spec = Zoi.type_spec(key_type, opts)
-      value_spec = Zoi.type_spec(value_type, opts)
+      key_spec = Zoi.TypeSpec.spec(key_type, opts)
+      value_spec = Zoi.TypeSpec.spec(value_type, opts)
 
       # If key and value are any type, we use map() (any map)
       if key_type == Zoi.any() and value_type == Zoi.any() do

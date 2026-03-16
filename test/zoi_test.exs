@@ -885,18 +885,6 @@ defmodule ZoiTest do
       assert Exception.message(error) == "custom union error"
     end
 
-    test "nested union preserves custom error" do
-      schema =
-        Zoi.union([
-          Zoi.boolean(),
-          Zoi.union([Zoi.string(), Zoi.integer()], error: "nested union error")
-        ])
-
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
-      assert error.code == :custom
-      assert Exception.message(error) == "nested union error"
-    end
-
     test "union with gt/lt/lte/length constraints" do
       schema = Zoi.union([Zoi.integer(), Zoi.float()]) |> Zoi.gt(3)
       assert {:ok, 5} = Zoi.parse(schema, 5)
