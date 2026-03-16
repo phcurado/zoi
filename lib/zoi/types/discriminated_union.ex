@@ -108,7 +108,7 @@ defmodule Zoi.Types.DiscriminatedUnion do
       values
       |> Enum.reverse()
       |> Enum.map(&Map.get(schemas, &1))
-      |> Enum.map(&Zoi.TypeSpec.spec(&1, opts))
+      |> Enum.map(&Zoi.type_spec(&1, opts))
       |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
     end
   end
