@@ -33,20 +33,9 @@ defmodule Zoi.Types.Union do
     raise ArgumentError, "Union type must receive a list of minimum 2 schemas"
   end
 
-  defp flattenable_union?(%__MODULE__{
-         meta: %Zoi.Types.Meta{
-           effects: [],
-           metadata: [],
-           error: nil,
-           description: nil,
-           example: nil,
-           typespec: nil,
-           deprecated: nil
-         }
-       }),
-       do: true
-
-  defp flattenable_union?(_), do: false
+  defp flattenable_union?(%__MODULE__{meta: meta}) do
+    %{meta | required: nil} == %Zoi.Types.Meta{}
+  end
 
   defimpl Zoi.Type do
     def parse(%Zoi.Types.Union{schemas: schemas} = union, value, opts) do
