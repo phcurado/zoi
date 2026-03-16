@@ -85,7 +85,7 @@ defmodule Zoi.Types.Keyword do
           fields
           |> Enum.map(fn {key, type} ->
             quote do
-              {unquote(key), unquote(Zoi.TypeSpec.spec(type, opts))}
+              {unquote(key), unquote(Zoi.type_spec(type, opts))}
             end
           end)
       end
@@ -93,7 +93,7 @@ defmodule Zoi.Types.Keyword do
 
     def spec(%Zoi.Types.Keyword{fields: schema}, opts) when is_struct(schema) do
       quote do
-        [{atom(), unquote(Zoi.TypeSpec.spec(schema, opts))}]
+        [{atom(), unquote(Zoi.type_spec(schema, opts))}]
       end
     end
   end

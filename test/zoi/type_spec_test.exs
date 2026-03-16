@@ -81,6 +81,18 @@ defmodule Zoi.TypeSpecTest do
       assert Zoi.type_spec(schema) == quote(do: [{atom(), binary()}])
     end
 
+    test "keyword typespec preserves nested custom field typespec" do
+      schema = Zoi.keyword(age: Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer())))
+
+      assert Zoi.type_spec(schema) == quote(do: [age: non_neg_integer()])
+    end
+
+    test "generic keyword typespec preserves nested custom typespec" do
+      schema = Zoi.keyword(Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer())))
+
+      assert Zoi.type_spec(schema) == quote(do: [{atom(), non_neg_integer()}])
+    end
+
     test "object typespec" do
       schema =
         Zoi.map(%{
@@ -110,6 +122,27 @@ defmodule Zoi.TypeSpecTest do
         })
 
       assert Zoi.type_spec(schema) == quote(do: map())
+    end
+
+    test "object typespec preserves nested custom field typespec" do
+      schema =
+        Zoi.map(%{
+          age: Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer()))
+        })
+
+      assert Zoi.type_spec(schema) |> normalize_map_or_struct_ast() ==
+               quote(do: %{required(:age) => non_neg_integer()})
+               |> normalize_map_or_struct_ast()
+    end
+
+    test "typed map typespec preserves nested key and value custom typespecs" do
+      schema =
+        Zoi.map(
+          Zoi.atom(typespec: quote(do: my_key())),
+          Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer()))
+        )
+
+      assert Zoi.type_spec(schema) == quote(do: %{optional(my_key()) => non_neg_integer()})
     end
 
     test "struct typespec" do
@@ -177,6 +210,37 @@ defmodule Zoi.TypeSpecTest do
       assert Zoi.type_spec(schema) == quote(do: (String.t() -> boolean()))
     end
 
+    test "array typespec preserves nested custom typespec" do
+      schema = Zoi.array(Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer())))
+
+      assert Zoi.type_spec(schema) == quote(do: [non_neg_integer()])
+    end
+
+    test "tuple typespec preserves nested custom typespec" do
+      schema =
+        Zoi.tuple({Zoi.string(), Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer()))})
+
+      assert Zoi.type_spec(schema) ==
+               {:{}, [], [quote(do: binary()), quote(do: non_neg_integer())]}
+    end
+
+    test "intersection typespec preserves nested custom typespec" do
+      schema =
+        Zoi.intersection([
+          Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer())),
+          Zoi.integer(gt: 0, typespec: quote(do: pos_integer()))
+        ])
+
+      assert Zoi.type_spec(schema) == quote(do: non_neg_integer() | pos_integer())
+    end
+
+    test "union typespec preserves nested custom typespec" do
+      schema =
+        Zoi.union([Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer())), Zoi.string()])
+
+      assert Zoi.type_spec(schema) == quote(do: non_neg_integer() | binary())
+    end
+
     test "nil typespec uses default generated type" do
       schema = Zoi.string()
       assert Zoi.type_spec(schema) == quote(do: binary())
@@ -200,6 +264,18 @@ defmodule Zoi.TypeSpecTest do
 
       # Check that both schemas are present in a union (order as it was given to discriminated_union)
       assert result == {:|, [], [cat_spec, dog_spec]}
+    end
+
+    test "discriminated_union preserves nested custom branch typespecs" do
+      cat_schema =
+        Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()}, typespec: quote(do: cat_t()))
+
+      dog_schema =
+        Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()}, typespec: quote(do: dog_t()))
+
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      assert Zoi.type_spec(schema) == quote(do: cat_t() | dog_t())
     end
 
     test "struct typespec makes optional fields nilable" do
@@ -253,6 +329,40 @@ defmodule Zoi.TypeSpecTest do
     test "nil default typespec does not duplicate nil" do
       schema = Zoi.default(Zoi.nullish(Zoi.integer()), nil)
       assert Zoi.type_spec(schema) == quote(do: nil | integer())
+    end
+
+    test "nil default preserves nested custom typespec" do
+      schema = Zoi.default(Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer())), nil)
+
+      assert Zoi.type_spec(schema) == quote(do: nil | non_neg_integer())
+    end
+
+    test "struct optional field preserves nested custom typespec" do
+      schema =
+        Zoi.struct(User, %{
+          name: Zoi.string(),
+          age: Zoi.optional(Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer())))
+        })
+
+      left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
+
+      right =
+        quote(do: %User{age: nil | non_neg_integer(), name: binary()})
+        |> normalize_map_or_struct_ast()
+
+      assert left == right
+    end
+
+    test "codec typespec preserves nested to-schema custom typespec" do
+      schema =
+        Zoi.codec(
+          Zoi.string(),
+          Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer())),
+          decode: &String.to_integer/1,
+          encode: &Integer.to_string/1
+        )
+
+      assert Zoi.type_spec(schema) == quote(do: non_neg_integer())
     end
   end
 

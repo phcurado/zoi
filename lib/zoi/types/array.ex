@@ -143,7 +143,7 @@ defmodule Zoi.Types.Array do
 
   defimpl Zoi.TypeSpec do
     def spec(%Zoi.Types.Array{inner: inner}, opts) do
-      inner_spec = Zoi.TypeSpec.spec(inner, opts)
+      inner_spec = Zoi.type_spec(inner, opts)
 
       quote do
         [unquote(inner_spec)]
