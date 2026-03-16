@@ -25,8 +25,7 @@ defmodule Zoi.Types.Default do
 
   defimpl Zoi.TypeSpec do
     def spec(%Zoi.Types.Default{inner: schema, value: nil}, opts) do
-      inner_spec = Zoi.TypeSpec.spec(schema, opts)
-      quote(do: nil | unquote(inner_spec))
+      Zoi.TypeSpec.spec(Zoi.Types.Nullable.new(schema), opts)
     end
 
     def spec(%Zoi.Types.Default{inner: schema}, opts) do
