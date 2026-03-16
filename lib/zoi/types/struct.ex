@@ -107,30 +107,14 @@ defmodule Zoi.Types.Struct do
     def spec(%Zoi.Types.Struct{module: module, fields: fields}, opts) do
       fields
       |> Enum.map(fn {key, type} ->
-        type_spec =
-          type
-          |> Zoi.TypeSpec.spec(opts)
-          |> maybe_add_nil_to_typespec(type.meta)
+        type_for_spec =
+          if Meta.optional?(type.meta), do: Zoi.Types.Nullable.new(type), else: type
 
+        type_spec = Zoi.TypeSpec.spec(type_for_spec, opts)
         quote do: {unquote(key), unquote(type_spec)}
       end)
       |> then(&quote(do: %unquote(module){unquote_splicing(&1)}))
     end
-
-    defp maybe_add_nil_to_typespec(type_spec, meta) do
-      if Meta.optional?(meta) and not nilable_typespec?(type_spec) do
-        quote(do: nil | unquote(type_spec))
-      else
-        type_spec
-      end
-    end
-
-    defp nilable_typespec?(nil), do: true
-
-    defp nilable_typespec?({:|, _, [left, right]}),
-      do: nilable_typespec?(left) or nilable_typespec?(right)
-
-    defp nilable_typespec?(_), do: false
   end
 
   defimpl Inspect do

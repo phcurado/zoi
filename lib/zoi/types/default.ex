@@ -25,29 +25,12 @@ defmodule Zoi.Types.Default do
 
   defimpl Zoi.TypeSpec do
     def spec(%Zoi.Types.Default{inner: schema, value: nil}, opts) do
-      schema
-      |> Zoi.TypeSpec.spec(opts)
-      |> maybe_add_nil_to_typespec()
+      Zoi.TypeSpec.spec(Zoi.Types.Nullable.new(schema), opts)
     end
 
     def spec(%Zoi.Types.Default{inner: schema}, opts) do
       Zoi.TypeSpec.spec(schema, opts)
     end
-
-    defp maybe_add_nil_to_typespec(type_spec) do
-      if nilable_typespec?(type_spec) do
-        type_spec
-      else
-        quote(do: nil | unquote(type_spec))
-      end
-    end
-
-    defp nilable_typespec?(nil), do: true
-
-    defp nilable_typespec?({:|, _, [left, right]}),
-      do: nilable_typespec?(left) or nilable_typespec?(right)
-
-    defp nilable_typespec?(_), do: false
   end
 
   defimpl Inspect do

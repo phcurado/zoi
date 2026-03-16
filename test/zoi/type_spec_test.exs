@@ -201,64 +201,64 @@ defmodule Zoi.TypeSpecTest do
       # Check that both schemas are present in a union (order as it was given to discriminated_union)
       assert result == {:|, [], [cat_spec, dog_spec]}
     end
-  end
 
-  test "struct typespec makes optional fields nilable" do
-    schema =
-      Zoi.struct(User, %{
-        name: Zoi.string(),
-        age: Zoi.optional(Zoi.integer())
-      })
+    test "struct typespec makes optional fields nilable" do
+      schema =
+        Zoi.struct(User, %{
+          name: Zoi.string(),
+          age: Zoi.optional(Zoi.integer())
+        })
 
-    left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
+      left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
 
-    right =
-      quote(do: %User{age: nil | integer(), name: binary()})
-      |> normalize_map_or_struct_ast()
+      right =
+        quote(do: %User{age: nil | integer(), name: binary()})
+        |> normalize_map_or_struct_ast()
 
-    assert left == right
-  end
+      assert left == right
+    end
 
-  test "struct typespec with nil default is nilable" do
-    schema =
-      Zoi.struct(User, %{
-        name: Zoi.string(),
-        age: Zoi.default(Zoi.optional(Zoi.integer()), nil)
-      })
+    test "struct typespec with nil default is nilable" do
+      schema =
+        Zoi.struct(User, %{
+          name: Zoi.string(),
+          age: Zoi.default(Zoi.optional(Zoi.integer()), nil)
+        })
 
-    left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
+      left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
 
-    right =
-      quote(do: %User{age: nil | integer(), name: binary()})
-      |> normalize_map_or_struct_ast()
+      right =
+        quote(do: %User{age: nil | integer(), name: binary()})
+        |> normalize_map_or_struct_ast()
 
-    assert left == right
-  end
+      assert left == right
+    end
 
-  test "struct typespec does not duplicate nil for already nilable fields" do
-    schema =
-      Zoi.struct(User, %{
-        name: Zoi.string(),
-        age: Zoi.nullish(Zoi.integer())
-      })
+    test "struct typespec does not duplicate nil for already nilable fields" do
+      schema =
+        Zoi.struct(User, %{
+          name: Zoi.string(),
+          age: Zoi.nullish(Zoi.integer())
+        })
 
-    left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
+      left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
 
-    right =
-      quote(do: %User{age: nil | integer(), name: binary()})
-      |> normalize_map_or_struct_ast()
+      right =
+        quote(do: %User{age: nil | integer(), name: binary()})
+        |> normalize_map_or_struct_ast()
 
-    assert left == right
-  end
+      assert left == right
+    end
 
-  test "nil default typespec is nilable" do
-    schema = Zoi.default(Zoi.integer(), nil)
-    assert Zoi.type_spec(schema) == quote(do: nil | integer())
-  end
+    test "nil default typespec is nilable" do
+      schema = Zoi.default(Zoi.integer(), nil)
+      assert Zoi.type_spec(schema) == quote(do: nil | integer())
+    end
 
-  test "nil default typespec does not duplicate nil" do
-    schema = Zoi.default(Zoi.nullish(Zoi.integer()), nil)
-    assert Zoi.type_spec(schema) == quote(do: nil | integer())
+    test "nil default typespec does not duplicate nil" do
+      schema = Zoi.default(Zoi.nullish(Zoi.integer()), nil)
+      assert Zoi.type_spec(schema) == quote(do: nil | integer())
+    end
   end
 
   defp normalize_map_or_struct_ast(ast) do

@@ -46,10 +46,18 @@ defmodule Zoi.Types.Union do
 
   defimpl Zoi.TypeSpec do
     def spec(%Zoi.Types.Union{schemas: schemas}, opts) do
-      Enum.map(schemas, &Zoi.TypeSpec.spec(&1, opts))
+      schemas
+      |> Enum.map(&Zoi.TypeSpec.spec(&1, opts))
+      |> Enum.flat_map(&flatten_spec/1)
+      |> Enum.uniq()
       |> Enum.reverse()
       |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
     end
+
+    defp flatten_spec({:|, _, [left, right]}),
+      do: flatten_spec(left) ++ flatten_spec(right)
+
+    defp flatten_spec(other), do: [other]
   end
 
   defimpl Inspect do
