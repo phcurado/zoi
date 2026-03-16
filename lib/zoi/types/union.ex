@@ -12,6 +12,17 @@ defmodule Zoi.Types.Union do
   end
 
   def new(schemas, opts) when is_list(schemas) do
+    schemas =
+      schemas
+      |> Enum.flat_map(fn
+        %__MODULE__{schemas: inner} -> inner
+        other -> [other]
+      end)
+      |> Enum.uniq_by(fn
+        %Zoi.Types.Null{} -> :null
+        other -> other
+      end)
+
     apply_type(opts ++ [schemas: schemas])
   end
 
@@ -46,18 +57,10 @@ defmodule Zoi.Types.Union do
 
   defimpl Zoi.TypeSpec do
     def spec(%Zoi.Types.Union{schemas: schemas}, opts) do
-      schemas
-      |> Enum.map(&Zoi.TypeSpec.spec(&1, opts))
-      |> Enum.flat_map(&flatten_spec/1)
-      |> Enum.uniq()
+      Enum.map(schemas, &Zoi.TypeSpec.spec(&1, opts))
       |> Enum.reverse()
       |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
     end
-
-    defp flatten_spec({:|, _, [left, right]}),
-      do: flatten_spec(left) ++ flatten_spec(right)
-
-    defp flatten_spec(other), do: [other]
   end
 
   defimpl Inspect do

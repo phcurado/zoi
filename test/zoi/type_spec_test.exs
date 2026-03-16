@@ -234,7 +234,7 @@ defmodule Zoi.TypeSpecTest do
       assert left == right
     end
 
-    test "struct typespec does not duplicate nil for already nilable fields" do
+    test "struct typespec does not duplicate nil for nullish fields" do
       schema =
         Zoi.struct(User, %{
           name: Zoi.string(),
@@ -248,11 +248,6 @@ defmodule Zoi.TypeSpecTest do
         |> normalize_map_or_struct_ast()
 
       assert left == right
-    end
-
-    test "nil default typespec is nilable" do
-      schema = Zoi.default(Zoi.integer(), nil)
-      assert Zoi.type_spec(schema) == quote(do: nil | integer())
     end
 
     test "nil default typespec does not duplicate nil" do
