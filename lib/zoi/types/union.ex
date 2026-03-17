@@ -15,11 +15,8 @@ defmodule Zoi.Types.Union do
     schemas =
       schemas
       |> Enum.flat_map(fn
-        %__MODULE__{} = inner ->
-          if flattenable_union?(inner), do: inner.schemas, else: [inner]
-
-        other ->
-          [other]
+        %__MODULE__{schemas: inner} -> inner
+        other -> [other]
       end)
       |> Enum.uniq_by(fn
         %Zoi.Types.Null{} -> :null
@@ -31,10 +28,6 @@ defmodule Zoi.Types.Union do
 
   def new(_schemas, _opts) do
     raise ArgumentError, "Union type must receive a list of minimum 2 schemas"
-  end
-
-  defp flattenable_union?(%__MODULE__{meta: meta}) do
-    %{meta | required: nil} == %Zoi.Types.Meta{}
   end
 
   defimpl Zoi.Type do
