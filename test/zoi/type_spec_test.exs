@@ -239,7 +239,6 @@ defmodule Zoi.TypeSpecTest do
 
       assert left == right
     end
-
   end
 
   defp normalize_map_or_struct_ast(ast) do
