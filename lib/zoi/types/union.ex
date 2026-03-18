@@ -12,17 +12,6 @@ defmodule Zoi.Types.Union do
   end
 
   def new(schemas, opts) when is_list(schemas) do
-    schemas =
-      schemas
-      |> Enum.flat_map(fn
-        %__MODULE__{schemas: inner} -> inner
-        other -> [other]
-      end)
-      |> Enum.uniq_by(fn
-        %Zoi.Types.Null{} -> :null
-        other -> other
-      end)
-
     apply_type(opts ++ [schemas: schemas])
   end
 

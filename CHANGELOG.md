@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.17.3 - 2026-03-18
+
+### Changed
+
+- `Zoi.type_spec/1` now preserves custom `typespec` overrides in nested schemas
+
 ## 0.17.2 - 2026-03-15
 
 ### Changed

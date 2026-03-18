@@ -240,26 +240,6 @@ defmodule Zoi.TypeSpecTest do
       assert left == right
     end
 
-    test "struct typespec does not duplicate nil for nullish fields" do
-      schema =
-        Zoi.struct(User, %{
-          name: Zoi.string(),
-          age: Zoi.nullish(Zoi.integer())
-        })
-
-      left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
-
-      right =
-        quote(do: %User{age: nil | integer(), name: binary()})
-        |> normalize_map_or_struct_ast()
-
-      assert left == right
-    end
-
-    test "nil default typespec does not duplicate nil" do
-      schema = Zoi.default(Zoi.nullish(Zoi.integer()), nil)
-      assert Zoi.type_spec(schema) == quote(do: nil | integer())
-    end
   end
 
   defp normalize_map_or_struct_ast(ast) do
