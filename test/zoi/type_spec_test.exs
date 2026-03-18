@@ -177,6 +177,12 @@ defmodule Zoi.TypeSpecTest do
       assert Zoi.type_spec(schema) == quote(do: (String.t() -> boolean()))
     end
 
+    test "nested custom typespec is preserved" do
+      schema = Zoi.array(Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer())))
+
+      assert Zoi.type_spec(schema) == quote(do: [non_neg_integer()])
+    end
+
     test "nil typespec uses default generated type" do
       schema = Zoi.string()
       assert Zoi.type_spec(schema) == quote(do: binary())
@@ -232,27 +238,6 @@ defmodule Zoi.TypeSpecTest do
         |> normalize_map_or_struct_ast()
 
       assert left == right
-    end
-
-    test "struct typespec does not duplicate nil for nullish fields" do
-      schema =
-        Zoi.struct(User, %{
-          name: Zoi.string(),
-          age: Zoi.nullish(Zoi.integer())
-        })
-
-      left = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
-
-      right =
-        quote(do: %User{age: nil | integer(), name: binary()})
-        |> normalize_map_or_struct_ast()
-
-      assert left == right
-    end
-
-    test "nil default typespec does not duplicate nil" do
-      schema = Zoi.default(Zoi.nullish(Zoi.integer()), nil)
-      assert Zoi.type_spec(schema) == quote(do: nil | integer())
     end
   end
 

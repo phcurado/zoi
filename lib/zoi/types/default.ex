@@ -25,11 +25,11 @@ defmodule Zoi.Types.Default do
 
   defimpl Zoi.TypeSpec do
     def spec(%Zoi.Types.Default{inner: schema, value: nil}, opts) do
-      Zoi.TypeSpec.spec(Zoi.Types.Nullable.new(schema), opts)
+      Zoi.type_spec(Zoi.Types.Nullable.new(schema), opts)
     end
 
     def spec(%Zoi.Types.Default{inner: schema}, opts) do
-      Zoi.TypeSpec.spec(schema, opts)
+      Zoi.type_spec(schema, opts)
     end
   end
 
