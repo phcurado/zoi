@@ -716,6 +716,23 @@ defmodule ZoiTest do
       assert Exception.message(error_2) == "invalid type: expected string"
       assert error_2.path == [3]
     end
+
+    test "optional then nullable preserves optional in maps" do
+      schema = Zoi.map(%{name: Zoi.string() |> Zoi.optional() |> Zoi.nullable()})
+      assert {:ok, %{}} = Zoi.parse(schema, %{})
+      assert {:ok, %{name: nil}} = Zoi.parse(schema, %{name: nil})
+      assert {:ok, %{name: "hello"}} = Zoi.parse(schema, %{name: "hello"})
+    end
+
+    test "nullable propagates description from inner type" do
+      schema = Zoi.nullable(Zoi.string(description: "A name"))
+      assert Zoi.description(schema) == "A name"
+    end
+
+    test "nullable opts override inner type meta" do
+      schema = Zoi.nullable(Zoi.string(description: "inner"), description: "outer")
+      assert Zoi.description(schema) == "outer"
+    end
   end
 
   describe "nullish/2" do

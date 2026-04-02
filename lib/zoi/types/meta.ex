@@ -30,10 +30,22 @@ defmodule Zoi.Types.Meta do
 
   defstruct @struct_fields
 
+  # When we propagate the meta schema fields to other schemas, these are the allowed keys
+  # An example is when using nullable type, which is a union under the hood. We should be able
+  # to propagate these fields to the union since nullable is a behavior
+  @propagate_keys [:required, :description, :example, :metadata, :typespec, :deprecated, :error]
+
   @spec create_meta(keyword()) :: {t(), keyword()}
   def create_meta(opts) do
     {meta_opts, rest_opts} = split_keyword(opts)
     {struct!(__MODULE__, meta_opts), rest_opts}
+  end
+
+  @spec propagate_opts(t()) :: keyword()
+  def propagate_opts(%__MODULE__{} = meta) do
+    meta
+    |> Map.take(@propagate_keys)
+    |> Enum.reject(fn {_k, v} -> v == nil end)
   end
 
   defp split_keyword(opts) when is_list(opts) do
