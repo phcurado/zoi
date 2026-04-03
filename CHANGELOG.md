@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.17.4 - Unreleased
+
+### Changed
+
+- `Zoi.nullable/2` now propagates the inner `opts` to it's type
+
 ## 0.17.3 - 2026-03-19
 
 ### Changed
