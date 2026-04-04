@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## 0.17.4 - Unreleased
 
+### Added
+
+- `Zoi.pick/2` to select specific fields from a map or keyword schema
+- `Zoi.omit/2` to remove specific fields from a map or keyword schema
+
 ### Changed
 
 - `Zoi.nullable/2` now propagates the inner `opts` to it's type

@@ -2360,6 +2360,66 @@ defmodule ZoiTest do
     end
   end
 
+  describe "pick/2" do
+    test "pick fields from map schema" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
+      picked = Zoi.pick(schema, [:name, :email])
+
+      assert {:ok, %{name: "Alice", email: "a@b.com"}} ==
+               Zoi.parse(picked, %{name: "Alice", email: "a@b.com"})
+    end
+
+    test "pick rejects fields not in picked keys" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
+      picked = Zoi.pick(schema, [:name])
+
+      assert {:ok, %{name: "Alice"}} == Zoi.parse(picked, %{name: "Alice", age: 30})
+    end
+
+    test "pick with keyword schema" do
+      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
+      picked = Zoi.pick(schema, [:name])
+
+      assert {:ok, [name: "Alice"]} == Zoi.parse(picked, name: "Alice")
+    end
+
+    test "pick with non-object schema" do
+      assert_raise ArgumentError, "must be an object or keyword", fn ->
+        Zoi.pick(Zoi.string(), [:name])
+      end
+    end
+  end
+
+  describe "omit/2" do
+    test "omit fields from map schema" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
+      omitted = Zoi.omit(schema, [:email])
+
+      assert {:ok, %{name: "Alice", age: 30}} ==
+               Zoi.parse(omitted, %{name: "Alice", age: 30})
+    end
+
+    test "omit strips removed fields from input" do
+      schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
+      omitted = Zoi.omit(schema, [:age])
+
+      assert {:ok, %{name: "Alice"}} == Zoi.parse(omitted, %{name: "Alice", age: 30})
+    end
+
+    test "omit with keyword schema" do
+      schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
+      omitted = Zoi.omit(schema, [:age])
+
+      assert {:ok, [name: "Alice"]} == Zoi.parse(omitted, name: "Alice")
+    end
+
+    test "omit with non-object schema" do
+      assert_raise ArgumentError, "must be an object or keyword", fn ->
+        Zoi.omit(Zoi.string(), [:name])
+      end
+    end
+  end
+
   describe "tuple/2" do
     test "tuple with correct value" do
       schema = Zoi.tuple({Zoi.string(), Zoi.integer()})
