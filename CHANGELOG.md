@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.18.0 - Unreleased
+
+### Added
+
+- `Zoi.Ecto` module for generating Ecto embedded schemas from Zoi schemas
+  - `Zoi.Ecto.generate_embedded_schema/1` macro that derives an `embedded_schema` from a `Zoi.map/1` schema
+  - `Zoi.Ecto.changeset/2` parses input through Zoi and returns an `Ecto.Changeset` with field-level errors
+  - Nested `Zoi.map` fields generate inline `embeds_one` / `embeds_many`
+  - Supports all primitive types, arrays, enums, defaults, and nullable fields
+  - Nested validation errors are placed on the correct embedded changeset
+
 ## 0.17.4 - Unreleased
 
 ### Added
