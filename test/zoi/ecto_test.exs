@@ -107,6 +107,26 @@ defmodule Zoi.EctoTest do
     Zoi.Ecto.generate_embedded_schema(@schema)
   end
 
+  defmodule DiscriminatedSchema do
+    require Zoi.Ecto
+
+    @schema Zoi.discriminated_union(:product_type, [
+              Zoi.map(%{
+                product_type: Zoi.literal(:card_type_1),
+                account: Zoi.string(),
+                balance: Zoi.integer(),
+                billing_address: Zoi.string()
+              }),
+              Zoi.map(%{
+                product_type: Zoi.literal(:card_type_2),
+                last_four: Zoi.string(),
+                billing_address: Zoi.string()
+              })
+            ])
+
+    Zoi.Ecto.generate_embedded_schema(@schema)
+  end
+
   describe "generate_embedded_schema/1" do
     test "generates struct with fields" do
       schema = %SimpleSchema{}
@@ -135,6 +155,15 @@ defmodule Zoi.EctoTest do
 
     test "generates fields with default values" do
       assert %DefaultSchema{role: "user", count: 0} = %DefaultSchema{}
+    end
+
+    test "generates flat embedded schema from discriminated union" do
+      schema = %DiscriminatedSchema{}
+      refute schema.product_type
+      refute schema.account
+      refute schema.balance
+      refute schema.last_four
+      refute schema.billing_address
     end
 
     test "generates nullable fields" do
@@ -300,6 +329,49 @@ defmodule Zoi.EctoTest do
 
       assert changeset.valid?
       assert %{tags: ["elixir", "ecto"]} = changeset.changes
+    end
+
+    test "discriminated union valid input" do
+      changeset =
+        Zoi.Ecto.changeset(%DiscriminatedSchema{}, %{
+          product_type: :card_type_1,
+          account: "123",
+          balance: 100,
+          billing_address: "Main St"
+        })
+
+      assert changeset.valid?
+
+      assert %{
+               product_type: :card_type_1,
+               account: "123",
+               balance: 100,
+               billing_address: "Main St"
+             } = changeset.changes
+    end
+
+    test "discriminated union wrong variant fields" do
+      changeset =
+        Zoi.Ecto.changeset(%DiscriminatedSchema{}, %{
+          product_type: :card_type_1,
+          billing_address: "Main St"
+        })
+
+      refute changeset.valid?
+      assert {"is required", _} = changeset.errors[:account]
+      assert {"is required", _} = changeset.errors[:balance]
+    end
+
+    test "discriminated union second variant" do
+      changeset =
+        Zoi.Ecto.changeset(%DiscriminatedSchema{}, %{
+          product_type: :card_type_2,
+          last_four: "1234",
+          billing_address: "Main St"
+        })
+
+      assert changeset.valid?
+      assert %{product_type: :card_type_2, last_four: "1234"} = changeset.changes
     end
   end
 end

@@ -80,6 +80,28 @@ if Code.ensure_loaded?(Ecto) do
       end)
     end
 
+    def build_fields_ast(%Zoi.Types.DiscriminatedUnion{
+          field: field,
+          schemas: schemas,
+          values: values
+        }) do
+      discriminator_ast =
+        quote do
+          field unquote(field), Ecto.Enum, values: unquote(values)
+        end
+
+      fields_ast =
+        values
+        |> Enum.flat_map(fn value ->
+          %Zoi.Types.Map{fields: fields} = Map.fetch!(schemas, value)
+          Enum.reject(fields, fn {key, _} -> key == field end)
+        end)
+        |> Enum.uniq_by(fn {key, _} -> key end)
+        |> Enum.map(fn {key, type} -> do_build_field_ast(key, type) end)
+
+      [discriminator_ast | fields_ast]
+    end
+
     defp do_build_field_ast(key, %Zoi.Types.Map{fields: fields} = schema) when is_list(fields) do
       inner_ast = build_fields_ast(schema)
 
