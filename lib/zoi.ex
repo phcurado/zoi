@@ -1642,6 +1642,32 @@ defmodule Zoi do
   defdelegate extend(schema1, schema2, opts \\ []), to: Zoi.Types.Extend, as: :new
 
   @doc """
+  Picks the given keys from a map or keyword schema.
+
+  ## Example
+      iex> user = Zoi.map(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
+      iex> name_schema = Zoi.pick(user, [:name])
+      iex> Zoi.parse(name_schema, %{name: "Alice"})
+      {:ok, %{name: "Alice"}}
+  """
+  @doc group: "Complex Types"
+  @spec pick(schema :: schema(), keys :: [atom()]) :: schema()
+  defdelegate pick(schema, keys), to: Zoi.Types.Pick, as: :new
+
+  @doc """
+  Omits the given keys from a map or keyword schema.
+
+  ## Example
+      iex> user = Zoi.map(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
+      iex> schema_without_email = Zoi.omit(user, [:email])
+      iex> Zoi.parse(schema_without_email, %{name: "Alice", age: 30})
+      {:ok, %{name: "Alice", age: 30}}
+  """
+  @doc group: "Complex Types"
+  @spec omit(schema :: schema(), keys :: [atom()]) :: schema()
+  defdelegate omit(schema, keys), to: Zoi.Types.Omit, as: :new
+
+  @doc """
   Defines a map type schema with a defined key and value type.
 
   ## Example
