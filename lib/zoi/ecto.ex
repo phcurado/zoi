@@ -113,9 +113,17 @@ if Code.ensure_loaded?(Ecto) do
     """
     @spec changeset(struct(), map(), keyword()) :: Ecto.Changeset.t()
     def changeset(schema, input, opts \\ []) do
-      case Zoi.parse(schema, input, opts) do
-        {:ok, parsed} -> Ecto.Changeset.change({parsed, %{}})
-        {:error, errors} -> errors_to_changeset(errors)
+      ctx =
+        schema
+        |> Zoi.Context.new(input)
+        |> Zoi.Context.parse(opts)
+
+      case ctx do
+        %{valid?: true, parsed: parsed} ->
+          Ecto.Changeset.change({parsed, %{}})
+
+        %{valid?: false, errors: errors, parsed: parsed} ->
+          errors_to_changeset(errors, parsed)
       end
     end
 
@@ -133,14 +141,23 @@ if Code.ensure_loaded?(Ecto) do
         iex> changeset.valid?
         false
     """
-    @spec errors_to_changeset([Zoi.Error.t()]) :: Ecto.Changeset.t()
-    def errors_to_changeset([]) do
+    @spec errors_to_changeset([Zoi.Error.t()], map() | nil) :: Ecto.Changeset.t()
+    def errors_to_changeset(errors, parsed \\ nil)
+
+    def errors_to_changeset([], _parsed) do
       empty_changeset()
     end
 
-    def errors_to_changeset(errors) when is_list(errors) do
+    def errors_to_changeset(errors, parsed) when is_list(errors) do
+      base =
+        if is_map(parsed) do
+          Ecto.Changeset.change({parsed, %{}})
+        else
+          empty_changeset()
+        end
+
       errors
-      |> Enum.reduce(empty_changeset(), fn
+      |> Enum.reduce(base, fn
         %Zoi.Error{code: code, issue: {template, issue_opts}, path: path}, cs ->
           ecto_opts = build_ecto_opts(code, template, issue_opts)
           route_error(cs, path, template, ecto_opts)

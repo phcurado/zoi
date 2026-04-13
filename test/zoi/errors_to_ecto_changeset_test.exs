@@ -59,7 +59,7 @@ defmodule Zoi.ErrorsToEctoChangesetTest do
   # ---------------------------------------------------------------------------
 
   defmodule OrderSchemas do
-    def validate_express_requires_phone(parsed, _opts) do
+    def validate_express_requires_phone(parsed) do
       express? = parsed[:shipping_method] == "express"
       has_phone? = is_binary(parsed[:phone]) and parsed[:phone] != ""
 
@@ -142,7 +142,7 @@ defmodule Zoi.ErrorsToEctoChangesetTest do
         },
         coerce: true
       )
-      |> Zoi.refine({__MODULE__, :validate_express_requires_phone, []})
+      |> Zoi.refine(&validate_express_requires_phone/1)
     end
   end
 
@@ -177,6 +177,35 @@ defmodule Zoi.ErrorsToEctoChangesetTest do
       assert %Ecto.Changeset{valid?: false} = nested
       {_msg, opts} = nested.errors[:zip]
       assert opts[:code] == :invalid_format
+    end
+
+    test "partial parse: valid flat fields preserved alongside errors" do
+      input =
+        @valid_order
+        |> Map.put("email", "not-valid")
+
+      changeset = Zoi.Ecto.changeset(OrderSchemas.order(), input)
+
+      refute changeset.valid?
+      # Email has an error
+      assert changeset.errors[:email]
+      # But successfully parsed flat fields are in .data
+      assert changeset.data.currency == "USD"
+      assert %DateTime{} = changeset.data.placed_at
+    end
+
+    test "partial parse: valid nested map preserved alongside errors" do
+      input =
+        @valid_order
+        |> Map.put("currency", 42)
+
+      changeset = Zoi.Ecto.changeset(OrderSchemas.order(), input)
+
+      refute changeset.valid?
+      assert changeset.errors[:currency]
+      # Shipping address was valid and its data is in .data
+      assert changeset.data.shipping_address.street == "123 Main St"
+      assert changeset.data.shipping_address.zip == "62704"
     end
 
     test "sub-schema works directly" do
