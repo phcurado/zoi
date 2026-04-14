@@ -39,9 +39,9 @@ defmodule Zoi.Context do
   def parse(%__MODULE__{} = ctx, opts \\ []) do
     maybe_warn_deprecated(ctx.schema, ctx.path)
 
-    with {:ok, ctx} <- parse_type(ctx, opts),
-         {:ok, ctx} <- run_effects(ctx) do
-      %{ctx | valid?: true}
+    with {:ok, parsed} <- parse_type(ctx, opts),
+         {:ok, parsed} <- run_effects(ctx, parsed) do
+      %{ctx | parsed: parsed, valid?: true}
     else
       {:error, ctx} -> ctx
     end
@@ -68,22 +68,23 @@ defmodule Zoi.Context do
   defp parse_type(ctx, opts) do
     case Zoi.Type.parse(ctx.schema, ctx.input, opts) do
       {:ok, result} ->
-        {:ok, add_parsed(ctx, result)}
+        {:ok, result}
 
       {:error, error, partial} ->
-        # Type explicitly provided partial (Objects, Arrays, etc)
         {:error, ctx |> add_parsed(partial) |> add_error(error)}
 
       {:error, error} ->
-        # Type didn't provide partial - preserve original input
-        {:error, ctx |> add_parsed(ctx.input) |> add_error(error)}
+        {:error, add_error(ctx, error)}
     end
   end
 
-  defp run_effects(ctx) do
-    case Meta.run_effects(ctx) do
+  defp run_effects(ctx, input) do
+    case Meta.run_effects(ctx, input) do
       {:ok, result} ->
-        {:ok, add_parsed(ctx, result)}
+        {:ok, result}
+
+      {:error, error, partial} ->
+        {:error, ctx |> add_parsed(partial) |> add_error(error)}
 
       {:error, error} ->
         {:error, add_error(ctx, error)}

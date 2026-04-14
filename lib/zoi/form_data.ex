@@ -56,34 +56,33 @@ if Code.ensure_loaded?(Phoenix.HTML) do
 
       # Use schema to determine if this is an array field, not the data
       if array_field?(context.schema, field) do
-        items_data = list_or_empty_maps(data)
-        items_params = list_or_empty_maps(params)
+        items_data = to_indexed_map(data)
+        items_params = to_indexed_map(params)
 
-        max_len = max(length(items_data), length(items_params))
+        indices =
+          (Map.keys(items_data) ++ Map.keys(items_params))
+          |> Enum.uniq()
+          |> Enum.sort()
 
-        if max_len == 0 do
-          []
-        else
-          Enum.map(0..(max_len - 1), fn idx ->
-            item_data = Enum.at(items_data, idx) || %{}
-            item_params = Enum.at(items_params, idx) || %{}
+        Enum.map(indices, fn idx ->
+          item_data = Map.get(items_data, idx, %{})
+          item_params = Map.get(items_params, idx, %{})
 
-            item_name = "#{name}[#{idx}]"
-            item_id = "#{id}[#{idx}]"
+          item_name = "#{name}[#{idx}]"
+          item_id = "#{id}[#{idx}]"
 
-            %Phoenix.HTML.Form{
-              source: context,
-              impl: __MODULE__,
-              id: item_id,
-              name: item_name,
-              data: item_data,
-              params: item_params,
-              action: action,
-              errors: nested_collection_errors(context.errors, field, idx),
-              options: opts
-            }
-          end)
-        end
+          %Phoenix.HTML.Form{
+            source: context,
+            impl: __MODULE__,
+            id: item_id,
+            name: item_name,
+            data: item_data,
+            params: item_params,
+            action: action,
+            errors: nested_collection_errors(context.errors, field, idx),
+            options: opts
+          }
+        end)
       else
         [
           %Phoenix.HTML.Form{
@@ -113,12 +112,23 @@ if Code.ensure_loaded?(Phoenix.HTML) do
       end
     end
 
-    # Convert various data structures to lists for form iteration
-    # Note: Maps with numeric keys are already converted to lists by Zoi.Form.parse
-    defp list_or_empty_maps(list) when is_list(list), do: list
-    defp list_or_empty_maps(%{} = map) when map_size(map) == 0, do: []
-    defp list_or_empty_maps(map) when is_map(map), do: [map]
-    defp list_or_empty_maps(_), do: []
+    defp to_indexed_map(list) when is_list(list) do
+      list
+      |> Enum.with_index()
+      |> Map.new(fn {value, index} -> {index, value} end)
+    end
+
+    defp to_indexed_map(%{} = map) when map_size(map) == 0, do: %{}
+
+    defp to_indexed_map(%{} = map) do
+      if Enum.all?(map, fn {key, _} -> is_integer(key) end) do
+        map
+      else
+        %{0 => map}
+      end
+    end
+
+    defp to_indexed_map(_), do: %{}
 
     defp ensure_map(%{} = m, _fallback), do: m
 
@@ -171,8 +181,14 @@ if Code.ensure_loaded?(Phoenix.HTML) do
         is_map(parsed) and Map.has_key?(parsed, field) ->
           Map.get(parsed, field)
 
+        is_map(parsed) and Map.has_key?(parsed, key) ->
+          Map.get(parsed, key)
+
         is_map(data) and Map.has_key?(data, field) ->
           Map.get(data, field)
+
+        is_map(data) and Map.has_key?(data, key) ->
+          Map.get(data, key)
 
         true ->
           nil
