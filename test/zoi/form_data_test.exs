@@ -246,11 +246,8 @@ defmodule Zoi.FormDataTest do
       ctx = Zoi.Form.parse(schema, params)
       refute ctx.valid?
 
-      # Partial parsing keeps array positions and includes only valid child data
-      assert ctx.parsed[:items] == %{
-               0 => %{name: "Valid", price: 100},
-               1 => %{}
-             }
+      # Only items with parsed data are in partial, fully invalid items excluded
+      assert ctx.parsed[:items] == %{0 => %{name: "Valid", price: 100}}
 
       # But params should preserve both for form display
       form = FormData.to_form(ctx, as: :order)

@@ -58,46 +58,39 @@ defmodule Zoi.Types.Meta do
     end)
   end
 
-  @spec run_effects(ctx :: Zoi.Context.t(), input :: Zoi.input()) ::
-          {:ok, Zoi.input()} | {:error, Zoi.Errors.t()} | {:error, Zoi.Errors.t(), Zoi.input()}
-  def run_effects(%Zoi.Context{schema: schema} = ctx, input) do
-    {result, errors} =
-      Enum.reduce(schema.meta.effects, {{:ok, input}, []}, fn
-        {:refine, refinement}, {{status, input}, errors} ->
-          case run_refinement(refinement, input, ctx) do
+  @spec run_effects(Zoi.Context.t()) :: {:ok, Zoi.Context.t()} | {:error, Zoi.Context.t()}
+  def run_effects(%Zoi.Context{schema: schema} = ctx) do
+    {ctx, has_partial} =
+      Enum.reduce(schema.meta.effects, {ctx, false}, fn
+        {:refine, refinement}, {ctx, has_partial} ->
+          case run_refinement(refinement, ctx.parsed, ctx) do
             {:ok, value} ->
-              {{status, value}, errors}
+              {Zoi.Context.add_parsed(ctx, value), has_partial}
 
-            {:error, new_errors} ->
-              {{status, input}, Zoi.Errors.merge(errors, new_errors)}
+            {:error, errors} ->
+              {Zoi.Context.add_error(ctx, errors), has_partial}
 
-            {:error, new_errors, partial} ->
-              {{:partial, partial}, Zoi.Errors.merge(errors, new_errors)}
+            {:error, errors, partial} ->
+              {ctx |> Zoi.Context.add_parsed(partial) |> Zoi.Context.add_error(errors), true}
           end
 
-        {:transform, transform}, {{status, input}, errors} ->
-          case run_transform(transform, input, ctx) do
+        {:transform, transform}, {ctx, has_partial} ->
+          case run_transform(transform, ctx.parsed, ctx) do
             {:ok, value} ->
-              {{status, value}, errors}
+              {Zoi.Context.add_parsed(ctx, value), has_partial}
 
-            {:error, new_errors} ->
-              {{status, input}, Zoi.Errors.merge(errors, new_errors)}
+            {:error, errors} ->
+              {Zoi.Context.add_error(ctx, errors), has_partial}
 
-            {:error, new_errors, partial} ->
-              {{:partial, partial}, Zoi.Errors.merge(errors, new_errors)}
+            {:error, errors, partial} ->
+              {ctx |> Zoi.Context.add_parsed(partial) |> Zoi.Context.add_error(errors), true}
           end
       end)
 
-    if errors == [] do
-      {:ok, effect_value(result)}
-    else
-      case result do
-        {:ok, _value} ->
-          {:error, errors}
-
-        {:partial, partial} ->
-          {:error, errors, partial}
-      end
+    cond do
+      ctx.errors == [] -> {:ok, ctx}
+      has_partial -> {:error, ctx}
+      true -> {:error, %{ctx | parsed: nil}}
     end
   end
 
@@ -126,8 +119,17 @@ defmodule Zoi.Types.Meta do
       {:error, err, partial} ->
         {:error, Zoi.Errors.add_error(err), partial}
 
-      %Zoi.Context{} = context ->
-        context_error_result(context, input)
+      %Zoi.Context{valid?: true, parsed: value} ->
+        {:ok, value}
+
+      %Zoi.Context{errors: errors, parsed: ^input} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: nil} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: partial} ->
+        {:error, errors, partial}
     end
   end
 
@@ -151,8 +153,17 @@ defmodule Zoi.Types.Meta do
       {:error, err, partial} ->
         {:error, Zoi.Errors.add_error(err), partial}
 
-      %Zoi.Context{} = context ->
-        context_error_result(context, input)
+      %Zoi.Context{valid?: true, parsed: value} ->
+        {:ok, value}
+
+      %Zoi.Context{errors: errors, parsed: ^input} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: nil} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: partial} ->
+        {:error, errors, partial}
     end
   end
 
@@ -167,8 +178,17 @@ defmodule Zoi.Types.Meta do
       {:error, err, partial} ->
         {:error, Zoi.Errors.add_error(err), partial}
 
-      %Zoi.Context{} = context ->
-        context_error_result(context, input)
+      %Zoi.Context{valid?: true, parsed: value} ->
+        {:ok, value}
+
+      %Zoi.Context{errors: errors, parsed: ^input} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: nil} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: partial} ->
+        {:error, errors, partial}
 
       value ->
         {:ok, value}
@@ -195,32 +215,21 @@ defmodule Zoi.Types.Meta do
       {:error, err, partial} ->
         {:error, Zoi.Errors.add_error(err), partial}
 
-      %Zoi.Context{} = context ->
-        context_error_result(context, input)
+      %Zoi.Context{valid?: true, parsed: value} ->
+        {:ok, value}
+
+      %Zoi.Context{errors: errors, parsed: ^input} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: nil} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: partial} ->
+        {:error, errors, partial}
 
       value ->
         {:ok, value}
     end
-  end
-
-  defp effect_value({:ok, input}) do
-    input
-  end
-
-  defp effect_value({:partial, input}) do
-    input
-  end
-
-  defp context_error_result(%Zoi.Context{errors: errors, parsed: nil}, _input) do
-    {:error, errors}
-  end
-
-  defp context_error_result(%Zoi.Context{errors: errors, parsed: input}, input) do
-    {:error, errors}
-  end
-
-  defp context_error_result(%Zoi.Context{errors: errors, parsed: partial}, _input) do
-    {:error, errors, partial}
   end
 
   @spec required?(t()) :: boolean()
