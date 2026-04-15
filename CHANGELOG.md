@@ -4,9 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## 0.17.5 - Unreleased
 
+### Added
+
+- `Zoi.Error.put_issue_opt/3` to add key-value pairs to error issue opts
+
 ### Changed
 
-- Array partial parsing now preserves item positions using integer-keyed maps instead of dropping invalid items
+- `Zoi.discriminated_union/3` errors now include `discriminator` in issue opts identifying the matched variant
+- `Zoi.array/2` now does partial parsing to preserves item positions using integer-keyed maps instead of dropping invalid items in `Zoi.Context.parse/2`
 - `Zoi.enum/2` error issue now returns values as a list instead of a joined string
 
 ## 0.17.4 - 2025-04-06
