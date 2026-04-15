@@ -57,7 +57,13 @@ defmodule Zoi.Types.DiscriminatedUnion do
         when is_map(input) do
       with {:ok, value} <- get_field_value(discriminated_union, input),
            {:ok, schema} <- get_schema(discriminated_union, value) do
-        Zoi.parse(schema, input, opts)
+        case Zoi.parse(schema, input, opts) do
+          {:ok, parsed} ->
+            {:ok, parsed}
+
+          {:error, errors} ->
+            {:error, Enum.map(errors, &Zoi.Error.put_issue_opt(&1, :discriminator, value))}
+        end
       end
     end
 
