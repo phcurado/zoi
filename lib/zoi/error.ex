@@ -118,6 +118,24 @@ defmodule Zoi.Error do
     %{error | path: path ++ error.path}
   end
 
+  @doc """
+  Adds a key-value pair to the error's issue opts.
+
+  ## Example
+
+      iex> error = Zoi.Error.invalid_type(:string)
+      iex> Zoi.Error.put_issue_opt(error, :discriminator, "cat")
+      %Zoi.Error{
+        code: :invalid_type,
+        issue: {"invalid type: expected string", [discriminator: "cat", type: :string]},
+        message: "invalid type: expected string"
+      }
+  """
+  @spec put_issue_opt(t(), atom(), any()) :: t()
+  def put_issue_opt(%__MODULE__{issue: {message, opts}} = error, key, value) do
+    %{error | issue: {message, Keyword.put(opts, key, value)}}
+  end
+
   defp render_message_from_issue({issue, opts}) do
     message =
       Enum.reduce(opts, issue, fn {key, value}, acc ->

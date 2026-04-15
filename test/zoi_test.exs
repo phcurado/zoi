@@ -1087,12 +1087,16 @@ defmodule ZoiTest do
       dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
       schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
 
-      assert {:error, [%Zoi.Error{} = error]} =
-               Zoi.parse(schema, %{type: "cat", meow: "hi"})
+      assert {:error, [error]} = Zoi.parse(schema, %{type: "cat", meow: "hi"})
 
-      assert error.code == :greater_than_or_equal_to
-      assert error.path == [:meow]
-      assert Exception.message(error) == "too small: must have at least 3 character(s)"
+      assert error == %Zoi.Error{
+               code: :greater_than_or_equal_to,
+               path: [:meow],
+               message: "too small: must have at least 3 character(s)",
+               issue:
+                 {"too small: must have at least %{count} character(s)",
+                  [discriminator: "cat", count: 3]}
+             }
     end
 
     test "discriminated_union with multiple schemas" do
