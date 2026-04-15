@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Array partial parsing now preserves item positions using integer-keyed maps instead of dropping invalid items
+- `Zoi.enum/2` error issue now returns values as a list instead of a joined string
 
 ## 0.17.4 - 2025-04-06
 

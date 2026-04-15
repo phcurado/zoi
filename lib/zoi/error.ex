@@ -209,7 +209,7 @@ defmodule Zoi.Error do
       iex> Zoi.Error.invalid_enum_value([{:a, "apple"}, {:b, "banana"}, {:c, "cherry"}])
       %Zoi.Error{
         code: :invalid_enum_value,
-        issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "apple, banana, cherry"]},
+        issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: ["apple", "banana", "cherry"]]},
         message: "invalid enum value: expected one of apple, banana, cherry"
       }
   """
@@ -217,7 +217,7 @@ defmodule Zoi.Error do
   def invalid_enum_value(enum, opts \\ []) when is_list(enum) do
     {msg, _opts} = Keyword.pop(opts, :error)
 
-    expected = Enum.map_join(enum, ", ", fn {_key, value} -> value end)
+    expected = Enum.map(enum, fn {_key, value} -> value end)
 
     if msg do
       custom_error(issue: {msg, [expected: expected]})
