@@ -172,6 +172,7 @@ if Code.ensure_loaded?(Ecto) do
       issue_opts
       |> maybe_add_enum_list(code)
       |> maybe_add_number_key(validation)
+      |> maybe_remap_array_type()
       |> Kernel.++(base ++ [code: code])
     end
 
@@ -223,6 +224,14 @@ if Code.ensure_loaded?(Ecto) do
     end
 
     defp maybe_add_number_key(issue_opts, _validation), do: issue_opts
+
+    # Ecto uses `type: :list` for array length errors; Zoi uses `type: :array`.
+    defp maybe_remap_array_type(issue_opts) do
+      case Keyword.get(issue_opts, :type) do
+        :array -> Keyword.put(issue_opts, :type, :list)
+        _ -> issue_opts
+      end
+    end
 
     # Root-level error (e.g., from Zoi.refine)
     defp route_error(cs, [], template, opts) do
