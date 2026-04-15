@@ -28,17 +28,40 @@ if Code.ensure_loaded?(Ecto) do
     The produced changeset errors use Ecto's `{template, keyword_list}` format.
     The keyword list always includes:
 
-    - `:validation` -- maps to Ecto's validation name (`:required`, `:format`,
-      `:number`, `:length`, `:inclusion`, `:cast`, `:custom`, `:unknown_field`)
-    - `:kind` -- present for numeric/length constraints (`:greater_than`,
-      `:greater_than_or_equal_to`, `:less_than`, `:less_than_or_equal_to`, `:is`)
+    - `:validation` -- maps to Ecto's validation name
+    - `:kind` -- present for numeric/length constraints
     - `:code` -- the original Zoi error code atom is preserved
-    - Any interpolation params from the Zoi error (`:count`, `:key`, `:values`, etc.)
+    - Any interpolation params from the Zoi error (`:count`, `:type`, `:values`, etc.)
 
-    Size constraints (min/max) are mapped to `validation: :length` or
-    `validation: :number` based on Zoi's error message templates. String
-    constraints include "character(s)" and array constraints include "item(s)"
-    in their templates, which distinguishes them from numeric constraints.
+    ### Validation mapping
+
+    | Ecto validation | Zoi error code | Opts produced | Notes |
+    |---|---|---|---|
+    | `:required` | `required` | `validation: :required` | Exact match |
+    | `:cast` | `invalid_type` | `validation: :cast` | |
+    | `:format` | `invalid_format` | `validation: :format` | |
+    | `:inclusion` | `invalid_enum_value` | `validation: :inclusion, enum: [values]` | `enum:` from Zoi's `values:` list |
+    | `:number` | `greater_than`, `gte`, `less_than`, `lte` | `validation: :number, kind: :greater_than, number: N` | `number:` copied from Zoi's `count:` |
+    | `:length` | same size codes on string/array types | `validation: :length, kind: :min/:max/:is, type: :string/:list` | Zoi `:array` remapped to Ecto `:list` |
+    | `:custom` | `custom` | `validation: :custom` | From `Zoi.refine/2` |
+    | `:unknown_field` | `unrecognized_key` | `validation: :unknown_field` | |
+
+    Size codes (`greater_than`, `greater_than_or_equal_to`, `less_than`,
+    `less_than_or_equal_to`) are dispatched to `:number` or `:length` based
+    on Zoi's `type:` key in the error opts: `:string` and `:array` types
+    produce `:length`, everything else produces `:number`. Length `kind:` is
+    remapped to Ecto's convention (`:min`/`:max` instead of
+    `:greater_than_or_equal_to`/`:less_than_or_equal_to`).
+
+    ### Ecto validations without a Zoi equivalent
+
+    | Ecto validation | Why no mapping |
+    |---|---|
+    | `:exclusion` | Zoi has no exclusion validator |
+    | `:subset` | Zoi has no subset validator |
+    | `:confirmation` | Field confirmation is an Ecto/Phoenix form concept |
+    | `:acceptance` | Checkbox acceptance is an Ecto/Phoenix form concept |
+    | `:unsafe_unique` | Database constraint, not a parse-time validation |
 
     ## Known limitations
 
