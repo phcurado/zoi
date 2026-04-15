@@ -358,7 +358,7 @@ defmodule Zoi.Error do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(issue: {msg, [count: max]})
+      custom_error(issue: {msg, [type: type, count: max]})
     else
       message =
         case type_category(type) do
@@ -392,7 +392,7 @@ defmodule Zoi.Error do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(issue: {msg, [count: min]})
+      custom_error(issue: {msg, [type: type, count: min]})
     else
       message =
         case type_category(type) do
@@ -426,7 +426,7 @@ defmodule Zoi.Error do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(issue: {msg, [count: min]})
+      custom_error(issue: {msg, [type: type, count: min]})
     else
       message =
         case type_category(type) do
@@ -458,7 +458,7 @@ defmodule Zoi.Error do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(issue: {msg, [count: max]})
+      custom_error(issue: {msg, [type: type, count: max]})
     else
       message =
         case type_category(type) do
@@ -489,7 +489,7 @@ defmodule Zoi.Error do
     {msg, opts} = Keyword.pop(opts, :error)
 
     if msg do
-      custom_error(issue: {msg, [count: length]})
+      custom_error(issue: {msg, [type: type, count: length]})
     else
       message =
         case type_category(type) do

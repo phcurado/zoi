@@ -2171,6 +2171,15 @@ defmodule ZoiTest do
       assert error.path == [:age]
     end
 
+    test "struct with all fields failing type parse" do
+      schema = Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()})
+
+      assert {:error, errors} =
+               Zoi.parse(schema, %User{name: 123, age: "not_int"})
+
+      assert length(errors) == 2
+    end
+
     test "struct with non-map input" do
       schema = Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()}, coerce: true)
 

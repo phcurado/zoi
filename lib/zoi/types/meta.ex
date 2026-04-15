@@ -102,9 +102,6 @@ defmodule Zoi.Types.Meta do
 
       {:error, err} ->
         {:error, Zoi.Errors.add_error(err)}
-
-      {:error, err, partial} ->
-        {:error, Zoi.Errors.add_error(err), partial}
     end
   end
 

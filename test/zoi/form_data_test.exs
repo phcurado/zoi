@@ -622,6 +622,19 @@ defmodule Zoi.FormDataTest do
 
       assert FormData.input_value(ctx, form, :missing) == nil
     end
+
+    test "retrieves value from parsed with string key" do
+      schema =
+        Zoi.map(%{name: Zoi.string()})
+        |> Zoi.Form.prepare()
+
+      ctx = Zoi.Form.parse(schema, %{"name" => "John"})
+      form = %{FormData.to_form(ctx, as: :user) | params: %{}}
+
+      # Manually set parsed with string keys to test string key fallback
+      ctx = %{ctx | parsed: %{"name" => "John"}}
+      assert FormData.input_value(ctx, form, :name) == "John"
+    end
   end
 
   describe "form errors" do
