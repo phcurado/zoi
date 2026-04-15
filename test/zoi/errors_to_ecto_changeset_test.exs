@@ -126,6 +126,36 @@ defmodule Zoi.ErrorsToEctoChangesetTest do
       )
     end
 
+    @doc """
+    Two variants sharing an `email` field with different constraints.
+    Demonstrates that the discriminator in error opts identifies which
+    variant's rule produced the error.
+    """
+    def contact do
+      Zoi.discriminated_union(
+        :kind,
+        [
+          Zoi.map(
+            %{
+              kind: Zoi.literal("personal"),
+              email: Zoi.email(),
+              name: Zoi.string()
+            },
+            coerce: true
+          ),
+          Zoi.map(
+            %{
+              kind: Zoi.literal("business"),
+              email: Zoi.string() |> Zoi.min(5),
+              company: Zoi.string()
+            },
+            coerce: true
+          )
+        ],
+        coerce: true
+      )
+    end
+
     def order do
       Zoi.map(
         %{
@@ -539,6 +569,31 @@ defmodule Zoi.ErrorsToEctoChangesetTest do
 
       assert {:ok, parsed} = Zoi.parse(OrderSchemas.order(), input)
       assert parsed.payment[:wallet_id] == "w_abc123"
+    end
+
+    test "discriminator identifies which variant produced the error" do
+      # Both "personal" and "business" variants have an :email field
+      # with different constraints. The discriminator in error opts
+      # tells us which variant's rule failed.
+
+      # "bad" is not a valid email — fails the personal variant's Zoi.email()
+      personal = %{"kind" => "personal", "email" => "bad", "name" => "Jane"}
+      {:error, errors} = Zoi.parse(OrderSchemas.contact(), personal)
+      changeset = Zoi.Ecto.errors_to_changeset(errors)
+
+      {_msg, opts} = changeset.errors[:email]
+      assert opts[:discriminator] == "personal"
+      assert opts[:code] == :invalid_format
+
+      # "ab" is too short — fails the business variant's Zoi.min(5)
+      business = %{"kind" => "business", "email" => "ab", "company" => "Acme"}
+      {:error, errors} = Zoi.parse(OrderSchemas.contact(), business)
+      changeset = Zoi.Ecto.errors_to_changeset(errors)
+
+      {_msg, opts} = changeset.errors[:email]
+      assert opts[:discriminator] == "business"
+      assert opts[:code] == :greater_than_or_equal_to
+      assert opts[:validation] == :length
     end
   end
 
