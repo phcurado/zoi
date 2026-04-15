@@ -103,7 +103,7 @@ defmodule Zoi.Types.Integer do
       if input >= value do
         :ok
       else
-        {:error, Zoi.Error.greater_than_or_equal_to(:number, value, opts)}
+        {:error, Zoi.Error.greater_than_or_equal_to(:integer, value, opts)}
       end
     end
   end
@@ -117,7 +117,7 @@ defmodule Zoi.Types.Integer do
       if input <= value do
         :ok
       else
-        {:error, Zoi.Error.less_than_or_equal_to(:number, value, opts)}
+        {:error, Zoi.Error.less_than_or_equal_to(:integer, value, opts)}
       end
     end
   end
@@ -131,7 +131,7 @@ defmodule Zoi.Types.Integer do
       if input > value do
         :ok
       else
-        {:error, Zoi.Error.greater_than(:number, value, opts)}
+        {:error, Zoi.Error.greater_than(:integer, value, opts)}
       end
     end
   end
@@ -145,7 +145,7 @@ defmodule Zoi.Types.Integer do
       if input < value do
         :ok
       else
-        {:error, Zoi.Error.less_than(:number, value, opts)}
+        {:error, Zoi.Error.less_than(:integer, value, opts)}
       end
     end
   end

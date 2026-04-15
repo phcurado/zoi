@@ -16,11 +16,45 @@ defmodule Zoi.MetaTest do
       {:ok, String.upcase(value)}
     end
 
-    def upcase(_value, _opts), do: {:error, "Value is not a string"}
+    def upcase(_value, _opts) do
+      {:error, "Value is not a string"}
+    end
 
     def upcase_error(_value, opts) do
       opts[:ctx]
       |> Zoi.Context.add_error(%{message: "Value is not a string"})
+    end
+
+    def refine_valid(_input, opts) do
+      %{opts[:ctx] | valid?: true, parsed: "valid", errors: []}
+    end
+
+    def refine_nil(_input, opts) do
+      opts[:ctx] |> Zoi.Context.add_parsed(nil) |> Zoi.Context.add_error("nil")
+    end
+
+    def refine_partial(_input, opts) do
+      opts[:ctx] |> Zoi.Context.add_parsed("partial") |> Zoi.Context.add_error("partial")
+    end
+
+    def refine_error_partial(_input, _opts) do
+      {:error, "partial error", "partial_data"}
+    end
+
+    def transform_valid(_input, opts) do
+      %{opts[:ctx] | valid?: true, parsed: "valid", errors: []}
+    end
+
+    def transform_nil(_input, opts) do
+      opts[:ctx] |> Zoi.Context.add_parsed(nil) |> Zoi.Context.add_error("nil")
+    end
+
+    def transform_partial(_input, opts) do
+      opts[:ctx] |> Zoi.Context.add_parsed("partial") |> Zoi.Context.add_error("partial")
+    end
+
+    def transform_error_partial(_input, _opts) do
+      {:error, "partial error", "partial_data"}
     end
   end
 
@@ -110,6 +144,83 @@ defmodule Zoi.MetaTest do
       assert Exception.message(error) == "Value is not an integer"
     end
 
+    test "refinement returning context with unchanged parsed" do
+      schema =
+        Zoi.string()
+        |> Zoi.refine(fn input, ctx ->
+          ctx
+          |> Zoi.Context.add_parsed(input)
+          |> Zoi.Context.add_error("unchanged")
+        end)
+
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: nil, errors: [error]}} = Meta.run_effects(ctx)
+      assert Exception.message(error) == "unchanged"
+    end
+
+    test "refinement returning context with nil parsed" do
+      schema =
+        Zoi.string()
+        |> Zoi.refine(fn _input, ctx ->
+          ctx
+          |> Zoi.Context.add_parsed(nil)
+          |> Zoi.Context.add_error("nil parsed")
+        end)
+
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: nil, errors: [error]}} = Meta.run_effects(ctx)
+      assert Exception.message(error) == "nil parsed"
+    end
+
+    test "refinement returning valid context from function" do
+      schema =
+        Zoi.string()
+        |> Zoi.refine(fn _input, ctx ->
+          %{ctx | valid?: true, parsed: "from_fn", errors: []}
+        end)
+
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:ok, %{parsed: "from_fn"}} = Meta.run_effects(ctx)
+    end
+
+    test "refinement returning context with different parsed" do
+      schema =
+        Zoi.string()
+        |> Zoi.refine(fn _input, ctx ->
+          ctx
+          |> Zoi.Context.add_parsed("partial")
+          |> Zoi.Context.add_error("has partial")
+        end)
+
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: "partial", errors: [error]}} = Meta.run_effects(ctx)
+      assert Exception.message(error) == "has partial"
+    end
+
+    test "mfa refinement returning error with partial" do
+      schema = Zoi.string() |> Zoi.refine({Validation, :refine_error_partial, []})
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: "partial_data"}} = Meta.run_effects(ctx)
+    end
+
+    test "mfa refinement returning valid context" do
+      schema = Zoi.string() |> Zoi.refine({Validation, :refine_valid, []})
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:ok, %{parsed: "valid"}} = Meta.run_effects(ctx)
+    end
+
+    test "mfa refinement returning context with nil parsed" do
+      schema = Zoi.string() |> Zoi.refine({Validation, :refine_nil, []})
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: nil}} = Meta.run_effects(ctx)
+    end
+
+    test "mfa refinement returning context with partial" do
+      schema = Zoi.string() |> Zoi.refine({Validation, :refine_partial, []})
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: "partial"}} = Meta.run_effects(ctx)
+    end
+
     test "returns partial from refinement errors" do
       schema =
         Zoi.map(%{sku: Zoi.string(), qty: Zoi.integer()})
@@ -195,6 +306,83 @@ defmodule Zoi.MetaTest do
       ctx = Zoi.Context.new(schema, 12) |> Zoi.Context.add_parsed(12)
       assert {:error, %{errors: [error]}} = Meta.run_effects(ctx)
       assert Exception.message(error) == "Value is not a string"
+    end
+
+    test "transform returning context with unchanged parsed" do
+      schema =
+        Zoi.string()
+        |> Zoi.transform(fn input, ctx ->
+          ctx
+          |> Zoi.Context.add_parsed(input)
+          |> Zoi.Context.add_error("unchanged")
+        end)
+
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: nil, errors: [error]}} = Meta.run_effects(ctx)
+      assert Exception.message(error) == "unchanged"
+    end
+
+    test "transform returning context with nil parsed" do
+      schema =
+        Zoi.string()
+        |> Zoi.transform(fn _input, ctx ->
+          ctx
+          |> Zoi.Context.add_parsed(nil)
+          |> Zoi.Context.add_error("nil parsed")
+        end)
+
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: nil, errors: [error]}} = Meta.run_effects(ctx)
+      assert Exception.message(error) == "nil parsed"
+    end
+
+    test "transform returning valid context from function" do
+      schema =
+        Zoi.string()
+        |> Zoi.transform(fn _input, ctx ->
+          %{ctx | valid?: true, parsed: "from_fn", errors: []}
+        end)
+
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:ok, %{parsed: "from_fn"}} = Meta.run_effects(ctx)
+    end
+
+    test "transform returning context with different parsed" do
+      schema =
+        Zoi.string()
+        |> Zoi.transform(fn _input, ctx ->
+          ctx
+          |> Zoi.Context.add_parsed("partial")
+          |> Zoi.Context.add_error("has partial")
+        end)
+
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: "partial", errors: [error]}} = Meta.run_effects(ctx)
+      assert Exception.message(error) == "has partial"
+    end
+
+    test "mfa transform returning error with partial" do
+      schema = Zoi.string() |> Zoi.transform({Validation, :transform_error_partial, []})
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: "partial_data"}} = Meta.run_effects(ctx)
+    end
+
+    test "mfa transform returning valid context" do
+      schema = Zoi.string() |> Zoi.transform({Validation, :transform_valid, []})
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:ok, %{parsed: "valid"}} = Meta.run_effects(ctx)
+    end
+
+    test "mfa transform returning context with nil parsed" do
+      schema = Zoi.string() |> Zoi.transform({Validation, :transform_nil, []})
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: nil}} = Meta.run_effects(ctx)
+    end
+
+    test "mfa transform returning context with partial" do
+      schema = Zoi.string() |> Zoi.transform({Validation, :transform_partial, []})
+      ctx = Zoi.Context.new(schema, "test") |> Zoi.Context.add_parsed("test")
+      assert {:error, %{parsed: "partial"}} = Meta.run_effects(ctx)
     end
 
     test "keeps transforming explicit partials after an error" do

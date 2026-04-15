@@ -1095,7 +1095,7 @@ defmodule ZoiTest do
                message: "too small: must have at least 3 character(s)",
                issue:
                  {"too small: must have at least %{count} character(s)",
-                  [discriminator: "cat", count: 3]}
+                  [discriminator: "cat", type: :string, count: 3]}
              }
     end
 
@@ -2169,6 +2169,15 @@ defmodule ZoiTest do
 
       assert Exception.message(error) == "invalid type: expected integer"
       assert error.path == [:age]
+    end
+
+    test "struct with all fields failing type parse" do
+      schema = Zoi.struct(User, %{name: Zoi.string(), age: Zoi.integer()})
+
+      assert {:error, errors} =
+               Zoi.parse(schema, %User{name: 123, age: "not_int"})
+
+      assert length(errors) == 2
     end
 
     test "struct with non-map input" do
@@ -3466,7 +3475,9 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
       assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must have at least 5 character(s)"
-      assert error.issue == {"too small: must have at least %{count} character(s)", [count: 5]}
+
+      assert error.issue ==
+               {"too small: must have at least %{count} character(s)", [type: :string, count: 5]}
     end
 
     test "min for integer" do
@@ -3505,7 +3516,9 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
       assert error.code == :greater_than_or_equal_to
       assert Exception.message(error) == "too small: must have at least 5 character(s)"
-      assert error.issue == {"too small: must have at least %{count} character(s)", [count: 5]}
+
+      assert error.issue ==
+               {"too small: must have at least %{count} character(s)", [type: :string, count: 5]}
     end
 
     test "gte for integer" do
@@ -3688,7 +3701,9 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello world")
       assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must have at most 5 character(s)"
-      assert error.issue == {"too big: must have at most %{count} character(s)", [count: 5]}
+
+      assert error.issue ==
+               {"too big: must have at most %{count} character(s)", [type: :string, count: 5]}
     end
 
     test "max for string with transforms runs refinements" do
@@ -3760,7 +3775,9 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello world")
       assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must have at most 5 character(s)"
-      assert error.issue == {"too big: must have at most %{count} character(s)", [count: 5]}
+
+      assert error.issue ==
+               {"too big: must have at most %{count} character(s)", [type: :string, count: 5]}
     end
 
     test "lte for integer" do
@@ -3770,7 +3787,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 15)
       assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must be at most 10"
-      assert error.issue == {"too big: must be at most %{count}", [count: 10]}
+      assert error.issue == {"too big: must be at most %{count}", [type: :integer, count: 10]}
     end
 
     test "lte for float" do
@@ -3780,7 +3797,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
       assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must be at most 10.5"
-      assert error.issue == {"too big: must be at most %{count}", [count: 10.5]}
+      assert error.issue == {"too big: must be at most %{count}", [type: :float, count: 10.5]}
     end
 
     test "lte for number" do
@@ -3790,7 +3807,7 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 12.34)
       assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must be at most 10.5"
-      assert error.issue == {"too big: must be at most %{count}", [count: 10.5]}
+      assert error.issue == {"too big: must be at most %{count}", [type: :number, count: 10.5]}
     end
 
     test "lte for decimal" do
@@ -3800,7 +3817,9 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, Decimal.new("12.34"))
       assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must be at most 10.5"
-      assert error.issue == {"too big: must be at most %{count}", [count: Decimal.new("10.5")]}
+
+      assert error.issue ==
+               {"too big: must be at most %{count}", [type: :decimal, count: Decimal.new("10.5")]}
     end
 
     test "lte for array" do
@@ -3810,7 +3829,9 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3, 4])
       assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must have at most 3 item(s)"
-      assert error.issue == {"too big: must have at most %{count} item(s)", [count: 3]}
+
+      assert error.issue ==
+               {"too big: must have at most %{count} item(s)", [type: :array, count: 3]}
     end
 
     test "lte for time" do
@@ -4015,7 +4036,9 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hi")
       assert error.code == :invalid_length
       assert Exception.message(error) == "invalid length: must have 5 character(s)"
-      assert error.issue == {"invalid length: must have %{count} character(s)", [count: 5]}
+
+      assert error.issue ==
+               {"invalid length: must have %{count} character(s)", [type: :string, count: 5]}
     end
 
     test "length for array" do
@@ -4024,7 +4047,9 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2])
       assert error.code == :invalid_length
       assert Exception.message(error) == "invalid length: must have 3 item(s)"
-      assert error.issue == {"invalid length: must have %{count} item(s)", [count: 3]}
+
+      assert error.issue ==
+               {"invalid length: must have %{count} item(s)", [type: :array, count: 3]}
     end
 
     test "custom message" do

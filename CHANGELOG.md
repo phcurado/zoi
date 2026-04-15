@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - `Zoi.discriminated_union/3` errors now include `discriminator` in issue opts identifying the matched variant
 - `Zoi.array/2` now does partial parsing to preserves item positions using integer-keyed maps instead of dropping invalid items in `Zoi.Context.parse/2`
 - `Zoi.enum/2` error issue now returns values as a list instead of a joined string
+- `Zoi.Error` issue opts now include `type` for programmatic type distinction (e.g. `:integer`, `:float`, `:string`, `:array`, `:date`, `:datetime`)
 
 ## 0.17.4 - 2025-04-06
 
