@@ -46,28 +46,13 @@ if Code.ensure_loaded?(Ecto) do
       through with `code:` only -- no `validation:` key is added.
     - **Array errors:** Array item errors produce a list of changesets matching
       Ecto's `embeds_many` convention. Positions without errors get empty valid
-      changesets (no parsed data) because Zoi's parse API does not expose
-      partial results on failure -- only the error list is available. This means
-      valid array items will have empty `.changes` rather than their parsed
-      values. Error traversal and rendering are unaffected.
-    - **Enum value splitting:** For inclusion errors, the `enum:` key is
-      produced by splitting Zoi's comma-joined `values` string back into a
-      list. Enum values containing `", "` (comma-space) will be split
-      incorrectly.
-    - **Length errors lack `type:` key:** Ecto's `validate_length/3` includes
-      `type: :string` or `type: :list` in error opts. Zoi's error issue opts
-      do not include the target type, so length errors produced by this module
-      will not have a `:type` key. Consumers that check `opts[:type]` on
-      length errors will get `nil`.
+      changesets because `Zoi.Ecto.errors_to_changeset/1` only receives the
+      error list, not partial parse data. Use `Zoi.Ecto.changeset/2` to get
+      partial data for valid items.
     - **Numeric `number:` key derived from `count:`:** For numeric validation
       errors, Ecto uses `number: target_value`. Zoi uses `count: value`. This
       module copies `count:` into `number:` for Ecto compatibility -- both
       keys are present in the output.
-    - **Template coupling:** Size constraint disambiguation (`:number` vs
-      `:length`) relies on Zoi's error message templates containing
-      "character(s)" or "item(s)" for string/array constraints. If Zoi
-      changes these templates in a future version, the mapping may need
-      updating.
     """
 
     @code_mapping %{
@@ -90,6 +75,8 @@ if Code.ensure_loaded?(Ecto) do
       :less_than,
       :less_than_or_equal_to
     ]
+
+    @length_types [:string, :array]
 
     @doc """
     Parses input through a Zoi schema and returns an Ecto changeset.
@@ -166,12 +153,12 @@ if Code.ensure_loaded?(Ecto) do
       |> Map.put(:valid?, false)
     end
 
-    defp build_ecto_opts(code, template, issue_opts) do
+    defp build_ecto_opts(code, _template, issue_opts) do
       base = Map.get(@code_mapping, code, [])
 
       base =
         if code in @size_codes do
-          validation = resolve_size_validation(template)
+          validation = resolve_size_validation(issue_opts)
 
           base
           |> Keyword.put(:validation, validation)
@@ -189,14 +176,11 @@ if Code.ensure_loaded?(Ecto) do
     end
 
     # Ecto uses `enum: [list]` for inclusion errors.
-    # Zoi provides `values: "a, b, c"` (comma-joined string) -- we split it
-    # back into a list to match Ecto's format. This assumes enum values do
-    # not contain ", " (comma-space). Pathological but documented.
+    # Zoi provides `values: [list]` natively -- pass it through as `enum:`.
     defp maybe_add_enum_list(issue_opts, :invalid_enum_value) do
       case Keyword.get(issue_opts, :values) do
-        values when is_binary(values) ->
-          enum = values |> String.split(", ") |> Enum.map(&String.trim/1)
-          Keyword.put(issue_opts, :enum, enum)
+        values when is_list(values) ->
+          Keyword.put(issue_opts, :enum, values)
 
         _ ->
           issue_opts
@@ -205,11 +189,10 @@ if Code.ensure_loaded?(Ecto) do
 
     defp maybe_add_enum_list(issue_opts, _code), do: issue_opts
 
-    defp resolve_size_validation(template) do
-      cond do
-        String.ends_with?(template, "character(s)") -> :length
-        String.ends_with?(template, "item(s)") -> :length
-        true -> :number
+    defp resolve_size_validation(issue_opts) do
+      case Keyword.get(issue_opts, :type) do
+        type when type in @length_types -> :length
+        _ -> :number
       end
     end
 
@@ -282,12 +265,17 @@ if Code.ensure_loaded?(Ecto) do
     # During routing, array items are stored as index-keyed maps for O(1)
     # lookup. After all errors are routed, convert to padded lists matching
     # Ecto's embeds_many convention: one changeset per array position.
+    # When parsed data is available (from changeset/2 via Zoi.Context),
+    # valid array items carry their parsed data instead of empty changesets.
 
     defp to_ecto_array_changes(%Ecto.Changeset{changes: changes} = cs) do
+      parsed_data = extract_parsed_data(cs)
+
       updated =
         Map.new(changes, fn
           {field, %{} = index_map} when not is_struct(index_map) ->
-            {field, index_map_to_list(index_map)}
+            parsed_array = Map.get(parsed_data, field, %{})
+            {field, index_map_to_list(index_map, parsed_array)}
 
           {field, %Ecto.Changeset{} = nested} ->
             {field, to_ecto_array_changes(nested)}
@@ -299,16 +287,29 @@ if Code.ensure_loaded?(Ecto) do
       %{cs | changes: updated}
     end
 
-    defp index_map_to_list(index_map) do
-      max_index = index_map |> Map.keys() |> Enum.max(fn -> -1 end)
+    defp extract_parsed_data(%Ecto.Changeset{data: data}) when is_map(data), do: data
+    defp extract_parsed_data(_cs), do: %{}
 
-      0..max_index
-      |> Enum.map(fn i ->
-        case Map.get(index_map, i) do
-          nil -> empty_changeset()
-          cs -> to_ecto_array_changes(cs)
-        end
-      end)
+    defp index_map_to_list(index_map, parsed_array) do
+      all_indices = Map.keys(index_map) ++ Map.keys(parsed_array)
+      max_index = Enum.max(all_indices, fn -> -1 end)
+
+      if max_index < 0 do
+        []
+      else
+        Enum.map(0..max_index, fn i ->
+          case Map.get(index_map, i) do
+            nil ->
+              case Map.get(parsed_array, i) do
+                item when is_map(item) -> Ecto.Changeset.change({item, %{}})
+                _ -> empty_changeset()
+              end
+
+            cs ->
+              to_ecto_array_changes(cs)
+          end
+        end)
+      end
     end
 
     defp empty_changeset, do: Ecto.Changeset.change({%{}, %{}})

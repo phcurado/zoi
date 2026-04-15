@@ -444,6 +444,41 @@ defmodule Zoi.ErrorsToEctoChangesetTest do
       {_msg, opts_p} = Enum.at(items, 1).errors[:unit_price]
       assert opts_p[:code] == :greater_than_or_equal_to
     end
+
+    test "changeset/2 preserves parsed data for valid array items" do
+      bad_items = [
+        %{"sku" => "VALID-1", "quantity" => 5, "unit_price" => 1000},
+        %{"sku" => "BAD-2", "quantity" => -1, "unit_price" => 500},
+        %{"sku" => "VALID-3", "quantity" => 2, "unit_price" => 750}
+      ]
+
+      input = Map.put(@valid_order, "items", bad_items)
+      changeset = Zoi.Ecto.changeset(OrderSchemas.order(), input)
+
+      refute changeset.valid?
+      items = changeset.changes[:items]
+      assert length(items) == 3
+
+      # Item 0 is valid — carries parsed data
+      valid_0 = Enum.at(items, 0)
+      assert valid_0.errors == []
+      assert valid_0.data[:sku] == "VALID-1"
+      assert valid_0.data[:quantity] == 5
+      assert valid_0.data[:unit_price] == 1000
+
+      # Item 1 has an error — but still carries partial parsed data
+      errored_1 = Enum.at(items, 1)
+      assert %Ecto.Changeset{valid?: false} = errored_1
+      {_msg, opts} = errored_1.errors[:quantity]
+      assert opts[:code] == :greater_than
+
+      # Item 2 is valid — carries parsed data
+      valid_2 = Enum.at(items, 2)
+      assert valid_2.errors == []
+      assert valid_2.data[:sku] == "VALID-3"
+      assert valid_2.data[:quantity] == 2
+      assert valid_2.data[:unit_price] == 750
+    end
   end
 
   # ---------------------------------------------------------------------------
