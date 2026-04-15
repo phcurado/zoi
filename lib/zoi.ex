@@ -1931,7 +1931,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of red, green, blue",
-           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "red, green, blue"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: [:red, :green, :blue]]},
            path: []
          }
        ]}
@@ -1946,7 +1946,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of red, green, blue",
-           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "red, green, blue"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: ["red", "green", "blue"]]},
            path: []
          }
        ]}
@@ -1961,7 +1961,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of Red, Green, Blue",
-           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "Red, Green, Blue"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: ["Red", "Green", "Blue"]]},
            path: []
          }
        ]}
@@ -1976,7 +1976,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of 1, 2, 3",
-           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: [1, 2, 3]]},
            path: []
          }
        ]}
@@ -1991,7 +1991,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of 1, 2, 3",
-           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: [1, 2, 3]]},
            path: []
          }
        ]}
@@ -2008,7 +2008,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of 1, 2, 3",
-           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: [1, 2, 3]]},
            path: []
          }
        ]}
@@ -2018,7 +2018,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_enum_value,
            message: "invalid enum value: expected one of 1, 2, 3",
-           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: "1, 2, 3"]},
+           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: [1, 2, 3]]},
            path: []
          }
        ]}
