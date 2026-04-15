@@ -40,7 +40,7 @@ defmodule Zoi.Context do
     maybe_warn_deprecated(ctx.schema, ctx.path)
 
     with {:ok, ctx} <- parse_type(ctx, opts),
-         {:ok, ctx} <- run_effects(ctx) do
+         {:ok, ctx} <- Meta.run_effects(ctx) do
       %{ctx | valid?: true}
     else
       {:error, ctx} -> ctx
@@ -71,19 +71,7 @@ defmodule Zoi.Context do
         {:ok, add_parsed(ctx, result)}
 
       {:error, error, partial} ->
-        # Type explicitly provided partial (Objects, Arrays, etc)
         {:error, ctx |> add_parsed(partial) |> add_error(error)}
-
-      {:error, error} ->
-        # Type didn't provide partial - preserve original input
-        {:error, ctx |> add_parsed(ctx.input) |> add_error(error)}
-    end
-  end
-
-  defp run_effects(ctx) do
-    case Meta.run_effects(ctx) do
-      {:ok, result} ->
-        {:ok, add_parsed(ctx, result)}
 
       {:error, error} ->
         {:error, add_error(ctx, error)}

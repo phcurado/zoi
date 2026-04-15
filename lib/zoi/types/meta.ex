@@ -58,105 +58,177 @@ defmodule Zoi.Types.Meta do
     end)
   end
 
-  @spec run_effects(ctx :: Zoi.Context.t()) :: {:ok, Zoi.input()} | {:error, [Zoi.Errors.t()]}
-  def run_effects(%Zoi.Context{schema: schema, parsed: input} = ctx) do
-    schema.meta.effects
-    |> Enum.reduce({{:ok, input}, []}, fn
-      {:refine, refinement}, {{:ok, input}, errors} ->
-        run_refinement(refinement, input, errors, ctx)
+  @spec run_effects(Zoi.Context.t()) :: {:ok, Zoi.Context.t()} | {:error, Zoi.Context.t()}
+  def run_effects(%Zoi.Context{schema: schema} = ctx) do
+    {ctx, has_partial} =
+      Enum.reduce(schema.meta.effects, {ctx, false}, fn
+        {:refine, refinement}, {ctx, has_partial} ->
+          case run_refinement(refinement, ctx.parsed, ctx) do
+            {:ok, value} ->
+              {Zoi.Context.add_parsed(ctx, value), has_partial}
 
-      {:transform, transform}, {{:ok, input}, errors} ->
-        run_transform(transform, input, errors, ctx)
-    end)
-    |> then(fn {{:ok, value}, errors} ->
-      if Enum.empty?(errors) do
-        {:ok, value}
-      else
-        {:error, errors}
-      end
-    end)
+            {:error, errors} ->
+              {Zoi.Context.add_error(ctx, errors), has_partial}
+
+            {:error, errors, partial} ->
+              {ctx |> Zoi.Context.add_parsed(partial) |> Zoi.Context.add_error(errors), true}
+          end
+
+        {:transform, transform}, {ctx, has_partial} ->
+          case run_transform(transform, ctx.parsed, ctx) do
+            {:ok, value} ->
+              {Zoi.Context.add_parsed(ctx, value), has_partial}
+
+            {:error, errors} ->
+              {Zoi.Context.add_error(ctx, errors), has_partial}
+
+            {:error, errors, partial} ->
+              {ctx |> Zoi.Context.add_parsed(partial) |> Zoi.Context.add_error(errors), true}
+          end
+      end)
+
+    cond do
+      ctx.errors == [] -> {:ok, ctx}
+      has_partial -> {:error, ctx}
+      true -> {:error, %{ctx | parsed: nil}}
+    end
   end
 
   # Internal validation which uses Protocols in form of MFA: {ProtocolMod, :validate, [value, opts]}
-  defp run_refinement({mod, :validate, args}, input, errors, ctx) do
+  defp run_refinement({mod, :validate, args}, input, ctx) do
     case apply(mod, :validate, [ctx.schema, input] ++ args) do
       :ok ->
-        {{:ok, input}, errors}
+        {:ok, input}
 
       {:error, err} ->
-        {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+        {:error, Zoi.Errors.add_error(err)}
+
+      {:error, err, partial} ->
+        {:error, Zoi.Errors.add_error(err), partial}
     end
   end
 
-  defp run_refinement({mod, func, args}, input, errors, ctx) do
+  defp run_refinement({mod, func, args}, input, ctx) do
     case apply(mod, func, [input] ++ args ++ [[ctx: ctx]]) do
       :ok ->
-        {{:ok, input}, errors}
+        {:ok, input}
 
       {:error, err} ->
-        {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+        {:error, Zoi.Errors.add_error(err)}
 
-      %Zoi.Context{} = context ->
-        {{:ok, context.parsed}, context.errors}
+      {:error, err, partial} ->
+        {:error, Zoi.Errors.add_error(err), partial}
+
+      %Zoi.Context{valid?: true, parsed: value} ->
+        {:ok, value}
+
+      %Zoi.Context{errors: errors, parsed: ^input} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: nil} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: partial} ->
+        {:error, errors, partial}
     end
   end
 
-  defp run_refinement(refine_func, input, errors, ctx) when is_function(refine_func) do
-    cond do
-      is_function(refine_func, 1) ->
-        refine_func.(input)
+  defp run_refinement(refine_func, input, ctx) when is_function(refine_func) do
+    result =
+      cond do
+        is_function(refine_func, 1) ->
+          refine_func.(input)
 
-      is_function(refine_func, 2) ->
-        refine_func.(input, ctx)
-    end
-    |> case do
+        is_function(refine_func, 2) ->
+          refine_func.(input, ctx)
+      end
+
+    case result do
       :ok ->
-        {{:ok, input}, errors}
+        {:ok, input}
 
       {:error, err} ->
-        {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+        {:error, Zoi.Errors.add_error(err)}
 
-      %Zoi.Context{} = context ->
-        {{:ok, context.parsed}, context.errors}
+      {:error, err, partial} ->
+        {:error, Zoi.Errors.add_error(err), partial}
+
+      %Zoi.Context{valid?: true, parsed: value} ->
+        {:ok, value}
+
+      %Zoi.Context{errors: errors, parsed: ^input} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: nil} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: partial} ->
+        {:error, errors, partial}
     end
   end
 
-  defp run_transform({mod, func, args}, input, errors, ctx) do
+  defp run_transform({mod, func, args}, input, ctx) do
     case apply(mod, func, [input] ++ args ++ [[ctx: ctx]]) do
       {:ok, value} ->
-        {{:ok, value}, errors}
+        {:ok, value}
 
       {:error, err} ->
-        {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+        {:error, Zoi.Errors.add_error(err)}
 
-      %Zoi.Context{} = context ->
-        {{:ok, context.parsed}, context.errors}
+      {:error, err, partial} ->
+        {:error, Zoi.Errors.add_error(err), partial}
+
+      %Zoi.Context{valid?: true, parsed: value} ->
+        {:ok, value}
+
+      %Zoi.Context{errors: errors, parsed: ^input} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: nil} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: partial} ->
+        {:error, errors, partial}
 
       value ->
-        {{:ok, value}, errors}
+        {:ok, value}
     end
   end
 
-  defp run_transform(transform_func, input, errors, ctx) when is_function(transform_func) do
-    cond do
-      is_function(transform_func, 1) ->
-        transform_func.(input)
+  defp run_transform(transform_func, input, ctx) when is_function(transform_func) do
+    result =
+      cond do
+        is_function(transform_func, 1) ->
+          transform_func.(input)
 
-      is_function(transform_func, 2) ->
-        transform_func.(input, ctx)
-    end
-    |> case do
+        is_function(transform_func, 2) ->
+          transform_func.(input, ctx)
+      end
+
+    case result do
       {:ok, value} ->
-        {{:ok, value}, errors}
+        {:ok, value}
 
       {:error, err} ->
-        {{:ok, input}, Zoi.Errors.add_error(errors, err)}
+        {:error, Zoi.Errors.add_error(err)}
 
-      %Zoi.Context{} = context ->
-        {{:ok, context.parsed}, context.errors}
+      {:error, err, partial} ->
+        {:error, Zoi.Errors.add_error(err), partial}
+
+      %Zoi.Context{valid?: true, parsed: value} ->
+        {:ok, value}
+
+      %Zoi.Context{errors: errors, parsed: ^input} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: nil} ->
+        {:error, errors}
+
+      %Zoi.Context{errors: errors, parsed: partial} ->
+        {:error, errors, partial}
 
       value ->
-        {{:ok, value}, errors}
+        {:ok, value}
     end
   end
 

@@ -9,6 +9,9 @@ defmodule Zoi.Types.KeyValue do
       {:ok, parsed} ->
         {:ok, Enum.into(parsed, %{})}
 
+      {:error, errors} ->
+        {:error, errors}
+
       {:error, errors, parsed} ->
         {:error, errors, Enum.into(parsed, %{})}
     end
@@ -22,6 +25,9 @@ defmodule Zoi.Types.KeyValue do
       {:ok, parsed} ->
         {:ok, Enum.into(parsed, %{})}
 
+      {:error, errors} ->
+        {:error, errors}
+
       {:error, errors, parsed} ->
         {:error, errors, Enum.into(parsed, %{})}
     end
@@ -32,6 +38,9 @@ defmodule Zoi.Types.KeyValue do
     |> case do
       {:ok, parsed} ->
         {:ok, Enum.reverse(parsed)}
+
+      {:error, errors} ->
+        {:error, errors}
 
       {:error, errors, parsed} ->
         {:error, errors, Enum.reverse(parsed)}
@@ -119,10 +128,10 @@ defmodule Zoi.Types.KeyValue do
           )
       end
 
-    if errors == [] do
-      {:ok, parsed}
-    else
-      {:error, errors, parsed}
+    case {errors, parsed} do
+      {[], parsed} -> {:ok, parsed}
+      {errors, []} -> {:error, errors}
+      {errors, parsed} -> {:error, errors, parsed}
     end
   end
 

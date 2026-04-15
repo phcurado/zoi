@@ -2546,6 +2546,44 @@ defmodule ZoiTest do
       assert error2.path == [5]
     end
 
+    test "array partial parsing preserves indices for valid and partial items" do
+      schema =
+        Zoi.map(
+          %{
+            items:
+              Zoi.array(
+                Zoi.map(
+                  %{
+                    sku: Zoi.string(),
+                    qty: Zoi.integer() |> Zoi.positive()
+                  },
+                  coerce: true
+                )
+              )
+          },
+          coerce: true
+        )
+
+      input = %{
+        "items" => [
+          %{"sku" => "A", "qty" => 5},
+          %{"sku" => "B", "qty" => -1},
+          %{"sku" => "C", "qty" => 10}
+        ]
+      }
+
+      ctx = Zoi.Context.new(schema, input) |> Zoi.Context.parse()
+
+      refute ctx.valid?
+      assert [%Zoi.Error{path: [:items, 1, :qty]}] = ctx.errors
+
+      assert ctx.parsed.items == %{
+               0 => %{sku: "A", qty: 5},
+               1 => %{sku: "B"},
+               2 => %{sku: "C", qty: 10}
+             }
+    end
+
     test "array with empty array" do
       schema = Zoi.array(Zoi.string())
 

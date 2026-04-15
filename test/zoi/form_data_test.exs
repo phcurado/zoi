@@ -246,8 +246,8 @@ defmodule Zoi.FormDataTest do
       ctx = Zoi.Form.parse(schema, params)
       refute ctx.valid?
 
-      # First valid item should be in parsed
-      assert ctx.parsed[:items] == [%{name: "Valid", price: 100}]
+      # Only items with parsed data are in partial, fully invalid items excluded
+      assert ctx.parsed[:items] == %{0 => %{name: "Valid", price: 100}}
 
       # But params should preserve both for form display
       form = FormData.to_form(ctx, as: :order)
@@ -258,7 +258,8 @@ defmodule Zoi.FormDataTest do
       # First form has validated data
       assert List.first(item_forms).data[:price] == 100
 
-      # Second form has params for re-display
+      # Second form has params for re-display, even though parsed data is empty
+      assert FormData.input_value(ctx, List.last(item_forms), :name) == "X"
       assert FormData.input_value(ctx, List.last(item_forms), :price) == "oops"
     end
   end
