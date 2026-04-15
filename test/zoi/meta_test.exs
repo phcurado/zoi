@@ -16,21 +16,46 @@ defmodule Zoi.MetaTest do
       {:ok, String.upcase(value)}
     end
 
-    def upcase(_value, _opts), do: {:error, "Value is not a string"}
+    def upcase(_value, _opts) do
+      {:error, "Value is not a string"}
+    end
 
     def upcase_error(_value, opts) do
       opts[:ctx]
       |> Zoi.Context.add_error(%{message: "Value is not a string"})
     end
 
-    def refine_valid(_input, opts), do: %{opts[:ctx] | valid?: true, parsed: "valid", errors: []}
-    def refine_nil(_input, opts), do: opts[:ctx] |> Zoi.Context.add_parsed(nil) |> Zoi.Context.add_error("nil")
-    def refine_partial(_input, opts), do: opts[:ctx] |> Zoi.Context.add_parsed("partial") |> Zoi.Context.add_error("partial")
-    def refine_error_partial(_input, _opts), do: {:error, "partial error", "partial_data"}
-    def transform_valid(_input, opts), do: %{opts[:ctx] | valid?: true, parsed: "valid", errors: []}
-    def transform_nil(_input, opts), do: opts[:ctx] |> Zoi.Context.add_parsed(nil) |> Zoi.Context.add_error("nil")
-    def transform_partial(_input, opts), do: opts[:ctx] |> Zoi.Context.add_parsed("partial") |> Zoi.Context.add_error("partial")
-    def transform_error_partial(_input, _opts), do: {:error, "partial error", "partial_data"}
+    def refine_valid(_input, opts) do
+      %{opts[:ctx] | valid?: true, parsed: "valid", errors: []}
+    end
+
+    def refine_nil(_input, opts) do
+      opts[:ctx] |> Zoi.Context.add_parsed(nil) |> Zoi.Context.add_error("nil")
+    end
+
+    def refine_partial(_input, opts) do
+      opts[:ctx] |> Zoi.Context.add_parsed("partial") |> Zoi.Context.add_error("partial")
+    end
+
+    def refine_error_partial(_input, _opts) do
+      {:error, "partial error", "partial_data"}
+    end
+
+    def transform_valid(_input, opts) do
+      %{opts[:ctx] | valid?: true, parsed: "valid", errors: []}
+    end
+
+    def transform_nil(_input, opts) do
+      opts[:ctx] |> Zoi.Context.add_parsed(nil) |> Zoi.Context.add_error("nil")
+    end
+
+    def transform_partial(_input, opts) do
+      opts[:ctx] |> Zoi.Context.add_parsed("partial") |> Zoi.Context.add_error("partial")
+    end
+
+    def transform_error_partial(_input, _opts) do
+      {:error, "partial error", "partial_data"}
+    end
   end
 
   describe "create_meta/1" do
