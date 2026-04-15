@@ -349,11 +349,11 @@ defmodule Zoi.Error do
       iex> Zoi.Error.less_than_or_equal_to(:string, 10)
       %Zoi.Error{
         code: :less_than_or_equal_to,
-        issue: {"too big: must have at most %{count} character(s)", [count: 10]},
+        issue: {"too big: must have at most %{count} character(s)", [type: :string, count: 10]},
         message: "too big: must have at most 10 character(s)"
       }
   """
-  @spec less_than_or_equal_to(:string | :array | :number | :date, any(), keyword()) :: t()
+  @spec less_than_or_equal_to(atom(), any(), keyword()) :: t()
   def less_than_or_equal_to(type, max, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
@@ -361,7 +361,7 @@ defmodule Zoi.Error do
       custom_error(issue: {msg, [count: max]})
     else
       message =
-        case type do
+        case type_category(type) do
           :string -> "too big: must have at most %{count} character(s)"
           :array -> "too big: must have at most %{count} item(s)"
           :number -> "too big: must be at most %{count}"
@@ -370,7 +370,7 @@ defmodule Zoi.Error do
 
       new(
         code: :less_than_or_equal_to,
-        issue: {message, [count: max]},
+        issue: {message, [type: type, count: max]},
         path: opts[:path] || []
       )
     end
@@ -383,11 +383,11 @@ defmodule Zoi.Error do
       iex> Zoi.Error.greater_than_or_equal_to(:string, 3)
       %Zoi.Error{
         code: :greater_than_or_equal_to,
-        issue: {"too small: must have at least %{count} character(s)", [count: 3]},
+        issue: {"too small: must have at least %{count} character(s)", [type: :string, count: 3]},
         message: "too small: must have at least 3 character(s)"
       }
   """
-  @spec greater_than_or_equal_to(:string | :array | :number | :date, any(), keyword()) :: t()
+  @spec greater_than_or_equal_to(atom(), any(), keyword()) :: t()
   def greater_than_or_equal_to(type, min, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
@@ -395,7 +395,7 @@ defmodule Zoi.Error do
       custom_error(issue: {msg, [count: min]})
     else
       message =
-        case type do
+        case type_category(type) do
           :string -> "too small: must have at least %{count} character(s)"
           :array -> "too small: must have at least %{count} item(s)"
           :number -> "too small: must be at least %{count}"
@@ -404,7 +404,7 @@ defmodule Zoi.Error do
 
       new(
         code: :greater_than_or_equal_to,
-        issue: {message, [count: min]},
+        issue: {message, [type: type, count: min]},
         path: opts[:path] || []
       )
     end
@@ -417,11 +417,11 @@ defmodule Zoi.Error do
       iex> Zoi.Error.greater_than(:number, 5)
       %Zoi.Error{
         code: :greater_than,
-        issue: {"too small: must be greater than %{count}", [count: 5]},
+        issue: {"too small: must be greater than %{count}", [type: :number, count: 5]},
         message: "too small: must be greater than 5"
       }
   """
-  @spec greater_than(:number | :date, any(), keyword()) :: t()
+  @spec greater_than(atom(), any(), keyword()) :: t()
   def greater_than(type, min, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
@@ -429,14 +429,14 @@ defmodule Zoi.Error do
       custom_error(issue: {msg, [count: min]})
     else
       message =
-        case type do
+        case type_category(type) do
           :number -> "too small: must be greater than %{count}"
           :date -> "too small: must be greater than %{count}"
         end
 
       new(
         code: :greater_than,
-        issue: {message, [count: min]},
+        issue: {message, [type: type, count: min]},
         path: opts[:path] || []
       )
     end
@@ -449,11 +449,11 @@ defmodule Zoi.Error do
       iex> Zoi.Error.less_than(:number, 10)
       %Zoi.Error{
         code: :less_than,
-        issue: {"too big: must be less than %{count}", [count: 10]},
+        issue: {"too big: must be less than %{count}", [type: :number, count: 10]},
         message: "too big: must be less than 10"
       }
   """
-  @spec less_than(:number | :date, any(), keyword()) :: t()
+  @spec less_than(atom(), any(), keyword()) :: t()
   def less_than(type, max, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
@@ -461,14 +461,14 @@ defmodule Zoi.Error do
       custom_error(issue: {msg, [count: max]})
     else
       message =
-        case type do
+        case type_category(type) do
           :number -> "too big: must be less than %{count}"
           :date -> "too big: must be less than %{count}"
         end
 
       new(
         code: :less_than,
-        issue: {message, [count: max]},
+        issue: {message, [type: type, count: max]},
         path: opts[:path] || []
       )
     end
@@ -480,11 +480,11 @@ defmodule Zoi.Error do
       iex> Zoi.Error.invalid_length(:string, 5)
       %Zoi.Error{
         code: :invalid_length,
-        issue: {"invalid length: must have %{count} character(s)", [count: 5]},
+        issue: {"invalid length: must have %{count} character(s)", [type: :string, count: 5]},
         message: "invalid length: must have 5 character(s)"
       }
   """
-  @spec invalid_length(:string | :array, non_neg_integer(), keyword()) :: t()
+  @spec invalid_length(atom(), non_neg_integer(), keyword()) :: t()
   def invalid_length(type, length, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
 
@@ -492,14 +492,14 @@ defmodule Zoi.Error do
       custom_error(issue: {msg, [count: length]})
     else
       message =
-        case type do
+        case type_category(type) do
           :string -> "invalid length: must have %{count} character(s)"
           :array -> "invalid length: must have %{count} item(s)"
         end
 
       new(
         code: :invalid_length,
-        issue: {message, [count: length]},
+        issue: {message, [type: type, count: length]},
         path: opts[:path] || []
       )
     end
@@ -656,6 +656,10 @@ defmodule Zoi.Error do
   def custom_error(opts \\ []) do
     new([{:code, :custom} | opts])
   end
+
+  defp type_category(type) when type in [:integer, :float, :number, :decimal], do: :number
+  defp type_category(type) when type in [:date, :datetime, :naive_datetime, :time], do: :date
+  defp type_category(type), do: type
 end
 
 defmodule Zoi.ParseError do

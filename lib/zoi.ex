@@ -71,7 +71,7 @@ defmodule Zoi do
           %Zoi.Error{
             code: :greater_than,
             message: "too small: must be greater than 0",
-            issue: {"too small: must be greater than %{count}", [count: 0]},
+            issue: {"too small: must be greater than %{count}", [type: :integer, count: 0]},
             path: []
           }
         ]}
@@ -117,7 +117,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :custom,
            message: "please provide a number bigger than 10",
-           issue: {"please provide a number bigger than %{count}", [count: 10]},
+           issue: {"please provide a number bigger than %{count}", [type: :number, count: 10]},
            path: []
           }
        ]}
@@ -186,7 +186,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :greater_than_or_equal_to,
            message: "too small: must have at least 2 character(s)",
-           issue: {"too small: must have at least %{count} character(s)", [count: 2]},
+           issue: {"too small: must have at least %{count} character(s)", [type: :string, count: 2]},
            path: []
          }
        ]}
@@ -565,7 +565,7 @@ defmodule Zoi do
        [
          %Zoi.Error{
            code: :greater_than_or_equal_to,
-           issue: {"too small: must have at least %{count} character(s)", [count: 2]},
+           issue: {"too small: must have at least %{count} character(s)", [type: :string, count: 2]},
            message: "too small: must have at least 2 character(s)",
            path: []
          }
@@ -1266,7 +1266,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :greater_than_or_equal_to,
            message: "too small: must be at least 0",
-           issue: {"too small: must be at least %{count}", [count: 0]},
+           issue: {"too small: must be at least %{count}", [type: :integer, count: 0]},
            path: []
          }
        ]}
@@ -1285,7 +1285,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :greater_than_or_equal_to,
            message: "too small: must be at least 3",
-           issue: {"too small: must be at least %{count}", [count: 3]},
+           issue: {"too small: must be at least %{count}", [type: :integer, count: 3]},
            path: []
          }
        ]}
@@ -1312,7 +1312,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :less_than_or_equal_to,
            message: "too big: must have at most 5 character(s)",
-           issue: {"too big: must have at most %{count} character(s)", [count: 5]},
+           issue: {"too big: must have at most %{count} character(s)", [type: :string, count: 5]},
            path: []
          }
        ]}
@@ -1333,7 +1333,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :greater_than_or_equal_to,
            message: "too small: must have at least 3 character(s)",
-           issue: {"too small: must have at least %{count} character(s)", [count: 3]},
+           issue: {"too small: must have at least %{count} character(s)", [type: :string, count: 3]},
            path: []
          }
        ]}
@@ -2477,7 +2477,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :invalid_length,
             message: "invalid length: must have 5 character(s)",
-           issue: {"invalid length: must have %{count} character(s)", [count: 5]},
+           issue: {"invalid length: must have %{count} character(s)", [type: :string, count: 5]},
            path: []
          }
        ]}
@@ -2553,7 +2553,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :greater_than_or_equal_to,
            message: "too small: must have at least 3 character(s)",
-           issue: {"too small: must have at least %{count} character(s)", [count: 3]},
+           issue: {"too small: must have at least %{count} character(s)", [type: :string, count: 3]},
            path: []
          }
        ]}
@@ -2583,7 +2583,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :greater_than,
            message: "too small: must be greater than 2",
-           issue: {"too small: must be greater than %{count}", [count: 2]},
+           issue: {"too small: must be greater than %{count}", [type: :integer, count: 2]},
            path: []
          }
        ]}
@@ -2622,7 +2622,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :less_than_or_equal_to,
            message: "too big: must have at most 5 character(s)",
-           issue: {"too big: must have at most %{count} character(s)", [count: 5]},
+           issue: {"too big: must have at most %{count} character(s)", [type: :string, count: 5]},
            path: []
          }
        ]}
@@ -2652,7 +2652,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :less_than,
            message: "too big: must be less than 10",
-           issue: {"too big: must be less than %{count}", [count: 10]},
+           issue: {"too big: must be less than %{count}", [type: :integer, count: 10]},
            path: []
          }
        ]}
@@ -2680,7 +2680,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :greater_than,
            message: "too small: must be greater than 0",
-           issue: {"too small: must be greater than %{count}", [count: 0]},
+           issue: {"too small: must be greater than %{count}", [type: :integer, count: 0]},
            path: []
          }
        ]}
@@ -2705,7 +2705,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :less_than,
            message: "too big: must be less than 0",
-           issue: {"too big: must be less than %{count}", [count: 0]},
+           issue: {"too big: must be less than %{count}", [type: :integer, count: 0]},
            path: []
          }
        ]}
@@ -2730,7 +2730,7 @@ defmodule Zoi do
          %Zoi.Error{
            code: :greater_than_or_equal_to,
            message: "too small: must be at least 0",
-           issue: {"too small: must be at least %{count}", [count: 0]},
+           issue: {"too small: must be at least %{count}", [type: :integer, count: 0]},
            path: []
          }
        ]}

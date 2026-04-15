@@ -22,7 +22,7 @@ defmodule Zoi.FormDataTest do
       assert form.params == params
       assert form.source == ctx
 
-      assert {"too small: must have at least %{count} character(s)", [count: 3]} ==
+      assert {"too small: must have at least %{count} character(s)", [type: :string, count: 3]} ==
                form.errors[:name]
 
       assert {"invalid email format", [format: :email, pattern: _]} = form.errors[:email]
@@ -105,7 +105,7 @@ defmodule Zoi.FormDataTest do
       form = FormData.to_form(ctx, as: :user)
       [profile_form] = FormData.to_form(ctx, form, :profile, [])
 
-      assert {"too big: must have at most %{count} character(s)", [count: 10]} ==
+      assert {"too big: must have at most %{count} character(s)", [type: :string, count: 10]} ==
                profile_form.errors[:bio]
     end
 
@@ -210,14 +210,14 @@ defmodule Zoi.FormDataTest do
       form = FormData.to_form(ctx, as: :user)
       [first_form, second_form] = FormData.to_form(ctx, form, :addresses, [])
 
-      assert {"too small: must have at least %{count} character(s)", [count: 5]} =
+      assert {"too small: must have at least %{count} character(s)", [type: :string, count: 5]} =
                first_form.errors[:street]
 
       refute first_form.errors[:zip]
 
       assert {"invalid type: expected integer", [type: :integer]} = second_form.errors[:zip]
 
-      assert {"too small: must have at least %{count} character(s)", [count: 5]} =
+      assert {"too small: must have at least %{count} character(s)", [type: :string, count: 5]} =
                second_form.errors[:street]
     end
   end

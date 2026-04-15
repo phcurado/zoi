@@ -116,7 +116,7 @@ defmodule Zoi.Types.NaiveDateTime do
       case NaiveDateTime.compare(input, value) do
         :gt -> :ok
         :eq -> :ok
-        :lt -> {:error, Zoi.Error.greater_than_or_equal_to(:date, value, opts)}
+        :lt -> {:error, Zoi.Error.greater_than_or_equal_to(:naive_datetime, value, opts)}
       end
     end
   end
@@ -130,7 +130,7 @@ defmodule Zoi.Types.NaiveDateTime do
       case NaiveDateTime.compare(input, value) do
         :lt -> :ok
         :eq -> :ok
-        :gt -> {:error, Zoi.Error.less_than_or_equal_to(:date, value, opts)}
+        :gt -> {:error, Zoi.Error.less_than_or_equal_to(:naive_datetime, value, opts)}
       end
     end
   end
@@ -143,7 +143,7 @@ defmodule Zoi.Types.NaiveDateTime do
     def validate(_schema, input, value, opts) do
       case NaiveDateTime.compare(input, value) do
         :gt -> :ok
-        _ -> {:error, Zoi.Error.greater_than(:date, value, opts)}
+        _ -> {:error, Zoi.Error.greater_than(:naive_datetime, value, opts)}
       end
     end
   end
@@ -156,7 +156,7 @@ defmodule Zoi.Types.NaiveDateTime do
     def validate(_schema, input, value, opts) do
       case NaiveDateTime.compare(input, value) do
         :lt -> :ok
-        _ -> {:error, Zoi.Error.less_than(:date, value, opts)}
+        _ -> {:error, Zoi.Error.less_than(:naive_datetime, value, opts)}
       end
     end
   end

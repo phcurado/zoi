@@ -106,7 +106,7 @@ if Code.ensure_loaded?(Decimal) do
         if Decimal.gte?(input, value) do
           :ok
         else
-          {:error, Zoi.Error.greater_than_or_equal_to(:number, value, opts)}
+          {:error, Zoi.Error.greater_than_or_equal_to(:decimal, value, opts)}
         end
       end
     end
@@ -120,7 +120,7 @@ if Code.ensure_loaded?(Decimal) do
         if Decimal.lte?(input, value) do
           :ok
         else
-          {:error, Zoi.Error.less_than_or_equal_to(:number, value, opts)}
+          {:error, Zoi.Error.less_than_or_equal_to(:decimal, value, opts)}
         end
       end
     end
@@ -134,7 +134,7 @@ if Code.ensure_loaded?(Decimal) do
         if Decimal.gt?(input, value) do
           :ok
         else
-          {:error, Zoi.Error.greater_than(:number, value, opts)}
+          {:error, Zoi.Error.greater_than(:decimal, value, opts)}
         end
       end
     end
@@ -148,7 +148,7 @@ if Code.ensure_loaded?(Decimal) do
         if Decimal.lt?(input, value) do
           :ok
         else
-          {:error, Zoi.Error.less_than(:number, value, opts)}
+          {:error, Zoi.Error.less_than(:decimal, value, opts)}
         end
       end
     end
