@@ -160,15 +160,24 @@ defmodule Zoi do
   @typedoc "Refinement function or module specification."
   @type refinement ::
           {module(), atom(), [any()]}
-          | (input() -> :ok | {:error, binary()})
-          | (input(), Zoi.Context.t() -> :ok | {:error, binary()})
+          | (input() ->
+               :ok | {:error, binary() | Zoi.Error.t() | [Zoi.Error.t()]} | Zoi.Context.t())
+          | (input(), Zoi.Context.t() ->
+               :ok | {:error, binary() | Zoi.Error.t() | [Zoi.Error.t()]} | Zoi.Context.t())
 
   @typedoc "Transformation function or module specification."
   @type transform ::
           {module(), atom(), [any()]}
-          | (input() -> {:ok, input()} | {:error, binary()} | input())
+          | (input() ->
+               {:ok, input()}
+               | {:error, binary() | Zoi.Error.t() | [Zoi.Error.t()]}
+               | Zoi.Context.t()
+               | input())
           | (input(), Zoi.Context.t() ->
-               {:ok, input()} | {:error, binary()} | input())
+               {:ok, input()}
+               | {:error, binary() | Zoi.Error.t() | [Zoi.Error.t()]}
+               | Zoi.Context.t()
+               | input())
 
   ## API
 
