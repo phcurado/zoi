@@ -29,6 +29,7 @@ defmodule Zoi.Types.Literal do
         false -> quote(do: false)
         _ when is_map(value) -> quote(do: map())
         _ when is_list(value) -> quote(do: list())
+        _ when is_binary(value) -> quote(do: binary())
         value -> quote(do: unquote(value))
       end
     end
