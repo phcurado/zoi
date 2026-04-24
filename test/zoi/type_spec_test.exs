@@ -42,7 +42,7 @@ defmodule Zoi.TypeSpecTest do
         {Zoi.integer(), quote(do: integer())},
         {Zoi.intersection([Zoi.string(), Zoi.atom()]), quote(do: binary() | atom())},
         {Zoi.literal(nil), quote(do: nil)},
-        {Zoi.literal("hello"), quote(do: "hello")},
+        {Zoi.literal("hello"), quote(do: binary())},
         {Zoi.literal(1), quote(do: 1)},
         {Zoi.literal(true), quote(do: true)},
         {Zoi.literal(false), quote(do: false)},
@@ -197,11 +197,11 @@ defmodule Zoi.TypeSpecTest do
 
       # Normalize expected schemas
       cat_spec =
-        quote(do: %{required(:type) => "cat", required(:meow) => binary()})
+        quote(do: %{required(:type) => binary(), required(:meow) => binary()})
         |> normalize_map_or_struct_ast()
 
       dog_spec =
-        quote(do: %{required(:type) => "dog", required(:bark) => binary()})
+        quote(do: %{required(:type) => binary(), required(:bark) => binary()})
         |> normalize_map_or_struct_ast()
 
       # Check that both schemas are present in a union (order as it was given to discriminated_union)
