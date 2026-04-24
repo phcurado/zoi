@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.17.5 - Unreleased
+## 0.18.0 - 2026-04-24
 
 ### Added
 
@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 - `Zoi.Error` issue opts now include `type` for programmatic type distinction (e.g. `:integer`, `:float`, `:string`, `:array`, `:date`, `:datetime`)
 - Improve error spec for `Zoi.refinement/2` and `Zoi.transform/2`
 
-## 0.17.4 - 2025-04-06
+## 0.17.4 - 2026-04-06
 
 ### Added
 
