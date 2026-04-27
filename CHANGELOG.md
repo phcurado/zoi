@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.18.1 - 2026-04-27
+
+### Changed
+
+- `Zoi.literal/2` string typespec now resolve to `binary()`
+
 ## 0.18.0 - 2026-04-24
 
 ### Added
