@@ -44,17 +44,34 @@ defmodule Zoi.JSONSchema do
     - `Zoi.time/0` and `Zoi.ISO.time/0`
 
   ## Metadata
-  `Zoi.to_json_schema/1` can also incorporate `description`, `example`, and `deprecated` metadata
-  into the resulting JSON Schema:
+
+  `Zoi.to_json_schema/1` can also incorporate `title`, `description`, `example`,
+  `examples`, `deprecated`, `read_only`, `write_only`, `id`, and `comment`
+  metadata into the resulting JSON Schema. The `:id` and `:comment` options are
+  emitted as the JSON Schema `$id` and `$comment` keywords:
 
   ```elixir
-  iex> schema = Zoi.string(description: "A simple string", example: "Hello, World!")
+  iex> schema = Zoi.string(title: "Greeting", description: "A simple string", example: "Hello, World!")
   iex> Zoi.to_json_schema(schema)
   %{
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     type: :string,
+    title: "Greeting",
     description: "A simple string",
     example: "Hello, World!"
+  }
+  ```
+
+  Multiple examples can be defined with the `:examples` option, which is
+  emitted as a list:
+
+  ```elixir
+  iex> schema = Zoi.string(examples: ["alice", "bob"])
+  iex> Zoi.to_json_schema(schema)
+  %{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    type: :string,
+    examples: ["alice", "bob"]
   }
   ```
 
@@ -68,6 +85,29 @@ defmodule Zoi.JSONSchema do
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     type: :string,
     deprecated: true
+  }
+  ```
+
+  `:read_only` and `:write_only` are emitted as `readOnly` and `writeOnly`
+  when set to `true`:
+
+  ```elixir
+  iex> schema = Zoi.string(read_only: true)
+  iex> Zoi.to_json_schema(schema)
+  %{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    type: :string,
+    readOnly: true
+  }
+  ```
+
+  ```elixir
+  iex> schema = Zoi.string(write_only: true)
+  iex> Zoi.to_json_schema(schema)
+  %{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    type: :string,
+    writeOnly: true
   }
   ```
 
@@ -249,16 +289,34 @@ defmodule Zoi.JSONSchema do
   defp encode_metadata(json_schema, zoi_schema) do
     json_schema =
       json_schema
+      |> maybe_add_metadata(:"$id", Zoi.id(zoi_schema))
+      |> maybe_add_metadata(:"$comment", Zoi.comment(zoi_schema))
+      |> maybe_add_metadata(:title, Zoi.title(zoi_schema))
       |> maybe_add_metadata(:description, Zoi.description(zoi_schema))
       |> maybe_add_metadata(:example, Zoi.example(zoi_schema))
+      |> maybe_add_metadata(:examples, Zoi.examples(zoi_schema))
+      |> maybe_add_flag(:readOnly, Zoi.read_only?(zoi_schema))
+      |> maybe_add_flag(:writeOnly, Zoi.write_only?(zoi_schema))
       |> maybe_add_deprecated(zoi_schema.meta)
 
     Enum.reduce(Zoi.metadata(zoi_schema), json_schema, fn
+      {:title, title}, acc ->
+        Map.put_new(acc, :title, title)
+
       {:description, description}, acc ->
         Map.put_new(acc, :description, description)
 
       {:example, example}, acc ->
         Map.put_new(acc, :example, example)
+
+      {:examples, examples}, acc ->
+        Map.put_new(acc, :examples, examples)
+
+      {:id, id}, acc ->
+        Map.put_new(acc, :"$id", id)
+
+      {:comment, comment}, acc ->
+        Map.put_new(acc, :"$comment", comment)
 
       _, acc ->
         acc
@@ -272,6 +330,9 @@ defmodule Zoi.JSONSchema do
       json_schema
     end
   end
+
+  defp maybe_add_flag(json_schema, _key, false), do: json_schema
+  defp maybe_add_flag(json_schema, key, true), do: Map.put(json_schema, key, true)
 
   defp maybe_add_deprecated(json_schema, meta) do
     if Meta.deprecated?(meta) do

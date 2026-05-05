@@ -348,6 +348,96 @@ defmodule Zoi do
     schema.meta.example
   end
 
+  @doc """
+  Retrieves the list of examples from the schema. If no examples are defined, it returns `nil`.
+
+  ## Example
+
+      iex> schema = Zoi.string(examples: ["alice", "bob"])
+      iex> Zoi.examples(schema)
+      ["alice", "bob"]
+  """
+  @doc group: "Parsing"
+  @spec examples(schema :: schema()) :: [input()] | nil
+  def examples(schema) do
+    schema.meta.examples
+  end
+
+  @doc """
+  Retrieves the title associated with the schema. If no title is defined, it returns `nil`.
+
+  ## Example
+
+      iex> schema = Zoi.string(title: "Username")
+      iex> Zoi.title(schema)
+      "Username"
+  """
+  @doc group: "Parsing"
+  @spec title(schema :: schema()) :: binary() | nil
+  def title(schema) do
+    schema.meta.title
+  end
+
+  @doc """
+  Returns whether the schema is marked as read-only.
+
+  ## Example
+
+      iex> schema = Zoi.string(read_only: true)
+      iex> Zoi.read_only?(schema)
+      true
+  """
+  @doc group: "Parsing"
+  @spec read_only?(schema :: schema()) :: boolean()
+  def read_only?(schema) do
+    schema.meta.read_only == true
+  end
+
+  @doc """
+  Returns whether the schema is marked as write-only.
+
+  ## Example
+
+      iex> schema = Zoi.string(write_only: true)
+      iex> Zoi.write_only?(schema)
+      true
+  """
+  @doc group: "Parsing"
+  @spec write_only?(schema :: schema()) :: boolean()
+  def write_only?(schema) do
+    schema.meta.write_only == true
+  end
+
+  @doc """
+  Retrieves the identifier associated with the schema. If no identifier is defined, it returns `nil`.
+
+  ## Example
+
+      iex> schema = Zoi.string(id: "https://example.com/schemas/name")
+      iex> Zoi.id(schema)
+      "https://example.com/schemas/name"
+  """
+  @doc group: "Parsing"
+  @spec id(schema :: schema()) :: binary() | nil
+  def id(schema) do
+    schema.meta.id
+  end
+
+  @doc """
+  Retrieves the comment associated with the schema. If no comment is defined, it returns `nil`.
+
+  ## Example
+
+      iex> schema = Zoi.string(comment: "internal note")
+      iex> Zoi.comment(schema)
+      "internal note"
+  """
+  @doc group: "Parsing"
+  @spec comment(schema :: schema()) :: binary() | nil
+  def comment(schema) do
+    schema.meta.comment
+  end
+
   @doc ~S"""
   Retrieves the metadata associated with the schema.
   It's often useful to store additional information about the schema, such as descriptions, titles, or custom identifiers.
@@ -526,6 +616,23 @@ defmodule Zoi do
   @doc group: "Parsing"
   @spec to_json_schema(schema :: schema()) :: map()
   defdelegate to_json_schema(schema), to: Zoi.JSONSchema, as: :encode
+
+  @doc """
+  Converts a JSON Schema map into a `Zoi` schema.
+
+  The input must be a JSON-shaped map with string keys, as produced by a JSON
+  parser. See `Zoi.JSONSchema.Decoder` for supported keywords.
+
+  ## Example
+
+      iex> json = %{"type" => "object", "properties" => %{"name" => %{"type" => "string"}}, "required" => ["name"]}
+      iex> schema = Zoi.from_json_schema(json)
+      iex> Zoi.parse(schema, %{"name" => "Alice"})
+      {:ok, %{"name" => "Alice"}}
+  """
+  @doc group: "Parsing"
+  @spec from_json_schema(json_schema :: map()) :: schema()
+  defdelegate from_json_schema(json_schema), to: Zoi.JSONSchema.Decoder, as: :decode
 
   @doc """
   See `Zoi.Describe`
