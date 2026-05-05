@@ -528,6 +528,23 @@ defmodule Zoi do
   defdelegate to_json_schema(schema), to: Zoi.JSONSchema, as: :encode
 
   @doc """
+  Converts a JSON Schema map into a `Zoi` schema.
+
+  The input must be a JSON-shaped map with string keys, as produced by a JSON
+  parser. See `Zoi.JSONSchema.Decoder` for supported keywords.
+
+  ## Example
+
+      iex> json = %{"type" => "object", "properties" => %{"name" => %{"type" => "string"}}, "required" => ["name"]}
+      iex> schema = Zoi.from_json_schema(json)
+      iex> Zoi.parse(schema, %{"name" => "Alice"})
+      {:ok, %{"name" => "Alice"}}
+  """
+  @doc group: "Parsing"
+  @spec from_json_schema(json_schema :: map()) :: schema()
+  defdelegate from_json_schema(json_schema), to: Zoi.JSONSchema.Decoder, as: :decode
+
+  @doc """
   See `Zoi.Describe`
   """
   @doc group: "Parsing"

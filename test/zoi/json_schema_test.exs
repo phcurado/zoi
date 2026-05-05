@@ -505,6 +505,40 @@ defmodule Zoi.JSONSchemaTest do
       assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
 
+    test "parse metadata bag annotations" do
+      schema =
+        Zoi.string(
+          metadata: [
+            title: "Username",
+            examples: ["alice", "bob"],
+            read_only: true,
+            write_only: true,
+            id: "https://example.com/schemas/name",
+            comment: "internal note"
+          ]
+        )
+
+      expected = %{
+        type: :string,
+        title: "Username",
+        examples: ["alice", "bob"],
+        readOnly: true,
+        writeOnly: true,
+        "$id": "https://example.com/schemas/name",
+        "$comment": "internal note"
+      }
+
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
+    end
+
+    test "metadata read_only/write_only false are not emitted" do
+      schema = Zoi.string(metadata: [read_only: false, write_only: false])
+
+      expected = %{type: :string}
+
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
+    end
+
     test "encoding discriminated_union" do
       cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
       dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
@@ -525,6 +559,141 @@ defmodule Zoi.JSONSchemaTest do
 
       assert %{type: :object, properties: %{type: %{const: "dog"}, bark: %{type: :string}}} =
                dog_json_schema
+    end
+  end
+
+  describe "Zoi.from_json_schema/1" do
+    test "decodes primitive types" do
+      cases = [
+        {%{"type" => "string"}, "x"},
+        {%{"type" => "integer"}, 1},
+        {%{"type" => "number"}, 1.5},
+        {%{"type" => "boolean"}, true},
+        {%{"type" => "null"}, nil}
+      ]
+
+      Enum.each(cases, fn {json, value} ->
+        schema = Zoi.from_json_schema(json)
+        assert Zoi.parse(schema, value) == {:ok, value}
+      end)
+    end
+
+    test "decodes literal, enum, and combinators" do
+      cases = [
+        {%{"const" => "fixed"}, "fixed", "other"},
+        {%{"enum" => ["red", "green"]}, "red", "blue"},
+        {%{"oneOf" => [%{"type" => "string"}, %{"type" => "integer"}]}, "x", true},
+        {%{"anyOf" => [%{"type" => "string"}, %{"type" => "integer"}]}, 1, true},
+        {%{"allOf" => [%{"type" => "string"}, %{"const" => "fixed"}]}, "fixed", "other"}
+      ]
+
+      Enum.each(cases, fn {json, valid, invalid} ->
+        schema = Zoi.from_json_schema(json)
+        assert Zoi.parse(schema, valid) == {:ok, valid}
+        assert {:error, _} = Zoi.parse(schema, invalid)
+      end)
+    end
+
+    test "decodes string formats with coercion" do
+      cases = [
+        {%{"type" => "string", "format" => "date"}, "2024-01-01", ~D[2024-01-01]},
+        {%{"type" => "string", "format" => "time"}, "12:00:00", ~T[12:00:00]},
+        {%{"type" => "string", "format" => "date-time"}, "2024-01-01T00:00:00Z",
+         ~U[2024-01-01 00:00:00Z]},
+        {%{"type" => "string", "format" => "email"}, "user@example.com", "user@example.com"},
+        {%{"type" => "string", "format" => "uri"}, "https://example.com", "https://example.com"}
+      ]
+
+      Enum.each(cases, fn {json, input, expected} ->
+        schema = Zoi.from_json_schema(json)
+        assert Zoi.parse(schema, input) == {:ok, expected}
+      end)
+    end
+
+    test "decodes constraints and rejects invalid values" do
+      cases = [
+        {%{"type" => "string", "minLength" => 2, "maxLength" => 5}, "abc", ["a", "abcdef"]},
+        {%{"type" => "integer", "minimum" => 0, "maximum" => 10, "multipleOf" => 2}, 4,
+         [-1, 11, 3]},
+        {%{
+           "type" => "array",
+           "items" => %{"type" => "integer"},
+           "minItems" => 1,
+           "maxItems" => 3
+         }, [1, 2], [[], [1, 2, 3, 4]]}
+      ]
+
+      Enum.each(cases, fn {json, valid, invalids} ->
+        schema = Zoi.from_json_schema(json)
+        assert Zoi.parse(schema, valid) == {:ok, valid}
+
+        Enum.each(invalids, fn invalid ->
+          assert {:error, _} = Zoi.parse(schema, invalid)
+        end)
+      end)
+    end
+
+    test "decodes tuple via prefixItems" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "array",
+          "prefixItems" => [%{"type" => "string"}, %{"type" => "integer"}]
+        })
+
+      assert Zoi.parse(schema, {"a", 1}) == {:ok, {"a", 1}}
+    end
+
+    test "decodes object with required, optional, and additionalProperties false" do
+      json = %{
+        "type" => "object",
+        "properties" => %{
+          "name" => %{"type" => "string"},
+          "age" => %{"type" => "integer"}
+        },
+        "required" => ["name"]
+      }
+
+      schema = Zoi.from_json_schema(json)
+
+      assert Zoi.parse(schema, %{"name" => "x", "age" => 1}) ==
+               {:ok, %{"name" => "x", "age" => 1}}
+
+      assert Zoi.parse(schema, %{"name" => "x"}) == {:ok, %{"name" => "x"}}
+      assert {:error, _} = Zoi.parse(schema, %{"age" => 1})
+
+      strict = Zoi.from_json_schema(Map.put(json, "additionalProperties", false))
+      assert {:error, _} = Zoi.parse(strict, %{"name" => "x", "extra" => 1})
+    end
+
+    test "carries metadata into Zoi schema" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "string",
+          "title" => "Username",
+          "description" => "Login name",
+          "examples" => ["alice"],
+          "readOnly" => true,
+          "$id" => "https://example.com/name",
+          "$comment" => "internal"
+        })
+
+      assert Zoi.description(schema) == "Login name"
+
+      metadata = Zoi.metadata(schema)
+      assert metadata[:title] == "Username"
+      assert metadata[:examples] == ["alice"]
+      assert metadata[:read_only] == true
+      assert metadata[:id] == "https://example.com/name"
+      assert metadata[:comment] == "internal"
+    end
+
+    test "default keyword wraps schema with Zoi.default" do
+      schema = Zoi.from_json_schema(%{"type" => "string", "default" => "x"})
+      assert Zoi.parse(schema, nil) == {:ok, "x"}
+    end
+
+    test "raises on non-map input" do
+      assert_raise ArgumentError, fn -> Zoi.from_json_schema("nope") end
     end
   end
 

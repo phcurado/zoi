@@ -11,7 +11,7 @@ defmodule Zoi.Types.Meta do
           required: boolean(),
           description: binary() | nil,
           example: Zoi.input(),
-          metadata: [keyword()],
+          metadata: keyword(),
           typespec: Macro.t() | nil,
           deprecated: binary() | nil
         }
