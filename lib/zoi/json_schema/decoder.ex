@@ -15,9 +15,8 @@ defmodule Zoi.JSONSchema.Decoder do
   `"null"`, `"object"`, `"array"`), `const`, `enum`, `oneOf`, `anyOf`,
   `allOf`.
 
-  Annotation keywords (carried over to the matching Zoi option): `title`,
-  `description`, `examples`, `example`, `default`, `deprecated`, `readOnly`,
-  `writeOnly`, `$id`, `$comment`.
+  Annotation keywords: `description`, `example`, `deprecated`, `title`,
+  `examples`, `readOnly`, `writeOnly`, `$id`, `$comment`, `default`.
 
   Validation keywords:
 
@@ -40,12 +39,9 @@ defmodule Zoi.JSONSchema.Decoder do
   that matches *any* branch (`anyOf` semantics).
   """
 
-  @meta_keys [
+  @bag_keys [
     {"title", :title},
-    {"description", :description},
-    {"example", :example},
     {"examples", :examples},
-    {"deprecated", :deprecated},
     {"readOnly", :read_only},
     {"writeOnly", :write_only},
     {"$id", :id},
@@ -203,19 +199,54 @@ defmodule Zoi.JSONSchema.Decoder do
   end
 
   defp apply_metadata(schema, json) do
+    schema
+    |> apply_first_class(json)
+    |> apply_bag(json)
+    |> apply_default(json)
+  end
+
+  defp apply_first_class(schema, json) do
     schema =
-      Enum.reduce(@meta_keys, schema, fn {json_key, meta_key}, acc ->
+      case Map.get(json, "description") do
+        nil -> schema
+        value -> put_meta(schema, :description, value)
+      end
+
+    schema =
+      case Map.get(json, "example") do
+        nil -> schema
+        value -> put_meta(schema, :example, value)
+      end
+
+    case Map.get(json, "deprecated") do
+      true -> put_meta(schema, :deprecated, "deprecated")
+      _ -> schema
+    end
+  end
+
+  defp apply_bag(schema, json) do
+    pairs =
+      Enum.flat_map(@bag_keys, fn {json_key, meta_key} ->
         case Map.get(json, json_key) do
-          nil -> acc
-          false when meta_key in [:deprecated, :read_only, :write_only] -> acc
-          true when meta_key == :deprecated -> put_meta(acc, :deprecated, "deprecated")
-          value -> put_meta(acc, meta_key, value)
+          nil -> []
+          false when meta_key in [:read_only, :write_only] -> []
+          value -> [{meta_key, value}]
         end
       end)
 
-    case Map.get(json, "default") do
-      nil -> schema
-      value -> Zoi.default(schema, value)
+    if pairs == [] do
+      schema
+    else
+      existing = schema.meta.metadata || []
+      put_meta(schema, :metadata, Keyword.merge(existing, pairs))
+    end
+  end
+
+  defp apply_default(schema, json) do
+    if Map.has_key?(json, "default") do
+      Zoi.default(schema, Map.get(json, "default"))
+    else
+      schema
     end
   end
 

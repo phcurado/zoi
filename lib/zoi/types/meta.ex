@@ -10,14 +10,8 @@ defmodule Zoi.Types.Meta do
           error: binary() | nil,
           required: boolean(),
           description: binary() | nil,
-          title: binary() | nil,
           example: Zoi.input(),
-          examples: [Zoi.input()] | nil,
-          read_only: boolean() | nil,
-          write_only: boolean() | nil,
-          id: binary() | nil,
-          comment: binary() | nil,
-          metadata: [keyword()],
+          metadata: keyword(),
           typespec: Macro.t() | nil,
           deprecated: binary() | nil
         }
@@ -28,13 +22,7 @@ defmodule Zoi.Types.Meta do
     required: nil,
     error: nil,
     description: nil,
-    title: nil,
     example: nil,
-    examples: nil,
-    read_only: nil,
-    write_only: nil,
-    id: nil,
-    comment: nil,
     typespec: nil,
     deprecated: nil
   ]
@@ -45,21 +33,7 @@ defmodule Zoi.Types.Meta do
   # When we propagate the meta schema fields to other schemas, these are the allowed keys
   # An example is when using nullable type, which is a union under the hood. We should be able
   # to propagate these fields to the union since nullable is a behavior
-  @propagate_keys [
-    :required,
-    :description,
-    :title,
-    :example,
-    :examples,
-    :read_only,
-    :write_only,
-    :id,
-    :comment,
-    :metadata,
-    :typespec,
-    :deprecated,
-    :error
-  ]
+  @propagate_keys [:required, :description, :example, :metadata, :typespec, :deprecated, :error]
 
   @spec create_meta(keyword()) :: {t(), keyword()}
   def create_meta(opts) do

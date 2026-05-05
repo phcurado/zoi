@@ -505,70 +505,36 @@ defmodule Zoi.JSONSchemaTest do
       assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
 
-    test "parse schema title" do
-      schema = Zoi.string(title: "Username")
-
-      expected = %{type: :string, title: "Username"}
-
-      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
-    end
-
-    test "parse schema examples list" do
-      schema = Zoi.string(examples: ["alice", "bob"])
-
-      expected = %{type: :string, examples: ["alice", "bob"]}
-
-      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
-    end
-
-    test "parse schema example and examples emit independently" do
-      schema = Zoi.string(example: "alice", examples: ["alice", "bob"])
-
-      expected = %{
-        type: :string,
-        example: "alice",
-        examples: ["alice", "bob"]
-      }
-
-      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
-    end
-
-    test "parse schema read_only" do
-      schema = Zoi.string(read_only: true)
-
-      expected = %{type: :string, readOnly: true}
-
-      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
-    end
-
-    test "parse schema write_only" do
-      schema = Zoi.string(write_only: true)
-
-      expected = %{type: :string, writeOnly: true}
-
-      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
-    end
-
-    test "read_only/write_only false are not emitted" do
-      schema = Zoi.string(read_only: false, write_only: false)
-
-      expected = %{type: :string}
-
-      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
-    end
-
-    test "parse schema id and comment" do
+    test "parse metadata bag annotations" do
       schema =
         Zoi.string(
-          id: "https://example.com/schemas/name",
-          comment: "internal note"
+          metadata: [
+            title: "Username",
+            examples: ["alice", "bob"],
+            read_only: true,
+            write_only: true,
+            id: "https://example.com/schemas/name",
+            comment: "internal note"
+          ]
         )
 
       expected = %{
         type: :string,
+        title: "Username",
+        examples: ["alice", "bob"],
+        readOnly: true,
+        writeOnly: true,
         "$id": "https://example.com/schemas/name",
         "$comment": "internal note"
       }
+
+      assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
+    end
+
+    test "metadata read_only/write_only false are not emitted" do
+      schema = Zoi.string(metadata: [read_only: false, write_only: false])
+
+      expected = %{type: :string}
 
       assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
@@ -646,8 +612,7 @@ defmodule Zoi.JSONSchemaTest do
 
     test "decodes constraints and rejects invalid values" do
       cases = [
-        {%{"type" => "string", "minLength" => 2, "maxLength" => 5}, "abc",
-         ["a", "abcdef"]},
+        {%{"type" => "string", "minLength" => 2, "maxLength" => 5}, "abc", ["a", "abcdef"]},
         {%{"type" => "integer", "minimum" => 0, "maximum" => 10, "multipleOf" => 2}, 4,
          [-1, 11, 3]},
         {%{
@@ -712,12 +677,14 @@ defmodule Zoi.JSONSchemaTest do
           "$comment" => "internal"
         })
 
-      assert Zoi.title(schema) == "Username"
       assert Zoi.description(schema) == "Login name"
-      assert Zoi.examples(schema) == ["alice"]
-      assert Zoi.read_only?(schema) == true
-      assert Zoi.id(schema) == "https://example.com/name"
-      assert Zoi.comment(schema) == "internal"
+
+      metadata = Zoi.metadata(schema)
+      assert metadata[:title] == "Username"
+      assert metadata[:examples] == ["alice"]
+      assert metadata[:read_only] == true
+      assert metadata[:id] == "https://example.com/name"
+      assert metadata[:comment] == "internal"
     end
 
     test "default keyword wraps schema with Zoi.default" do

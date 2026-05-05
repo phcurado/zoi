@@ -45,13 +45,7 @@ defmodule Zoi.Opts do
     Zoi.Types.Keyword.new(
       [
         description: description(),
-        title: title(),
         example: example(),
-        examples: examples(),
-        read_only: boolean_flag("Marks the schema as read-only."),
-        write_only: boolean_flag("Marks the schema as write-only."),
-        id: string_meta("Schema identifier emitted as $id."),
-        comment: string_meta("Schema comment emitted as $comment."),
         metadata: metadata(),
         error: error(),
         typespec: typespec(),
@@ -83,26 +77,8 @@ defmodule Zoi.Opts do
     Zoi.Types.String.new(description: "Description of the schema.")
   end
 
-  defp title() do
-    Zoi.Types.String.new(description: "Title of the schema.")
-  end
-
   defp example() do
     Zoi.Types.Any.new(description: "Example value for the schema.")
-  end
-
-  defp examples() do
-    Zoi.Types.Array.new(Zoi.Types.Any.new(),
-      description: "List of example values for the schema."
-    )
-  end
-
-  defp boolean_flag(description) do
-    Zoi.Types.Boolean.new(description: description)
-  end
-
-  defp string_meta(description) do
-    Zoi.Types.String.new(description: description)
   end
 
   defp typespec() do
