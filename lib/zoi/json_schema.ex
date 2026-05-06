@@ -101,17 +101,71 @@ defmodule Zoi.JSONSchema do
   - [JSON Schema Official Website](https://json-schema.org/)
   """
 
+  alias Zoi.JSONSchema.Decoder
   alias Zoi.JSONSchema.Encoder
   alias Zoi.Types.Meta
 
   @draft "https://json-schema.org/draft/2020-12/schema"
 
+  @doc """
+  Encodes a `Zoi` schema into a JSON Schema map.
+
+  ## Examples
+
+      iex> schema = Zoi.map(%{name: Zoi.string()})
+      iex> Zoi.JSONSchema.encode(schema)
+      %{
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        type: :object,
+        properties: %{name: %{type: :string}},
+        required: [:name],
+        additionalProperties: false
+      }
+  """
   @spec encode(Zoi.schema()) :: map()
   def encode(schema) do
     schema
     |> encode_schema()
     |> add_dialect()
   end
+
+  @doc """
+  Decodes a JSON Schema map into a `Zoi` schema.
+
+  The input must be a JSON-shaped map with string keys, as produced by a JSON
+  parser (`Jason.decode!/1`, `:json.decode/1`, etc.).
+
+  ## Supported keywords
+
+  Type keywords: `type` (`"string"`, `"integer"`, `"number"`, `"boolean"`,
+  `"null"`, `"object"`, `"array"`), `const`, `enum`, `oneOf`, `anyOf`,
+  `allOf`.
+
+  Annotation keywords: `description`, `example`, `deprecated`, `title`,
+  `examples`, `readOnly`, `writeOnly`, `$id`, `$comment`, `default`.
+
+  Validation keywords:
+
+    * String — `minLength`, `maxLength`, `pattern`, `format`
+      (`"date"`, `"time"`, `"date-time"`, `"email"`, `"uri"`, `"uuid"`).
+    * Numeric — `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`,
+      `multipleOf`.
+    * Array — `items`, `prefixItems`, `minItems`, `maxItems`.
+    * Object — `properties`, `required`, `additionalProperties`.
+
+  Keywords without a Zoi equivalent are dropped silently. `oneOf` is decoded
+  to `Zoi.union/2`, losing JSON Schema's *exactly-one* matching semantics
+  (the resulting schema accepts a value matching *any* branch).
+
+  ## Examples
+
+      iex> json = %{"type" => "object", "properties" => %{"name" => %{"type" => "string"}}, "required" => ["name"]}
+      iex> schema = Zoi.JSONSchema.decode(json)
+      iex> Zoi.parse(schema, %{"name" => "Alice"})
+      {:ok, %{"name" => "Alice"}}
+  """
+  @spec decode(map()) :: Zoi.schema()
+  defdelegate decode(json_schema), to: Decoder
 
   @doc false
   @spec encode_schema(Zoi.schema()) :: map()

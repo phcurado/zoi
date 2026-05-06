@@ -1,43 +1,5 @@
 defmodule Zoi.JSONSchema.Decoder do
-  @moduledoc """
-  Decodes a JSON Schema map into a `Zoi` schema.
-
-  The input is expected to be a JSON-shaped map with string keys (as
-  produced by `Jason.decode!/1`, `:json.decode/1`, or any other JSON
-  parser). The output is built from the same constructors used everywhere
-  else (`Zoi.string/1`, `Zoi.map/2`, `Zoi.array/2`, ...).
-
-  Use the public entry point `Zoi.from_json_schema/1`.
-
-  ## Supported keywords
-
-  Type keywords: `type` (`"string"`, `"integer"`, `"number"`, `"boolean"`,
-  `"null"`, `"object"`, `"array"`), `const`, `enum`, `oneOf`, `anyOf`,
-  `allOf`.
-
-  Annotation keywords: `description`, `example`, `deprecated`, `title`,
-  `examples`, `readOnly`, `writeOnly`, `$id`, `$comment`, `default`.
-
-  Validation keywords:
-
-    * String — `minLength`, `maxLength`, `pattern`, `format`
-      (`"date"`, `"time"`, `"date-time"`, `"email"`, `"uri"`, `"uuid"`).
-    * Numeric — `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`,
-      `multipleOf`.
-    * Array — `items`, `prefixItems`, `minItems`, `maxItems`.
-    * Object — `properties`, `required`, `additionalProperties`.
-
-  ## Limitations
-
-  Keywords without a Zoi equivalent are dropped silently rather than
-  raising. This includes `if`/`then`/`else`, `not`, `dependentRequired`,
-  `patternProperties`, `propertyNames`, `contains`, `$ref`, and `$defs`.
-  They are tracked in `TODO.md`.
-
-  `oneOf` is decoded to `Zoi.union/2` and so loses the JSON Schema
-  *exactly-one* matching semantics; the resulting schema accepts a value
-  that matches *any* branch (`anyOf` semantics).
-  """
+  @moduledoc false
 
   @bag_keys [
     {"title", :title},
@@ -48,11 +10,6 @@ defmodule Zoi.JSONSchema.Decoder do
     {"$comment", :comment}
   ]
 
-  @doc """
-  Decodes a JSON Schema map into a Zoi schema.
-
-  Raises `ArgumentError` if the input is not a map.
-  """
   @spec decode(map()) :: Zoi.schema()
   def decode(json_schema) when is_map(json_schema), do: convert(json_schema)
 
