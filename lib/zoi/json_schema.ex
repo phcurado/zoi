@@ -19,29 +19,32 @@ defmodule Zoi.JSONSchema do
         additionalProperties: false
       }
 
-  ## Supported Types
+  ## Type mapping
 
-  The following `Zoi` types are supported for conversion to JSON Schema:
-
-    - `Zoi.string/0`
-    - `Zoi.integer/0`
-    - `Zoi.float/0`
-    - `Zoi.number/0`
-    - `Zoi.decimal/0` - (converted to JSON Schema `number`)
-    - `Zoi.boolean/0`
-    - `Zoi.literal/1`
-    - `Zoi.null/0`
-    - `Zoi.array/1`
-    - `Zoi.tuple/1`
-    - `Zoi.enum/1`
-    - `Zoi.map/2`
-    - `Zoi.intersection/1`
-    - `Zoi.union/1`
-    - `Zoi.nullable/1`
-    - `Zoi.date/0` and `Zoi.ISO.date/0`
-    - `Zoi.datetime/0` and `Zoi.ISO.datetime/0`
-    - `Zoi.naive_datetime/0` and `Zoi.ISO.naive_datetime/0`
-    - `Zoi.time/0` and `Zoi.ISO.time/0`
+  | Zoi | JSON Schema |
+  |---|---|
+  | `Zoi.string/1` | `"string"` |
+  | `Zoi.integer/1` | `"integer"` |
+  | `Zoi.float/1` | `"number"` |
+  | `Zoi.number/1` | `"number"` |
+  | `Zoi.decimal/1` | `"number"` |
+  | `Zoi.boolean/1` | `"boolean"` |
+  | `Zoi.null/1` | `"null"` |
+  | `Zoi.literal/2` | `const` |
+  | `Zoi.enum/2` | `enum` |
+  | `Zoi.array/2` | `"array"` |
+  | `Zoi.tuple/2` | `"array"` with `prefixItems` |
+  | `Zoi.map/2` | `"object"` |
+  | `Zoi.union/2` | `oneOf` (decode also accepts `anyOf`) |
+  | `Zoi.intersection/2` | `allOf` |
+  | `Zoi.nullable/2` | nullable type via `oneOf` |
+  | `Zoi.date/1` and `Zoi.ISO.date/1` | `"string"` with `format: "date"` |
+  | `Zoi.datetime/1` and `Zoi.ISO.datetime/1` | `"string"` with `format: "date-time"` |
+  | `Zoi.naive_datetime/1` and `Zoi.ISO.naive_datetime/1` | `"string"` with `format: "date-time"` |
+  | `Zoi.time/1` and `Zoi.ISO.time/1` | `"string"` with `format: "time"` |
+  | `Zoi.email/1` | `"string"` with `format: "email"` |
+  | `Zoi.url/1` | `"string"` with `format: "uri"` |
+  | `Zoi.uuid/1` | `"string"` with `format: "uuid"` |
 
   ## Metadata
 
@@ -72,10 +75,8 @@ defmodule Zoi.JSONSchema do
   }
   ```
 
-  Additional JSON Schema annotations are read from the `:metadata` keyword bag.
-  Recognised keys: `:title`, `:examples`, `:read_only`, `:write_only`, `:id`,
-  `:comment`. They are emitted as the matching JSON Schema keywords (`$id` and
-  `$comment` for `:id` and `:comment`):
+  Additional JSON Schema annotations can be set via the `:metadata` option.
+  The recognised keys are `:title`, `:examples`, `:read_only`, `:write_only`, `:id` and `:comment`. They are emitted as the matching JSON Schema keywords (`$id` and `$comment` for `:id` and `:comment`):
 
   ```elixir
   iex> schema = Zoi.string(metadata: [title: "Username", examples: ["alice", "bob"], read_only: true])
@@ -132,30 +133,7 @@ defmodule Zoi.JSONSchema do
   @doc """
   Decodes a JSON Schema map into a `Zoi` schema.
 
-  The input must be a JSON-shaped map with string keys, as produced by a JSON
-  parser (`Jason.decode!/1`, `:json.decode/1`, etc.).
-
-  ## Supported keywords
-
-  Type keywords: `type` (`"string"`, `"integer"`, `"number"`, `"boolean"`,
-  `"null"`, `"object"`, `"array"`), `const`, `enum`, `oneOf`, `anyOf`,
-  `allOf`.
-
-  Annotation keywords: `description`, `example`, `deprecated`, `title`,
-  `examples`, `readOnly`, `writeOnly`, `$id`, `$comment`, `default`.
-
-  Validation keywords:
-
-    * String — `minLength`, `maxLength`, `pattern`, `format`
-      (`"date"`, `"time"`, `"date-time"`, `"email"`, `"uri"`, `"uuid"`).
-    * Numeric — `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`,
-      `multipleOf`.
-    * Array — `items`, `prefixItems`, `minItems`, `maxItems`.
-    * Object — `properties`, `required`, `additionalProperties`.
-
-  Keywords without a Zoi equivalent are dropped silently. `oneOf` is decoded
-  to `Zoi.union/2`, losing JSON Schema's *exactly-one* matching semantics
-  (the resulting schema accepts a value matching *any* branch).
+  The input must be a JSON-shaped map with string keys, as produced by a JSON parser.
 
   ## Examples
 
@@ -323,7 +301,7 @@ defmodule Zoi.JSONSchema do
     |> maybe_add_metadata(:description, Zoi.description(zoi_schema))
     |> maybe_add_metadata(:example, Zoi.example(zoi_schema))
     |> maybe_add_deprecated(zoi_schema.meta)
-    |> apply_metadata_bag(Zoi.metadata(zoi_schema))
+    |> apply_extra_metadata(Zoi.metadata(zoi_schema))
   end
 
   defp maybe_add_metadata(json_schema, key, value) do
@@ -334,7 +312,7 @@ defmodule Zoi.JSONSchema do
     end
   end
 
-  defp apply_metadata_bag(json_schema, metadata) do
+  defp apply_extra_metadata(json_schema, metadata) do
     Enum.reduce(metadata, json_schema, fn
       {:title, title}, acc ->
         Map.put_new(acc, :title, title)

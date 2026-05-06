@@ -1,7 +1,7 @@
 defmodule Zoi.JSONSchema.Decoder do
   @moduledoc false
 
-  @bag_keys [
+  @metadata_keys [
     {"title", :title},
     {"examples", :examples},
     {"readOnly", :read_only},
@@ -158,7 +158,7 @@ defmodule Zoi.JSONSchema.Decoder do
   defp apply_metadata(schema, json) do
     schema
     |> apply_first_class(json)
-    |> apply_bag(json)
+    |> apply_extra_metadata(json)
     |> apply_default(json)
   end
 
@@ -181,9 +181,9 @@ defmodule Zoi.JSONSchema.Decoder do
     end
   end
 
-  defp apply_bag(schema, json) do
+  defp apply_extra_metadata(schema, json) do
     pairs =
-      Enum.flat_map(@bag_keys, fn {json_key, meta_key} ->
+      Enum.flat_map(@metadata_keys, fn {json_key, meta_key} ->
         case Map.get(json, json_key) do
           nil -> []
           false when meta_key in [:read_only, :write_only] -> []
