@@ -2,12 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 0.18.2 - 2026-05-06
 
 ### Added
 
-- `Zoi.from_json_schema/1` to decode a JSON Schema map into a Zoi schema (`Zoi.JSONSchema.Decoder`)
-- `Zoi.to_json_schema/1` now emits `title`, `examples`, `readOnly`, `writeOnly`, `$id`, `$comment` JSON Schema keywords from the `:metadata` keyword bag
+- `Zoi.from_json_schema/1` function to convert JSON Schema format to a `Zoi` schema
+- `Zoi.to_json_schema/1` now supports the following metadata: `title`, `examples`, `readOnly`, `writeOnly`, `$id`, `$comment`
 
 ## 0.18.1 - 2026-04-27
 
