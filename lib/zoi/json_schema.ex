@@ -2,9 +2,11 @@ defmodule Zoi.JSONSchema do
   @moduledoc """
   [JSON Schema](https://json-schema.org/) is a declarative language for annotating and validating JSON document's structure, constraints, and data types. It helps you standardize and define expectations for JSON data.
 
-  `Zoi` provides functionality to convert its type definitions into JSON Schema format, enabling seamless integration with systems that utilize JSON Schema for data validation and documentation.
+  `Zoi` provides functionality to convert its type definitions into JSON Schema format, enabling seamless integration with systems that utilize JSON Schema for data validation and documentation. It also supports decoding existing JSON Schemas back into `Zoi` schemas via `Zoi.from_json_schema/1`.
 
-  ## Example
+  ## Examples
+
+  Encoding a `Zoi` schema:
 
       iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
       iex> Zoi.to_json_schema(schema)
@@ -18,6 +20,13 @@ defmodule Zoi.JSONSchema do
         required: [:name, :age],
         additionalProperties: false
       }
+
+  Decoding a JSON Schema:
+
+      iex> json = %{"type" => "object", "properties" => %{"name" => %{"type" => "string"}}, "required" => ["name"]}
+      iex> schema = Zoi.from_json_schema(json)
+      iex> Zoi.parse(schema, %{"name" => "Alice"})
+      {:ok, %{"name" => "Alice"}}
 
   ## Type mapping
 
