@@ -1,7 +1,8 @@
 defmodule Zoi.Types.Array do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:inner, :min_length, :max_length, :length, coerce: false]
+  use Zoi.Type.Def,
+    fields: [:inner, :min_length, :max_length, :length, :unique_items, coerce: false]
 
   alias Zoi.Validations
 
@@ -25,17 +26,23 @@ defmodule Zoi.Types.Array do
         Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
           description: "array exact length",
           error: error
+        ),
+      unique_items:
+        Zoi.Opts.constraint_schema(Zoi.Types.Boolean.new([]),
+          description: "all items must be unique"
         )
     )
   end
 
   def new(inner, opts) when is_struct(inner) do
-    {validation_opts, opts} = Keyword.split(opts, [:min_length, :max_length, :length])
+    {validation_opts, opts} =
+      Keyword.split(opts, [:min_length, :max_length, :length, :unique_items])
 
     apply_type([inner: inner] ++ opts)
     |> Validations.maybe_set_validation(Validations.Gte, validation_opts[:min_length])
     |> Validations.maybe_set_validation(Validations.Lte, validation_opts[:max_length])
     |> Validations.maybe_set_validation(Validations.Length, validation_opts[:length])
+    |> Validations.maybe_set_validation(Validations.Unique, validation_opts[:unique_items])
   end
 
   def new(inner, _opts) do
@@ -121,7 +128,8 @@ defmodule Zoi.Types.Array do
       [
         {Validations.Length, schema.length},
         {Validations.Gte, schema.min_length},
-        {Validations.Lte, schema.max_length}
+        {Validations.Lte, schema.max_length},
+        {Validations.Unique, schema.unique_items}
       ]
       |> Validations.run_validations(schema, input)
     end
@@ -167,7 +175,8 @@ defmodule Zoi.Types.Array do
         inner: Inspect.inspect(type.inner, opts),
         min_length: Validations.unwrap_validation(type.min_length),
         max_length: Validations.unwrap_validation(type.max_length),
-        length: Validations.unwrap_validation(type.length)
+        length: Validations.unwrap_validation(type.length),
+        unique_items: Validations.unwrap_validation(type.unique_items)
       ]
 
       Zoi.Inspect.build(type, opts, extra_fields)
@@ -190,6 +199,7 @@ defmodule Zoi.Types.Array do
       |> maybe_add(:minItems, schema.min_length)
       |> maybe_add(:maxItems, schema.max_length)
       |> maybe_add_length(schema.length)
+      |> maybe_add_unique(schema.unique_items)
     end
 
     defp maybe_add(map, _key, nil), do: map
@@ -199,6 +209,10 @@ defmodule Zoi.Types.Array do
 
     defp maybe_add_length(map, {value, _opts}),
       do: map |> Map.put(:minItems, value) |> Map.put(:maxItems, value)
+
+    defp maybe_add_unique(map, nil), do: map
+    defp maybe_add_unique(map, {false, _opts}), do: map
+    defp maybe_add_unique(map, {true, _opts}), do: Map.put(map, :uniqueItems, true)
   end
 
   defimpl Zoi.Validations.Gte do
@@ -239,6 +253,22 @@ defmodule Zoi.Types.Array do
         :ok
       else
         {:error, Zoi.Error.invalid_length(:array, value, opts)}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.Unique do
+    def set(schema, value, opts \\ []) do
+      %{schema | unique_items: {value, opts}}
+    end
+
+    def validate(_schema, _input, false, _opts), do: :ok
+
+    def validate(_schema, input, true, opts) do
+      if length(input) == length(Enum.uniq(input)) do
+        :ok
+      else
+        {:error, Zoi.Error.not_unique(opts)}
       end
     end
   end

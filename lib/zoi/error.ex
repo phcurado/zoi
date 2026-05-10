@@ -27,6 +27,7 @@ defmodule Zoi.Error do
     - `:invalid_length`
     - `:invalid_format`
     - `:multiple_of`
+    - `:not_unique`
     - `:custom`
 
   ## Example
@@ -634,6 +635,32 @@ defmodule Zoi.Error do
       new(
         code: :multiple_of,
         issue: {"must be a multiple of %{value}", [value: value]},
+        path: opts[:path] || []
+      )
+    end
+  end
+
+  @doc """
+  Creates a not unique error.
+
+  ## Example
+      iex> Zoi.Error.not_unique()
+      %Zoi.Error{
+        code: :not_unique,
+        issue: {"must contain unique items", []},
+        message: "must contain unique items"
+      }
+  """
+  @spec not_unique(keyword()) :: t()
+  def not_unique(opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(issue: {msg, []})
+    else
+      new(
+        code: :not_unique,
+        issue: {"must contain unique items", []},
         path: opts[:path] || []
       )
     end
