@@ -2546,6 +2546,28 @@ defmodule ZoiTest do
                Zoi.parse(schema, %{a: "hello", b: "world"})
     end
 
+    test "array with unique_items" do
+      schema = Zoi.array(Zoi.integer(), unique_items: true)
+
+      assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
+
+      assert {:error, [%Zoi.Error{code: :not_unique, message: "must contain unique items"}]} =
+               Zoi.parse(schema, [1, 2, 1])
+    end
+
+    test "array with unique_items false is a no-op" do
+      schema = Zoi.array(Zoi.integer(), unique_items: false)
+
+      assert {:ok, [1, 2, 1]} == Zoi.parse(schema, [1, 2, 1])
+    end
+
+    test "array with unique_items custom error" do
+      schema = Zoi.array(Zoi.integer(), unique_items: {true, [error: "duplicates not allowed"]})
+
+      assert {:error, [%Zoi.Error{code: :custom, message: "duplicates not allowed"}]} =
+               Zoi.parse(schema, [1, 2, 1])
+    end
+
     test "array with incorrect value" do
       schema = Zoi.array(Zoi.integer())
 

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.18.3 - Unreleased
+
+### Added
+
+- `unique_items` option for `Zoi.array/2` to enforce that all items are unique
+- `Zoi.from_json_schema/1` now supports the `uniqueItems` keyword
+
 ## 0.18.2 - 2026-05-06
 
 ### Added

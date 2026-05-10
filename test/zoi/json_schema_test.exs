@@ -287,6 +287,17 @@ defmodule Zoi.JSONSchemaTest do
       end)
     end
 
+    test "array unique_items" do
+      schema = Zoi.array(Zoi.integer(), unique_items: true)
+
+      assert %{
+               "$schema": @draft,
+               type: :array,
+               items: %{type: :integer},
+               uniqueItems: true
+             } = Zoi.to_json_schema(schema)
+    end
+
     test "array ranges with transforms (effects-based refinements)" do
       # When a transform is applied first, constraints go through effects
       array_lengths = [
@@ -631,6 +642,29 @@ defmodule Zoi.JSONSchemaTest do
           assert {:error, _} = Zoi.parse(schema, invalid)
         end)
       end)
+    end
+
+    test "decodes uniqueItems" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "array",
+          "items" => %{"type" => "integer"},
+          "uniqueItems" => true
+        })
+
+      assert {:ok, [1, 2, 3]} = Zoi.parse(schema, [1, 2, 3])
+      assert {:error, [%Zoi.Error{code: :not_unique}]} = Zoi.parse(schema, [1, 2, 1])
+    end
+
+    test "decodes uniqueItems on prefixItems is ignored" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "array",
+          "prefixItems" => [%{"type" => "integer"}, %{"type" => "integer"}],
+          "uniqueItems" => true
+        })
+
+      assert {:ok, {1, 1}} == Zoi.parse(schema, {1, 1})
     end
 
     test "decodes tuple via prefixItems" do

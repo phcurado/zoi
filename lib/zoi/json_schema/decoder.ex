@@ -120,7 +120,14 @@ defmodule Zoi.JSONSchema.Decoder do
     schema
     |> maybe_apply(json, "minItems", &Zoi.min/2)
     |> maybe_apply(json, "maxItems", &Zoi.max/2)
+    |> maybe_apply_unique(json)
   end
+
+  defp maybe_apply_unique(schema, %{"uniqueItems" => true}) do
+    Zoi.Validations.Unique.set(schema, true, [])
+  end
+
+  defp maybe_apply_unique(schema, _), do: schema
 
   defp object_schema(schema) do
     properties = Map.get(schema, "properties", %{})
