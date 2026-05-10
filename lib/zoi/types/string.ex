@@ -130,6 +130,49 @@ defmodule Zoi.Types.String do
     end
   end
 
+  defimpl Zoi.Validations.Base64 do
+    def validate(_schema, input, opts) do
+      case Base.decode64(input) do
+        {:ok, _} -> :ok
+        :error -> {:error, format_error(:base64, "invalid base64 format", opts)}
+      end
+    end
+
+    defp format_error(format, message, opts) do
+      Zoi.Error.invalid_format(nil, [{:format, format}, {:internal_message, message} | opts])
+    end
+  end
+
+  defimpl Zoi.Validations.Base64Url do
+    def validate(_schema, input, opts) do
+      case Base.url_decode64(input, padding: false) do
+        {:ok, _} -> :ok
+        :error -> {:error, format_error(:base64url, "invalid base64url format", opts)}
+      end
+    end
+
+    defp format_error(format, message, opts) do
+      Zoi.Error.invalid_format(nil, [{:format, format}, {:internal_message, message} | opts])
+    end
+  end
+
+  defimpl Zoi.Validations.JWT do
+    def validate(_schema, input, opts) do
+      with [header, payload, signature] <- String.split(input, "."),
+           {:ok, _} <- Base.url_decode64(header, padding: false),
+           {:ok, _} <- Base.url_decode64(payload, padding: false),
+           {:ok, _} <- Base.url_decode64(signature, padding: false) do
+        :ok
+      else
+        _ -> {:error, format_error(:jwt, "invalid JWT format", opts)}
+      end
+    end
+
+    defp format_error(format, message, opts) do
+      Zoi.Error.invalid_format(nil, [{:format, format}, {:internal_message, message} | opts])
+    end
+  end
+
   defimpl Zoi.Validations.StartsWith do
     def validate(_schema, input, prefix, opts) do
       if String.starts_with?(input, prefix) do

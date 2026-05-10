@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.18.4 - Unreleased
+
+### Added
+
+- `Zoi.base64/1` to validate base64-encoded strings
+- `Zoi.base64url/1` to validate base64url-encoded strings
+- `Zoi.jwt/1` to validate JWT format
+- `:content_encoding` and `:content_media_type` metadata options now map to JSON Schema's `contentEncoding` and `contentMediaType`
+
 ## 0.18.3 - 2026-05-10
 
 ### Added

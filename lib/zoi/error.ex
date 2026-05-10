@@ -588,7 +588,7 @@ defmodule Zoi.Error do
       iex> error.message
       "invalid format: must match pattern ^[^a-z]*$"
   """
-  @spec invalid_format(Regex.t(), keyword()) :: t()
+  @spec invalid_format(Regex.t() | nil, keyword()) :: t()
   def invalid_format(pattern, opts \\ []) do
     {msg, opts} = Keyword.pop(opts, :error)
     {format, opts} = Keyword.pop(opts, :format)

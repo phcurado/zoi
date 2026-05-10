@@ -202,6 +202,8 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.string() |> Zoi.length(5), %{type: :string, minLength: 5, maxLength: 5}},
         {Zoi.uuid(), %{type: :string, pattern: Regexes.uuid().source}},
         {Zoi.url(), %{type: :string, format: :uri}},
+        {Zoi.base64(), %{type: :string, contentEncoding: :base64}},
+        {Zoi.base64url(), %{type: :string, contentEncoding: :base64url}},
         {Zoi.string() |> Zoi.lte(10) |> Zoi.gte(3),
          %{type: :string, maxLength: 10, minLength: 3}},
         {Zoi.string() |> Zoi.starts_with("prefix"), %{type: :string}},
@@ -296,6 +298,13 @@ defmodule Zoi.JSONSchemaTest do
                items: %{type: :integer},
                uniqueItems: true
              } = Zoi.to_json_schema(schema)
+    end
+
+    test "array unique_items false is not emitted" do
+      schema = Zoi.array(Zoi.integer(), unique_items: false)
+
+      json = Zoi.to_json_schema(schema)
+      refute Map.has_key?(json, :uniqueItems)
     end
 
     test "array ranges with transforms (effects-based refinements)" do
@@ -525,7 +534,9 @@ defmodule Zoi.JSONSchemaTest do
             read_only: true,
             write_only: true,
             id: "https://example.com/schemas/name",
-            comment: "internal note"
+            comment: "internal note",
+            content_encoding: "base64",
+            content_media_type: "image/png"
           ]
         )
 
@@ -536,7 +547,9 @@ defmodule Zoi.JSONSchemaTest do
         readOnly: true,
         writeOnly: true,
         "$id": "https://example.com/schemas/name",
-        "$comment": "internal note"
+        "$comment": "internal note",
+        contentEncoding: "base64",
+        contentMediaType: "image/png"
       }
 
       assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
@@ -708,7 +721,9 @@ defmodule Zoi.JSONSchemaTest do
           "examples" => ["alice"],
           "readOnly" => true,
           "$id" => "https://example.com/name",
-          "$comment" => "internal"
+          "$comment" => "internal",
+          "contentEncoding" => "base64",
+          "contentMediaType" => "image/png"
         })
 
       assert Zoi.description(schema) == "Login name"
@@ -719,6 +734,8 @@ defmodule Zoi.JSONSchemaTest do
       assert metadata[:read_only] == true
       assert metadata[:id] == "https://example.com/name"
       assert metadata[:comment] == "internal"
+      assert metadata[:content_encoding] == "base64"
+      assert metadata[:content_media_type] == "image/png"
     end
 
     test "default keyword wraps schema with Zoi.default" do
@@ -728,6 +745,103 @@ defmodule Zoi.JSONSchemaTest do
 
     test "raises on non-map input" do
       assert_raise ArgumentError, fn -> Zoi.from_json_schema("nope") end
+    end
+
+    test "type as a list decodes to a union" do
+      schema = Zoi.from_json_schema(%{"type" => ["string", "integer"]})
+
+      assert {:ok, "abc"} = Zoi.parse(schema, "abc")
+      assert {:ok, 1} = Zoi.parse(schema, 1)
+      assert {:error, _} = Zoi.parse(schema, true)
+    end
+
+    test "schema without type but with properties decodes as object" do
+      schema = Zoi.from_json_schema(%{"properties" => %{"name" => %{"type" => "string"}}})
+
+      assert {:ok, %{"name" => "Alice"}} = Zoi.parse(schema, %{"name" => "Alice"})
+    end
+
+    test "schema without type but with items decodes as array" do
+      schema = Zoi.from_json_schema(%{"items" => %{"type" => "integer"}})
+
+      assert {:ok, [1, 2]} = Zoi.parse(schema, [1, 2])
+    end
+
+    test "schema without type or known keywords decodes as any" do
+      schema = Zoi.from_json_schema(%{})
+
+      assert {:ok, "anything"} = Zoi.parse(schema, "anything")
+      assert {:ok, 42} = Zoi.parse(schema, 42)
+    end
+
+    test "string format uuid decodes to Zoi.uuid" do
+      schema = Zoi.from_json_schema(%{"type" => "string", "format" => "uuid"})
+
+      assert {:ok, "550e8400-e29b-41d4-a716-446655440000"} =
+               Zoi.parse(schema, "550e8400-e29b-41d4-a716-446655440000")
+
+      assert {:error, _} = Zoi.parse(schema, "not-a-uuid")
+    end
+
+    test "string pattern decodes to a regex refinement" do
+      schema = Zoi.from_json_schema(%{"type" => "string", "pattern" => "^[a-z]+$"})
+
+      assert {:ok, "abc"} = Zoi.parse(schema, "abc")
+      assert {:error, _} = Zoi.parse(schema, "ABC")
+    end
+
+    test "string with invalid regex pattern is ignored" do
+      schema = Zoi.from_json_schema(%{"type" => "string", "pattern" => "["})
+
+      assert {:ok, "anything"} = Zoi.parse(schema, "anything")
+    end
+
+    test "array without items decodes as Zoi.array" do
+      schema = Zoi.from_json_schema(%{"type" => "array"})
+
+      assert {:ok, [1, "two", true]} = Zoi.parse(schema, [1, "two", true])
+    end
+
+    test "object with additionalProperties as a schema decodes to a typed map" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "object",
+          "additionalProperties" => %{"type" => "integer"}
+        })
+
+      assert {:ok, %{"a" => 1, "b" => 2}} = Zoi.parse(schema, %{"a" => 1, "b" => 2})
+      assert {:error, _} = Zoi.parse(schema, %{"a" => "not_int"})
+    end
+
+    test "object with no fields decodes as a generic map" do
+      schema = Zoi.from_json_schema(%{"type" => "object"})
+
+      assert {:ok, %{}} = Zoi.parse(schema, %{})
+    end
+
+    test "example annotation is preserved" do
+      schema = Zoi.from_json_schema(%{"type" => "string", "example" => "hello"})
+
+      assert Zoi.example(schema) == "hello"
+    end
+
+    test "deprecated annotation is preserved" do
+      schema = Zoi.from_json_schema(%{"type" => "string", "deprecated" => true})
+
+      assert Zoi.Types.Meta.deprecated?(schema.meta)
+    end
+
+    test "metadata read_only/write_only false are not preserved" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "string",
+          "readOnly" => false,
+          "writeOnly" => false
+        })
+
+      metadata = Zoi.metadata(schema)
+      refute Keyword.has_key?(metadata, :read_only)
+      refute Keyword.has_key?(metadata, :write_only)
     end
   end
 

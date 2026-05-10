@@ -3490,6 +3490,72 @@ defmodule ZoiTest do
     end
   end
 
+  describe "base64/0" do
+    test "valid base64 string" do
+      schema = Zoi.base64()
+      assert {:ok, "SGVsbG8="} == Zoi.parse(schema, "SGVsbG8=")
+
+      assert {:ok, "U29tZSBlbmNvZGVkIHN0cmluZw=="} ==
+               Zoi.parse(schema, "U29tZSBlbmNvZGVkIHN0cmluZw==")
+    end
+
+    test "invalid base64 string" do
+      schema = Zoi.base64()
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not base64!")
+      assert error.code == :invalid_format
+      assert Exception.message(error) == "invalid base64 format"
+    end
+
+    test "base64 should only work on implemented protocols" do
+      schema = Zoi.literal("a") |> Zoi.refine({Zoi.Validations.Base64, :validate, [[]]})
+      assert {:ok, "a"} == Zoi.parse(schema, "a")
+    end
+  end
+
+  describe "base64url/0" do
+    test "valid base64url string" do
+      schema = Zoi.base64url()
+      assert {:ok, "SGVsbG8"} == Zoi.parse(schema, "SGVsbG8")
+      assert {:ok, "SGVsbG8="} == Zoi.parse(schema, "SGVsbG8=")
+    end
+
+    test "invalid base64url string" do
+      schema = Zoi.base64url()
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "not+base64/url")
+      assert error.code == :invalid_format
+      assert Exception.message(error) == "invalid base64url format"
+    end
+
+    test "base64url should only work on implemented protocols" do
+      schema = Zoi.literal("a") |> Zoi.refine({Zoi.Validations.Base64Url, :validate, [[]]})
+      assert {:ok, "a"} == Zoi.parse(schema, "a")
+    end
+  end
+
+  describe "jwt/0" do
+    test "valid JWT" do
+      schema = Zoi.jwt()
+      jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+      assert {:ok, ^jwt} = Zoi.parse(schema, jwt)
+    end
+
+    test "invalid JWT" do
+      schema = Zoi.jwt()
+      invalid = ["not.a.jwt", "missing.parts", "too.many.parts.here", "noparts"]
+
+      for jwt <- invalid do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, jwt)
+        assert error.code == :invalid_format
+        assert Exception.message(error) == "invalid JWT format"
+      end
+    end
+
+    test "jwt should only work on implemented protocols" do
+      schema = Zoi.literal("a") |> Zoi.refine({Zoi.Validations.JWT, :validate, [[]]})
+      assert {:ok, "a"} == Zoi.parse(schema, "a")
+    end
+  end
+
   describe "min/2" do
     test "min for string" do
       schema = Zoi.string() |> Zoi.min(5)

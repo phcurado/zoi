@@ -2478,6 +2478,54 @@ defmodule Zoi do
     )
   end
 
+  @doc """
+  Validates that the string is a valid base64-encoded value.
+
+  ## Example
+
+      iex> schema = Zoi.base64()
+      iex> Zoi.parse(schema, "SGVsbG8=")
+      {:ok, "SGVsbG8="}
+  """
+  @doc group: "Formats"
+  @spec base64(opts :: options()) :: schema()
+  def base64(opts \\ []) do
+    Zoi.string(opts)
+    |> refine({Zoi.Validations.Base64, :validate, [opts]})
+  end
+
+  @doc """
+  Validates that the string is a valid base64url-encoded value.
+
+  ## Example
+
+      iex> schema = Zoi.base64url()
+      iex> Zoi.parse(schema, "SGVsbG8")
+      {:ok, "SGVsbG8"}
+  """
+  @doc group: "Formats"
+  @spec base64url(opts :: options()) :: schema()
+  def base64url(opts \\ []) do
+    Zoi.string(opts)
+    |> refine({Zoi.Validations.Base64Url, :validate, [opts]})
+  end
+
+  @doc """
+  Validates that the string is a valid JWT (three base64url-encoded parts separated by `.`).
+
+  ## Example
+
+      iex> schema = Zoi.jwt()
+      iex> Zoi.parse(schema, "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk")
+      {:ok, "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"}
+  """
+  @doc group: "Formats"
+  @spec jwt(opts :: options()) :: schema()
+  def jwt(opts \\ []) do
+    Zoi.string(opts)
+    |> refine({Zoi.Validations.JWT, :validate, [opts]})
+  end
+
   # Refinements
 
   @doc """
