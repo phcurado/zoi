@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 - `unique_items` option for `Zoi.array/2` to enforce that all items are unique
 - `Zoi.from_json_schema/1` now supports the `uniqueItems` keyword
 
+### Changed
+
+- `decimal` dependency now supports `~> 3.0`
+
 ## 0.18.2 - 2026-05-06
 
 ### Added

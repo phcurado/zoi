@@ -46,7 +46,7 @@ defmodule Zoi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:decimal, "~> 2.0", optional: true},
+      {:decimal, "~> 2.0 or ~> 3.0", optional: true},
       {:phoenix_html, "~> 2.14.2 or ~> 3.0 or ~> 4.1", optional: true},
       {:excoveralls, "~> 0.18", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
