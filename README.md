@@ -28,14 +28,13 @@ end
 
 ## Usage
 
-You can create schemas for various data types, including strings, integers, floats, booleans, arrays, maps, and more. `Zoi` supports a wide range of validation rules and transformations.
+`Zoi` supports a wide range of types including `string`, `integer`, `float`, `boolean`, `atom`, `date`, `datetime`, `decimal`, `array`, `tuple`, `map`, `keyword`, `enum`, `union`, `intersection`, `discriminated_union` and more.
 
 ### Parsing Data
 
 Here's a simple example of how to use `Zoi` to validate a string:
 
 ```elixir
-# Define a schema with a string type
 iex> schema = Zoi.string() |> Zoi.min(3)
 iex> Zoi.parse(schema, "hello")
 {:ok, "hello"}
@@ -44,14 +43,16 @@ iex> Zoi.parse(schema, "hi")
  [
    %Zoi.Error{
      code: :greater_than_or_equal_to,
-     issue: {"too small: must have at least %{count} character(s)", [count: 3]},
+     issue: {"too small: must have at least %{count} character(s)", [type: :string, count: 3]},
      message: "too small: must have at least 3 character(s)",
      path: []
    }
  ]}
+```
 
+You can also apply transformations to your schema:
 
-# Add transforms to a schema
+```elixir
 iex> schema = Zoi.string() |> Zoi.trim()
 iex> Zoi.parse(schema, "    world    ")
 {:ok, "world"}
@@ -60,7 +61,6 @@ iex> Zoi.parse(schema, "    world    ")
 You can also validate structured maps:
 
 ```elixir
-# Validate a structured data in a map
 iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer(), email: Zoi.email()})
 iex> Zoi.parse(schema, %{name: "John", age: 30, email: "john@email.com"})
 {:ok, %{name: "John", age: 30, email: "john@email.com"}}
@@ -72,8 +72,7 @@ iex> Zoi.treefy_errors(errors)
 or arrays:
 
 ```elixir
-# Validate an array of integers
-iex> schema = Zoi.array(Zoi.integer() |> Zoi.min(0)) |> Zoi.min(2)
+iex> schema = Zoi.array(Zoi.integer())
 iex> Zoi.parse(schema, [1, 2, 3])
 {:ok, [1, 2, 3]}
 iex> Zoi.parse(schema, [1, "2"])
@@ -88,10 +87,9 @@ iex> Zoi.parse(schema, [1, "2"])
  ]}
 ```
 
-keywords:
+or keywords:
 
 ```elixir
-# Validate a keyword list
 iex> schema = Zoi.keyword(email: Zoi.email(), allow?: Zoi.boolean())
 iex> Zoi.parse(schema, [email: "john@email.com", allow?: true])
 {:ok, [email: "john@email.com", allow?: true]}
@@ -149,7 +147,7 @@ Which will generate:
 }
 ```
 
-### Errors
+## Errors
 
 When validation fails, `Zoi` returns a list of errors, each containing a message and the path to the invalid data. Even when errors are nested, `Zoi` will return all errors in a flattened list.
 
@@ -234,7 +232,7 @@ socket |> assign(:form, form)
 - See [Rendering forms with Phoenix](https://hexdocs.pm/zoi/rendering_forms_with_phoenix.html) for a complete LiveView example.
 - See [Localizing errors with Gettext](https://hexdocs.pm/zoi/localizing_errors_with_gettext.html) for translation support.
 
-### Metadata
+## Metadata
 
 `Zoi` supports 4 types of metadata:
 
@@ -255,49 +253,25 @@ iex> Zoi.metadata(schema)
 [identifier: "string"]
 ```
 
-You can use this feature to create self-documenting schemas, with example and tests. For example:
+`description` and `example` are also used when generating OpenAPI specs. See the [Using Zoi to generate OpenAPI specs](https://hexdocs.pm/zoi/using_zoi_to_generate_openapi_specs.html) guide for more details.
+
+## JSON Schema
+
+`Zoi` schemas can be converted to and from [JSON Schema](https://json-schema.org/) format:
 
 ```elixir
-defmodule MyApp.UserSchema do
-  @schema Zoi.map(
-            %{
-            name: Zoi.string(description: "The user first name") |> Zoi.min(2) |> Zoi.max(100),
-            first_name: Zoi.string(deprecated: "Please use `name` instead"),
-            age: Zoi.integer(description: "The user age") |> Zoi.optional()
-            },
-            description: "A user schema with name and optional age",
-            example: %{name: "Alice", age: 30},
-            metadata: [
-              moduledoc: "This module represents a schema of a user"
-            ]
-          )
-
-  @moduledoc """
-  #{Zoi.metadata(@schema)[:moduledoc]}
-  """
-
-  @doc """
-  #{Zoi.description(@schema)}
-
-  Options:
-
-  #{Zoi.describe(@schema)}
-  """
-  def schema, do: @schema
-end
-
-defmodule MyApp.UserSchemaTest do
-  use ExUnit.Case
-  alias MyApp.UserSchema
-
-  test "example matches schema" do
-    example = Zoi.example(UserSchema.schema())
-    assert {:ok, example} == Zoi.parse(UserSchema.schema(), example)
-  end
-end
+iex> schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
+iex> Zoi.to_json_schema(schema)
+%{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  type: :object,
+  properties: %{name: %{type: :string}, age: %{type: :integer}},
+  required: [:name, :age],
+  additionalProperties: false
+}
 ```
 
-`description`, `example` are also used when generating OpenAPI specs. See the [Using Zoi to generate OpenAPI specs](https://hexdocs.pm/zoi/using_zoi_to_generate_openapi_specs.html) guide for more details.
+You can also decode an existing JSON Schema into a `Zoi` schema using `Zoi.from_json_schema/1`. See `Zoi.JSONSchema` for the full type mapping.
 
 ## Guides
 
