@@ -7,7 +7,9 @@ defmodule Zoi.JSONSchema.Decoder do
     {"readOnly", :read_only},
     {"writeOnly", :write_only},
     {"$id", :id},
-    {"$comment", :comment}
+    {"$comment", :comment},
+    {"contentEncoding", :content_encoding},
+    {"contentMediaType", :content_media_type}
   ]
 
   @spec decode(map()) :: Zoi.schema()

@@ -85,7 +85,7 @@ defmodule Zoi.JSONSchema do
   ```
 
   Additional JSON Schema annotations can be set via the `:metadata` option.
-  The recognised keys are `:title`, `:examples`, `:read_only`, `:write_only`, `:id` and `:comment`. They are emitted as the matching JSON Schema keywords (`$id` and `$comment` for `:id` and `:comment`):
+  The recognised keys are `:title`, `:examples`, `:read_only`, `:write_only`, `:id`, `:comment`, `:content_encoding` and `:content_media_type`. They are emitted as the matching JSON Schema keywords (`$id` and `$comment` for `:id` and `:comment`):
 
   ```elixir
   iex> schema = Zoi.string(metadata: [title: "Username", examples: ["alice", "bob"], read_only: true])
@@ -276,6 +276,20 @@ defmodule Zoi.JSONSchema do
     Map.put(json_schema, :format, :uri)
   end
 
+  defp encode_refinement(
+         {Zoi.Validations.Base64, :validate, [_opts]},
+         %{type: :string} = json_schema
+       ) do
+    Map.put(json_schema, :contentEncoding, :base64)
+  end
+
+  defp encode_refinement(
+         {Zoi.Validations.Base64Url, :validate, [_opts]},
+         %{type: :string} = json_schema
+       ) do
+    Map.put(json_schema, :contentEncoding, :base64url)
+  end
+
   defp encode_refinement(_refinement, json_schema) do
     json_schema
   end
@@ -346,6 +360,12 @@ defmodule Zoi.JSONSchema do
 
       {:comment, comment}, acc ->
         Map.put_new(acc, :"$comment", comment)
+
+      {:content_encoding, value}, acc ->
+        Map.put_new(acc, :contentEncoding, value)
+
+      {:content_media_type, value}, acc ->
+        Map.put_new(acc, :contentMediaType, value)
 
       _, acc ->
         acc
