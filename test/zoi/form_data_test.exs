@@ -1042,7 +1042,7 @@ defmodule Zoi.FormDataTest do
       [first_form, second_form] = FormData.to_form(ctx, form, :users, [])
 
       # First user should have errors
-      assert length(first_form.errors) > 0
+      assert first_form.errors != []
 
       # Second user should have no errors
       assert second_form.errors == []
@@ -1069,7 +1069,7 @@ defmodule Zoi.FormDataTest do
 
       # Only second should have errors
       assert first.errors == []
-      assert length(second.errors) > 0
+      assert second.errors != []
     end
 
     test "handles errors with non-atom/non-string keys in path" do
@@ -1421,7 +1421,7 @@ defmodule Zoi.FormDataTest do
 
       # But nested forms still have errors (unlike top-level form)
       # This is expected behavior - :ignore only affects top-level form errors
-      assert length(item_form.errors) > 0
+      assert item_form.errors != []
     end
   end
 
@@ -1591,7 +1591,7 @@ defmodule Zoi.FormDataTest do
       # Verify forms can be created for nested structures
       form = FormData.to_form(ctx, as: :company)
       dept_forms = FormData.to_form(ctx, form, :departments, [])
-      assert length(dept_forms) > 0
+      assert dept_forms != []
 
       # Can access nested teams
       first_dept = List.first(dept_forms)
