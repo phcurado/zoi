@@ -1624,7 +1624,7 @@ defmodule Zoi do
     end)
   end
 
-  def struct(module, opts, []) when is_list(opts) and length(opts) > 0 do
+  def struct(module, opts, []) when is_list(opts) and opts != [] do
     Zoi.Types.Struct.opts()
     |> parse!(opts)
     |> then(fn opts ->
