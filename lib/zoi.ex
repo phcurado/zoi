@@ -1936,9 +1936,9 @@ defmodule Zoi do
   @doc """
   Defines a MapSet type schema.
 
-  Use `Zoi.mapset(elements)` to define a MapSet of a specific type:
+  Use `Zoi.map_set(elements)` to define a MapSet of a specific type:
 
-      iex> schema = Zoi.mapset(Zoi.integer())
+      iex> schema = Zoi.map_set(Zoi.integer())
       iex> Zoi.parse(schema, MapSet.new([1, 2, 3]))
       {:ok, MapSet.new([1, 2, 3])}
       iex> Zoi.parse(schema, MapSet.new(["two"]))
@@ -1954,7 +1954,7 @@ defmodule Zoi do
 
   For coercion, you can pass the `:coerce` option and `Zoi` will coerce lists into the MapSet type:
 
-      iex> schema = Zoi.mapset(Zoi.integer(), coerce: true)
+      iex> schema = Zoi.map_set(Zoi.integer(), coerce: true)
       iex> Zoi.parse(schema, [1, 2, 3])
       {:ok, MapSet.new([1, 2, 3])}
 
@@ -1963,8 +1963,8 @@ defmodule Zoi do
   #{Zoi.Describe.generate(Zoi.Types.MapSet.opts())}
   """
   @doc group: "Complex Types"
-  @spec mapset(elements :: schema(), opts :: options()) :: schema()
-  def mapset(elements \\ Zoi.any(), opts \\ []) do
+  @spec map_set(elements :: schema(), opts :: options()) :: schema()
+  def map_set(elements \\ Zoi.any(), opts \\ []) do
     Zoi.Types.MapSet.opts()
     |> parse!(opts)
     |> then(fn opts ->

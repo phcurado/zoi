@@ -42,7 +42,7 @@ defmodule Zoi.JSONSchema do
   | `Zoi.literal/2` | `const` |
   | `Zoi.enum/2` | `enum` |
   | `Zoi.array/2` | `"array"` |
-  | `Zoi.mapset/2` | `"array"` with `uniqueItems` |
+  | `Zoi.map_set/2` | `"array"` with `uniqueItems` |
   | `Zoi.tuple/2` | `"array"` with `prefixItems` |
   | `Zoi.map/2` | `"object"` |
   | `Zoi.union/2` | `oneOf` (decode also accepts `anyOf`) |

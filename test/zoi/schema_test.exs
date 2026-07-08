@@ -64,10 +64,10 @@ defmodule Zoi.SchemaTest do
       assert counts_field.inner.coerce == true
     end
 
-    test "applies transformation to mapsets" do
+    test "applies transformation to map_sets" do
       schema =
         Zoi.map(%{
-          tags: Zoi.mapset(Zoi.string())
+          tags: Zoi.map_set(Zoi.string())
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
 

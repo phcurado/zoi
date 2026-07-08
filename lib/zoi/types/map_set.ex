@@ -29,7 +29,7 @@ defmodule Zoi.Types.MapSet do
     end
 
     def parse(schema, _input, _opts) do
-      {:error, Zoi.Error.invalid_type(:mapset, error: schema.meta.error)}
+      {:error, Zoi.Error.invalid_type(:map_set, error: schema.meta.error)}
     end
 
     defp parse_values(input, schema, opts) do
