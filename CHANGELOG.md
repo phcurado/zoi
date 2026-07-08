@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.18.5 - 2026-07-08
+
+### Added
+
+- `Zoi.map_set/2` type for validating `MapSet` values, including element validation, list coercion, typespec generation, JSON Schema encoding, schema traversal, and descriptions.
+
 ## 0.18.4 - 2026-05-11
 
 ### Added
