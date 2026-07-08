@@ -1934,6 +1934,45 @@ defmodule Zoi do
   end
 
   @doc """
+  Defines a MapSet type schema.
+
+  Use `Zoi.map_set(elements)` to define a MapSet of a specific type:
+
+      iex> schema = Zoi.map_set(Zoi.integer())
+      iex> Zoi.parse(schema, MapSet.new([1, 2, 3]))
+      {:ok, MapSet.new([1, 2, 3])}
+      iex> Zoi.parse(schema, MapSet.new(["two"]))
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected integer",
+           issue: {"invalid type: expected integer", [type: :integer]},
+           path: [0]
+         }
+       ]}
+
+  For coercion, you can pass the `:coerce` option and `Zoi` will coerce lists into the MapSet type:
+
+      iex> schema = Zoi.map_set(Zoi.integer(), coerce: true)
+      iex> Zoi.parse(schema, [1, 2, 3])
+      {:ok, MapSet.new([1, 2, 3])}
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.MapSet.opts())}
+  """
+  @doc group: "Complex Types"
+  @spec map_set(elements :: schema(), opts :: options()) :: schema()
+  def map_set(elements \\ Zoi.any(), opts \\ []) do
+    Zoi.Types.MapSet.opts()
+    |> parse!(opts)
+    |> then(fn opts ->
+      Zoi.Types.MapSet.new(elements, opts)
+    end)
+  end
+
+  @doc """
   Defines an enum type schema.
 
   Use `Zoi.enum(values)` to define a schema that accepts only specific values:

@@ -135,6 +135,7 @@ defmodule Zoi.DescribeTest do
           keyword: Zoi.keyword(Zoi.string()),
           literal: Zoi.literal(42),
           map: Zoi.map(),
+          map_set: Zoi.map_set(Zoi.integer()),
           naivedatetime: Zoi.naive_datetime(),
           null: Zoi.null(),
           number: Zoi.number(),
@@ -204,6 +205,8 @@ defmodule Zoi.DescribeTest do
       * `:literal` (`42`)
 
       * `:map` (`t:map/0`)
+
+      * `:map_set` (MapSet of `t:integer/0`)
 
       * `:naivedatetime` (`t:NaiveDateTime.t/0`)
 

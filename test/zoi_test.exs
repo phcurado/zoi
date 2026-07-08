@@ -2919,6 +2919,56 @@ defmodule ZoiTest do
     end
   end
 
+  describe "map_set/2" do
+    test "map_set with correct values" do
+      schema = Zoi.map_set(Zoi.integer())
+
+      assert {:ok, parsed} = Zoi.parse(schema, MapSet.new([1, 2, 3]))
+      assert parsed == MapSet.new([1, 2, 3])
+    end
+
+    test "map_set with no arguments should create an any map_set" do
+      schema = Zoi.map_set()
+
+      assert %{inner: %Zoi.Types.Any{}} = schema
+      input = MapSet.new([1, "two", 3.0, true, nil, %{}, []])
+
+      assert {:ok, ^input} = Zoi.parse(schema, input)
+    end
+
+    test "map_set with coercion" do
+      schema = Zoi.map_set(Zoi.integer(), coerce: true)
+
+      assert {:ok, parsed} = Zoi.parse(schema, [1, 2, 3])
+      assert parsed == MapSet.new([1, 2, 3])
+    end
+
+    test "map_set with incorrect value" do
+      schema = Zoi.map_set(Zoi.integer())
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, MapSet.new(["not an integer"]))
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected integer"
+      assert error.path == [0]
+    end
+
+    test "map_set with non-map_set input" do
+      schema = Zoi.map_set(Zoi.string())
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ["not", "a", "map_set"])
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected map_set"
+    end
+
+    test "map_set with invalid inner schema raises ArgumentError" do
+      assert_raise ArgumentError,
+                   "you should use a valid Zoi schema, got: \"not a schema\"",
+                   fn ->
+                     Zoi.map_set("not a schema")
+                   end
+    end
+  end
+
   describe "enum/2" do
     test "enum with atom key" do
       schema = Zoi.enum([:apple, :banana, :cherry])

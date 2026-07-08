@@ -64,6 +64,19 @@ defmodule Zoi.SchemaTest do
       assert counts_field.inner.coerce == true
     end
 
+    test "applies transformation to map_sets" do
+      schema =
+        Zoi.map(%{
+          tags: Zoi.map_set(Zoi.string())
+        })
+        |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+      tags_field = schema.fields[:tags]
+
+      assert tags_field.coerce == true
+      assert tags_field.inner.coerce == true
+    end
+
     test "applies transformation to nested arrays" do
       schema =
         Zoi.map(%{
