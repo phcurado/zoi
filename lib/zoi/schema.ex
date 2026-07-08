@@ -164,6 +164,12 @@ defmodule Zoi.Schema do
     |> apply_fun(path, fun)
   end
 
+  defp do_traverse(%Zoi.Types.MapSet{inner: inner} = mapset, path, fun) do
+    mapset
+    |> Map.put(:inner, do_traverse(inner, path, fun))
+    |> apply_fun(path, fun)
+  end
+
   defp do_traverse(%Zoi.Types.Default{inner: inner} = default, path, fun) do
     default
     |> Map.put(:inner, do_traverse(inner, path, fun))

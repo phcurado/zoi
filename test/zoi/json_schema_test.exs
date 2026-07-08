@@ -19,6 +19,8 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.null(), %{type: :null}},
         {Zoi.array(Zoi.integer()), %{type: :array, items: %{type: :integer}}},
         {Zoi.array(), %{type: :array}},
+        {Zoi.mapset(Zoi.integer()), %{type: :array, items: %{type: :integer}, uniqueItems: true}},
+        {Zoi.mapset(), %{type: :array, uniqueItems: true}},
         {Zoi.tuple({Zoi.string(), Zoi.integer()}),
          %{type: :array, prefixItems: [%{type: :string}, %{type: :integer}]}},
         {Zoi.enum(["red", "green", "blue"]), %{type: :string, enum: ["red", "green", "blue"]}},

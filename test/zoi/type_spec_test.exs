@@ -50,6 +50,8 @@ defmodule Zoi.TypeSpecTest do
         {Zoi.literal(["hello", "world"]), quote(do: list())},
         {Zoi.map(), quote(do: map())},
         {Zoi.map(Zoi.string(), Zoi.integer()), quote(do: %{optional(binary()) => integer()})},
+        {Zoi.mapset(), quote(do: MapSet.t())},
+        {Zoi.mapset(Zoi.string()), quote(do: MapSet.t(binary()))},
         {Zoi.naive_datetime(), quote(do: NaiveDateTime.t())},
         {Zoi.null(), quote(do: nil)},
         {Zoi.nullable(Zoi.string()), quote(do: nil | binary())},

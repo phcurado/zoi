@@ -33,6 +33,8 @@ defmodule Zoi.InspectTest do
       {Zoi.map(Zoi.string(), Zoi.integer()),
        "#Zoi.map<key: #Zoi.string<coerce: false>, value: #Zoi.integer<coerce: false>>"},
       {Zoi.map(), "#Zoi.map<key: #Zoi.any<>, value: #Zoi.any<>>"},
+      {Zoi.mapset(Zoi.string()),
+       "#Zoi.map_set<coerce: false, inner: #Zoi.string<coerce: false>>"},
       {Zoi.naive_datetime(), "#Zoi.naive_date_time<coerce: false>"},
       {Zoi.null(), "#Zoi.null<>"},
       {Zoi.nullable(Zoi.string()),
