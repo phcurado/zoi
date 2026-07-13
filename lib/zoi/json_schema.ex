@@ -39,6 +39,7 @@ defmodule Zoi.JSONSchema do
   | `Zoi.decimal/1` | `"number"` |
   | `Zoi.boolean/1` | `"boolean"` |
   | `Zoi.null/1` | `"null"` |
+  | `Zoi.any/1` | unconstrained schema (`{}`) |
   | `Zoi.literal/2` | `const` |
   | `Zoi.enum/2` | `enum` |
   | `Zoi.array/2` | `"array"` |

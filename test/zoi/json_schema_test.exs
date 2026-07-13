@@ -17,6 +17,7 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.boolean(), %{type: :boolean}},
         {Zoi.literal("fixed"), %{const: "fixed"}},
         {Zoi.null(), %{type: :null}},
+        {Zoi.any(), %{}},
         {Zoi.array(Zoi.integer()), %{type: :array, items: %{type: :integer}}},
         {Zoi.array(), %{type: :array}},
         {Zoi.map_set(Zoi.integer()),
@@ -40,6 +41,41 @@ defmodule Zoi.JSONSchemaTest do
         expected = Map.put(expected, :"$schema", @draft)
         assert Zoi.to_json_schema(schema) == expected
       end)
+    end
+
+    test "encoding any as required and optional nested fields" do
+      schema =
+        Zoi.map(%{
+          required: Zoi.any(description: "Required open value"),
+          optional: Zoi.any(description: "Optional open value") |> Zoi.optional()
+        })
+
+      assert Zoi.to_json_schema(schema) == %{
+               "$schema": @draft,
+               type: :object,
+               properties: %{
+                 required: %{description: "Required open value"},
+                 optional: %{description: "Optional open value"}
+               },
+               required: [:required],
+               additionalProperties: true
+             }
+    end
+
+    test "encoding any preserves metadata and defaults" do
+      schema =
+        Zoi.any(
+          description: "Any JSON value",
+          metadata: [title: "Open value"]
+        )
+        |> Zoi.default(%{"accepted" => true})
+
+      assert Zoi.to_json_schema(schema) == %{
+               "$schema": @draft,
+               description: "Any JSON value",
+               title: "Open value",
+               default: %{"accepted" => true}
+             }
     end
 
     test "enconding object" do
@@ -775,6 +811,7 @@ defmodule Zoi.JSONSchemaTest do
 
       assert {:ok, "anything"} = Zoi.parse(schema, "anything")
       assert {:ok, 42} = Zoi.parse(schema, 42)
+      assert Zoi.to_json_schema(schema) == %{"$schema": @draft}
     end
 
     test "string format uuid decodes to Zoi.uuid" do
