@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.18.6 - 2026-07-17
+
+### Fixed
+
+- `Zoi.any/1` encoder for JSON Schema as `{}`
+
 ## 0.18.5 - 2026-07-08
 
 ### Added
