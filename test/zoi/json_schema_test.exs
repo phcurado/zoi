@@ -17,6 +17,7 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.boolean(), %{type: :boolean}},
         {Zoi.literal("fixed"), %{const: "fixed"}},
         {Zoi.null(), %{type: :null}},
+        {Zoi.any(), %{}},
         {Zoi.array(Zoi.integer()), %{type: :array, items: %{type: :integer}}},
         {Zoi.array(), %{type: :array}},
         {Zoi.map_set(Zoi.integer()),

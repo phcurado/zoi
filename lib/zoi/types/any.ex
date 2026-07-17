@@ -26,6 +26,10 @@ defmodule Zoi.Types.Any do
     end
   end
 
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(_schema), do: %{}
+  end
+
   defimpl Zoi.Describe.Encoder do
     def encode(_schema), do: "`t:term/0`"
   end
