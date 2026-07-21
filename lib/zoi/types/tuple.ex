@@ -84,7 +84,7 @@ defmodule Zoi.Types.Tuple do
     def encode(schema) do
       %{
         type: :array,
-        prefixItems: Enum.map(schema.fields, &Zoi.JSONSchema.Encoder.encode/1)
+        prefixItems: Enum.map(schema.fields, &Zoi.JSONSchema.encode_schema/1)
       }
     end
   end

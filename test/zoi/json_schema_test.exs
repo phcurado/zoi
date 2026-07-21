@@ -220,6 +220,57 @@ defmodule Zoi.JSONSchemaTest do
       end)
     end
 
+    test "union branches keep string pattern refinements" do
+      pattern = "^[a-z]+$"
+      code = Zoi.regex(Zoi.string(), ~r/^[a-z]+$/)
+
+      assert %{
+               "$schema": @draft,
+               anyOf: [%{type: :null}, %{type: :string, pattern: ^pattern}]
+             } = Zoi.to_json_schema(Zoi.nullable(code))
+
+      assert %{
+               "$schema": @draft,
+               anyOf: [%{type: :string, pattern: ^pattern}, %{type: :integer}]
+             } = Zoi.to_json_schema(Zoi.union([code, Zoi.integer()]))
+    end
+
+    test "intersection branches keep string pattern refinements" do
+      pattern = "^[a-z]+$"
+      code = Zoi.regex(Zoi.string(), ~r/^[a-z]+$/)
+
+      assert %{
+               "$schema": @draft,
+               allOf: [%{type: :string, pattern: ^pattern}, %{type: :string}]
+             } = Zoi.to_json_schema(Zoi.intersection([code, Zoi.string()]))
+    end
+
+    test "tuple prefix items keep string pattern refinements" do
+      pattern = "^[a-z]+$"
+      code = Zoi.regex(Zoi.string(), ~r/^[a-z]+$/)
+
+      assert %{
+               "$schema": @draft,
+               type: :array,
+               prefixItems: [%{type: :string, pattern: ^pattern}, %{type: :integer}]
+             } = Zoi.to_json_schema(Zoi.tuple({code, Zoi.integer()}))
+    end
+
+    test "discriminated_union branches keep string pattern refinements" do
+      pattern = "^[a-z]+$"
+      code = Zoi.regex(Zoi.string(), ~r/^[a-z]+$/)
+      cat_schema = Zoi.map(%{type: Zoi.literal("cat"), code: code})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+
+      assert %{
+               "$schema": @draft,
+               oneOf: [cat_json_schema, _dog_json_schema],
+               discriminator: %{propertyName: "type"}
+             } = Zoi.to_json_schema(Zoi.discriminated_union(:type, [cat_schema, dog_schema]))
+
+      assert %{properties: %{code: %{type: :string, pattern: ^pattern}}} = cat_json_schema
+    end
+
     test "encoding string refinements with transforms" do
       schema =
         Zoi.string()

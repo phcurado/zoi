@@ -142,7 +142,7 @@ defmodule Zoi.Types.DiscriminatedUnion do
       one_of_schemas =
         schema.values
         |> Enum.map(&Map.get(schema.schemas, &1))
-        |> Enum.map(&Zoi.JSONSchema.Encoder.encode/1)
+        |> Enum.map(&Zoi.JSONSchema.encode_schema/1)
 
       %{
         oneOf: one_of_schemas,

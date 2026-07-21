@@ -67,7 +67,7 @@ defmodule Zoi.Types.Union do
 
   defimpl Zoi.JSONSchema.Encoder do
     def encode(schema) do
-      %{anyOf: Enum.map(schema.schemas, &Zoi.JSONSchema.Encoder.encode/1)}
+      %{anyOf: Enum.map(schema.schemas, &Zoi.JSONSchema.encode_schema/1)}
     end
   end
 
