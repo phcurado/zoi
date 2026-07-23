@@ -220,6 +220,42 @@ defmodule Zoi.JSONSchemaTest do
       end)
     end
 
+    test "union branches keep string pattern refinements" do
+      pattern = "^[a-z]+$"
+      code = Zoi.regex(Zoi.string(), ~r/^[a-z]+$/)
+
+      assert %{
+               "$schema": @draft,
+               anyOf: [%{type: :null}, %{type: :string, pattern: ^pattern}]
+             } = Zoi.to_json_schema(Zoi.nullable(code))
+
+      assert %{
+               "$schema": @draft,
+               anyOf: [%{type: :string, pattern: ^pattern}, %{type: :integer}]
+             } = Zoi.to_json_schema(Zoi.union([code, Zoi.integer()]))
+    end
+
+    test "intersection branches keep string pattern refinements" do
+      pattern = "^[a-z]+$"
+      code = Zoi.regex(Zoi.string(), ~r/^[a-z]+$/)
+
+      assert %{
+               "$schema": @draft,
+               allOf: [%{type: :string, pattern: ^pattern}, %{type: :string}]
+             } = Zoi.to_json_schema(Zoi.intersection([code, Zoi.string()]))
+    end
+
+    test "tuple prefix items keep string pattern refinements" do
+      pattern = "^[a-z]+$"
+      code = Zoi.regex(Zoi.string(), ~r/^[a-z]+$/)
+
+      assert %{
+               "$schema": @draft,
+               type: :array,
+               prefixItems: [%{type: :string, pattern: ^pattern}, %{type: :integer}]
+             } = Zoi.to_json_schema(Zoi.tuple({code, Zoi.integer()}))
+    end
+
     test "encoding string refinements with transforms" do
       schema =
         Zoi.string()
