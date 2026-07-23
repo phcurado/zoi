@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.18.7 - 2026-07-23
+
+### Fixed
+
+- Preserve child refinements when encoding unions, intersections, tuples and discriminated unions as JSON Schema
+
 ## 0.18.6 - 2026-07-17
 
 ### Fixed
