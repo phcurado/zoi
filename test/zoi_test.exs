@@ -1034,6 +1034,92 @@ defmodule ZoiTest do
                Zoi.parse(schema, %{type: "dog", bark: "woof"})
     end
 
+    test "mapped enum discriminators parse JSON tags into atoms" do
+      article =
+        Zoi.map(%{type: Zoi.enum(article: "article"), title: Zoi.string()}, coerce: true)
+
+      video =
+        Zoi.map(%{type: Zoi.enum(video: "video"), duration: Zoi.integer()}, coerce: true)
+
+      schema = Zoi.discriminated_union(:type, [article, video], coerce: true)
+
+      assert {:ok, %{type: :article, title: "Hello"}} =
+               Zoi.parse(schema, %{"type" => "article", "title" => "Hello"})
+
+      assert {:ok, %{type: :video, duration: 120}} =
+               Zoi.parse(schema, %{"type" => "video", "duration" => 120})
+
+      assert {:error, [_]} = Zoi.parse(schema, %{type: :article, title: "Hello"})
+      assert {:error, [_]} = Zoi.parse(schema, %{"type" => "unknown"})
+    end
+
+    test "enum discriminators support multiple tags and literal branches" do
+      for tags <- [["article", "post"], [:article, :post], [1, 2], [false, nil]] do
+        content = Zoi.map(%{"type" => Zoi.enum(tags), "title" => Zoi.string()})
+        video = Zoi.map(%{"type" => Zoi.literal("video"), "duration" => Zoi.integer()})
+        schema = Zoi.discriminated_union("type", [content, video])
+
+        for tag <- tags do
+          input = %{"type" => tag, "title" => "Hello"}
+          assert {:ok, ^input} = Zoi.parse(schema, input)
+        end
+
+        input = %{"type" => "video", "duration" => 120}
+        assert {:ok, ^input} = Zoi.parse(schema, input)
+      end
+    end
+
+    test "enum discriminator transforms run once after branch selection" do
+      tag =
+        Zoi.enum(article: "article", post: "post")
+        |> Zoi.transform(fn value ->
+          send(self(), {:transformed, value})
+          value
+        end)
+
+      article = Zoi.map(%{type: tag, title: Zoi.string()})
+      video = Zoi.map(%{type: Zoi.literal("video"), duration: Zoi.integer()})
+      schema = Zoi.discriminated_union(:type, [article, video])
+
+      assert {:ok, %{type: :post, title: "Hello"}} =
+               Zoi.parse(schema, %{type: "post", title: "Hello"})
+
+      assert_received {:transformed, :post}
+      refute_received {:transformed, _}
+
+      assert {:error, [error]} = Zoi.parse(schema, %{type: "post", title: 123})
+      assert error.path == [:title]
+      assert elem(error.issue, 1)[:discriminator] == "post"
+    end
+
+    test "enum discriminator overlaps across branches are rejected" do
+      for {first, second} <- [
+            {Zoi.enum(["article", "post"]), Zoi.literal("post")},
+            {Zoi.enum(["article", "post"]), Zoi.enum(["post", "video"])},
+            {Zoi.enum(article: "article"), Zoi.enum(other: "article")}
+          ] do
+        assert_raise ArgumentError, ~r/duplicate discriminator/, fn ->
+          Zoi.discriminated_union(:type, [Zoi.map(%{type: first}), Zoi.map(%{type: second})])
+        end
+      end
+    end
+
+    test "identical enum branches still have overlapping discriminators" do
+      cat_schema = Zoi.map(%{type: Zoi.enum(["cat", "kitten"])})
+
+      assert_raise ArgumentError, ~r/duplicate discriminator 'cat'/, fn ->
+        Zoi.discriminated_union(:type, [cat_schema, cat_schema])
+      end
+    end
+
+    test "repeated enum tags within a branch are allowed" do
+      article = Zoi.map(%{type: Zoi.enum(["article", "article"], coerce: true)})
+      video = Zoi.map(%{type: Zoi.literal("video")})
+      schema = Zoi.discriminated_union(:type, [article, video])
+
+      assert {:ok, %{type: "article"}} = Zoi.parse(schema, %{type: "article"})
+    end
+
     test "discriminated_union with string tag" do
       cat_schema = Zoi.map(%{"type" => Zoi.literal("cat"), "meow" => Zoi.string()})
       dog_schema = Zoi.map(%{"type" => Zoi.literal("dog"), "bark" => Zoi.string()})
@@ -1215,12 +1301,12 @@ defmodule ZoiTest do
                    end
     end
 
-    test "discriminated_union raises when tag field is not a literal type" do
+    test "discriminated_union raises when tag field is not a literal or enum type" do
       cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
       dog_schema = Zoi.map(%{type: Zoi.string(), bark: Zoi.string()})
 
       assert_raise ArgumentError,
-                   ~r/field 'type' must be a literal type/,
+                   ~r/field 'type' must be a literal or enum type/,
                    fn ->
                      Zoi.discriminated_union(:type, [cat_schema, dog_schema])
                    end

@@ -603,6 +603,21 @@ defmodule Zoi.JSONSchemaTest do
       assert Zoi.to_json_schema(schema) == Map.put(expected, :"$schema", @draft)
     end
 
+    test "encoding discriminated_union with enum discriminators" do
+      cat_schema = Zoi.map(%{type: Zoi.enum(cat: "cat", kitten: "kitten"), meow: Zoi.string()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      assert %{
+               "$schema": @draft,
+               oneOf: [cat_json_schema, dog_json_schema],
+               discriminator: %{propertyName: "type"}
+             } = Zoi.to_json_schema(schema)
+
+      assert %{type: :object, properties: %{type: %{enum: ["cat", "kitten"]}}} = cat_json_schema
+      assert %{type: :object, properties: %{type: %{const: "dog"}}} = dog_json_schema
+    end
+
     test "encoding discriminated_union" do
       cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
       dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})

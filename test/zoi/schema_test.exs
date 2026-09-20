@@ -138,6 +138,22 @@ defmodule Zoi.SchemaTest do
       assert schema_b.coerce == true
     end
 
+    test "applies transformation to all enum discriminator values" do
+      cat_schema = Zoi.map(%{type: Zoi.enum(["cat", "kitten"]), age: Zoi.integer()})
+      dog_schema = Zoi.map(%{type: Zoi.literal("dog"), age: Zoi.integer()})
+      union = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      root = Zoi.Schema.traverse(union, &Zoi.coerce/1)
+      nested = Zoi.map(%{animal: union}) |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+      for tag <- ["cat", "kitten", "dog"] do
+        assert {:ok, %{type: ^tag, age: 2}} = Zoi.parse(root, %{type: tag, age: "2"})
+
+        assert {:ok, %{animal: %{type: ^tag, age: 2}}} =
+                 Zoi.parse(nested, %{animal: %{type: tag, age: "2"}})
+      end
+    end
+
     test "applies transformation to intersections" do
       schema =
         Zoi.map(%{
