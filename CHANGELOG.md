@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.18.8 - 2026-09-22
+
+### Added
+
+- `Zoi.discriminated_union/3` accepts `Zoi.enum/1` discriminators. Each enum value selects that schema.
+
 ## 0.18.7 - 2026-07-23
 
 ### Fixed
