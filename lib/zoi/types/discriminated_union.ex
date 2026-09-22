@@ -20,34 +20,44 @@ defmodule Zoi.Types.DiscriminatedUnion do
   defp build_schema_lookup(field, schemas) do
     {schema_map, reversed_values} =
       Enum.reduce(schemas, {%{}, []}, fn schema, {lookup, values} ->
-        value = extract_field_value(schema, field)
+        [value | _] = field_values = extract_field_values(schema, field)
 
-        if Map.has_key?(lookup, value) do
-          raise ArgumentError,
-                "duplicate discriminator '#{value}' found in discriminated_union schemas"
-        end
+        lookup =
+          field_values
+          |> Enum.uniq()
+          |> Enum.reduce(lookup, fn discriminator, lookup ->
+            if Map.has_key?(lookup, discriminator) do
+              raise ArgumentError,
+                    "duplicate discriminator '#{discriminator}' found in discriminated_union schemas"
+            end
 
-        {Map.put(lookup, value, schema), [value | values]}
+            Map.put(lookup, discriminator, schema)
+          end)
+
+        {lookup, [value | values]}
       end)
 
     {schema_map, Enum.reverse(reversed_values)}
   end
 
-  defp extract_field_value(%Zoi.Types.Map{fields: fields} = schema, field) do
+  defp extract_field_values(%Zoi.Types.Map{fields: fields} = schema, field) do
     case List.keyfind(fields, field, 0) do
       {_key, %Zoi.Types.Literal{value: value}} ->
-        value
+        [value]
+
+      {_key, %Zoi.Types.Enum{values: values}} ->
+        Enum.map(values, fn {_key, value} -> value end)
 
       nil ->
         raise ArgumentError,
               "all schemas must have the field '#{field}' defined, missing in: #{inspect(schema)}"
 
       _other ->
-        raise ArgumentError, "field '#{field}' must be a literal type"
+        raise ArgumentError, "field '#{field}' must be a literal or enum type"
     end
   end
 
-  defp extract_field_value(unsupported, _field) do
+  defp extract_field_values(unsupported, _field) do
     raise ArgumentError,
           "all schemas in discriminated_union must be map types, got: #{inspect(unsupported)}"
   end

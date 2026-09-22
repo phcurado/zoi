@@ -1393,7 +1393,8 @@ defmodule Zoi do
          }
        ]}
 
-  All schemas must be map types and must have the discriminator field defined:
+  All schemas must be map types and must have the discriminator field defined as a literal
+  or enum. Each accepted discriminator value must belong to only one branch:
 
       iex> success = Zoi.map(%{
       ...>   status: Zoi.literal("success"),
@@ -1406,6 +1407,30 @@ defmodule Zoi do
       iex> schema = Zoi.discriminated_union(:status, [success, error])
       iex> Zoi.parse(schema, %{status: "success", data: "result"})
       {:ok, %{status: "success", data: "result"}}
+
+  Enums allow multiple discriminator values for the same schema:
+
+      iex> cat_schema = Zoi.map(%{
+      ...>   type: Zoi.enum(["cat", "kitten"]),
+      ...>   meow: Zoi.string()
+      ...> })
+      iex> dog_schema = Zoi.map(%{
+      ...>   type: Zoi.literal("dog"),
+      ...>   bark: Zoi.string()
+      ...> })
+      iex> schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+      iex> Zoi.parse(schema, %{type: "kitten", meow: "meow"})
+      {:ok, %{type: "kitten", meow: "meow"}}
+
+  Key-value enums use their values to select the schema and return their keys:
+
+      iex> cat_schema = Zoi.map(%{type: Zoi.enum([cat: "cat"]), meow: Zoi.string()})
+      iex> dog_schema = Zoi.map(%{type: Zoi.enum([dog: "dog"]), bark: Zoi.string()})
+      iex> schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+      iex> Zoi.parse(schema, %{type: "cat", meow: "meow"})
+      {:ok, %{type: :cat, meow: "meow"}}
+
+  Discriminator values must not overlap between schemas.
 
   ## Options
 

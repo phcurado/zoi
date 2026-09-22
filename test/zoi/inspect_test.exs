@@ -95,6 +95,15 @@ defmodule Zoi.InspectTest do
     assert result =~ "bark: #Zoi.string<required: true, coerce: false>"
   end
 
+  test "inspect discriminated_union with enum discriminators" do
+    cat_schema = Zoi.map(%{type: Zoi.enum(["cat", "kitten"]), meow: Zoi.string()})
+    dog_schema = Zoi.map(%{type: Zoi.literal("dog"), bark: Zoi.string()})
+    schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+    assert inspect(schema) ==
+             "#Zoi.discriminated_union<coerce: false, field: \":type\", schemas: [#{inspect(cat_schema)}, #{inspect(dog_schema)}]>"
+  end
+
   test "inspect nested types" do
     type =
       Zoi.map(%{
