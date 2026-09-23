@@ -93,7 +93,14 @@ defmodule Zoi.Types.DiscriminatedUnion do
       coerced_key = if coerce?, do: to_string(field), else: field
 
       coerced_input =
-        if coerce?, do: Map.new(input, fn {k, v} -> {to_string(k), v} end), else: input
+        if coerce? do
+          input
+          # Make sure input is a plain map (that implements Enumerable) and not a struct:
+          |> Map.delete(:__struct__)
+          |> Map.new(fn {k, v} -> {to_string(k), v} end)
+        else
+          input
+        end
 
       case Map.fetch(coerced_input, coerced_key) do
         {:ok, value} ->

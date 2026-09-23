@@ -1043,11 +1043,21 @@ defmodule ZoiTest do
     end
 
     test "discriminated_union with struct schemas" do
-      cat_schema =
-        Zoi.struct(Cat, %{type: Zoi.enum(["cat", "kitten"]), meow: Zoi.string()})
-
+      cat_schema = Zoi.struct(Cat, %{type: Zoi.enum(["cat", "kitten"]), meow: Zoi.string()})
       dog_schema = Zoi.struct(Dog, %{type: Zoi.literal("dog"), bark: Zoi.string()})
       schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      cat = %Cat{type: "kitten", meow: "meow"}
+      dog = %Dog{type: "dog", bark: "woof"}
+
+      assert {:ok, ^cat} = Zoi.parse(schema, cat)
+      assert {:ok, ^dog} = Zoi.parse(schema, dog)
+    end
+
+    test "discriminated_union with struct schemas and coerce" do
+      cat_schema = Zoi.struct(Cat, %{type: Zoi.enum(["cat", "kitten"]), meow: Zoi.string()})
+      dog_schema = Zoi.struct(Dog, %{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema]) |> Zoi.coerce()
 
       cat = %Cat{type: "kitten", meow: "meow"}
       dog = %Dog{type: "dog", bark: "woof"}
