@@ -1,6 +1,14 @@
 defmodule Zoi.TypeSpecTest do
   use ExUnit.Case, async: true
 
+  defmodule Cat do
+    defstruct [:type, :meow]
+  end
+
+  defmodule Dog do
+    defstruct [:type, :bark]
+  end
+
   describe "Zoi.type_spec/2" do
     test "all iso typespecs" do
       types = [
@@ -225,6 +233,24 @@ defmodule Zoi.TypeSpecTest do
         |> normalize_map_or_struct_ast()
 
       # Check that both schemas are present in a union (order as it was given to discriminated_union)
+      assert result == {:|, [], [cat_spec, dog_spec]}
+    end
+
+    test "discriminated_union typespec with struct schemas" do
+      cat_schema = Zoi.struct(Cat, %{type: Zoi.literal("cat"), meow: Zoi.string()})
+      dog_schema = Zoi.struct(Dog, %{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      result = Zoi.type_spec(schema) |> normalize_map_or_struct_ast()
+
+      cat_spec =
+        quote(do: %Cat{type: binary(), meow: binary()})
+        |> normalize_map_or_struct_ast()
+
+      dog_spec =
+        quote(do: %Dog{type: binary(), bark: binary()})
+        |> normalize_map_or_struct_ast()
+
       assert result == {:|, [], [cat_spec, dog_spec]}
     end
 

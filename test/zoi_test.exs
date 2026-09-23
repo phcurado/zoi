@@ -10,6 +10,14 @@ defmodule ZoiTest do
     defstruct [:name, :age, :role]
   end
 
+  defmodule Cat do
+    defstruct [:type, :meow]
+  end
+
+  defmodule Dog do
+    defstruct [:type, :bark]
+  end
+
   describe "parse/3" do
     test "parse types with custom errors" do
       custom_error = "custom error"
@@ -1034,6 +1042,20 @@ defmodule ZoiTest do
                Zoi.parse(schema, %{type: "dog", bark: "woof"})
     end
 
+    test "discriminated_union with struct schemas" do
+      cat_schema =
+        Zoi.struct(Cat, %{type: Zoi.enum(["cat", "kitten"]), meow: Zoi.string()})
+
+      dog_schema = Zoi.struct(Dog, %{type: Zoi.literal("dog"), bark: Zoi.string()})
+      schema = Zoi.discriminated_union(:type, [cat_schema, dog_schema])
+
+      cat = %Cat{type: "kitten", meow: "meow"}
+      dog = %Dog{type: "dog", bark: "woof"}
+
+      assert {:ok, ^cat} = Zoi.parse(schema, cat)
+      assert {:ok, ^dog} = Zoi.parse(schema, dog)
+    end
+
     test "mapped enum discriminators parse JSON tags into atoms" do
       article =
         Zoi.map(%{type: Zoi.enum(article: "article"), title: Zoi.string()}, coerce: true)
@@ -1282,12 +1304,14 @@ defmodule ZoiTest do
                    end
     end
 
-    test "discriminated_union raises when schema is not an map" do
+    test "discriminated_union raises when schema is not a map or struct" do
       cat_schema = Zoi.map(%{type: Zoi.literal("cat"), meow: Zoi.string()})
 
-      assert_raise ArgumentError, ~r/all schemas in discriminated_union must be map types/, fn ->
-        Zoi.discriminated_union(:type, [cat_schema, Zoi.string()])
-      end
+      assert_raise ArgumentError,
+                   ~r/all schemas in discriminated_union must be map or struct types/,
+                   fn ->
+                     Zoi.discriminated_union(:type, [cat_schema, Zoi.string()])
+                   end
     end
 
     test "discriminated_union raises when schema missing tag field" do
