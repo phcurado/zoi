@@ -1393,8 +1393,8 @@ defmodule Zoi do
          }
        ]}
 
-  All schemas must be map types and must have the discriminator field defined as a literal
-  or enum. Each accepted discriminator value must belong to only one branch:
+  All schemas must be map or struct types and must have the discriminator field defined as a
+  literal or enum. Each accepted discriminator value must belong to only one branch:
 
       iex> success = Zoi.map(%{
       ...>   status: Zoi.literal("success"),
@@ -1407,6 +1407,14 @@ defmodule Zoi do
       iex> schema = Zoi.discriminated_union(:status, [success, error])
       iex> Zoi.parse(schema, %{status: "success", data: "result"})
       {:ok, %{status: "success", data: "result"}}
+
+  Struct schemas are also supported:
+
+      iex> http = Zoi.struct(URI, %{scheme: Zoi.literal("http"), host: Zoi.string()})
+      iex> https = Zoi.struct(URI, %{scheme: Zoi.literal("https"), host: Zoi.string()})
+      iex> schema = Zoi.discriminated_union(:scheme, [http, https])
+      iex> Zoi.parse(schema, URI.parse("http://example.com"))
+      {:ok, %URI{scheme: "http", host: "example.com"}}
 
   Enums allow multiple discriminator values for the same schema:
 

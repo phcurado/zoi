@@ -40,7 +40,20 @@ defmodule Zoi.Types.DiscriminatedUnion do
     {schema_map, Enum.reverse(reversed_values)}
   end
 
-  defp extract_field_values(%Zoi.Types.Map{fields: fields} = schema, field) do
+  defp extract_field_values(%Zoi.Types.Map{} = schema, field) do
+    extract_map_or_struct_field_values(schema, field)
+  end
+
+  defp extract_field_values(%Zoi.Types.Struct{} = schema, field) do
+    extract_map_or_struct_field_values(schema, field)
+  end
+
+  defp extract_field_values(unsupported, _field) do
+    raise ArgumentError,
+          "all schemas in discriminated_union must be map or struct types, got: #{inspect(unsupported)}"
+  end
+
+  defp extract_map_or_struct_field_values(%{fields: fields} = schema, field) do
     case List.keyfind(fields, field, 0) do
       {_key, %Zoi.Types.Literal{value: value}} ->
         [value]
@@ -55,11 +68,6 @@ defmodule Zoi.Types.DiscriminatedUnion do
       _other ->
         raise ArgumentError, "field '#{field}' must be a literal or enum type"
     end
-  end
-
-  defp extract_field_values(unsupported, _field) do
-    raise ArgumentError,
-          "all schemas in discriminated_union must be map types, got: #{inspect(unsupported)}"
   end
 
   defimpl Zoi.Type do
