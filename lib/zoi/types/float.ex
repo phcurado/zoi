@@ -72,6 +72,9 @@ defmodule Zoi.Types.Float do
 
     defp parse_type(_input, _coerce, schema), do: error(schema)
 
+    defp validate_constraints(%{gte: nil, lte: nil, gt: nil, lt: nil, multiple_of: nil}, _input),
+      do: :ok
+
     defp validate_constraints(schema, input) do
       [
         {Validations.Gte, schema.gte},

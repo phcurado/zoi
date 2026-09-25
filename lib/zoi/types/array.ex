@@ -124,6 +124,12 @@ defmodule Zoi.Types.Array do
       end
     end
 
+    defp validate_constraints(
+           %{length: nil, min_length: nil, max_length: nil, unique_items: nil},
+           _input
+         ),
+         do: :ok
+
     defp validate_constraints(schema, input) do
       [
         {Validations.Length, schema.length},
