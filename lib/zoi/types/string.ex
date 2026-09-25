@@ -196,7 +196,7 @@ defmodule Zoi.Types.String do
   defimpl Zoi.Validations.Regex do
     def validate(_schema, input, regex, regex_opts, opts) do
       # To allow both string and regex input for regex refinement
-      regex = Regex.compile!(regex, regex_opts)
+      regex = compile_regex(regex, regex_opts)
 
       if String.match?(input, regex) do
         :ok
@@ -204,6 +204,28 @@ defmodule Zoi.Types.String do
         {:error, Zoi.Error.invalid_format(regex, opts)}
       end
     end
+
+    # Reuse the existing compiled patterns without putting runtime resources in schemas.
+    for name <- [
+          :email,
+          :html5_email,
+          :rfc5322_email,
+          :simple_email,
+          :upcase,
+          :downcase,
+          :uuid,
+          :ipv4,
+          :ipv6,
+          :hex
+        ] do
+      regex = apply(Zoi.Regexes, name, [])
+
+      defp compile_regex(unquote(regex.source), unquote(Macro.escape(regex.opts))) do
+        Zoi.Regexes.unquote(name)()
+      end
+    end
+
+    defp compile_regex(source, opts), do: Regex.compile!(source, opts)
   end
 
   defimpl Inspect do
