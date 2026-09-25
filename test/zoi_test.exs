@@ -781,6 +781,19 @@ defmodule ZoiTest do
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
     end
 
+    test "default with transforms and refinements" do
+      schema =
+        Zoi.string()
+        |> Zoi.default("  fallback  ")
+        |> Zoi.trim()
+        |> Zoi.length(5)
+
+      assert %Zoi.Types.String{} = schema
+      assert {:ok, "hello"} == Zoi.parse(schema, "  hello  ")
+      assert {:error, [%Zoi.Error{code: :invalid_length}]} = Zoi.parse(schema, "  hi  ")
+      assert {:ok, "  fallback  "} == Zoi.parse(schema, nil)
+    end
+
     test "default with incorrect type" do
       # Zoi will not validate the default value
       schema = Zoi.default(Zoi.integer(), "10")
@@ -800,7 +813,7 @@ defmodule ZoiTest do
         })
 
       assert {:ok, %{}} == Zoi.parse(schema, %{})
-      # Transform will run on default value, since it's short circuit
+      # The default value skips the transform.
       assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{name: nil})
       assert {:ok, %{name: "John_refined"}} == Zoi.parse(schema, %{name: "John"})
     end

@@ -151,7 +151,7 @@ defmodule Zoi.FormTest do
       assert account_field.coerce == true
     end
 
-    test "enables coercion on default wrapped types" do
+    test "enables coercion on types with defaults" do
       schema =
         Zoi.map(%{
           age: Zoi.integer() |> Zoi.default(0)
@@ -159,7 +159,7 @@ defmodule Zoi.FormTest do
         |> Zoi.Form.prepare()
 
       age_field = schema.fields[:age]
-      assert age_field.inner.coerce == true
+      assert age_field.coerce == true
     end
 
     test "enables coercion on struct with nested struct" do
@@ -382,7 +382,7 @@ defmodule Zoi.FormTest do
       assert ctx.input == %{}
     end
 
-    test "normalizes arrays with default wrapper" do
+    test "normalizes arrays with defaults" do
       schema =
         Zoi.map(%{
           tags: Zoi.array(Zoi.string()) |> Zoi.default([])

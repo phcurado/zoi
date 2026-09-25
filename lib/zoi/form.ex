@@ -107,10 +107,6 @@ defmodule Zoi.Form do
     normalize_input(obj, value)
   end
 
-  defp normalize_value(%Zoi.Types.Default{inner: inner}, value) do
-    normalize_value(inner, value)
-  end
-
   defp normalize_value(_type, value), do: value
 
   # Convert LiveView's numeric-key map format to a list

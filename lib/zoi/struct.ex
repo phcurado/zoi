@@ -44,16 +44,10 @@ defmodule Zoi.Struct do
   """
   def enforce_keys(%Zoi.Types.Struct{fields: fields}) do
     Enum.reduce(fields, [], fn {key, type}, acc ->
-      type =
-        case type do
-          %Zoi.Types.Default{inner: inner} -> inner
-          type -> type
-        end
-
-      if Meta.required?(type.meta) do
-        [key | acc]
-      else
-        acc
+      cond do
+        Meta.default?(type.meta) -> acc
+        Meta.required?(type.meta) -> [key | acc]
+        true -> acc
       end
     end)
   end
@@ -65,9 +59,12 @@ defmodule Zoi.Struct do
   This is useful for defining the fields of an Elixir struct.
   """
   def struct_fields(%Zoi.Types.Struct{fields: fields}) do
-    Enum.map(fields, fn
-      {key, %Zoi.Types.Default{value: value}} -> {key, value}
-      {key, _type} -> key
+    Enum.map(fields, fn {key, type} ->
+      if Meta.default?(type.meta) do
+        {key, Meta.default(type.meta)}
+      else
+        key
+      end
     end)
     |> Enum.sort_by(fn
       {_, _} -> 1

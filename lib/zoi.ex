@@ -283,8 +283,23 @@ defmodule Zoi do
   @spec type_spec(schema :: schema(), opts :: options()) :: Macro.t()
   def type_spec(schema, opts \\ []) do
     case schema do
-      %{meta: %{typespec: typespec}} when not is_nil(typespec) -> typespec
-      _ -> Zoi.TypeSpec.spec(schema, opts)
+      %{meta: %{typespec: typespec}} when not is_nil(typespec) ->
+        typespec
+
+      %{meta: meta} ->
+        schema
+        |> Zoi.TypeSpec.spec(opts)
+        |> default_type_spec(meta)
+
+      _ ->
+        Zoi.TypeSpec.spec(schema, opts)
+    end
+  end
+
+  defp default_type_spec(typespec, meta) do
+    case {Zoi.Types.Meta.default?(meta), Zoi.Types.Meta.default(meta)} do
+      {true, nil} -> quote(do: nil | unquote(typespec))
+      _ -> typespec
     end
   end
 
@@ -1219,6 +1234,7 @@ defmodule Zoi do
   Creates a default value for the schema.
 
   This allows you to specify a default value that will be used if the input is `nil` or not provided.
+  The default value is returned without validation or transformation.
 
   ## Example
       iex> schema = Zoi.string() |> Zoi.default("default value")
@@ -1227,16 +1243,15 @@ defmodule Zoi do
 
   ## Options
 
-  #{Zoi.Describe.generate(Zoi.Types.Default.opts())}
+  #{Zoi.Describe.generate(Zoi.Opts.meta_opts())}
   """
   @doc group: "Encapsulated Types"
-  @spec default(inner :: schema(), value :: input(), opts :: options()) :: schema()
-  def default(inner, value, opts \\ []) do
-    Zoi.Types.Default.opts()
-    |> parse!(opts)
-    |> then(fn opts ->
-      Zoi.Types.Default.new(inner, value, opts)
-    end)
+  @spec default(schema :: schema(), value :: input(), opts :: options()) :: schema()
+  def default(schema, value, opts \\ []) do
+    opts = parse!(Zoi.Opts.meta_opts(), opts)
+
+    %{schema | meta: struct!(schema.meta, opts)}
+    |> Zoi.Types.Meta.put_default(value)
   end
 
   @doc """

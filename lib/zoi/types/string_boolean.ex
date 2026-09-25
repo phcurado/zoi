@@ -12,17 +12,17 @@ defmodule Zoi.Types.StringBoolean do
             Zoi.Types.Enum.new(["sensitive", "insensitive"],
               description: "Whether string comparison is case sensitive or insensitive."
             )
-            |> Zoi.Types.Default.new("insensitive"),
+            |> Zoi.Types.Meta.put_default("insensitive"),
           truthy:
             Zoi.Types.Array.new(Zoi.Types.String.new([]),
               description: "List of strings to interpret as true."
             )
-            |> Zoi.Types.Default.new(["true", "1", "yes", "on", "y", "enabled"]),
+            |> Zoi.Types.Meta.put_default(["true", "1", "yes", "on", "y", "enabled"]),
           falsy:
             Zoi.Types.Array.new(Zoi.Types.String.new([]),
               description: "List of strings to interpret as false."
             )
-            |> Zoi.Types.Default.new(["false", "0", "no", "off", "n", "disabled"])
+            |> Zoi.Types.Meta.put_default(["false", "0", "no", "off", "n", "disabled"])
         ],
         unrecognized_keys: :error
       )

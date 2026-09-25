@@ -793,7 +793,7 @@ defmodule Zoi.JSONSchemaTest do
       assert metadata[:content_media_type] == "image/png"
     end
 
-    test "default keyword wraps schema with Zoi.default" do
+    test "default keyword sets schema metadata" do
       schema = Zoi.from_json_schema(%{"type" => "string", "default" => "x"})
       assert Zoi.parse(schema, nil) == {:ok, "x"}
     end
