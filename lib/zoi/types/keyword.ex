@@ -51,8 +51,12 @@ defmodule Zoi.Types.Keyword do
             if ctx.valid? do
               {[{key, ctx.parsed} | acc], errs}
             else
-              patched = Enum.map(ctx.errors, &Zoi.Error.prepend_path(&1, [key]))
-              {acc, Zoi.Errors.merge(errs, patched)}
+              errors =
+                Enum.reduce(ctx.errors, errs, fn error, errors ->
+                  [Zoi.Error.prepend_path(error, [key]) | errors]
+                end)
+
+              {acc, errors}
             end
           end
         end)
@@ -62,7 +66,7 @@ defmodule Zoi.Types.Keyword do
       if errors == [] do
         {:ok, parsed}
       else
-        {:error, errors, parsed}
+        {:error, Enum.reverse(errors), parsed}
       end
     end
 
