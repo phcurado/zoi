@@ -63,12 +63,8 @@ defmodule Zoi.Types.KeyValue do
 
     input_lookup = Map.new(input_pairs, fn {k, v} -> {normalize_key.(k), v} end)
 
-    schema_keyset =
-      schema_fields
-      |> Enum.map(fn {k, _schema} -> normalize_key.(k) end)
-      |> MapSet.new()
-
-    unknown_pairs = reject_known_pairs(input_pairs, schema_keyset, normalize_key)
+    unknown_pairs =
+      reject_known_pairs(unrecognized_keys, input_pairs, schema_fields, normalize_key)
 
     {parsed, collected_errors} =
       Enum.reduce(schema_fields, {[], []}, fn {field_key, field_schema}, {parsed, errors} ->
@@ -84,7 +80,7 @@ defmodule Zoi.Types.KeyValue do
             else
               case parse_child_value(field_schema, raw_value, opts, [field_key]) do
                 {:ok, parsed_value, child_errors} ->
-                  {[{field_key, parsed_value} | parsed], Zoi.Errors.merge(errors, child_errors)}
+                  {[{field_key, parsed_value} | parsed], Enum.reverse(child_errors, errors)}
 
                 {:error, child_errors, partial_value} ->
                   parsed =
@@ -94,11 +90,13 @@ defmodule Zoi.Types.KeyValue do
                       [{field_key, partial_value} | parsed]
                     end
 
-                  {parsed, Zoi.Errors.merge(errors, child_errors)}
+                  {parsed, Enum.reverse(child_errors, errors)}
               end
             end
         end
       end)
+
+    collected_errors = Enum.reverse(collected_errors)
 
     {parsed, errors} =
       case unrecognized_keys do
@@ -165,7 +163,7 @@ defmodule Zoi.Types.KeyValue do
 
       true ->
         required_error = Zoi.Error.required(field_key, path: [field_key])
-        {parsed, Zoi.Errors.merge(errors, [required_error])}
+        {parsed, [required_error | errors]}
     end
   end
 
@@ -174,7 +172,14 @@ defmodule Zoi.Types.KeyValue do
   defp normalize_key_fun(true), do: &to_string/1
   defp normalize_key_fun(false), do: &Function.identity/1
 
-  defp reject_known_pairs(input_pairs, schema_keyset, normalize_key) do
+  defp reject_known_pairs(:strip, _input_pairs, _schema_fields, _normalize_key), do: []
+
+  defp reject_known_pairs(_mode, input_pairs, schema_fields, normalize_key) do
+    schema_keyset =
+      schema_fields
+      |> Enum.map(fn {k, _schema} -> normalize_key.(k) end)
+      |> MapSet.new()
+
     Enum.reject(input_pairs, fn {k, _} ->
       MapSet.member?(schema_keyset, normalize_key.(k))
     end)
