@@ -56,6 +56,9 @@ defmodule Zoi.Types.String do
       end
     end
 
+    defp validate_constraints(%{length: nil, min_length: nil, max_length: nil}, _input),
+      do: :ok
+
     defp validate_constraints(schema, input) do
       [
         {Validations.Length, schema.length},
