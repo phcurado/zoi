@@ -145,6 +145,21 @@ defmodule Zoi do
 
   alias Zoi.Regexes
 
+  @map_options_schema Zoi.Types.Map.opts()
+
+  @array_options_schema Zoi.Types.Array.opts()
+
+  @float_options_schema Zoi.Types.Float.opts()
+
+  @integer_options_schema Zoi.Types.Integer.opts()
+
+  @string_options_schema Zoi.Types.String.opts()
+
+  # These constructors supply the same defaults when their option list is empty.
+  # Keep validation for every caller-supplied option.
+  defp parse_constructor_opts(_schema, []), do: []
+  defp parse_constructor_opts(schema, opts), do: parse!(schema, opts)
+
   @typedoc "The schema definition."
   @type schema :: Zoi.Type.t()
 
@@ -606,8 +621,8 @@ defmodule Zoi do
   @doc group: "Basic Types"
   @spec string(opts :: options()) :: schema()
   def string(opts \\ []) do
-    Zoi.Types.String.opts()
-    |> parse!(opts)
+    @string_options_schema
+    |> parse_constructor_opts(opts)
     |> Zoi.Types.String.new()
   end
 
@@ -651,8 +666,8 @@ defmodule Zoi do
   @doc group: "Basic Types"
   @spec integer(opts :: options()) :: schema()
   def integer(opts \\ []) do
-    Zoi.Types.Integer.opts()
-    |> parse!(opts)
+    @integer_options_schema
+    |> parse_constructor_opts(opts)
     |> Zoi.Types.Integer.new()
   end
 
@@ -686,8 +701,8 @@ defmodule Zoi do
   @doc group: "Basic Types"
   @spec float(opts :: options()) :: schema()
   def float(opts \\ []) do
-    Zoi.Types.Float.opts()
-    |> parse!(opts)
+    @float_options_schema
+    |> parse_constructor_opts(opts)
     |> Zoi.Types.Float.new()
   end
 
@@ -1513,8 +1528,8 @@ defmodule Zoi do
   @doc group: "Complex Types"
   @spec object(fields :: map(), opts :: options()) :: schema()
   def object(fields, opts \\ []) do
-    Zoi.Types.Map.opts()
-    |> parse!(opts)
+    @map_options_schema
+    |> parse_constructor_opts(opts)
     |> then(fn opts ->
       Zoi.Types.Map.new(fields, opts)
     end)
@@ -1742,8 +1757,8 @@ defmodule Zoi do
   @doc group: "Complex Types"
   @spec map(key :: schema(), type :: schema(), opts :: options()) :: schema()
   def map(key, value, opts) do
-    Zoi.Types.Map.opts()
-    |> parse!(opts)
+    @map_options_schema
+    |> parse_constructor_opts(opts)
     |> then(fn opts ->
       Zoi.Types.Map.new(key, value, opts)
     end)
@@ -1848,8 +1863,8 @@ defmodule Zoi do
   @doc group: "Complex Types"
   @spec map(fields :: map(), opts :: options()) :: schema()
   def map(fields, opts) when is_list(opts) do
-    Zoi.Types.Map.opts()
-    |> parse!(opts)
+    @map_options_schema
+    |> parse_constructor_opts(opts)
     |> then(fn opts ->
       Zoi.Types.Map.new(fields, opts)
     end)
@@ -1950,8 +1965,8 @@ defmodule Zoi do
   @doc group: "Complex Types"
   @spec array(elements :: schema(), opts :: options()) :: schema()
   def array(elements \\ Zoi.any(), opts \\ []) do
-    Zoi.Types.Array.opts()
-    |> parse!(opts)
+    @array_options_schema
+    |> parse_constructor_opts(opts)
     |> then(fn opts ->
       Zoi.Types.Array.new(elements, opts)
     end)
