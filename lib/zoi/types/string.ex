@@ -56,6 +56,28 @@ defmodule Zoi.Types.String do
       end
     end
 
+    defp validate_constraints(
+           %{length: nil, min_length: {min, min_opts}, max_length: {max, max_opts}},
+           input
+         ) do
+      size = String.length(input)
+
+      errors =
+        if size < min,
+          do: [Zoi.Error.greater_than_or_equal_to(:string, min, min_opts)],
+          else: []
+
+      errors =
+        if size > max,
+          do: [Zoi.Error.less_than_or_equal_to(:string, max, max_opts) | errors],
+          else: errors
+
+      case errors do
+        [] -> :ok
+        errors -> {:error, Enum.reverse(errors)}
+      end
+    end
+
     defp validate_constraints(schema, input) do
       [
         {Validations.Length, schema.length},
