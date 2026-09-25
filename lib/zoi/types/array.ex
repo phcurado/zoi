@@ -53,29 +53,7 @@ defmodule Zoi.Types.Array do
   defimpl Zoi.Type do
     def parse(%Zoi.Types.Array{inner: inner} = schema, inputs, opts) when is_list(inputs) do
       inputs
-      |> Enum.with_index()
-      |> Enum.reduce({[], []}, fn {input, index}, {parsed, errors} ->
-        ctx = Zoi.Context.new(inner, input) |> Zoi.Context.add_path([index])
-        ctx = Zoi.Context.parse(ctx, opts)
-
-        if ctx.valid? do
-          {[{index, ctx.parsed} | parsed], errors}
-        else
-          new_errors =
-            Enum.reduce(ctx.errors, errors, fn error, acc ->
-              [Zoi.Error.prepend_path(error, [index]) | acc]
-            end)
-
-          parsed =
-            if is_nil(ctx.parsed) do
-              parsed
-            else
-              [{index, ctx.parsed} | parsed]
-            end
-
-          {parsed, new_errors}
-        end
-      end)
+      |> parse_items(inner, opts, 0, [], [])
       |> then(&finalize_result(&1, schema))
     end
 
@@ -106,23 +84,43 @@ defmodule Zoi.Types.Array do
       {:error, Zoi.Error.invalid_type(:array, error: schema.meta.error)}
     end
 
-    defp finalize_result({parsed, errors}, schema) do
-      parsed = Enum.reverse(parsed)
+    defp parse_items([], _inner, _opts, _index, parsed, errors), do: {parsed, errors}
 
-      if errors == [] do
-        values = Enum.map(parsed, fn {_index, value} -> value end)
+    defp parse_items([input | rest], inner, opts, index, parsed, errors) do
+      ctx = Zoi.Context.new(inner, input) |> Zoi.Context.add_path([index])
+      ctx = Zoi.Context.parse(ctx, opts)
 
-        case validate_constraints(schema, values) do
-          :ok ->
-            {:ok, values}
+      parsed =
+        if ctx.valid? or not is_nil(ctx.parsed),
+          do: [{index, ctx.parsed} | parsed],
+          else: parsed
 
-          {:error, new_errors} ->
-            {:error, new_errors, values}
-        end
-      else
-        {:error, Enum.reverse(errors), Map.new(parsed)}
+      errors =
+        Enum.reduce(ctx.errors, errors, fn error, acc ->
+          [Zoi.Error.prepend_path(error, [index]) | acc]
+        end)
+
+      parse_items(rest, inner, opts, index + 1, parsed, errors)
+    end
+
+    defp finalize_result({parsed, []}, schema) do
+      values = Enum.reduce(parsed, [], fn {_index, value}, acc -> [value | acc] end)
+
+      case validate_constraints(schema, values) do
+        :ok -> {:ok, values}
+        {:error, errors} -> {:error, errors, values}
       end
     end
+
+    defp finalize_result({parsed, errors}, _schema) do
+      {:error, Enum.reverse(errors), Map.new(parsed)}
+    end
+
+    defp validate_constraints(
+           %{length: nil, min_length: nil, max_length: nil, unique_items: nil},
+           _input
+         ),
+         do: :ok
 
     defp validate_constraints(schema, input) do
       [
