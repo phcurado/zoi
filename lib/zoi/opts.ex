@@ -70,7 +70,7 @@ defmodule Zoi.Opts do
 
   defp coerce() do
     Zoi.Types.Boolean.new(description: "Enable or disable coercion.")
-    |> Zoi.Types.Default.new(false)
+    |> Zoi.Types.Meta.put_default(false)
   end
 
   defp description() do

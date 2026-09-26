@@ -39,16 +39,27 @@ defmodule Zoi.Context do
   def parse(%__MODULE__{} = ctx, opts \\ []) do
     maybe_warn_deprecated(ctx.schema, ctx.path)
 
+    case ctx.input do
+      nil -> parse_default(ctx, opts)
+      _ -> parse_schema(ctx, opts)
+    end
+  end
+
+  defp parse_default(ctx, opts) do
+    if Meta.default?(ctx.schema.meta) do
+      %{ctx | parsed: Meta.default(ctx.schema.meta), valid?: true}
+    else
+      parse_schema(ctx, opts)
+    end
+  end
+
+  defp parse_schema(ctx, opts) do
     with {:ok, ctx} <- parse_type(ctx, opts),
          {:ok, ctx} <- Meta.run_effects(ctx) do
       %{ctx | valid?: true}
     else
       {:error, ctx} -> ctx
     end
-  end
-
-  defp maybe_warn_deprecated(%Zoi.Types.Default{inner: inner}, path) do
-    maybe_warn_deprecated(inner, path)
   end
 
   defp maybe_warn_deprecated(schema, path) do
