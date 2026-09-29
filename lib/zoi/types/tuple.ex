@@ -17,8 +17,7 @@ defmodule Zoi.Types.Tuple do
 
   defimpl Zoi.Type do
     def parse(schema, input, opts) when is_tuple(input) do
-      input = Tuple.to_list(input)
-      input_length = length(input)
+      input_length = tuple_size(input)
 
       if input_length != schema.length do
         {:error, Zoi.Error.invalid_tuple(schema.length, input_length, error: schema.meta.error)}
@@ -35,13 +34,17 @@ defmodule Zoi.Types.Tuple do
       schema.fields
       |> Enum.with_index()
       |> Enum.reduce({[], []}, fn {field, index}, {parsed, errors} ->
-        case Zoi.parse(field, Enum.at(input, index), opts) do
+        case Zoi.parse(field, elem(input, index), opts) do
           {:ok, value} ->
             {[value | parsed], errors}
 
           {:error, err} ->
-            error = Enum.map(err, &Zoi.Error.prepend_path(&1, [index]))
-            {parsed, Zoi.Errors.merge(errors, error)}
+            errors =
+              Enum.reduce(err, errors, fn error, acc ->
+                [Zoi.Error.prepend_path(error, [index]) | acc]
+              end)
+
+            {parsed, errors}
         end
       end)
       |> then(fn {parsed, errors} ->
@@ -53,7 +56,7 @@ defmodule Zoi.Types.Tuple do
         if errors == [] do
           {:ok, parsed_tuple}
         else
-          {:error, errors, parsed_tuple}
+          {:error, Enum.reverse(errors), parsed_tuple}
         end
       end)
     end

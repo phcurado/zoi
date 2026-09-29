@@ -5,13 +5,13 @@
 #   cd bench && elixir run.exs primitives   # Run specific suite
 #   cd bench && elixir run.exs quick        # Quick smoke test (~5s)
 #
-# Available suites: primitives, complex, comparisons, quick, all
+# Available suites: primitives, complex, comparisons, review, quick, all
 
 Mix.install([
   {:benchee, "~> 1.3"},
   {:ecto, "~> 3.12"},
   {:nimble_options, "~> 1.1"},
-  {:zoi, path: "../"}
+  {:zoi, path: System.get_env("ZOI_PATH", "../")}
 ])
 
 # Ecto schema for comparison benchmarks
@@ -44,6 +44,7 @@ defmodule Zoi.Bench do
       "primitives" -> primitives(config)
       "complex" -> complex(config)
       "comparisons" -> comparisons(config)
+      "review" -> review(config)
       "quick" -> quick()
       "all" -> all(config)
       _ -> help()
@@ -178,6 +179,42 @@ defmodule Zoi.Bench do
     )
   end
 
+  # === Parser and Constructor Changes ===
+
+  def review(config) do
+    object = Zoi.object(for i <- 1..1000, do: {"field_#{i}", Zoi.integer()})
+    array = Zoi.array(Zoi.integer())
+    values = Enum.to_list(1..1000)
+    tuple = Zoi.tuple(List.to_tuple(List.duplicate(Zoi.integer(), 1000)))
+    tuple_values = List.to_tuple(values)
+    invalid_tuple = List.to_tuple(List.duplicate("invalid", 1000))
+    keyword = Zoi.keyword(Zoi.integer())
+    invalid_keyword = List.duplicate({:item, "invalid"}, 1000)
+    email = Zoi.email()
+    custom_regex = Zoi.string() |> Zoi.regex(~r/^custom-\d+$/)
+
+    Benchee.run(
+      %{
+        "construct four-field object" => fn ->
+          Zoi.object(
+            name: Zoi.string(),
+            age: Zoi.integer(),
+            score: Zoi.float(),
+            tags: Zoi.array(Zoi.string())
+          )
+        end,
+        "object (1000 missing fields)" => fn -> Zoi.parse(object, %{}) end,
+        "array (1000 valid items)" => fn -> Zoi.parse(array, values) end,
+        "tuple (1000 valid items)" => fn -> Zoi.parse(tuple, tuple_values) end,
+        "tuple (1000 invalid items)" => fn -> Zoi.parse(tuple, invalid_tuple) end,
+        "keyword (1000 invalid values)" => fn -> Zoi.parse(keyword, invalid_keyword) end,
+        "email (built-in regex)" => fn -> Zoi.parse(email, "ada@example.com") end,
+        "custom regex" => fn -> Zoi.parse(custom_regex, "custom-123") end
+      },
+      config
+    )
+  end
+
   # === Quick Smoke Test ===
 
   def quick do
@@ -209,6 +246,7 @@ defmodule Zoi.Bench do
     primitives(config)
     complex(config)
     comparisons(config)
+    review(config)
   end
 
   defp help do
@@ -222,6 +260,7 @@ defmodule Zoi.Bench do
       primitives   - String, integer, boolean, email, uuid, etc.
       complex      - Maps, arrays, nested structures
       comparisons  - vs Ecto.Changeset and NimbleOptions
+      review       - Constructor, collection, and regex changes
       quick        - Fast smoke test (~5 seconds)
       all          - Run all suites (default)
 

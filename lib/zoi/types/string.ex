@@ -196,7 +196,7 @@ defmodule Zoi.Types.String do
   defimpl Zoi.Validations.Regex do
     def validate(_schema, input, regex, regex_opts, opts) do
       # To allow both string and regex input for regex refinement
-      regex = Regex.compile!(regex, regex_opts)
+      regex = Zoi.Regexes.compile!(regex, regex_opts)
 
       if String.match?(input, regex) do
         :ok
