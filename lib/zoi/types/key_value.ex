@@ -1,6 +1,8 @@
 defmodule Zoi.Types.KeyValue do
   @moduledoc false
 
+  alias Zoi.Types.Meta
+
   def parse(%Zoi.Types.Map{} = type, input, opts) when is_map(input) do
     input
     |> Map.to_list()
@@ -155,8 +157,8 @@ defmodule Zoi.Types.KeyValue do
       field_schema.meta.required == false ->
         {parsed, errors}
 
-      default?(field_schema) ->
-        {[{field_key, field_schema.value} | parsed], errors}
+      Meta.default?(field_schema.meta) ->
+        {[{field_key, Meta.default(field_schema.meta)} | parsed], errors}
 
       field_schema.meta.required == nil ->
         {parsed, errors}
@@ -184,9 +186,6 @@ defmodule Zoi.Types.KeyValue do
       MapSet.member?(schema_keyset, normalize_key.(k))
     end)
   end
-
-  defp default?(%Zoi.Types.Default{}), do: true
-  defp default?(_), do: false
 
   defp validate_preserve_schema(unknown_pairs, key_schema, value_schema, parsed, errors, opts) do
     unknown_map = Map.new(unknown_pairs)

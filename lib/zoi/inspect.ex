@@ -3,12 +3,14 @@ defmodule Zoi.Inspect do
 
   import Inspect.Algebra
 
+  alias Zoi.Types.Meta
+
   @spec build(Zoi.schema(), Inspect.Opts.t(), keyword()) :: Inspect.Algebra.t()
   def build(type, inspect_opts, extra_fields \\ []) do
     name = inspect_name(type)
 
     list =
-      meta_field_list(type) ++ type_common_fields(type) ++ extra_fields
+      meta_field_list(type) ++ type_common_fields(type) ++ extra_fields ++ default_field(type)
 
     container_doc("#Zoi.#{name}<", list, ">", %Inspect.Opts{limit: 8}, fn
       {_key, nil}, _opts ->
@@ -20,6 +22,14 @@ defmodule Zoi.Inspect do
       {key, value}, _opts ->
         concat("#{key}: ", to_doc(value, inspect_opts))
     end)
+  end
+
+  defp default_field(type) do
+    if Meta.default?(type.meta) do
+      [default: Meta.default(type.meta)]
+    else
+      []
+    end
   end
 
   defp meta_field_list(type) do

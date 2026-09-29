@@ -70,6 +70,14 @@ defmodule ZoiTest do
       assert {:ok, "123"} == Zoi.parse(Zoi.string(coerce: false), 123, coerce: true)
       assert {:ok, "true"} == Zoi.parse(Zoi.string(), true, coerce: true)
       assert {:ok, "12.34"} == Zoi.parse(Zoi.string(), 12.34, coerce: true)
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.string(), %{}, coerce: true)
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected string"
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.string(coerce: true), {})
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected string"
     end
 
     test "string with incorrect value" do
@@ -781,6 +789,19 @@ defmodule ZoiTest do
       assert {:ok, "hello"} == Zoi.parse(schema, "hello")
     end
 
+    test "default with transforms and refinements" do
+      schema =
+        Zoi.string()
+        |> Zoi.default("  fallback  ")
+        |> Zoi.trim()
+        |> Zoi.length(5)
+
+      assert %Zoi.Types.String{} = schema
+      assert {:ok, "hello"} == Zoi.parse(schema, "  hello  ")
+      assert {:error, [%Zoi.Error{code: :invalid_length}]} = Zoi.parse(schema, "  hi  ")
+      assert {:ok, "  fallback  "} == Zoi.parse(schema, nil)
+    end
+
     test "default with incorrect type" do
       # Zoi will not validate the default value
       schema = Zoi.default(Zoi.integer(), "10")
@@ -800,7 +821,7 @@ defmodule ZoiTest do
         })
 
       assert {:ok, %{}} == Zoi.parse(schema, %{})
-      # Transform will run on default value, since it's short circuit
+      # The default value skips the transform.
       assert {:ok, %{name: "no name"}} == Zoi.parse(schema, %{name: nil})
       assert {:ok, %{name: "John_refined"}} == Zoi.parse(schema, %{name: "John"})
     end

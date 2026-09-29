@@ -787,8 +787,8 @@ defmodule Zoi.FormDataTest do
     end
   end
 
-  describe "array field detection with Default wrapper" do
-    test "detects array field wrapped in Default" do
+  describe "array field detection with defaults" do
+    test "detects array fields with defaults" do
       schema =
         Zoi.map(%{
           tags: Zoi.array(Zoi.string()) |> Zoi.default([])
@@ -804,7 +804,7 @@ defmodule Zoi.FormDataTest do
       assert length(tag_forms) == 2
     end
 
-    test "detects nested Default wrappers around arrays" do
+    test "detects arrays with replaced defaults" do
       schema =
         Zoi.map(%{
           items: Zoi.array(Zoi.string()) |> Zoi.default([]) |> Zoi.default([])
@@ -1600,8 +1600,8 @@ defmodule Zoi.FormDataTest do
     end
   end
 
-  describe "array_field_inner? with non-array Default types" do
-    test "detects non-array fields wrapped in Default" do
+  describe "non-array fields with defaults" do
+    test "detects non-array fields with defaults" do
       schema =
         Zoi.map(%{
           name: Zoi.string() |> Zoi.default(""),
@@ -1612,11 +1612,11 @@ defmodule Zoi.FormDataTest do
       ctx = Zoi.Form.parse(schema, %{"name" => "test", "tags" => ["a", "b"]})
       form = FormData.to_form(ctx, as: :post)
 
-      # :name is Default<String>, should create single form (not array)
+      # :name is a string with a default, should create single form (not array)
       name_forms = FormData.to_form(ctx, form, :name, [])
       assert length(name_forms) == 1
 
-      # :tags is Default<Array>, should create multiple forms
+      # :tags is an array with a default, should create multiple forms
       tag_forms = FormData.to_form(ctx, form, :tags, [])
       assert length(tag_forms) == 2
     end

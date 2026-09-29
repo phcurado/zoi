@@ -7,6 +7,7 @@ defmodule Zoi.Types.Meta do
 
   @type t :: %__MODULE__{
           effects: [effect()],
+          default: nil | {:value, term()},
           error: binary() | nil,
           required: boolean(),
           description: binary() | nil,
@@ -18,6 +19,7 @@ defmodule Zoi.Types.Meta do
 
   @struct_fields [
     effects: [],
+    default: nil,
     metadata: [],
     required: nil,
     error: nil,
@@ -34,6 +36,18 @@ defmodule Zoi.Types.Meta do
   # An example is when using nullable type, which is a union under the hood. We should be able
   # to propagate these fields to the union since nullable is a behavior
   @propagate_keys [:required, :description, :example, :metadata, :typespec, :deprecated, :error]
+
+  @spec put_default(Zoi.schema(), term()) :: Zoi.schema()
+  def put_default(schema, value) do
+    %{schema | meta: %{schema.meta | default: {:value, value}, required: nil}}
+  end
+
+  @spec default?(t()) :: boolean()
+  def default?(%__MODULE__{default: default}), do: match?({:value, _}, default)
+
+  @spec default(t()) :: term()
+  def default(%__MODULE__{default: {:value, value}}), do: value
+  def default(%__MODULE__{}), do: nil
 
   @spec create_meta(keyword()) :: {t(), keyword()}
   def create_meta(opts) do

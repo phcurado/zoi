@@ -170,12 +170,6 @@ defmodule Zoi.Schema do
     |> apply_fun(path, fun)
   end
 
-  defp do_traverse(%Zoi.Types.Default{inner: inner} = default, path, fun) do
-    default
-    |> Map.put(:inner, do_traverse(inner, path, fun))
-    |> apply_fun(path, fun)
-  end
-
   defp do_traverse(%Zoi.Types.Map{key_type: key_type, value_type: value_type} = map, path, fun) do
     map
     |> Map.put(:key_type, do_traverse(key_type, path, fun))

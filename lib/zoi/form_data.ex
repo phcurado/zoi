@@ -215,7 +215,6 @@ if Code.ensure_loaded?(Phoenix.HTML) do
     defp array_field?(%Zoi.Types.Map{fields: fields}, field) when is_atom(field) do
       case get_field_schema(fields, field) do
         %Zoi.Types.Array{} -> true
-        %Zoi.Types.Default{inner: inner} -> array_field_inner?(inner)
         _ -> false
       end
     end
@@ -225,10 +224,5 @@ if Code.ensure_loaded?(Phoenix.HTML) do
     # Get field schema from fields (keyword list structure)
     # Note: Map fields are always stored as a list after construction
     defp get_field_schema(fields, field) when is_list(fields), do: Keyword.get(fields, field)
-
-    # Recursively check if inner type is an array (for wrapped types like Default)
-    defp array_field_inner?(%Zoi.Types.Array{}), do: true
-    defp array_field_inner?(%Zoi.Types.Default{inner: inner}), do: array_field_inner?(inner)
-    defp array_field_inner?(_), do: false
   end
 end

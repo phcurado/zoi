@@ -222,7 +222,7 @@ defmodule Zoi.SchemaTest do
       assert schema.fields[:age].coerce == true
     end
 
-    test "applies transformation to default wrappers" do
+    test "applies transformation to schemas with defaults" do
       schema =
         Zoi.map(%{
           name: Zoi.string() |> Zoi.default("unknown")
@@ -231,7 +231,7 @@ defmodule Zoi.SchemaTest do
 
       name_field = schema.fields[:name]
 
-      assert name_field.inner.coerce == true
+      assert name_field.coerce == true
     end
 
     test "applies transformation to lazy types" do
@@ -372,7 +372,7 @@ defmodule Zoi.SchemaTest do
       # Email should have coercion
       assert schema.fields[:email].coerce
       # Age should have coercion and default
-      assert schema.fields[:age].inner.coerce
+      assert schema.fields[:age].coerce
 
       assert {:ok, %{age: 0}} =
                Zoi.parse(schema, %{password: "secret", email: "test@example.com", age: nil})

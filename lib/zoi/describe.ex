@@ -137,10 +137,6 @@ defmodule Zoi.Describe do
     end
   end
 
-  defp check_deprecated(str, %Zoi.Types.Default{inner: inner}) do
-    check_deprecated(str, inner)
-  end
-
   defp check_deprecated(str, schema) do
     case Meta.deprecated(schema.meta) do
       nil -> str
@@ -148,14 +144,17 @@ defmodule Zoi.Describe do
     end
   end
 
-  defp check_description(str, %Zoi.Types.Default{inner: inner, value: value}) do
-    check_description(str, inner) <> " The default value is `#{inspect(value)}`."
-  end
-
   defp check_description(str, schema) do
-    case schema.meta.description do
-      nil -> str
-      description -> str <> indent_doc(description)
+    str =
+      case schema.meta.description do
+        nil -> str
+        description -> str <> indent_doc(description)
+      end
+
+    if Meta.default?(schema.meta) do
+      str <> " The default value is `#{inspect(Meta.default(schema.meta))}`."
+    else
+      str
     end
   end
 

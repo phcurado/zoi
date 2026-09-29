@@ -163,6 +163,15 @@ defmodule Zoi.JSONSchema do
     |> Encoder.encode()
     |> encode_metadata(schema)
     |> encode_refinements(schema)
+    |> encode_default(schema.meta)
+  end
+
+  defp encode_default(json_schema, meta) do
+    if Meta.default?(meta) do
+      Map.put(json_schema, :default, Meta.default(meta))
+    else
+      json_schema
+    end
   end
 
   defp add_dialect(encoded_schema) do
