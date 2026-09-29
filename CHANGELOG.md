@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.18.11 - 2026-09-29
+
+### Fixed
+
+- `Zoi.default/3` now stores defaults in schema metadata, preserving the schema type so transforms and refinements can be added after a default.
+- `Zoi.string/1` now returns a validation error instead of crashing when coercing values without a `String.Chars` implementation.
+
 ## 0.18.10 - 2026-09-24
 
 ### Fixed
