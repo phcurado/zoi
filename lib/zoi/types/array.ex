@@ -91,9 +91,10 @@ defmodule Zoi.Types.Array do
       ctx = Zoi.Context.parse(ctx, opts)
 
       parsed =
-        if ctx.valid? or not is_nil(ctx.parsed),
-          do: [{index, ctx.parsed} | parsed],
-          else: parsed
+        case {ctx.valid?, ctx.parsed} do
+          {false, nil} -> parsed
+          {_valid?, value} -> [{index, value} | parsed]
+        end
 
       errors =
         Enum.reduce(ctx.errors, errors, fn error, acc ->
@@ -115,12 +116,6 @@ defmodule Zoi.Types.Array do
     defp finalize_result({parsed, errors}, _schema) do
       {:error, Enum.reverse(errors), Map.new(parsed)}
     end
-
-    defp validate_constraints(
-           %{length: nil, min_length: nil, max_length: nil, unique_items: nil},
-           _input
-         ),
-         do: :ok
 
     defp validate_constraints(schema, input) do
       [

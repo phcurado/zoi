@@ -155,11 +155,6 @@ defmodule Zoi do
 
   @string_options_schema Zoi.Types.String.opts()
 
-  # These constructors supply the same defaults when their option list is empty.
-  # Keep validation for every caller-supplied option.
-  defp parse_constructor_opts(_schema, []), do: []
-  defp parse_constructor_opts(schema, opts), do: parse!(schema, opts)
-
   @typedoc "The schema definition."
   @type schema :: Zoi.Type.t()
 
@@ -637,7 +632,7 @@ defmodule Zoi do
   @spec string(opts :: options()) :: schema()
   def string(opts \\ []) do
     @string_options_schema
-    |> parse_constructor_opts(opts)
+    |> parse!(opts)
     |> Zoi.Types.String.new()
   end
 
@@ -682,7 +677,7 @@ defmodule Zoi do
   @spec integer(opts :: options()) :: schema()
   def integer(opts \\ []) do
     @integer_options_schema
-    |> parse_constructor_opts(opts)
+    |> parse!(opts)
     |> Zoi.Types.Integer.new()
   end
 
@@ -717,7 +712,7 @@ defmodule Zoi do
   @spec float(opts :: options()) :: schema()
   def float(opts \\ []) do
     @float_options_schema
-    |> parse_constructor_opts(opts)
+    |> parse!(opts)
     |> Zoi.Types.Float.new()
   end
 
@@ -1544,7 +1539,7 @@ defmodule Zoi do
   @spec object(fields :: map(), opts :: options()) :: schema()
   def object(fields, opts \\ []) do
     @map_options_schema
-    |> parse_constructor_opts(opts)
+    |> parse!(opts)
     |> then(fn opts ->
       Zoi.Types.Map.new(fields, opts)
     end)
@@ -1773,7 +1768,7 @@ defmodule Zoi do
   @spec map(key :: schema(), type :: schema(), opts :: options()) :: schema()
   def map(key, value, opts) do
     @map_options_schema
-    |> parse_constructor_opts(opts)
+    |> parse!(opts)
     |> then(fn opts ->
       Zoi.Types.Map.new(key, value, opts)
     end)
@@ -1879,7 +1874,7 @@ defmodule Zoi do
   @spec map(fields :: map(), opts :: options()) :: schema()
   def map(fields, opts) when is_list(opts) do
     @map_options_schema
-    |> parse_constructor_opts(opts)
+    |> parse!(opts)
     |> then(fn opts ->
       Zoi.Types.Map.new(fields, opts)
     end)
@@ -1981,7 +1976,7 @@ defmodule Zoi do
   @spec array(elements :: schema(), opts :: options()) :: schema()
   def array(elements \\ Zoi.any(), opts \\ []) do
     @array_options_schema
-    |> parse_constructor_opts(opts)
+    |> parse!(opts)
     |> then(fn opts ->
       Zoi.Types.Array.new(elements, opts)
     end)

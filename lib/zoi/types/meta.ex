@@ -73,9 +73,6 @@ defmodule Zoi.Types.Meta do
   end
 
   @spec run_effects(Zoi.Context.t()) :: {:ok, Zoi.Context.t()} | {:error, Zoi.Context.t()}
-  def run_effects(%Zoi.Context{schema: %{meta: %{effects: []}}, errors: []} = ctx),
-    do: {:ok, ctx}
-
   def run_effects(%Zoi.Context{schema: schema} = ctx) do
     {ctx, has_partial} =
       Enum.reduce(schema.meta.effects, {ctx, false}, fn
