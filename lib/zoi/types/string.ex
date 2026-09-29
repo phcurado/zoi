@@ -51,7 +51,7 @@ defmodule Zoi.Types.String do
     defp parse_type(input, coerce, schema) do
       cond do
         is_binary(input) -> {:ok, input}
-        coerce -> {:ok, to_string(input)}
+        coerce && String.Chars.impl_for(input) -> {:ok, to_string(input)}
         true -> error(schema)
       end
     end
