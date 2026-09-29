@@ -70,6 +70,14 @@ defmodule ZoiTest do
       assert {:ok, "123"} == Zoi.parse(Zoi.string(coerce: false), 123, coerce: true)
       assert {:ok, "true"} == Zoi.parse(Zoi.string(), true, coerce: true)
       assert {:ok, "12.34"} == Zoi.parse(Zoi.string(), 12.34, coerce: true)
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.string(), %{}, coerce: true)
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected string"
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.string(coerce: true), {})
+      assert error.code == :invalid_type
+      assert Exception.message(error) == "invalid type: expected string"
     end
 
     test "string with incorrect value" do
