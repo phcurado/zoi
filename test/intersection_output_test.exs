@@ -149,4 +149,51 @@ defmodule Zoi.IntersectionOutputTest do
 
     assert {:error, [%Zoi.Error{path: [:a]}]} = Zoi.parse(schema, %{a: "bad", b: 2})
   end
+
+  test "compatible generated projections are independent of branch order and duplication" do
+    for depth <- 0..20 do
+      projections = Enum.map([:a, :b, :c], &nest(%{&1 => depth}, depth))
+      expected = nest(%{a: depth, b: depth, c: depth}, depth)
+
+      for [first, second, third] <- permutations(projections) do
+        schemas = Enum.map([first, second, third, first], &projection/1)
+        assert {:ok, ^expected} = Zoi.parse(Zoi.intersection(schemas), :input)
+      end
+    end
+  end
+
+  test "deep conflict paths retain every component and stop before later effects" do
+    for depth <- [0, 1, 70, 300] do
+      schema =
+        Zoi.intersection([
+          projection(nest(%{leaf: 1}, depth)),
+          projection(nest(%{leaf: 2}, depth)),
+          Zoi.any() |> Zoi.transform(fn _ -> flunk("branch after conflict ran") end)
+        ])
+
+      expected_path = List.duplicate(:child, depth) ++ [:leaf]
+      assert {:error, [%Zoi.Error{path: ^expected_path}]} = Zoi.parse(schema, :input)
+    end
+  end
+
+  test "numeric map keys retain their exact identities and nil is a real field value" do
+    left = %{1 => :integer, :nullable => nil}
+    right = %{1.0 => :float, :nullable => nil}
+    expected = %{1 => :integer, 1.0 => :float, :nullable => nil}
+
+    for results <- [[left, right], [right, left]] do
+      assert {:ok, ^expected} = Zoi.parse(Zoi.intersection(Enum.map(results, &projection/1)), nil)
+    end
+
+    assert {:error, [%Zoi.Error{path: [:nullable]}]} =
+             Zoi.parse(Zoi.intersection([projection(left), projection(%{nullable: 1})]), nil)
+  end
+
+  defp projection(result), do: Zoi.any() |> Zoi.transform(fn _input -> result end)
+
+  defp nest(value, 0), do: value
+  defp nest(value, depth), do: nest(%{child: value}, depth - 1)
+
+  defp permutations([a, b, c]),
+    do: [[a, b, c], [a, c, b], [b, a, c], [b, c, a], [c, a, b], [c, b, a]]
 end

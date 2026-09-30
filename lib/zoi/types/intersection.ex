@@ -25,13 +25,10 @@ defmodule Zoi.Types.Intersection do
         ctx = Zoi.Context.new(schema, value)
         opts = Keyword.put(opts, :ctx, ctx)
 
-        case Zoi.parse(schema, value, opts) do
-          {:ok, result} ->
-            case combine_results(acc, result) do
-              {:ok, combined} -> {:cont, {:ok, combined}}
-              {:error, reason} -> {:halt, error(intersection, reason)}
-            end
-
+        with {:ok, result} <- Zoi.parse(schema, value, opts),
+             {:ok, combined} <- combine_results(acc, result) do
+          {:cont, {:ok, combined}}
+        else
           {:error, reason} ->
             {:halt, error(intersection, reason)}
         end
@@ -40,7 +37,7 @@ defmodule Zoi.Types.Intersection do
 
     defp combine_results({:ok, left}, right)
          when is_map(left) and not is_struct(left) and is_map(right) and not is_struct(right),
-         do: merge_objects(left, right, [])
+         do: merge_field(left, right, [])
 
     # Preserve the existing last-result contract for scalar coercion and other types.
     defp combine_results(_acc, result), do: {:ok, result}
@@ -52,7 +49,7 @@ defmodule Zoi.Types.Intersection do
             {:cont, {:ok, Map.put(combined, key, value)}}
 
           {:ok, previous} ->
-            case merge_field(previous, value, path ++ [key]) do
+            case merge_field(previous, value, [key | path]) do
               {:ok, merged} -> {:cont, {:ok, Map.put(combined, key, merged)}}
               {:error, reason} -> {:halt, {:error, reason}}
             end
@@ -70,7 +67,7 @@ defmodule Zoi.Types.Intersection do
       {:error,
        Zoi.Error.custom_error(
          issue: {"intersection branches produced conflicting field values", []},
-         path: path
+         path: Enum.reverse(path)
        )}
     end
 
