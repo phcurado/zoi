@@ -72,12 +72,24 @@ defmodule Zoi.Types.Meta do
     end)
   end
 
-  @spec run_effects(Zoi.Context.t()) :: {:ok, Zoi.Context.t()} | {:error, Zoi.Context.t()}
-  def run_effects(%Zoi.Context{schema: schema} = ctx) do
+  @spec run_effects(Zoi.Context.t(), keyword()) ::
+          {:ok, Zoi.Context.t()} | {:error, Zoi.Context.t()}
+  def run_effects(ctx, opts \\ [])
+
+  def run_effects(%Zoi.Context{schema: schema} = ctx, opts) do
+    validate? = opts[:mode] == :validate
+    immutable_refinements? = validate? or Keyword.get(opts, :immutable_refinements, false)
+
     {ctx, has_partial} =
       Enum.reduce(schema.meta.effects, {ctx, false}, fn
         {:refine, refinement}, {ctx, has_partial} ->
           case run_refinement(refinement, ctx.parsed, ctx) do
+            {:ok, value} when immutable_refinements? and value !== ctx.parsed ->
+              error =
+                Zoi.Error.new(code: :custom, message: "refinement must not change the value")
+
+              {Zoi.Context.add_error(ctx, error), has_partial}
+
             {:ok, value} ->
               {Zoi.Context.add_parsed(ctx, value), has_partial}
 
@@ -87,6 +99,9 @@ defmodule Zoi.Types.Meta do
             {:error, errors, partial} ->
               {ctx |> Zoi.Context.add_parsed(partial) |> Zoi.Context.add_error(errors), true}
           end
+
+        {:transform, _transform}, acc when validate? ->
+          acc
 
         {:transform, transform}, {ctx, has_partial} ->
           case run_transform(transform, ctx.parsed, ctx) do
