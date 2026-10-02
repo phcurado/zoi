@@ -1671,7 +1671,12 @@ defmodule Zoi do
   #{Zoi.Describe.generate(Zoi.Types.Struct.opts())}
   """
   @doc group: "Complex Types"
-  @spec struct(module :: module(), fields :: map() | nil, opts :: options()) :: schema()
+  @spec struct(
+          module :: module(),
+          fields :: map() | options() | nil,
+          opts :: options()
+        ) ::
+          schema()
   def struct(module, fields_or_opts \\ nil, opts \\ [])
 
   def struct(module, nil, opts) do
@@ -1871,7 +1876,11 @@ defmodule Zoi do
   #{Zoi.Describe.generate(Zoi.Types.Map.opts())}
   """
   @doc group: "Complex Types"
-  @spec map(fields :: map(), opts :: options()) :: schema()
+  @spec map(
+          fields_or_key :: map() | schema(),
+          opts_or_value :: options() | schema()
+        ) ::
+          schema()
   def map(fields, opts) when is_list(opts) do
     @map_options_schema
     |> parse!(opts)
