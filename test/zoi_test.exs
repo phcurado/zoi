@@ -1031,6 +1031,17 @@ defmodule ZoiTest do
                Zoi.parse(schema, %{a: 1, b: 2, c: 3})
     end
 
+    test "mixed branch result types preserve the last result" do
+      schema =
+        Zoi.intersection([
+          Zoi.any() |> Zoi.transform(fn _ -> %{a: 1} end),
+          Zoi.any() |> Zoi.transform(fn _ -> :middle end),
+          Zoi.any() |> Zoi.transform(fn _ -> %{c: 3} end)
+        ])
+
+      assert {:ok, %{c: 3}} = Zoi.parse(schema, :input)
+    end
+
     test "intersection with correct values" do
       schema =
         Zoi.intersection([

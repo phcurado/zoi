@@ -1341,8 +1341,9 @@ defmodule Zoi do
 
   An intersection type allows you to combine multiple schemas into one, requiring that the input data satisfies all of them.
 
-  Object results are merged recursively. Conflicting field values return an error
-  at the field path.
+  When every branch returns an object, the results are merged recursively.
+  Conflicting field values return an error at the field path. Otherwise, the last
+  branch result is returned.
 
   ## Example
 
