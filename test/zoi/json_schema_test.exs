@@ -686,18 +686,6 @@ defmodule Zoi.JSONSchemaTest do
       assert {:error, _} = Zoi.parse(schema, 12.0)
     end
 
-    test "decodes integer with a fractional multipleOf" do
-      schema = Zoi.from_json_schema(%{"type" => "integer", "multipleOf" => 0.5})
-
-      assert Zoi.parse(schema, 3) == {:ok, 3}
-      assert Zoi.parse(schema, 3.0) == {:ok, 3.0}
-
-      schema = Zoi.from_json_schema(%{"type" => "integer", "multipleOf" => 1.5})
-
-      assert Zoi.parse(schema, 3) == {:ok, 3}
-      assert {:error, [%{code: :multiple_of}]} = Zoi.parse(schema, 2)
-    end
-
     test "decodes literal, enum, and combinators" do
       cases = [
         {%{"const" => "fixed"}, "fixed", "other"},

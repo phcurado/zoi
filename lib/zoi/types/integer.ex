@@ -161,18 +161,11 @@ defmodule Zoi.Types.Integer do
     end
 
     def validate(_schema, input, value, opts) do
-      if multiple_of?(input, value) do
+      if rem(trunc(input), value) == 0 do
         :ok
       else
         {:error, Zoi.Error.multiple_of(value, opts)}
       end
-    end
-
-    defp multiple_of?(input, value) when is_integer(value), do: rem(trunc(input), value) == 0
-
-    defp multiple_of?(input, value) do
-      quotient = input / value
-      quotient == Float.floor(quotient)
     end
   end
 
