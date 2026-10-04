@@ -37,7 +37,7 @@ defmodule Zoi.Types.Intersection do
 
     defp combine_results({:ok, left}, right)
          when is_map(left) and not is_struct(left) and is_map(right) and not is_struct(right),
-         do: merge_field(left, right, [])
+         do: merge_objects(left, right, [])
 
     # Preserve the existing last-result contract for scalar coercion and other types.
     defp combine_results(_acc, result), do: {:ok, result}

@@ -1341,13 +1341,8 @@ defmodule Zoi do
 
   An intersection type allows you to combine multiple schemas into one, requiring that the input data satisfies all of them.
 
-  Each branch parses the original input once. Plain map results are combined
-  recursively, retaining fields from every branch. Overlapping fields must have
-  exactly equal values or compatible plain map results; conflicting values return
-  an error at the field path. Structs and lists are not merged recursively.
-  For other branch result types, the last result is returned, preserving the
-  existing scalar coercion behavior. Refinements and transforms added through
-  `refine/2` and `transform/2` still apply to each branch before results combine.
+  Object results are merged recursively. Conflicting field values return an error
+  at the field path.
 
   ## Example
 
