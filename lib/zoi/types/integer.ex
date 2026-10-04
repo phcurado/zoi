@@ -1,7 +1,8 @@
 defmodule Zoi.Types.Integer do
   @moduledoc false
 
-  use Zoi.Type.Def, fields: [:gte, :lte, :gt, :lt, :multiple_of, coerce: false]
+  use Zoi.Type.Def,
+    fields: [:gte, :lte, :gt, :lt, :multiple_of, coerce: false, integral_floats: false]
 
   alias Zoi.Validations
 
@@ -62,6 +63,10 @@ defmodule Zoi.Types.Integer do
     end
 
     defp parse_type(input, _coerce, _schema) when is_integer(input), do: {:ok, input}
+
+    defp parse_type(input, _coerce, %{integral_floats: true} = schema) when is_float(input) do
+      if Float.floor(input) == input, do: {:ok, input}, else: error(schema)
+    end
 
     defp parse_type(input, true, schema) when is_binary(input) do
       case Integer.parse(input) do
@@ -156,12 +161,15 @@ defmodule Zoi.Types.Integer do
     end
 
     def validate(_schema, input, value, opts) do
-      if rem(input, value) == 0 do
+      if multiple_of?(input, value) do
         :ok
       else
         {:error, Zoi.Error.multiple_of(value, opts)}
       end
     end
+
+    defp multiple_of?(input, value) when is_integer(input), do: rem(input, value) == 0
+    defp multiple_of?(input, value), do: rem(trunc(input), value) == 0
   end
 
   defimpl Inspect do

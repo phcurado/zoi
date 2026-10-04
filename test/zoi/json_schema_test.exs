@@ -662,6 +662,30 @@ defmodule Zoi.JSONSchemaTest do
       end)
     end
 
+    test "decoded integer schemas accept floats with no fractional part" do
+      schema = Zoi.from_json_schema(%{"type" => "integer"})
+
+      assert Zoi.parse(schema, 1.0) == {:ok, 1.0}
+      assert Zoi.parse(schema, -3.0) == {:ok, -3.0}
+      assert {:error, [%{message: "invalid type: expected integer"}]} = Zoi.parse(schema, 1.5)
+      assert {:error, _} = Zoi.parse(Zoi.integer(), 1.0)
+      assert %{type: :integer} = Zoi.to_json_schema(schema)
+    end
+
+    test "decoded integer schemas enforce numeric constraints on floats with no fractional part" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "integer",
+          "minimum" => 0,
+          "maximum" => 10,
+          "multipleOf" => 2
+        })
+
+      assert Zoi.parse(schema, 4.0) == {:ok, 4.0}
+      assert {:error, _} = Zoi.parse(schema, 3.0)
+      assert {:error, _} = Zoi.parse(schema, 12.0)
+    end
+
     test "decodes literal, enum, and combinators" do
       cases = [
         {%{"const" => "fixed"}, "fixed", "other"},

@@ -93,7 +93,10 @@ defmodule Zoi.JSONSchema.Decoder do
     end
   end
 
-  defp integer_schema(schema), do: apply_numeric_constraints(Zoi.integer(), schema)
+  defp integer_schema(schema) do
+    apply_numeric_constraints(%{Zoi.integer() | integral_floats: true}, schema)
+  end
+
   defp number_schema(schema), do: apply_numeric_constraints(Zoi.number(), schema)
 
   defp apply_numeric_constraints(schema, json) do
