@@ -369,6 +369,7 @@ defmodule Zoi.Error do
         case type_category(type) do
           :string -> "too big: must have at most %{count} character(s)"
           :array -> "too big: must have at most %{count} item(s)"
+          :map -> "too big: must have at most %{count} field(s)"
           :number -> "too big: must be at most %{count}"
           :date -> "too big: must be at most %{count}"
         end
@@ -403,6 +404,7 @@ defmodule Zoi.Error do
         case type_category(type) do
           :string -> "too small: must have at least %{count} character(s)"
           :array -> "too small: must have at least %{count} item(s)"
+          :map -> "too small: must have at least %{count} field(s)"
           :number -> "too small: must be at least %{count}"
           :date -> "too small: must be at least %{count}"
         end

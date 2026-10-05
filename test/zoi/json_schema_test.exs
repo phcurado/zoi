@@ -30,6 +30,8 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.enum([1.5, %{"status" => "ready"}, [1, 2]]),
          %{enum: [1.5, %{"status" => "ready"}, [1, 2]]}},
         {Zoi.map(), %{type: :object}},
+        {Zoi.map() |> Zoi.min(1) |> Zoi.max(2),
+         %{type: :object, minProperties: 1, maxProperties: 2}},
         {Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
          %{allOf: [%{type: :string}, %{const: "fixed"}]}},
         {Zoi.union([Zoi.string(), Zoi.integer()]),
@@ -702,6 +704,15 @@ defmodule Zoi.JSONSchemaTest do
         {%{"type" => "string", "minLength" => 2, "maxLength" => 5}, "abc", ["a", "abcdef"]},
         {%{"type" => "integer", "minimum" => 0, "maximum" => 10, "multipleOf" => 2}, 4,
          [-1, 11, 3]},
+        {%{"type" => "object", "minProperties" => 1}, %{"a" => 1}, [%{}]},
+        {%{"type" => "object", "maxProperties" => 0}, %{}, [%{"a" => 1}]},
+        {%{
+           "type" => "object",
+           "properties" => %{"name" => %{"type" => "string"}},
+           "minProperties" => 2,
+           "maxProperties" => 2
+         }, %{"name" => "Alice", "age" => 30},
+         [%{"name" => "Alice"}, %{"name" => "Alice", "age" => 30, "active" => true}]},
         {%{
            "type" => "array",
            "items" => %{"type" => "integer"},

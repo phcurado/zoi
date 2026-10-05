@@ -3878,6 +3878,15 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2])
       assert Exception.message(error) == "too small: must have at least 3 item(s)"
     end
+
+    test "min for map" do
+      for schema <- [Zoi.map(), Zoi.map(Zoi.string(), Zoi.integer())] do
+        schema = Zoi.min(schema, 1)
+        assert {:ok, %{"a" => 1}} == Zoi.parse(schema, %{"a" => 1})
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, %{})
+        assert Exception.message(error) == "too small: must have at least 1 field(s)"
+      end
+    end
   end
 
   describe "gte/2" do
@@ -4128,6 +4137,20 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3, 4])
       assert error.code == :less_than_or_equal_to
       assert Exception.message(error) == "too big: must have at most 3 item(s)"
+    end
+
+    test "max for map" do
+      for schema <- [Zoi.map(), Zoi.map(Zoi.string(), Zoi.integer())] do
+        schema = Zoi.max(schema, 2)
+        assert {:ok, %{"a" => 1}} == Zoi.parse(schema, %{"a" => 1})
+        assert {:ok, %{"a" => 1, "b" => 2}} == Zoi.parse(schema, %{"a" => 1, "b" => 2})
+
+        assert {:error, [%Zoi.Error{} = error]} =
+                 Zoi.parse(schema, %{"a" => 1, "b" => 2, "c" => 3})
+
+        assert error.code == :less_than_or_equal_to
+        assert Exception.message(error) == "too big: must have at most 2 field(s)"
+      end
     end
 
     test "custom message" do

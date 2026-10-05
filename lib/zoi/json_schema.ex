@@ -255,6 +255,20 @@ defmodule Zoi.JSONSchema do
     Map.put(json_schema, :exclusiveMaximum, value)
   end
 
+  defp encode_refinement(
+         {Zoi.Validations.Gte, :validate, [value, _opts]},
+         %{type: :object} = json_schema
+       ) do
+    Map.put(json_schema, :minProperties, value)
+  end
+
+  defp encode_refinement(
+         {Zoi.Validations.Lte, :validate, [value, _opts]},
+         %{type: :object} = json_schema
+       ) do
+    Map.put(json_schema, :maxProperties, value)
+  end
+
   # Array refinements from effects
 
   defp encode_refinement(

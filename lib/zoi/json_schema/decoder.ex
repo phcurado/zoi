@@ -143,6 +143,8 @@ defmodule Zoi.JSONSchema.Decoder do
     end)
     |> add_required_fields(required, unrecognized_keys)
     |> Zoi.map(unrecognized_keys: unrecognized_keys)
+    |> maybe_apply(schema, "minProperties", &Zoi.min/2)
+    |> maybe_apply(schema, "maxProperties", &Zoi.max/2)
   end
 
   defp maybe_optional(schema, key, required) do
