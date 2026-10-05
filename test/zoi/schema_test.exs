@@ -2,6 +2,40 @@ defmodule Zoi.SchemaTest do
   use ExUnit.Case, async: true
 
   describe "traverse/2" do
+    test "visits children of a root dictionary without transforming its root" do
+      schema = Zoi.map(Zoi.string(), Zoi.object(%{count: Zoi.integer()}))
+      prepared = Zoi.Schema.traverse(schema, &Zoi.coerce/1)
+      refute prepared.coerce
+      assert prepared.key_type.coerce
+      assert prepared.value_type.coerce
+      assert prepared.value_type.fields[:count].coerce
+    end
+
+    test "visits schemas for typed additional properties" do
+      schema =
+        Zoi.object(%{},
+          unrecognized_keys: {:preserve, {Zoi.string(), Zoi.object(%{count: Zoi.integer()})}}
+        )
+
+      for root <- [schema, Zoi.object(%{nested: schema})] do
+        prepared = Zoi.Schema.traverse(root, &Zoi.coerce/1)
+        object = if prepared.fields == [], do: prepared, else: prepared.fields[:nested]
+        {:preserve, {key, value}} = object.unrecognized_keys
+        assert key.coerce
+        assert value.coerce
+        assert value.fields[:count].coerce
+      end
+    end
+
+    test "fieldless struct schemas stay leaf nodes" do
+      schema = Zoi.struct(URI)
+      assert Zoi.Schema.traverse(schema, &Zoi.coerce/1) == schema
+
+      nested = Zoi.object(%{uri: schema}) |> Zoi.Schema.traverse(&Zoi.coerce/1)
+      assert nested.fields[:uri].coerce
+      assert nested.fields[:uri].fields == nil
+    end
+
     test "enables coercion on nested fields" do
       schema =
         Zoi.map(%{

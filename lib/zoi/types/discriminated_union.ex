@@ -92,21 +92,20 @@ defmodule Zoi.Types.DiscriminatedUnion do
     defp get_field_value(%{field: field, coerce: coerce?} = discriminated_union, input) do
       coerced_key = if coerce?, do: to_string(field), else: field
 
-      coerced_input =
-        if coerce? do
-          input
-          # Make sure input is a plain map (that implements Enumerable) and not a struct:
-          |> Map.delete(:__struct__)
-          |> Map.new(fn {k, v} -> {to_string(k), v} end)
-        else
-          input
-        end
+      {coerced_input, collisions} =
+        input
+        |> Map.delete(:__struct__)
+        |> Map.to_list()
+        |> Zoi.Types.KeyValue.lookup(coerce?)
 
-      case Map.fetch(coerced_input, coerced_key) do
-        {:ok, value} ->
+      case {MapSet.member?(collisions, coerced_key), Map.fetch(coerced_input, coerced_key)} do
+        {true, _value} ->
+          {:error, Zoi.Error.key_collision(field)}
+
+        {false, {:ok, value}} ->
           {:ok, value}
 
-        :error ->
+        {false, :error} ->
           if error = discriminated_union.meta.error do
             {:error, Zoi.Error.custom_error(issue: {error, [field: field]})}
           else

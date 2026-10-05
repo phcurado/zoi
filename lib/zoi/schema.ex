@@ -77,10 +77,18 @@ defmodule Zoi.Schema do
         {key, do_traverse(type, [key], fun)}
       end)
 
-    Map.put(obj, :fields, transformed_fields)
+    obj
+    |> Map.put(:fields, transformed_fields)
+    |> traverse_preserved([], fun)
   end
 
-  defp do_traverse_root(%Zoi.Types.Struct{fields: fields} = struct, fun) do
+  defp do_traverse_root(%Zoi.Types.Map{key_type: key, value_type: value} = schema, fun) do
+    schema
+    |> Map.put(:key_type, do_traverse(key, [], fun))
+    |> Map.put(:value_type, do_traverse(value, [], fun))
+  end
+
+  defp do_traverse_root(%Zoi.Types.Struct{fields: fields} = struct, fun) when is_list(fields) do
     transformed_fields =
       Enum.map(fields, fn {key, type} ->
         {key, do_traverse(type, [key], fun)}
@@ -125,10 +133,11 @@ defmodule Zoi.Schema do
 
     obj
     |> Map.put(:fields, transformed_fields)
+    |> traverse_preserved(path, fun)
     |> apply_fun(path, fun)
   end
 
-  defp do_traverse(%Zoi.Types.Struct{fields: fields} = struct, path, fun) do
+  defp do_traverse(%Zoi.Types.Struct{fields: fields} = struct, path, fun) when is_list(fields) do
     transformed_fields =
       Enum.map(fields, fn {key, type} ->
         {key, do_traverse(type, path ++ [key], fun)}
@@ -226,6 +235,16 @@ defmodule Zoi.Schema do
   defp do_traverse(schema, path, fun) do
     apply_fun(schema, path, fun)
   end
+
+  defp traverse_preserved(%{unrecognized_keys: {:preserve, {key, value}}} = schema, path, fun) do
+    %{
+      schema
+      | unrecognized_keys:
+          {:preserve, {do_traverse(key, path, fun), do_traverse(value, path, fun)}}
+    }
+  end
+
+  defp traverse_preserved(schema, _path, _fun), do: schema
 
   # Apply function based on arity
   defp apply_fun(schema, _path, fun) when is_function(fun, 1), do: fun.(schema)

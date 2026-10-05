@@ -10,6 +10,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Coerced object keys now reject multiple input keys for one declared field
+  with a `:key_collision` error. Discriminator collisions fail before a branch
+  is selected. Unknown fields retain their authored policy.
+- Schema traversal now handles fieldless structs, root dictionary children,
+  and typed additional property schemas. The root remains untransformed.
+
 - `Zoi.enum/2` now accepts float, map and list values
 - `Zoi.to_json_schema/1` no longer emits `type: "string"` for non-string enums
 - `Zoi.from_json_schema/1` now preserves and validates additional properties

@@ -17,6 +17,7 @@ defmodule Zoi.Error do
     - `:invalid_literal`
     - `:invalid_tuple`
     - `:unrecognized_key`
+    - `:key_collision`
     - `:invalid_enum_value`
     - `:not_in_values`
     - `:required`
@@ -223,6 +224,16 @@ defmodule Zoi.Error do
         {:issue, {"invalid literal: expected %{expected}", [expected: value]}} | opts
       ])
     end
+  end
+
+  @doc "Creates an error for input keys that match the same declared field."
+  @spec key_collision(atom() | binary()) :: t()
+  def key_collision(field) do
+    new(
+      code: :key_collision,
+      issue: {"multiple input keys match field %{field}", [field: field]},
+      path: [field]
+    )
   end
 
   @doc """

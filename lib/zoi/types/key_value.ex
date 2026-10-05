@@ -63,7 +63,7 @@ defmodule Zoi.Types.KeyValue do
     coerce? = Keyword.get(opts, :coerce, coerce?)
     normalize_key = normalize_key_fun(coerce?)
 
-    input_lookup = Map.new(input_pairs, fn {k, v} -> {normalize_key.(k), v} end)
+    {input_lookup, collisions} = lookup(input_pairs, coerce?)
 
     unknown_pairs =
       reject_known_pairs(unrecognized_keys, input_pairs, schema_fields, normalize_key)
@@ -72,11 +72,14 @@ defmodule Zoi.Types.KeyValue do
       Enum.reduce(schema_fields, {[], []}, fn {field_key, field_schema}, {parsed, errors} ->
         normalized = normalize_key.(field_key)
 
-        case Map.fetch(input_lookup, normalized) do
-          :error ->
+        case {MapSet.member?(collisions, normalized), Map.fetch(input_lookup, normalized)} do
+          {true, _value} ->
+            {parsed, [Zoi.Error.key_collision(field_key) | errors]}
+
+          {false, :error} ->
             handle_missing_field(field_schema, field_key, parsed, errors, opts)
 
-          {:ok, raw_value} ->
+          {false, {:ok, raw_value}} ->
             if raw_value in empty_values do
               handle_missing_field(field_schema, field_key, parsed, errors, opts)
             else
@@ -187,6 +190,23 @@ defmodule Zoi.Types.KeyValue do
   end
 
   # Helpers
+
+  @doc false
+  @spec lookup([{term(), term()}], boolean()) :: {map(), MapSet.t()}
+  def lookup(input_pairs, false), do: {Map.new(input_pairs), MapSet.new()}
+
+  def lookup(input_pairs, true) do
+    Enum.reduce(input_pairs, {%{}, MapSet.new()}, fn {key, value}, {lookup, collisions} ->
+      normalized = to_string(key)
+
+      collisions =
+        if Map.has_key?(lookup, normalized),
+          do: MapSet.put(collisions, normalized),
+          else: collisions
+
+      {Map.put(lookup, normalized, value), collisions}
+    end)
+  end
 
   defp normalize_key_fun(true), do: &to_string/1
   defp normalize_key_fun(false), do: &Function.identity/1

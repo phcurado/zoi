@@ -2458,6 +2458,8 @@ defmodule Zoi do
   end
 
   if Code.ensure_loaded?(Decimal) do
+    Code.ensure_compiled!(Zoi.Types.Decimal)
+
     @doc """
     Defines a decimal type schema.
 
