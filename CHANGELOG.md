@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- Improve schema construction and parsing performance
+
+### Fixed
+
+- `Zoi.enum/2` now accepts float, map and list values
+- `Zoi.to_json_schema/1` no longer emits `type: "string"` for non-string enums
+- `Zoi.from_json_schema/1` now preserves and validates additional properties
+- `Zoi.from_json_schema/1` now handles required keys not listed in `properties`
+- `Zoi.from_json_schema/1` now preserves date, time and date-time strings instead of converting them to structs
+- `Zoi.intersection/2` now preserves fields from all map schemas and rejects conflicting field values
+- Fix `Zoi.map/2` and `Zoi.struct/3` specs for supported argument types
+
 ## 0.18.11 - 2026-09-29
 
 ### Fixed
