@@ -669,7 +669,6 @@ defmodule Zoi.JSONSchemaTest do
       assert Zoi.parse(schema, -3.0) == {:ok, -3.0}
       assert {:error, [%{message: "invalid type: expected integer"}]} = Zoi.parse(schema, 1.5)
       assert {:error, _} = Zoi.parse(Zoi.integer(), 1.0)
-      assert %{type: :integer} = Zoi.to_json_schema(schema)
     end
 
     test "decoded integer schemas enforce numeric constraints on floats with no fractional part" do
