@@ -767,6 +767,61 @@ defmodule Zoi.JSONSchemaTest do
       assert {:error, _} = Zoi.parse(strict, %{"name" => "x", "extra" => 1})
     end
 
+    test "preserves additional properties when omitted or true" do
+      json = %{
+        "type" => "object",
+        "properties" => %{"name" => %{"type" => "string"}}
+      }
+
+      input = %{"name" => "Alice", "age" => 30}
+
+      for json_schema <- [json, Map.put(json, "additionalProperties", true)] do
+        schema = Zoi.from_json_schema(json_schema)
+
+        assert {:ok, ^input} = Zoi.parse(schema, input)
+      end
+    end
+
+    test "validates additional properties alongside named properties" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "object",
+          "properties" => %{"name" => %{"type" => "string"}},
+          "additionalProperties" => %{"type" => "integer"}
+        })
+
+      input = %{"name" => "Alice", "age" => 30}
+
+      assert {:ok, ^input} = Zoi.parse(schema, input)
+
+      assert {:error, [%{path: ["age"]}]} =
+               Zoi.parse(schema, %{"name" => "Alice", "age" => "thirty"})
+    end
+
+    test "required keys without properties use Zoi.any" do
+      schema = Zoi.from_json_schema(%{"type" => "object", "required" => ["name"]})
+
+      assert {:error, [%{code: :required, path: ["name"]}]} = Zoi.parse(schema, %{})
+      assert {:ok, %{"name" => "Alice"}} = Zoi.parse(schema, %{"name" => "Alice"})
+      assert {:ok, %{"name" => nil}} = Zoi.parse(schema, %{"name" => nil})
+    end
+
+    test "required keys without properties use the additionalProperties schema" do
+      json = %{
+        "type" => "object",
+        "properties" => %{"name" => %{"type" => "string"}},
+        "required" => ["age"],
+        "additionalProperties" => %{"type" => "integer"}
+      }
+
+      schema = Zoi.from_json_schema(json)
+      input = %{"name" => "Alice", "age" => 30}
+
+      assert {:ok, ^input} = Zoi.parse(schema, input)
+      assert {:error, _} = Zoi.parse(schema, %{"name" => "Alice"})
+      assert {:error, _} = Zoi.parse(schema, %{"age" => "thirty"})
+    end
+
     test "carries metadata into Zoi schema" do
       schema =
         Zoi.from_json_schema(%{
@@ -872,6 +927,7 @@ defmodule Zoi.JSONSchemaTest do
       schema = Zoi.from_json_schema(%{"type" => "object"})
 
       assert {:ok, %{}} = Zoi.parse(schema, %{})
+      assert {:ok, %{"age" => 30}} = Zoi.parse(schema, %{"age" => 30})
     end
 
     test "example annotation is preserved" do

@@ -13,28 +13,28 @@ defmodule Zoi.JSONSchema.Decoder do
   ]
 
   @spec decode(map()) :: Zoi.schema()
-  def decode(json_schema) when is_map(json_schema), do: convert(json_schema)
+  def decode(json_schema) when is_map(json_schema), do: decode_schema(json_schema)
 
   def decode(other) do
     raise ArgumentError, "expected a JSON Schema map, got: #{inspect(other)}"
   end
 
-  defp convert(schema) do
+  defp decode_schema(schema) do
     schema
     |> base_schema()
     |> apply_metadata(schema)
   end
 
   defp base_schema(%{"oneOf" => schemas}) when is_list(schemas) do
-    Zoi.union(Enum.map(schemas, &convert/1))
+    Zoi.union(Enum.map(schemas, &decode_schema/1))
   end
 
   defp base_schema(%{"anyOf" => schemas}) when is_list(schemas) do
-    Zoi.union(Enum.map(schemas, &convert/1))
+    Zoi.union(Enum.map(schemas, &decode_schema/1))
   end
 
   defp base_schema(%{"allOf" => schemas}) when is_list(schemas) do
-    Zoi.intersection(Enum.map(schemas, &convert/1))
+    Zoi.intersection(Enum.map(schemas, &decode_schema/1))
   end
 
   defp base_schema(%{"const" => value}), do: Zoi.literal(value)
@@ -106,12 +106,12 @@ defmodule Zoi.JSONSchema.Decoder do
   end
 
   defp array_schema(%{"prefixItems" => items} = schema) when is_list(items) do
-    tuple_fields = items |> Enum.map(&convert/1) |> List.to_tuple()
+    tuple_fields = items |> Enum.map(&decode_schema/1) |> List.to_tuple()
     apply_array_constraints(Zoi.tuple(tuple_fields), schema)
   end
 
   defp array_schema(%{"items" => items} = schema) when is_map(items) do
-    apply_array_constraints(Zoi.array(convert(items)), schema)
+    apply_array_constraints(Zoi.array(decode_schema(items)), schema)
   end
 
   defp array_schema(schema) do
@@ -133,35 +133,48 @@ defmodule Zoi.JSONSchema.Decoder do
 
   defp object_schema(schema) do
     properties = Map.get(schema, "properties", %{})
-    required = schema |> Map.get("required", []) |> MapSet.new()
+    required = Map.get(schema, "required", [])
     additional = Map.get(schema, "additionalProperties")
+    unrecognized_keys = unrecognized_keys(additional)
 
-    fields =
-      Enum.map(properties, fn {key, prop_schema} ->
-        prop_zoi = convert(prop_schema)
+    properties
+    |> Map.new(fn {key, prop_schema} ->
+      {key, prop_schema |> decode_schema() |> maybe_optional(key, required)}
+    end)
+    |> add_required_fields(required, unrecognized_keys)
+    |> Zoi.map(unrecognized_keys: unrecognized_keys)
+  end
 
-        prop_zoi =
-          if MapSet.member?(required, key) do
-            prop_zoi
-          else
-            Zoi.optional(prop_zoi)
-          end
-
-        {key, prop_zoi}
-      end)
-
-    map_opts = if additional == false, do: [unrecognized_keys: :error], else: []
-
-    cond do
-      fields == [] and is_map(additional) ->
-        Zoi.map(Zoi.string(), convert(additional))
-
-      fields == [] and map_opts == [] ->
-        Zoi.map()
-
-      true ->
-        Zoi.map(Map.new(fields), map_opts)
+  defp maybe_optional(schema, key, required) do
+    if key in required do
+      schema
+    else
+      Zoi.optional(schema)
     end
+  end
+
+  defp add_required_fields(fields, required, unrecognized_keys) do
+    schema =
+      case unrecognized_keys do
+        {:preserve, {_, schema}} -> Zoi.required(schema)
+        _ -> Zoi.any()
+      end
+
+    Enum.reduce(required, fields, fn key, fields ->
+      Map.put_new(fields, key, schema)
+    end)
+  end
+
+  defp unrecognized_keys(false) do
+    :error
+  end
+
+  defp unrecognized_keys(schema) when is_map(schema) do
+    {:preserve, {Zoi.string(), decode_schema(schema)}}
+  end
+
+  defp unrecognized_keys(_) do
+    :preserve
   end
 
   defp apply_metadata(schema, json) do
