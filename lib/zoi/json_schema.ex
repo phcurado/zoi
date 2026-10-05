@@ -46,6 +46,7 @@ defmodule Zoi.JSONSchema do
   | `Zoi.map_set/2` | `"array"` with `uniqueItems` |
   | `Zoi.tuple/2` | `"array"` with `prefixItems` |
   | `Zoi.map/2` | `"object"` |
+  | `Zoi.struct/3` | `"object"` (the Elixir module is not encoded) |
   | `Zoi.union/2` | `oneOf` (decode also accepts `anyOf`) |
   | `Zoi.intersection/2` | `allOf` |
   | `Zoi.nullable/2` | nullable type via `oneOf` |

@@ -110,16 +110,40 @@ defmodule Zoi.JSONSchemaTest do
       map_json = Zoi.to_json_schema(Zoi.map(fields, opts))
 
       assert struct_json == map_json
-      assert struct_json.required == [:name, :settings]
+      assert MapSet.new(struct_json.required) == MapSet.new([:name, :settings])
+      refute :age in struct_json.required
+      refute :nickname in struct_json.required
       assert struct_json.additionalProperties == false
+      assert struct_json.description == "A user profile"
+      assert struct_json.title == "Profile"
       assert struct_json.properties.age.default == 21
       assert struct_json.properties.name.minLength == 2
+      assert struct_json.properties.name.description == "Full name"
       assert struct_json.properties.settings.required == [:theme]
-      refute inspect(struct_json) =~ inspect(Profile)
+      assert struct_json.properties.settings.properties.alerts.title == "Alerts enabled"
+      refute Map.has_key?(struct_json, :module)
+      refute Map.has_key?(struct_json, :__struct__)
     end
 
-    test "encoding a struct without declared fields matches an open map schema" do
-      assert Zoi.to_json_schema(Zoi.struct(Profile)) == Zoi.to_json_schema(Zoi.map())
+    test "encoding struct fields follows the map unknown-key policy" do
+      fields = %{name: Zoi.string()}
+
+      for {policy, additional_properties?} <- [strip: true, error: false] do
+        opts = [unrecognized_keys: policy]
+        struct_json = Zoi.to_json_schema(Zoi.struct(Profile, fields, opts))
+
+        assert struct_json == Zoi.to_json_schema(Zoi.map(fields, opts))
+        assert struct_json.additionalProperties == additional_properties?
+      end
+    end
+
+    test "encoding a struct without declared fields produces an open object" do
+      open_object = Zoi.to_json_schema(Zoi.map())
+
+      assert open_object == %{type: :object, "$schema": @draft}
+      assert Zoi.to_json_schema(Zoi.struct(Profile)) == open_object
+
+      assert Zoi.to_json_schema(Zoi.struct(Profile, unrecognized_keys: :error)) == open_object
     end
 
     test "encoding nested string patterns and refinements" do
