@@ -100,6 +100,34 @@ defmodule Zoi.Types.Map do
     end
   end
 
+  defimpl Zoi.Validations.Gte do
+    def set(schema, value, opts) do
+      Zoi.refine(schema, {Zoi.Validations.Gte, :validate, [value, opts]})
+    end
+
+    def validate(_schema, input, value, opts) do
+      if map_size(input) >= value do
+        :ok
+      else
+        {:error, Zoi.Error.greater_than_or_equal_to(:map, value, opts)}
+      end
+    end
+  end
+
+  defimpl Zoi.Validations.Lte do
+    def set(schema, value, opts) do
+      Zoi.refine(schema, {Zoi.Validations.Lte, :validate, [value, opts]})
+    end
+
+    def validate(_schema, input, value, opts) do
+      if map_size(input) <= value do
+        :ok
+      else
+        {:error, Zoi.Error.less_than_or_equal_to(:map, value, opts)}
+      end
+    end
+  end
+
   defimpl Zoi.TypeSpec do
     # If the keys are strings, there isn't a good way to represent that in typespecs
     def spec(%Zoi.Types.Map{fields: [{key, _val} | _rest]}, _opts) when is_binary(key) do
