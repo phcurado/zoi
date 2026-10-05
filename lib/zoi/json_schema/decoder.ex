@@ -71,9 +71,9 @@ defmodule Zoi.JSONSchema.Decoder do
   defp string_schema(schema) do
     base =
       case Map.get(schema, "format") do
-        "date" -> Zoi.date(coerce: true)
-        "time" -> Zoi.time(coerce: true)
-        "date-time" -> Zoi.datetime(coerce: true)
+        "date" -> Zoi.ISO.date()
+        "time" -> Zoi.ISO.time()
+        "date-time" -> Zoi.ISO.datetime()
         "email" -> Zoi.email()
         "uri" -> Zoi.url()
         "uuid" -> Zoi.uuid()
