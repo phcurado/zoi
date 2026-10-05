@@ -26,6 +26,9 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.tuple({Zoi.string(), Zoi.integer()}),
          %{type: :array, prefixItems: [%{type: :string}, %{type: :integer}]}},
         {Zoi.enum(["red", "green", "blue"]), %{type: :string, enum: ["red", "green", "blue"]}},
+        {Zoi.enum([1, 2]), %{enum: [1, 2]}},
+        {Zoi.enum([1.5, %{"status" => "ready"}, [1, 2]]),
+         %{enum: [1.5, %{"status" => "ready"}, [1, 2]]}},
         {Zoi.map(), %{type: :object}},
         {Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
          %{allOf: [%{type: :string}, %{const: "fixed"}]}},
@@ -661,6 +664,11 @@ defmodule Zoi.JSONSchemaTest do
       cases = [
         {%{"const" => "fixed"}, "fixed", "other"},
         {%{"enum" => ["red", "green"]}, "red", "blue"},
+        {%{"enum" => [1.5]}, 1.5, 2.5},
+        {%{"enum" => [%{"status" => "ready"}]}, %{"status" => "ready"}, %{}},
+        {%{"enum" => [[1, 2]]}, [1, 2], [2, 1]},
+        {%{"enum" => [1.5, %{}, [], nil, true, "hello"]}, nil, "other"},
+        {%{"enum" => ["hello", true, nil, [], %{}, 1.5]}, 1.5, "other"},
         {%{"oneOf" => [%{"type" => "string"}, %{"type" => "integer"}]}, "x", true},
         {%{"anyOf" => [%{"type" => "string"}, %{"type" => "integer"}]}, 1, true},
         {%{"allOf" => [%{"type" => "string"}, %{"const" => "fixed"}]}, "fixed", "other"}

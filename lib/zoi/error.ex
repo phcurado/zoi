@@ -162,6 +162,10 @@ defmodule Zoi.Error do
     Regex.source(regex)
   end
 
+  defp parse_message_type(value) when is_map(value) and not is_struct(value) do
+    inspect(value)
+  end
+
   defp parse_message_type(message) do
     to_string(message)
   end
