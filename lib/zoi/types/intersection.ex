@@ -21,18 +21,77 @@ defmodule Zoi.Types.Intersection do
 
   defimpl Zoi.Type do
     def parse(%Zoi.Types.Intersection{schemas: schemas} = intersection, value, opts) do
-      Enum.reduce_while(schemas, nil, fn schema, _acc ->
+      schemas
+      |> Enum.reduce_while({:ok, []}, fn schema, {:ok, results} ->
         ctx = Zoi.Context.new(schema, value)
         opts = Keyword.put(opts, :ctx, ctx)
 
         case Zoi.parse(schema, value, opts) do
           {:ok, result} ->
-            {:cont, {:ok, result}}
+            {:cont, {:ok, [result | results]}}
 
           {:error, reason} ->
             {:halt, error(intersection, reason)}
         end
       end)
+      |> combine_results(intersection)
+    end
+
+    defp combine_results({:ok, reversed_results}, intersection) do
+      results = Enum.reverse(reversed_results)
+
+      if Enum.all?(results, &plain_map?/1) do
+        results
+        |> merge_results()
+        |> case do
+          {:error, reason} -> error(intersection, reason)
+          result -> result
+        end
+      else
+        {:ok, List.last(results)}
+      end
+    end
+
+    defp combine_results(error, _intersection), do: error
+
+    defp plain_map?(value), do: is_map(value) and not is_struct(value)
+
+    defp merge_results([first | rest]) do
+      Enum.reduce_while(rest, {:ok, first}, fn right, {:ok, left} ->
+        case merge_objects(left, right, []) do
+          {:ok, combined} -> {:cont, {:ok, combined}}
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+      end)
+    end
+
+    defp merge_objects(left, right, path) do
+      Enum.reduce_while(right, {:ok, left}, fn {key, value}, {:ok, combined} ->
+        case Map.fetch(combined, key) do
+          :error ->
+            {:cont, {:ok, Map.put(combined, key, value)}}
+
+          {:ok, previous} ->
+            case merge_field(previous, value, [key | path]) do
+              {:ok, merged} -> {:cont, {:ok, Map.put(combined, key, merged)}}
+              {:error, reason} -> {:halt, {:error, reason}}
+            end
+        end
+      end)
+    end
+
+    defp merge_field(left, right, _path) when left === right, do: {:ok, left}
+
+    defp merge_field(left, right, path)
+         when is_map(left) and not is_struct(left) and is_map(right) and not is_struct(right),
+         do: merge_objects(left, right, path)
+
+    defp merge_field(_left, _right, path) do
+      {:error,
+       Zoi.Error.custom_error(
+         issue: {"intersection branches produced conflicting field values", []},
+         path: Enum.reverse(path)
+       )}
     end
 
     defp error(schema, type_error) do

@@ -962,6 +962,86 @@ defmodule ZoiTest do
   end
 
   describe "intersection/2" do
+    test "object intersections retain each branch's fields in either order" do
+      branches = [Zoi.object(%{a: Zoi.integer()}), Zoi.object(%{b: Zoi.integer()})]
+
+      for schemas <- [branches, Enum.reverse(branches)] do
+        assert {:ok, %{a: 1, b: 2}} =
+                 Zoi.parse(Zoi.intersection(schemas), %{a: 1, b: 2, ignored: true})
+      end
+    end
+
+    test "nested object results from multiple branches are merged recursively" do
+      schema =
+        Zoi.intersection([
+          Zoi.object(%{nested: Zoi.object(%{a: Zoi.integer()})}),
+          Zoi.object(%{nested: Zoi.object(%{b: Zoi.integer()})}),
+          Zoi.object(%{c: Zoi.integer()})
+        ])
+
+      value = %{nested: %{a: 1, b: 2}, c: 3}
+      assert {:ok, ^value} = Zoi.parse(schema, value)
+    end
+
+    test "object intersection defaults are retained" do
+      schema =
+        Zoi.intersection([
+          Zoi.object(%{a: Zoi.integer() |> Zoi.default(1)}),
+          Zoi.object(%{b: Zoi.integer() |> Zoi.default(2)})
+        ])
+
+      assert {:ok, %{a: 1, b: 2}} = Zoi.parse(schema, %{})
+    end
+
+    test "conflicting nested field values return their path in either branch order" do
+      branches = [
+        Zoi.object(%{nested: Zoi.object(%{count: Zoi.integer() |> Zoi.default(1)})}),
+        Zoi.object(%{nested: Zoi.object(%{count: Zoi.integer() |> Zoi.default(2)})})
+      ]
+
+      for schemas <- [branches, Enum.reverse(branches)] do
+        assert {:error, [%Zoi.Error{code: :custom, path: [:nested, :count]}]} =
+                 Zoi.parse(Zoi.intersection(schemas), %{nested: %{}})
+      end
+    end
+
+    test "custom intersection errors apply to conflicting field values" do
+      schema =
+        Zoi.intersection(
+          [
+            Zoi.object(%{count: Zoi.integer() |> Zoi.default(1)}),
+            Zoi.object(%{count: Zoi.integer() |> Zoi.default(2)})
+          ],
+          error: "incompatible intersection"
+        )
+
+      assert {:error, [%Zoi.Error{message: "incompatible intersection"}]} =
+               Zoi.parse(schema, %{})
+    end
+
+    test "conflicting fields added by branch transforms return an error" do
+      schema =
+        Zoi.intersection([
+          Zoi.object(%{a: Zoi.integer()}),
+          Zoi.object(%{b: Zoi.integer(), c: Zoi.integer()})
+        ])
+        |> Zoi.transform(&Map.put(&1, :field_count, map_size(&1)))
+
+      assert {:error, [%Zoi.Error{path: [:field_count]}]} =
+               Zoi.parse(schema, %{a: 1, b: 2, c: 3})
+    end
+
+    test "mixed branch result types preserve the last result" do
+      schema =
+        Zoi.intersection([
+          Zoi.any() |> Zoi.transform(fn _ -> %{a: 1} end),
+          Zoi.any() |> Zoi.transform(fn _ -> :middle end),
+          Zoi.any() |> Zoi.transform(fn _ -> %{c: 3} end)
+        ])
+
+      assert {:ok, %{c: 3}} = Zoi.parse(schema, :input)
+    end
+
     test "intersection with correct values" do
       schema =
         Zoi.intersection([
