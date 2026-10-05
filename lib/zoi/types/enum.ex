@@ -42,6 +42,18 @@ defmodule Zoi.Types.Enum do
     :integer
   end
 
+  defp verify_type([value | _rest]) when is_float(value) do
+    :float
+  end
+
+  defp verify_type([value | _rest]) when is_map(value) do
+    :map
+  end
+
+  defp verify_type([value | _rest]) when is_list(value) do
+    :list
+  end
+
   defp verify_type(_values) do
     raise ArgumentError, "Invalid enum values"
   end
@@ -84,6 +96,12 @@ defmodule Zoi.Types.Enum do
 
         true ->
           keys
+          |> Enum.map(fn
+            value when is_float(value) -> quote(do: float())
+            value when is_map(value) -> quote(do: map())
+            value when is_list(value) -> quote(do: list())
+            value -> value
+          end)
           |> Enum.reverse()
           |> Enum.reduce(&quote(do: unquote(&1) | unquote(&2)))
       end
@@ -107,7 +125,13 @@ defmodule Zoi.Types.Enum do
 
   defimpl Zoi.JSONSchema.Encoder do
     def encode(schema) do
-      %{type: :string, enum: Enum.map(schema.values, fn {_k, v} -> v end)}
+      values = Enum.map(schema.values, fn {_key, value} -> value end)
+
+      if Enum.all?(values, &is_binary/1) do
+        %{type: :string, enum: values}
+      else
+        %{enum: values}
+      end
     end
   end
 

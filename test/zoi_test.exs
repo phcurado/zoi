@@ -3127,12 +3127,24 @@ defmodule ZoiTest do
       assert {:ok, "cherry"} == Zoi.parse(schema, "cherry")
     end
 
-    test "enum with integer key" do
-      schema = Zoi.enum([1, 2, 3])
+    test "enum with values" do
+      cases = [
+        {[1, 2, 3], 4},
+        {[1.5], 2.5},
+        {[%{"status" => "ready"}], %{"status" => "ready", "extra" => true}},
+        {[[1, 2]], [2, 1]},
+        {[1.5, %{}, [], "hello", 1, true, false, nil], "other"}
+      ]
 
-      assert {:ok, 1} == Zoi.parse(schema, 1)
-      assert {:ok, 2} == Zoi.parse(schema, 2)
-      assert {:ok, 3} == Zoi.parse(schema, 3)
+      for {values, invalid} <- cases do
+        schema = Zoi.enum(values)
+
+        for value <- values do
+          assert {:ok, ^value} = Zoi.parse(schema, value)
+        end
+
+        assert {:error, [%Zoi.Error{code: :invalid_enum_value}]} = Zoi.parse(schema, invalid)
+      end
     end
 
     test "enum with key-value string" do
