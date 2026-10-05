@@ -673,12 +673,12 @@ defmodule Zoi.JSONSchemaTest do
       end)
     end
 
-    test "decodes string formats with coercion" do
+    test "decodes string formats" do
       cases = [
-        {%{"type" => "string", "format" => "date"}, "2024-01-01", ~D[2024-01-01]},
-        {%{"type" => "string", "format" => "time"}, "12:00:00", ~T[12:00:00]},
+        {%{"type" => "string", "format" => "date"}, "2024-01-01", "2024-01-01"},
+        {%{"type" => "string", "format" => "time"}, "12:00:00", "12:00:00"},
         {%{"type" => "string", "format" => "date-time"}, "2024-01-01T00:00:00Z",
-         ~U[2024-01-01 00:00:00Z]},
+         "2024-01-01T00:00:00Z"},
         {%{"type" => "string", "format" => "email"}, "user@example.com", "user@example.com"},
         {%{"type" => "string", "format" => "uri"}, "https://example.com", "https://example.com"}
       ]
