@@ -140,6 +140,15 @@ defmodule Zoi.Types.Struct do
     end
   end
 
+  defimpl Zoi.JSONSchema.Encoder do
+    def encode(schema) do
+      Zoi.JSONSchema.Encoder.encode(%Zoi.Types.Map{
+        fields: schema.fields,
+        unrecognized_keys: schema.unrecognized_keys
+      })
+    end
+  end
+
   defimpl Zoi.Describe.Encoder do
     def encode(%{module: module}) do
       "struct of type `#{inspect(module)}`"

@@ -4,6 +4,10 @@ defmodule Zoi.JSONSchemaTest do
 
   alias Zoi.Regexes
 
+  defmodule Profile do
+    defstruct [:name, :nickname, :age, :settings]
+  end
+
   @draft "https://json-schema.org/draft/2020-12/schema"
 
   describe "Zoi.to_json_schema/1" do
@@ -82,6 +86,64 @@ defmodule Zoi.JSONSchemaTest do
                required: _required_properties,
                additionalProperties: false
              } = Zoi.to_json_schema(schema)
+    end
+
+    test "encoding struct fields matches the equivalent map schema" do
+      fields = %{
+        name: Zoi.string(min_length: 2, description: "Full name"),
+        nickname: Zoi.optional(Zoi.string()),
+        age: Zoi.integer() |> Zoi.min(18) |> Zoi.default(21) |> Zoi.optional(),
+        settings:
+          Zoi.map(%{
+            theme: Zoi.enum([:light, :dark]),
+            alerts: Zoi.optional(Zoi.boolean(metadata: [title: "Alerts enabled"]))
+          })
+      }
+
+      opts = [
+        unrecognized_keys: :error,
+        description: "A user profile",
+        metadata: [title: "Profile"]
+      ]
+
+      struct_json = Zoi.to_json_schema(Zoi.struct(Profile, fields, opts))
+      map_json = Zoi.to_json_schema(Zoi.map(fields, opts))
+
+      assert struct_json == map_json
+      assert MapSet.new(struct_json.required) == MapSet.new([:name, :settings])
+      refute :age in struct_json.required
+      refute :nickname in struct_json.required
+      assert struct_json.additionalProperties == false
+      assert struct_json.description == "A user profile"
+      assert struct_json.title == "Profile"
+      assert struct_json.properties.age.default == 21
+      assert struct_json.properties.name.minLength == 2
+      assert struct_json.properties.name.description == "Full name"
+      assert struct_json.properties.settings.required == [:theme]
+      assert struct_json.properties.settings.properties.alerts.title == "Alerts enabled"
+      refute Map.has_key?(struct_json, :module)
+      refute Map.has_key?(struct_json, :__struct__)
+    end
+
+    test "encoding struct fields follows the map unknown-key policy" do
+      fields = %{name: Zoi.string()}
+
+      for {policy, additional_properties?} <- [strip: true, error: false] do
+        opts = [unrecognized_keys: policy]
+        struct_json = Zoi.to_json_schema(Zoi.struct(Profile, fields, opts))
+
+        assert struct_json == Zoi.to_json_schema(Zoi.map(fields, opts))
+        assert struct_json.additionalProperties == additional_properties?
+      end
+    end
+
+    test "encoding a struct without declared fields produces an open object" do
+      open_object = Zoi.to_json_schema(Zoi.map())
+
+      assert open_object == %{type: :object, "$schema": @draft}
+      assert Zoi.to_json_schema(Zoi.struct(Profile)) == open_object
+
+      assert Zoi.to_json_schema(Zoi.struct(Profile, unrecognized_keys: :error)) == open_object
     end
 
     test "encoding nested string patterns and refinements" do
