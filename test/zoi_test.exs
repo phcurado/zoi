@@ -1641,6 +1641,38 @@ defmodule ZoiTest do
                })
     end
 
+    test "map with field and key schemas" do
+      schema = Zoi.map(%{"name" => Zoi.string(), "age" => Zoi.integer()})
+      schema = %{schema | key_type: Zoi.string() |> Zoi.regex(~r/^[a-z]+$/)}
+
+      assert {:ok, %{"name" => "Alice", "age" => 30}} ==
+               Zoi.parse(schema, %{"name" => "Alice", "age" => 30})
+
+      ctx =
+        schema
+        |> Zoi.Context.new(%{"name" => 1, "age" => 30, "Bad" => true})
+        |> Zoi.Context.parse()
+
+      refute ctx.valid?
+      assert ctx.parsed == %{"age" => 30}
+
+      assert [
+               %Zoi.Error{code: :invalid_format, path: ["Bad"]},
+               %Zoi.Error{code: :invalid_type, path: ["name"]}
+             ] = ctx.errors
+
+      schema = Zoi.map(%{user: schema})
+
+      assert {:error,
+              [
+                %Zoi.Error{code: :invalid_format, path: [:user, "Bad"]},
+                %Zoi.Error{code: :invalid_format, path: [:user, "Other"]}
+              ]} =
+               Zoi.parse(schema, %{
+                 user: %{"name" => "Alice", "age" => 30, "Bad" => true, "Other" => nil}
+               })
+    end
+
     test "map with optional field" do
       schema =
         Zoi.map(%{name: Zoi.string(), age: Zoi.optional(Zoi.integer())})

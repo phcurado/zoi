@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - `Zoi.min/2` and `Zoi.max/2` now support map field counts
 - `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support `minProperties` and `maxProperties`
+- `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support `propertyNames`
 
 ### Changed
 

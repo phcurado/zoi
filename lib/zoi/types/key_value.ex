@@ -56,7 +56,7 @@ defmodule Zoi.Types.KeyValue do
            unrecognized_keys: unrecognized_keys,
            coerce: coerce?,
            empty_values: empty_values
-         },
+         } = type,
          opts
        )
        when is_list(schema_fields) do
@@ -68,8 +68,11 @@ defmodule Zoi.Types.KeyValue do
     unknown_pairs =
       reject_known_pairs(unrecognized_keys, input_pairs, schema_fields, normalize_key)
 
+    key_errors = type |> validate_keys(input_pairs, opts) |> Enum.reverse()
+
     {parsed, collected_errors} =
-      Enum.reduce(schema_fields, {[], []}, fn {field_key, field_schema}, {parsed, errors} ->
+      Enum.reduce(schema_fields, {[], key_errors}, fn {field_key, field_schema},
+                                                      {parsed, errors} ->
         normalized = normalize_key.(field_key)
 
         case Map.fetch(input_lookup, normalized) do
@@ -150,6 +153,20 @@ defmodule Zoi.Types.KeyValue do
       errors = Enum.map(ctx.errors, &Zoi.Error.prepend_path(&1, path))
       {:error, errors, ctx.parsed}
     end
+  end
+
+  defp validate_keys(%Zoi.Types.Map{key_type: key_type}, input_pairs, opts)
+       when not is_nil(key_type) do
+    Enum.flat_map(input_pairs, fn {key, _value} ->
+      case parse_child_value(key_type, key, opts, [key]) do
+        {:ok, _, errors} -> errors
+        {:error, errors, _} -> errors
+      end
+    end)
+  end
+
+  defp validate_keys(_type, _input_pairs, _opts) do
+    []
   end
 
   defp handle_missing_field(field_schema, field_key, parsed, errors) do

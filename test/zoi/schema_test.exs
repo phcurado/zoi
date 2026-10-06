@@ -19,6 +19,18 @@ defmodule Zoi.SchemaTest do
       assert schema.fields[:active].coerce == true
     end
 
+    test "applies transformation to key schemas on named-field maps" do
+      schema = Zoi.map(%{"name" => Zoi.string()})
+      schema = %{schema | key_type: Zoi.string()}
+
+      root = Zoi.Schema.traverse(schema, &Zoi.coerce/1)
+      nested = Zoi.map(%{user: schema}) |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+      assert root.key_type.coerce
+      assert nested.fields[:user].key_type.coerce
+      refute root.coerce
+    end
+
     test "applies transformation to deeply nested objects" do
       schema =
         Zoi.map(%{

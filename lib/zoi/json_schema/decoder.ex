@@ -145,6 +145,16 @@ defmodule Zoi.JSONSchema.Decoder do
     |> Zoi.map(unrecognized_keys: unrecognized_keys)
     |> maybe_apply(schema, "minProperties", &Zoi.min/2)
     |> maybe_apply(schema, "maxProperties", &Zoi.max/2)
+    |> maybe_apply(schema, "propertyNames", &apply_property_names/2)
+  end
+
+  defp apply_property_names(schema, property_names) do
+    key_type =
+      property_names
+      |> Map.put_new("type", "string")
+      |> decode_schema()
+
+    %{schema | key_type: key_type}
   end
 
   defp maybe_optional(schema, key, required) do
