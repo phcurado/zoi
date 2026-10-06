@@ -96,14 +96,7 @@ defmodule Zoi.JSONSchema.Decoder do
   defp integer_schema(schema) do
     Zoi.number(error: "invalid type: expected integer")
     |> apply_numeric_constraints(schema)
-    |> Zoi.refine({__MODULE__, :validate_integer, []})
-  end
-
-  @doc false
-  def validate_integer(value, _opts) when value == trunc(value), do: :ok
-
-  def validate_integer(_value, _opts) do
-    {:error, Zoi.Error.invalid_type(:integer)}
+    |> Zoi.refine({Zoi.Validations.Integer, :validate, []})
   end
 
   defp number_schema(schema), do: apply_numeric_constraints(Zoi.number(), schema)

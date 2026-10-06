@@ -685,6 +685,15 @@ defmodule Zoi.JSONSchemaTest do
       assert {:error, _} = Zoi.parse(schema, 12.0)
     end
 
+    test "decoded integer schemas encode back to integer" do
+      json = %{"type" => "integer", "minimum" => 0, "multipleOf" => 2}
+
+      assert %{type: :integer, minimum: 0, multipleOf: 2} =
+               json |> Zoi.from_json_schema() |> Zoi.to_json_schema()
+
+      assert %{type: :number} = Zoi.to_json_schema(Zoi.number())
+    end
+
     test "decodes literal, enum, and combinators" do
       cases = [
         {%{"const" => "fixed"}, "fixed", "other"},

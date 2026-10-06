@@ -256,6 +256,13 @@ defmodule Zoi.JSONSchema do
   end
 
   defp encode_refinement(
+         {Zoi.Validations.Integer, :validate, []},
+         %{type: :number} = json_schema
+       ) do
+    Map.put(json_schema, :type, :integer)
+  end
+
+  defp encode_refinement(
          {Zoi.Validations.Gte, :validate, [value, _opts]},
          %{type: :object} = json_schema
        ) do
