@@ -266,6 +266,34 @@ defmodule Zoi.Types.Array do
     end
   end
 
+  defimpl Zoi.Validations.Contains do
+    def validate(_schema, input, item_schema, opts) do
+      min = Keyword.get(opts, :min, 1)
+      max = Keyword.get(opts, :max)
+
+      count = Enum.count(input, &matches_schema?(&1, item_schema))
+
+      cond do
+        count < min ->
+          {:error, Zoi.Error.invalid_contains(:min, min, opts)}
+
+        max == nil ->
+          :ok
+
+        count > max ->
+          {:error, Zoi.Error.invalid_contains(:max, max, opts)}
+
+        true ->
+          :ok
+      end
+    end
+
+    defp matches_schema?(item, schema) do
+      ctx = Zoi.Context.new(schema, item) |> Zoi.Context.parse()
+      ctx.valid?
+    end
+  end
+
   defimpl Zoi.Describe.Encoder do
     def encode(%{inner: inner}) do
       "list of #{Zoi.Describe.Encoder.encode(inner)}"

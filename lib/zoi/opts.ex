@@ -55,6 +55,18 @@ defmodule Zoi.Opts do
     )
   end
 
+  @spec contains_opts() :: Zoi.Type.t()
+  def contains_opts() do
+    Zoi.Types.Keyword.new(
+      [
+        min: Zoi.Types.Integer.new(gte: 0) |> Zoi.Types.Meta.put_default(1),
+        max: Zoi.Types.Integer.new(gte: 0) |> Zoi.Types.Nullable.new(),
+        error: error()
+      ],
+      unrecognized_keys: :error
+    )
+  end
+
   @spec with_coerce(Zoi.Type.t()) :: Zoi.Type.t()
   def with_coerce(schema) do
     Zoi.Types.Extend.new(schema, Zoi.Types.Keyword.new([coerce: coerce()], coerce: true))

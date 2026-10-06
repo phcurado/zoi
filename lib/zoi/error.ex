@@ -28,6 +28,7 @@ defmodule Zoi.Error do
     - `:invalid_format`
     - `:multiple_of`
     - `:not_unique`
+    - `:invalid_contains`
     - `:custom`
 
   ## Example
@@ -667,6 +668,38 @@ defmodule Zoi.Error do
       new(
         code: :not_unique,
         issue: {"must contain unique items", []},
+        path: opts[:path] || []
+      )
+    end
+  end
+
+  @doc """
+  Creates an invalid contains error.
+
+  ## Example
+      iex> Zoi.Error.invalid_contains(:min, 2)
+      %Zoi.Error{
+        code: :invalid_contains,
+        issue: {"must contain at least %{count} matching item(s)", [count: 2]},
+        message: "must contain at least 2 matching item(s)"
+      }
+  """
+  @spec invalid_contains(:min | :max, non_neg_integer(), keyword()) :: t()
+  def invalid_contains(bound, count, opts \\ []) do
+    {msg, opts} = Keyword.pop(opts, :error)
+
+    if msg do
+      custom_error(issue: {msg, [count: count]})
+    else
+      message =
+        case bound do
+          :min -> "must contain at least %{count} matching item(s)"
+          :max -> "must contain at most %{count} matching item(s)"
+        end
+
+      new(
+        code: :invalid_contains,
+        issue: {message, [count: count]},
         path: opts[:path] || []
       )
     end
