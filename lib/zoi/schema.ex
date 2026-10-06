@@ -71,13 +71,15 @@ defmodule Zoi.Schema do
     do_traverse_root(schema, fun)
   end
 
-  defp do_traverse_root(%Zoi.Types.Map{fields: fields} = obj, fun) when is_list(fields) do
+  defp do_traverse_root(%Zoi.Types.Map{fields: fields} = map, fun) when is_list(fields) do
     transformed_fields =
       Enum.map(fields, fn {key, type} ->
         {key, do_traverse(type, [key], fun)}
       end)
 
-    Map.put(obj, :fields, transformed_fields)
+    map
+    |> Map.put(:fields, transformed_fields)
+    |> traverse_key_type([], fun)
   end
 
   defp do_traverse_root(%Zoi.Types.Struct{fields: fields} = struct, fun) do
@@ -117,14 +119,15 @@ defmodule Zoi.Schema do
 
   defp do_traverse_root(schema, _fun), do: schema
 
-  defp do_traverse(%Zoi.Types.Map{fields: fields} = obj, path, fun) when is_list(fields) do
+  defp do_traverse(%Zoi.Types.Map{fields: fields} = map, path, fun) when is_list(fields) do
     transformed_fields =
       Enum.map(fields, fn {key, type} ->
         {key, do_traverse(type, path ++ [key], fun)}
       end)
 
-    obj
+    map
     |> Map.put(:fields, transformed_fields)
+    |> traverse_key_type(path, fun)
     |> apply_fun(path, fun)
   end
 
@@ -225,6 +228,14 @@ defmodule Zoi.Schema do
 
   defp do_traverse(schema, path, fun) do
     apply_fun(schema, path, fun)
+  end
+
+  defp traverse_key_type(%{key_type: nil} = schema, _path, _fun) do
+    schema
+  end
+
+  defp traverse_key_type(schema, path, fun) do
+    Map.put(schema, :key_type, do_traverse(schema.key_type, path, fun))
   end
 
   # Apply function based on arity

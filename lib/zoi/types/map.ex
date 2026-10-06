@@ -205,9 +205,18 @@ defmodule Zoi.Types.Map do
           end),
         additionalProperties: schema.unrecognized_keys != :error
       }
+      |> encode_property_names(schema.key_type)
     end
 
     def encode(_schema), do: %{type: :object}
+
+    defp encode_property_names(json_schema, nil) do
+      json_schema
+    end
+
+    defp encode_property_names(json_schema, key_type) do
+      Map.put(json_schema, :propertyNames, Zoi.JSONSchema.encode_schema(key_type))
+    end
   end
 
   defimpl Zoi.Describe.Encoder do

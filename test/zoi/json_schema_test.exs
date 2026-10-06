@@ -34,6 +34,14 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.enum([1.5, %{"status" => "ready"}, [1, 2]]),
          %{enum: [1.5, %{"status" => "ready"}, [1, 2]]}},
         {Zoi.map(), %{type: :object}},
+        {%{Zoi.map(%{}) | key_type: Zoi.string() |> Zoi.min(2)},
+         %{
+           type: :object,
+           properties: %{},
+           required: [],
+           additionalProperties: true,
+           propertyNames: %{type: :string, minLength: 2}
+         }},
         {Zoi.map() |> Zoi.min(1) |> Zoi.max(2),
          %{type: :object, minProperties: 1, maxProperties: 2}},
         {Zoi.intersection([Zoi.string(), Zoi.literal("fixed")]),
@@ -768,6 +776,20 @@ defmodule Zoi.JSONSchemaTest do
          [-1, 11, 3]},
         {%{"type" => "object", "minProperties" => 1}, %{"a" => 1}, [%{}]},
         {%{"type" => "object", "maxProperties" => 0}, %{}, [%{"a" => 1}]},
+        {%{"type" => "object", "propertyNames" => %{"pattern" => "^[a-z]+$"}},
+         %{"name" => "Alice"}, [%{"Name" => "Alice"}]},
+        {%{
+           "type" => "object",
+           "properties" => %{"Name" => %{"type" => "string"}},
+           "propertyNames" => %{"pattern" => "^[a-z]+$"}
+         }, %{}, [%{"Name" => "Alice"}]},
+        {%{
+           "type" => "object",
+           "properties" => %{"name" => %{"type" => "string"}},
+           "additionalProperties" => %{"type" => "integer"},
+           "propertyNames" => %{"minLength" => 2}
+         }, %{"name" => "Alice", "age" => 30},
+         [%{"name" => "Alice", "a" => 30}, %{"name" => 1}, %{"age" => "thirty"}]},
         {%{
            "type" => "object",
            "properties" => %{"name" => %{"type" => "string"}},
