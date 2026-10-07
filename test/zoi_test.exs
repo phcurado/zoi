@@ -379,6 +379,21 @@ defmodule ZoiTest do
     end
   end
 
+  describe "none/1" do
+    test "none rejects every value" do
+      for input <- [nil, true, false, 1, 1.5, "hello", :atom, [], %{}] do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.none(), input)
+        assert error.code == :invalid_type
+        assert Exception.message(error) == "invalid type: expected none"
+      end
+    end
+
+    test "none with custom error" do
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(Zoi.none(error: "not allowed"), nil)
+      assert Exception.message(error) == "not allowed"
+    end
+  end
+
   describe "atom/1" do
     test "atom with correct value" do
       assert {:ok, :hello} == Zoi.parse(Zoi.atom(), :hello)

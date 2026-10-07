@@ -28,6 +28,10 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.any(), %{}},
         {Zoi.array(Zoi.integer()), %{type: :array, items: %{type: :integer}}},
         {Zoi.array(), %{type: :array}},
+        {Zoi.array(Zoi.none()), %{type: :array, items: false}},
+        {%{Zoi.array(Zoi.none()) | prefix_items: [Zoi.string()]},
+         %{type: :array, prefixItems: [%{type: :string}], items: false}},
+        {Zoi.union([Zoi.none(), Zoi.string()]), %{anyOf: [false, %{type: :string}]}},
         {Zoi.array() |> Zoi.contains(Zoi.number()),
          %{type: :array, contains: %{type: :number}, minContains: 1}},
         {Zoi.array(Zoi.string()) |> Zoi.contains(Zoi.string() |> Zoi.min(3), min: 0, max: 2),
@@ -717,6 +721,21 @@ defmodule Zoi.JSONSchemaTest do
       end)
     end
 
+    test "decodes boolean schemas" do
+      any = Zoi.from_json_schema(true)
+      none = Zoi.from_json_schema(false)
+
+      for input <- [nil, true, false, 1, 1.5, "hello", [], %{}] do
+        assert {:ok, ^input} = Zoi.parse(any, input)
+        assert {:error, [%Zoi.Error{code: :invalid_type}]} = Zoi.parse(none, input)
+      end
+
+      assert Zoi.to_json_schema(none) == false
+
+      contains = Zoi.from_json_schema(%{"type" => "array", "contains" => false})
+      assert {:error, [%Zoi.Error{code: :invalid_contains}]} = Zoi.parse(contains, [1])
+    end
+
     test "decoded integer schemas accept floats with no fractional part" do
       schema = Zoi.from_json_schema(%{"type" => "integer"})
 
@@ -789,6 +808,27 @@ defmodule Zoi.JSONSchemaTest do
     test "decodes constraints and rejects invalid values" do
       cases = [
         {%{"type" => "string", "minLength" => 2, "maxLength" => 5}, "abc", ["a", "abcdef"]},
+        {%{"type" => "array", "items" => true}, [1, nil], []},
+        {%{"type" => "array", "items" => false}, [], [[nil], [1]]},
+        {%{
+           "type" => "array",
+           "prefixItems" => [%{"type" => "string"}],
+           "items" => false
+         }, ["hello"], [[1], ["hello", 1]]},
+        {%{"type" => "array", "prefixItems" => [true, false]}, [1], [[1, nil]]},
+        {%{
+           "type" => "array",
+           "contains" => true,
+           "minContains" => 2,
+           "maxContains" => 2
+         }, [1, nil], [[], [1], [1, 2, 3]]},
+        {%{"type" => "array", "contains" => false, "minContains" => 0}, [1, nil], []},
+        {%{"type" => "object", "properties" => %{"a" => true, "b" => false}}, %{"a" => nil},
+         [%{"b" => nil}, %{"b" => 1}]},
+        {%{"type" => "object", "propertyNames" => false}, %{}, [%{"a" => 1}]},
+        {%{"type" => "object", "propertyNames" => true}, %{"a" => 1}, []},
+        {%{"anyOf" => [false, %{"type" => "string"}]}, "hello", [1]},
+        {%{"allOf" => [true, %{"type" => "string"}]}, "hello", [1]},
         {%{"type" => "integer", "minimum" => 0, "maximum" => 10, "multipleOf" => 2}, 4,
          [-1, 11, 3]},
         {%{"type" => "integer", "multipleOf" => 0.1}, 1, [1.5]},

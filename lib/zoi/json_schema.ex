@@ -40,6 +40,7 @@ defmodule Zoi.JSONSchema do
   | `Zoi.boolean/1` | `"boolean"` |
   | `Zoi.null/1` | `"null"` |
   | `Zoi.any/1` | unconstrained schema (`{}`) |
+  | `Zoi.none/1` | `false` |
   | `Zoi.literal/2` | `const` |
   | `Zoi.enum/2` | `enum` |
   | `Zoi.array/2` | `"array"` |
@@ -121,7 +122,7 @@ defmodule Zoi.JSONSchema do
   @draft "https://json-schema.org/draft/2020-12/schema"
 
   @doc """
-  Encodes a `Zoi` schema into a JSON Schema map.
+  Encodes a `Zoi` schema into a JSON Schema map or boolean.
 
   ## Examples
 
@@ -135,7 +136,7 @@ defmodule Zoi.JSONSchema do
         additionalProperties: false
       }
   """
-  @spec encode(Zoi.schema()) :: map()
+  @spec encode(Zoi.schema()) :: map() | boolean()
   def encode(schema) do
     schema
     |> encode_schema()
@@ -143,9 +144,10 @@ defmodule Zoi.JSONSchema do
   end
 
   @doc """
-  Decodes a JSON Schema map into a `Zoi` schema.
+  Decodes a JSON Schema map or boolean into a `Zoi` schema.
 
-  The input must be a JSON-shaped map with string keys, as produced by a JSON parser.
+  Maps must have string keys, as produced by a JSON parser.
+  `true` accepts any value; `false` rejects every value.
 
   ## Examples
 
@@ -154,17 +156,22 @@ defmodule Zoi.JSONSchema do
       iex> Zoi.parse(schema, %{"name" => "Alice"})
       {:ok, %{"name" => "Alice"}}
   """
-  @spec decode(map()) :: Zoi.schema()
+  @spec decode(map() | boolean()) :: Zoi.schema()
   defdelegate decode(json_schema), to: Decoder
 
   @doc false
-  @spec encode_schema(Zoi.schema()) :: map()
+  @spec encode_schema(Zoi.schema()) :: map() | boolean()
   def encode_schema(schema) do
-    schema
-    |> Encoder.encode()
-    |> encode_metadata(schema)
-    |> encode_refinements(schema)
-    |> encode_default(schema.meta)
+    case Encoder.encode(schema) do
+      false ->
+        false
+
+      json_schema ->
+        json_schema
+        |> encode_metadata(schema)
+        |> encode_refinements(schema)
+        |> encode_default(schema.meta)
+    end
   end
 
   defp encode_default(json_schema, meta) do
@@ -173,6 +180,10 @@ defmodule Zoi.JSONSchema do
     else
       json_schema
     end
+  end
+
+  defp add_dialect(false) do
+    false
   end
 
   defp add_dialect(encoded_schema) do

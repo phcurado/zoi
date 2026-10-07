@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `Zoi.none/1` rejects every input
+- `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support boolean schemas
 - `Zoi.contains/3` validates the number of array items matching a schema
 - `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support `contains`, `minContains` and `maxContains`
 - `Zoi.min/2` and `Zoi.max/2` now support map field counts
