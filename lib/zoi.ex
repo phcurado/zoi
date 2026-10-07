@@ -1290,6 +1290,9 @@ defmodule Zoi do
   @doc """
   Defines a union type schema.
 
+  Returns the parsed value from the first matching schema.
+  Use `exclusive_union/2` to require exactly one matching schema.
+
   ## Example
 
       iex> schema = Zoi.union([Zoi.string(), Zoi.integer()])
@@ -1358,6 +1361,29 @@ defmodule Zoi do
   @doc group: "Encapsulated Types"
   @spec union(fields :: [schema()], opts :: options()) :: schema()
   defdelegate union(fields, opts \\ []), to: Zoi.Types.Union, as: :new
+
+  @doc """
+  Defines a union that requires exactly one matching schema.
+
+  Unlike `union/2`, this schema rejects inputs matching more than one branch.
+  Returns the parsed value from the matching schema.
+
+  ## Example
+
+      iex> schema = Zoi.exclusive_union([Zoi.string(), Zoi.any()])
+      iex> Zoi.parse(schema, 42)
+      {:ok, 42}
+      iex> {:error, [%Zoi.Error{message: message}]} = Zoi.parse(schema, "hello")
+      iex> message
+      "input matches more than one union schema"
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.ExclusiveUnion.opts())}
+  """
+  @doc group: "Encapsulated Types"
+  @spec exclusive_union(fields :: [schema()], opts :: options()) :: schema()
+  defdelegate exclusive_union(fields, opts \\ []), to: Zoi.Types.ExclusiveUnion, as: :new
 
   @doc """
   Defines an intersection type schema.
@@ -3248,6 +3274,11 @@ defmodule Zoi do
     %{schema | schemas: schemas}
   end
 
+  def refine(%Zoi.Types.ExclusiveUnion{schemas: schemas} = schema, fun) do
+    schemas = Enum.map(schemas, &refine(&1, fun))
+    %{schema | schemas: schemas}
+  end
+
   def refine(%Zoi.Types.Intersection{schemas: schemas} = schema, fun) do
     schemas =
       Enum.map(schemas, fn sub_schema ->
@@ -3332,6 +3363,11 @@ defmodule Zoi do
         transform(sub_schema, fun)
       end)
 
+    %{schema | schemas: schemas}
+  end
+
+  def transform(%Zoi.Types.ExclusiveUnion{schemas: schemas} = schema, fun) do
+    schemas = Enum.map(schemas, &transform(&1, fun))
     %{schema | schemas: schemas}
   end
 

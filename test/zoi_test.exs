@@ -856,6 +856,59 @@ defmodule ZoiTest do
     end
   end
 
+  describe "exclusive_union/2" do
+    test "requires exactly one matching schema" do
+      schema = Zoi.exclusive_union([Zoi.number(), Zoi.integer()])
+      assert %Zoi.Types.ExclusiveUnion{} = schema
+
+      assert {:ok, 1.5} == Zoi.parse(schema, 1.5)
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 1)
+      assert Exception.message(error) == "input matches more than one union schema"
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "hello")
+      assert Exception.message(error) == "invalid type: expected integer"
+
+      assert {:ok, 1} == Zoi.parse(Zoi.union([Zoi.number(), Zoi.integer()]), 1)
+    end
+
+    test "preserves parsed values" do
+      schema = Zoi.exclusive_union([Zoi.integer(coerce: true), Zoi.boolean()])
+
+      assert {:ok, 42} == Zoi.parse(schema, "42")
+      assert {:ok, true} == Zoi.parse(schema, true)
+    end
+
+    test "custom error" do
+      schema = Zoi.exclusive_union([Zoi.number(), Zoi.integer()], error: "one match required")
+
+      for input <- [1, "hello"] do
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, input)
+        assert Exception.message(error) == "one match required"
+      end
+    end
+
+    test "refinements apply to each branch" do
+      schema = Zoi.exclusive_union([Zoi.string(), Zoi.integer()]) |> Zoi.min(5)
+
+      assert {:ok, "hello"} == Zoi.parse(schema, "hello")
+      assert {:ok, 6} == Zoi.parse(schema, 6)
+      assert {:error, _} = Zoi.parse(schema, "abc")
+      assert {:error, _} = Zoi.parse(schema, 3)
+    end
+
+    test "transforms apply to each branch" do
+      schema = Zoi.exclusive_union([Zoi.string(), Zoi.integer()]) |> Zoi.to_downcase()
+
+      assert {:ok, "hello"} == Zoi.parse(schema, "HELLO")
+      assert {:ok, 42} == Zoi.parse(schema, 42)
+    end
+
+    test "requires at least two schemas" do
+      for schemas <- [[], [Zoi.string()]] do
+        assert_raise ArgumentError, fn -> Zoi.exclusive_union(schemas) end
+      end
+    end
+  end
+
   describe "union/2" do
     test "union with correct values" do
       schema = Zoi.union([Zoi.string(), Zoi.integer()])
