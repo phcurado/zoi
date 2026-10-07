@@ -41,4 +41,10 @@ defmodule Zoi.Validations do
   @spec unwrap_validation(value()) :: value()
   def unwrap_validation(nil), do: nil
   def unwrap_validation({value, _opts}), do: value
+
+  # The JSON Schema decoder refines `Zoi.number/1` with this check for
+  # `"type": "integer"`, and the encoder maps it back to `type: :integer`.
+  @spec validate_integer(input(), opts()) :: :ok | {:error, Zoi.Error.t()}
+  def validate_integer(input, _opts) when input == trunc(input), do: :ok
+  def validate_integer(_input, _opts), do: {:error, Zoi.Error.invalid_type(:integer)}
 end
