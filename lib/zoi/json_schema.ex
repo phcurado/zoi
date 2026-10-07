@@ -296,6 +296,21 @@ defmodule Zoi.JSONSchema do
   end
 
   defp encode_refinement(
+         {Zoi.Validations.Contains, :validate, [schema, opts]},
+         %{type: :array} = json_schema
+       ) do
+    json_schema =
+      json_schema
+      |> Map.put(:contains, encode_schema(schema))
+      |> Map.put(:minContains, Keyword.get(opts, :min, 1))
+
+    case Keyword.get(opts, :max) do
+      nil -> json_schema
+      max -> Map.put(json_schema, :maxContains, max)
+    end
+  end
+
+  defp encode_refinement(
          {Zoi.Validations.Url, :validate, [_opts]},
          %{type: :string} = json_schema
        ) do

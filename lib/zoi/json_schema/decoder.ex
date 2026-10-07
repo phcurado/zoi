@@ -123,6 +123,7 @@ defmodule Zoi.JSONSchema.Decoder do
     |> maybe_apply(json, "minItems", &Zoi.min/2)
     |> maybe_apply(json, "maxItems", &Zoi.max/2)
     |> maybe_apply_unique(json)
+    |> maybe_apply_contains(json)
   end
 
   defp maybe_apply_unique(schema, %{"uniqueItems" => true}) do
@@ -130,6 +131,15 @@ defmodule Zoi.JSONSchema.Decoder do
   end
 
   defp maybe_apply_unique(schema, _), do: schema
+
+  defp maybe_apply_contains(schema, %{"contains" => contains} = json) do
+    opts = [min: Map.get(json, "minContains", 1), max: Map.get(json, "maxContains")]
+    Zoi.contains(schema, decode_schema(contains), opts)
+  end
+
+  defp maybe_apply_contains(schema, _) do
+    schema
+  end
 
   defp object_schema(schema) do
     properties = Map.get(schema, "properties", %{})

@@ -2668,6 +2668,38 @@ defmodule Zoi do
     end
   end
 
+  @contains_options_schema Zoi.Opts.contains_opts()
+
+  @doc """
+  Validates that an array contains items matching a schema.
+
+  By default, at least one item must match. Non-matching items are allowed,
+  and the matching schema does not transform the array's values.
+
+  ## Options
+
+  - `:min` - minimum number of matching items (default: `1`)
+  - `:max` - maximum number of matching items (no limit by default)
+  - `:error` - custom error message
+
+  ## Example
+      iex> schema = Zoi.array() |> Zoi.contains(Zoi.number(), min: 1, max: 2)
+      iex> Zoi.parse(schema, ["hello", 1])
+      {:ok, ["hello", 1]}
+      iex> {:error, [%Zoi.Error{code: code}]} = Zoi.parse(schema, [1, 2, 3])
+      iex> code
+      :invalid_contains
+  """
+  @doc group: "Refinements"
+  @spec contains(schema :: schema(), item_schema :: schema(), opts :: options()) :: schema()
+  def contains(schema, item_schema, opts \\ []) do
+    @contains_options_schema
+    |> parse!(opts)
+    |> then(fn opts ->
+      refine(schema, {Zoi.Validations.Contains, :validate, [item_schema, opts]})
+    end)
+  end
+
   @doc ~S"""
   Validates that the input value is within a list of valid literals.
 

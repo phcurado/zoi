@@ -4502,6 +4502,87 @@ defmodule ZoiTest do
     end
   end
 
+  describe "contains/3" do
+    test "contains matching items" do
+      schema = Zoi.array() |> Zoi.contains(Zoi.number())
+
+      assert {:ok, ["hello", 1]} == Zoi.parse(schema, ["hello", 1])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, ["hello"])
+      assert error.code == :invalid_contains
+      assert Exception.message(error) == "must contain at least 1 matching item(s)"
+      assert error.path == []
+      assert {:error, _} = Zoi.parse(schema, [])
+    end
+
+    test "contains with minimum and maximum matches" do
+      schema = Zoi.array() |> Zoi.contains(Zoi.number(), min: 2, max: 3)
+
+      assert {:ok, [1, 1]} == Zoi.parse(schema, [1, 1])
+      assert {:ok, [1, "hello", 2, 3]} == Zoi.parse(schema, [1, "hello", 2, 3])
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1])
+      assert Exception.message(error) == "must contain at least 2 matching item(s)"
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [1, 2, 3, 4])
+      assert Exception.message(error) == "must contain at most 3 matching item(s)"
+    end
+
+    test "contains with zero matches allowed" do
+      schema = Zoi.array() |> Zoi.contains(Zoi.number(), min: 0, max: 0)
+
+      assert {:ok, []} == Zoi.parse(schema, [])
+      assert {:ok, ["hello"]} == Zoi.parse(schema, ["hello"])
+      assert {:error, _} = Zoi.parse(schema, [1])
+    end
+
+    test "contains does not transform matching items" do
+      schema = Zoi.array() |> Zoi.contains(Zoi.integer(coerce: true))
+
+      assert {:ok, ["1", "hello"]} == Zoi.parse(schema, ["1", "hello"])
+    end
+
+    test "contains follows transform order" do
+      schema =
+        Zoi.array()
+        |> Zoi.transform(fn _ -> [1] end)
+        |> Zoi.contains(Zoi.number())
+
+      assert {:ok, [1]} == Zoi.parse(schema, [])
+
+      schema =
+        Zoi.array()
+        |> Zoi.contains(Zoi.number())
+        |> Zoi.transform(fn _ -> [1] end)
+
+      assert {:error, _} = Zoi.parse(schema, [])
+    end
+
+    test "contains validates options when building the schema" do
+      for opts <- [[min: -1], [min: 1.5], [max: -1], [max: "2"], [unknown: true]] do
+        assert_raise Zoi.ParseError, fn ->
+          Zoi.array() |> Zoi.contains(Zoi.number(), opts)
+        end
+      end
+
+      schema = Zoi.array() |> Zoi.contains(Zoi.number(), max: nil)
+      assert {:ok, [1, 2, 3]} == Zoi.parse(schema, [1, 2, 3])
+    end
+
+    test "contains with conflicting bounds" do
+      schema = Zoi.array() |> Zoi.contains(Zoi.number(), min: 2, max: 1)
+
+      for input <- [[1], [1, 2]] do
+        assert {:error, [%Zoi.Error{code: :invalid_contains}]} = Zoi.parse(schema, input)
+      end
+    end
+
+    test "contains with custom error" do
+      schema = Zoi.array() |> Zoi.contains(Zoi.number(), error: "expected %{count} number(s)")
+
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, [])
+      assert error.code == :custom
+      assert Exception.message(error) == "expected 1 number(s)"
+    end
+  end
+
   describe "one_of/3" do
     test "valid string value" do
       schema = Zoi.string() |> Zoi.one_of(["red", "green", "blue"])

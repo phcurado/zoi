@@ -5,6 +5,6 @@ defmodule Zoi.Types.Nullable do
 
   def new(inner, opts \\ []) do
     inner_opts = Meta.propagate_opts(inner.meta)
-    Zoi.union([Zoi.null(), inner], Keyword.merge(inner_opts, opts))
+    Zoi.Types.Union.new([Zoi.Types.Null.new(), inner], Keyword.merge(inner_opts, opts))
   end
 end

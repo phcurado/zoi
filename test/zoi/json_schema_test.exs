@@ -28,6 +28,16 @@ defmodule Zoi.JSONSchemaTest do
         {Zoi.any(), %{}},
         {Zoi.array(Zoi.integer()), %{type: :array, items: %{type: :integer}}},
         {Zoi.array(), %{type: :array}},
+        {Zoi.array() |> Zoi.contains(Zoi.number()),
+         %{type: :array, contains: %{type: :number}, minContains: 1}},
+        {Zoi.array(Zoi.string()) |> Zoi.contains(Zoi.string() |> Zoi.min(3), min: 0, max: 2),
+         %{
+           type: :array,
+           items: %{type: :string},
+           contains: %{type: :string, minLength: 3},
+           minContains: 0,
+           maxContains: 2
+         }},
         {Zoi.map_set(Zoi.integer()),
          %{type: :array, items: %{type: :integer}, uniqueItems: true}},
         {Zoi.map_set(), %{type: :array, uniqueItems: true}},
@@ -777,7 +787,38 @@ defmodule Zoi.JSONSchemaTest do
            "items" => %{"type" => "integer"},
            "minItems" => 1,
            "maxItems" => 3
-         }, [1, 2], [[], [1, 2, 3, 4]]}
+         }, [1, 2], [[], [1, 2, 3, 4]]},
+        {%{"type" => "array", "contains" => %{"type" => "number"}}, ["hello", 1],
+         [[], ["hello"]]},
+        {%{
+           "type" => "array",
+           "contains" => %{"type" => "number"},
+           "minContains" => 2,
+           "maxContains" => 3
+         }, ["hello", 1, 2], [[1], [1, 2, 3, 4]]},
+        {%{
+           "type" => "array",
+           "contains" => %{"type" => "number"},
+           "minContains" => 0,
+           "maxContains" => 0
+         }, [], [[1]]},
+        {%{
+           "type" => "array",
+           "contains" => %{"type" => "number"},
+           "minContains" => 0
+         }, ["hello"], []},
+        {%{
+           "type" => "array",
+           "contains" => %{"type" => "number"},
+           "maxContains" => 1
+         }, [1], [[], [1, 1]]},
+        {%{
+           "type" => "array",
+           "items" => %{"type" => "string"},
+           "contains" => %{"minLength" => 3, "type" => "string"},
+           "minContains" => 2
+         }, ["a", "abc", "abc"], [["abc"], ["a", "ab"], ["abc", "def", 1]]},
+        {%{"type" => "array", "minContains" => 4, "maxContains" => 0}, [1, 2, 3], []}
       ]
 
       Enum.each(cases, fn {json, valid, invalids} ->
