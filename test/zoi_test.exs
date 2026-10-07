@@ -248,6 +248,9 @@ defmodule ZoiTest do
       assert {:ok, 12.34} == Zoi.parse(Zoi.float(coerce: false), "12.34", coerce: true)
       assert {:ok, 0.0} == Zoi.parse(Zoi.float(), "0", coerce: true)
       assert {:ok, -1.0} == Zoi.parse(Zoi.float(), "-1", coerce: true)
+      assert {:ok, 42.0} = Zoi.parse(Zoi.float(), 42, coerce: true)
+      assert {:ok, 0.0} = Zoi.parse(Zoi.float(), 0, coerce: true)
+      assert {:ok, -1.0} = Zoi.parse(Zoi.float(coerce: true), -1)
     end
 
     test "float with coercion but incorrect value" do
