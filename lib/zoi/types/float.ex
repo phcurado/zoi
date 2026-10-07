@@ -63,6 +63,12 @@ defmodule Zoi.Types.Float do
 
     defp parse_type(input, _coerce, _schema) when is_float(input), do: {:ok, input}
 
+    defp parse_type(input, true, schema) when is_integer(input) do
+      input
+      |> Integer.to_string()
+      |> parse_type(true, schema)
+    end
+
     defp parse_type(input, true, schema) when is_binary(input) do
       case Float.parse(input) do
         {float, ""} -> {:ok, float}

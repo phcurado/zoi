@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- `Zoi.float/1` now coerces integer inputs when coercion is enabled
 - `Zoi.from_json_schema/1` now preserves sibling constraints alongside combinators, `enum` and `const`
 - `Zoi.from_json_schema/1` now enforces exactly one match for `oneOf` and accepts single-branch combinators
 - `Zoi.multiple_of/3` now handles fractional divisors without crashes or float rounding errors
