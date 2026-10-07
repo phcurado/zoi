@@ -42,6 +42,20 @@ defmodule Zoi.Validations do
   def unwrap_validation(nil), do: nil
   def unwrap_validation({value, _opts}), do: value
 
+  @spec multiple_of?(number() | Decimal.t(), number() | Decimal.t()) :: boolean()
+  def multiple_of?(input, value) when is_integer(input) and is_integer(value) do
+    rem(input, value) == 0
+  end
+
+  def multiple_of?(input, value) do
+    {:ok, decimal_input} = Decimal.cast(input)
+    {:ok, decimal_value} = Decimal.cast(value)
+
+    decimal_input
+    |> Decimal.rem(decimal_value)
+    |> Decimal.eq?(0)
+  end
+
   # The JSON Schema decoder refines `Zoi.number/1` with this check for
   # `"type": "integer"`, and the encoder maps it back to `type: :integer`.
   @spec validate_integer(input(), opts()) :: :ok | {:error, Zoi.Error.t()}

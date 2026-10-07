@@ -156,9 +156,7 @@ defmodule Zoi.Types.Float do
     end
 
     def validate(_schema, input, value, opts) do
-      quotient = input / value
-
-      if quotient == Float.floor(quotient) do
+      if Zoi.Validations.multiple_of?(input, value) do
         :ok
       else
         {:error, Zoi.Error.multiple_of(value, opts)}
