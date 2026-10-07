@@ -4394,6 +4394,10 @@ defmodule ZoiTest do
       assert error.code == :multiple_of
       assert Exception.message(error) == "must be a multiple of 5"
       assert error.issue == {"must be a multiple of %{value}", [value: 5]}
+
+      schema = Zoi.integer() |> Zoi.multiple_of(0.3)
+      assert {:ok, 3} == Zoi.parse(schema, 3)
+      assert {:error, [%Zoi.Error{code: :multiple_of}]} = Zoi.parse(schema, 1)
     end
 
     test "multiple_of for float" do
@@ -4412,6 +4416,24 @@ defmodule ZoiTest do
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 7)
       assert error.code == :multiple_of
       assert Exception.message(error) == "must be a multiple of 3"
+
+      schema = Zoi.number() |> Zoi.multiple_of(0.3)
+      assert {:ok, 3} == Zoi.parse(schema, 3)
+      assert {:error, [%Zoi.Error{code: :multiple_of}]} = Zoi.parse(schema, 1)
+    end
+
+    test "multiple_of with fractional divisors" do
+      for schema <- [Zoi.float(), Zoi.number()] do
+        schema = Zoi.multiple_of(schema, 0.1)
+
+        for input <- [0.3, -0.3, 0.0] do
+          assert {:ok, ^input} = Zoi.parse(schema, input)
+        end
+
+        for input <- [0.35, 0.30000000000000004] do
+          assert {:error, [%Zoi.Error{code: :multiple_of}]} = Zoi.parse(schema, input)
+        end
+      end
     end
 
     test "multiple_of for decimal" do
@@ -4428,6 +4450,10 @@ defmodule ZoiTest do
       assert {:ok, 14} == Zoi.parse(schema, 14)
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, 10)
       assert error.code == :multiple_of
+
+      schema = Zoi.integer(multiple_of: 0.3)
+      assert {:ok, 3} == Zoi.parse(schema, 3)
+      assert {:error, [%Zoi.Error{code: :multiple_of}]} = Zoi.parse(schema, 1)
     end
 
     test "custom message" do

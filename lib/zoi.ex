@@ -2380,61 +2380,55 @@ defmodule Zoi do
     |> Zoi.Types.NaiveDateTime.new()
   end
 
-  if Code.ensure_loaded?(Decimal) do
-    @doc """
-    Defines a decimal type schema.
+  @doc """
+  Defines a decimal type schema.
 
-    This type is used to validate and parse decimal numbers, which can be useful for financial calculations or precise numeric values.
-    It uses the `Decimal` library for handling decimal numbers. It will convert the input to a `Decimal` structure.
+  This type is used to validate and parse decimal numbers, which can be useful for financial calculations or precise numeric values.
+  It uses the `Decimal` library for handling decimal numbers. It will convert the input to a `Decimal` structure.
 
-    ## Example
+  ## Example
 
-        iex> schema = Zoi.decimal()
-        iex> Zoi.parse(schema, Decimal.new("123.45"))
-        {:ok, Decimal.new("123.45")}
-        iex> Zoi.parse(schema, "invalid-decimal")
-        {:error,
-         [
-           %Zoi.Error{
-             code: :invalid_type,
-             message: "invalid type: expected decimal",
-             issue: {"invalid type: expected decimal", [type: :decimal]},
-             path: []
-           }
-         ]}
+      iex> schema = Zoi.decimal()
+      iex> Zoi.parse(schema, Decimal.new("123.45"))
+      {:ok, Decimal.new("123.45")}
+      iex> Zoi.parse(schema, "invalid-decimal")
+      {:error,
+       [
+         %Zoi.Error{
+           code: :invalid_type,
+           message: "invalid type: expected decimal",
+           issue: {"invalid type: expected decimal", [type: :decimal]},
+           path: []
+         }
+       ]}
 
-    You can pass constraint options directly in the constructor:
+  You can pass constraint options directly in the constructor:
 
-        iex> schema = Zoi.decimal(gte: Decimal.new("0"), lte: Decimal.new("100"))
-        iex> Zoi.parse(schema, Decimal.new("50"))
-        {:ok, Decimal.new("50")}
-        iex> {:error, [%{code: code}]} = Zoi.parse(schema, Decimal.new("-1"))
-        iex> code
-        :greater_than_or_equal_to
+      iex> schema = Zoi.decimal(gte: Decimal.new("0"), lte: Decimal.new("100"))
+      iex> Zoi.parse(schema, Decimal.new("50"))
+      {:ok, Decimal.new("50")}
+      iex> {:error, [%{code: code}]} = Zoi.parse(schema, Decimal.new("-1"))
+      iex> code
+      :greater_than_or_equal_to
 
-    You can also specify the `:coerce` option to allow coercion from strings or integers:
+  You can also specify the `:coerce` option to allow coercion from strings or integers:
 
-        iex> schema = Zoi.decimal(coerce: true)
-        iex> Zoi.parse(schema, "123.45")
-        {:ok, Decimal.new("123.45")}
-        iex> Zoi.parse(schema, 123)
-        {:ok, Decimal.new("123")}
+      iex> schema = Zoi.decimal(coerce: true)
+      iex> Zoi.parse(schema, "123.45")
+      {:ok, Decimal.new("123.45")}
+      iex> Zoi.parse(schema, 123)
+      {:ok, Decimal.new("123")}
 
-    ## Options
+  ## Options
 
-    #{Zoi.Describe.generate(Zoi.Types.Decimal.opts())}
-    """
-    @doc group: "Structured Types"
-    @spec decimal(opts :: options()) :: schema()
-    def decimal(opts \\ []) do
-      Zoi.Types.Decimal.opts()
-      |> parse!(opts)
-      |> Zoi.Types.Decimal.new()
-    end
-  else
-    def decimal(_opts \\ []) do
-      raise "`Decimal` library is not available. Please add `{:decimal, \"~> 2.0\"}` to your mix.exs dependencies."
-    end
+  #{Zoi.Describe.generate(Zoi.Types.Decimal.opts())}
+  """
+  @doc group: "Structured Types"
+  @spec decimal(opts :: options()) :: schema()
+  def decimal(opts \\ []) do
+    Zoi.Types.Decimal.opts()
+    |> parse!(opts)
+    |> Zoi.Types.Decimal.new()
   end
 
   @doc """
@@ -2968,7 +2962,8 @@ defmodule Zoi do
        ]}
   """
   @doc group: "Refinements"
-  @spec multiple_of(schema :: schema(), value :: number(), opts :: options()) :: schema()
+  @spec multiple_of(schema :: schema(), value :: number() | Decimal.t(), opts :: options()) ::
+          schema()
   def multiple_of(schema, value, opts \\ []) do
     if Enum.empty?(schema.meta.effects) do
       Zoi.Validations.MultipleOf.set(schema, value, opts)

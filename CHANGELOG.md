@@ -11,15 +11,19 @@ All notable changes to this project will be documented in this file.
 - `Zoi.min/2` and `Zoi.max/2` now support map field counts
 - `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support `minProperties` and `maxProperties`
 - `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support `propertyNames`
+- `Zoi.to_json_schema/1` now supports struct schemas
 
 ### Changed
 
+- Decimal is now a required dependency, supporting 2.2+ and 3.x
 - Improve schema construction and parsing performance
 
 ### Fixed
 
+- `Zoi.multiple_of/3` now handles fractional divisors without crashes or float rounding errors
 - `Zoi.enum/2` now accepts float, map and list values
 - `Zoi.to_json_schema/1` no longer emits `type: "string"` for non-string enums
+- `Zoi.from_json_schema/1` now accepts floats for integer schemas
 - `Zoi.from_json_schema/1` now preserves and validates additional properties
 - `Zoi.from_json_schema/1` now handles required keys not listed in `properties`
 - `Zoi.from_json_schema/1` now preserves date, time and date-time strings instead of converting them to structs

@@ -32,9 +32,9 @@ defmodule Zoi.Types.Integer do
           error: error
         ),
       multiple_of:
-        Zoi.Opts.constraint_schema(Zoi.Types.Integer.new([]),
+        Zoi.Opts.constraint_schema(Zoi.Types.Number.new([]),
           description: "integer must be multiple of",
-          error: error
+          error: "invalid type: expected number"
         )
     )
   end
@@ -156,7 +156,7 @@ defmodule Zoi.Types.Integer do
     end
 
     def validate(_schema, input, value, opts) do
-      if rem(input, value) == 0 do
+      if Zoi.Validations.multiple_of?(input, value) do
         :ok
       else
         {:error, Zoi.Error.multiple_of(value, opts)}
