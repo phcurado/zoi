@@ -121,6 +121,11 @@ defmodule Zoi.Schema do
     traverse_array(array, [], fun)
   end
 
+  defp do_traverse_root(%Zoi.Types.ExclusiveUnion{schemas: schemas} = union, fun) do
+    transformed_schemas = Enum.map(schemas, &do_traverse(&1, [], fun))
+    Map.put(union, :schemas, transformed_schemas)
+  end
+
   defp do_traverse_root(schema, _fun), do: schema
 
   defp do_traverse(%Zoi.Types.Map{fields: fields} = map, path, fun) when is_list(fields) do
@@ -203,6 +208,14 @@ defmodule Zoi.Schema do
       end)
 
     discriminated_union
+    |> Map.put(:schemas, transformed_schemas)
+    |> apply_fun(path, fun)
+  end
+
+  defp do_traverse(%Zoi.Types.ExclusiveUnion{schemas: schemas} = union, path, fun) do
+    transformed_schemas = Enum.map(schemas, &do_traverse(&1, path, fun))
+
+    union
     |> Map.put(:schemas, transformed_schemas)
     |> apply_fun(path, fun)
   end

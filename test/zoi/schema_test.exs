@@ -112,14 +112,27 @@ defmodule Zoi.SchemaTest do
     end
 
     test "applies transformation to unions" do
+      for constructor <- [&Zoi.union/1, &Zoi.exclusive_union/1] do
+        schema =
+          Zoi.map(%{
+            value: constructor.([Zoi.string(), Zoi.integer()])
+          })
+          |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+        value_field = schema.fields[:value]
+        [string_schema, integer_schema] = value_field.schemas
+
+        assert string_schema.coerce == true
+        assert integer_schema.coerce == true
+      end
+    end
+
+    test "applies transformation to root exclusive unions" do
       schema =
-        Zoi.map(%{
-          value: Zoi.union([Zoi.string(), Zoi.integer()])
-        })
+        Zoi.exclusive_union([Zoi.string(), Zoi.integer()])
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
 
-      value_field = schema.fields[:value]
-      [string_schema, integer_schema] = value_field.schemas
+      [string_schema, integer_schema] = schema.schemas
 
       assert string_schema.coerce == true
       assert integer_schema.coerce == true

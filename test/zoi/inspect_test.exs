@@ -15,6 +15,8 @@ defmodule Zoi.InspectTest do
       {Zoi.default(Zoi.string(), "hello"), "#Zoi.string<coerce: false, default: \"hello\">"},
       {Zoi.enum([:a, :b, :c]), "#Zoi.enum<coerce: false, values: [:a, :b, :c]>"},
       {Zoi.enum(a: "a", b: "b"), "#Zoi.enum<coerce: false, values: [a: \"a\", b: \"b\"]>"},
+      {Zoi.exclusive_union([Zoi.string(), Zoi.integer()]),
+       "#Zoi.exclusive_union<schemas: [#Zoi.string<coerce: false>, #Zoi.integer<coerce: false>]>"},
       {Zoi.float(), "#Zoi.float<coerce: false>"},
       {Zoi.function(), "#Zoi.function<>"},
       {Zoi.function(arity: 2), "#Zoi.function<arity: 2>"},

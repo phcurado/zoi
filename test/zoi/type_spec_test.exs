@@ -80,6 +80,7 @@ defmodule Zoi.TypeSpecTest do
          quote(do: {binary(), integer(), any()})},
         {Zoi.union([Zoi.string(), Zoi.integer(), Zoi.number()]),
          quote(do: binary() | integer() | number())},
+        {Zoi.exclusive_union([Zoi.string(), Zoi.integer()]), quote(do: binary() | integer())},
         {Zoi.lazy(fn -> Zoi.string() end), quote(do: term())}
       ]
 

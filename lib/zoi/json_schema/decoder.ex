@@ -1,6 +1,13 @@
 defmodule Zoi.JSONSchema.Decoder do
   @moduledoc false
 
+  @validation_keys ~w(
+    minLength maxLength pattern format
+    minimum maximum exclusiveMinimum exclusiveMaximum multipleOf
+    properties required additionalProperties minProperties maxProperties propertyNames
+    items prefixItems minItems maxItems uniqueItems contains
+  )
+
   @metadata_keys [
     {"title", :title},
     {"examples", :examples},
@@ -32,25 +39,52 @@ defmodule Zoi.JSONSchema.Decoder do
   defp decode_schema(schema) do
     schema
     |> base_schema()
+    |> List.wrap()
+    |> add_constraint(schema, "const", &Zoi.literal/1)
+    |> add_constraint(schema, "enum", &Zoi.enum/1)
+    |> add_constraint(schema, "anyOf", fn schemas -> decode_union(schemas, &Zoi.union/1) end)
+    |> add_constraint(schema, "oneOf", fn schemas ->
+      decode_union(schemas, &Zoi.exclusive_union/1)
+    end)
+    |> add_constraint(schema, "allOf", &decode_intersection/1)
+    |> Enum.reverse()
+    |> intersection_schema()
     |> apply_metadata(schema)
   end
 
-  defp base_schema(%{"oneOf" => schemas}) when is_list(schemas) do
-    Zoi.union(Enum.map(schemas, &decode_schema/1))
+  defp add_constraint(schemas, json, key, decoder) do
+    case Map.fetch(json, key) do
+      {:ok, value} -> [decoder.(value) | schemas]
+      :error -> schemas
+    end
   end
 
-  defp base_schema(%{"anyOf" => schemas}) when is_list(schemas) do
-    Zoi.union(Enum.map(schemas, &decode_schema/1))
+  defp decode_union(schemas, constructor) do
+    schemas |> Enum.map(&decode_schema/1) |> union_schema(constructor)
   end
 
-  defp base_schema(%{"allOf" => schemas}) when is_list(schemas) do
-    Zoi.intersection(Enum.map(schemas, &decode_schema/1))
+  defp union_schema([schema], _constructor) do
+    schema
   end
 
-  defp base_schema(%{"const" => value}), do: Zoi.literal(value)
+  defp union_schema(schemas, constructor) do
+    constructor.(schemas)
+  end
 
-  defp base_schema(%{"enum" => values}) when is_list(values) do
-    Zoi.enum(values)
+  defp decode_intersection(schemas) do
+    schemas |> Enum.map(&decode_schema/1) |> intersection_schema()
+  end
+
+  defp intersection_schema([]) do
+    Zoi.any()
+  end
+
+  defp intersection_schema([schema]) do
+    schema
+  end
+
+  defp intersection_schema(schemas) do
+    Zoi.intersection(schemas)
   end
 
   defp base_schema(%{"type" => "string"} = schema), do: string_schema(schema)
@@ -62,19 +96,18 @@ defmodule Zoi.JSONSchema.Decoder do
   defp base_schema(%{"type" => "object"} = schema), do: object_schema(schema)
 
   defp base_schema(%{"type" => types} = schema) when is_list(types) do
-    Zoi.union(Enum.map(types, fn t -> base_schema(Map.put(schema, "type", t)) end))
+    types
+    |> Enum.map(fn type -> base_schema(Map.put(schema, "type", type)) end)
+    |> union_schema(&Zoi.union/1)
   end
 
   defp base_schema(schema) when is_map(schema) do
-    cond do
-      Map.has_key?(schema, "properties") ->
-        object_schema(Map.put(schema, "type", "object"))
-
-      Map.has_key?(schema, "items") or Map.has_key?(schema, "prefixItems") ->
-        array_schema(Map.put(schema, "type", "array"))
-
-      true ->
-        Zoi.any()
+    if Enum.any?(@validation_keys, &Map.has_key?(schema, &1)) do
+      ~w(string number boolean null array object)
+      |> Enum.map(fn type -> base_schema(Map.put(schema, "type", type)) end)
+      |> Zoi.union()
+    else
+      nil
     end
   end
 

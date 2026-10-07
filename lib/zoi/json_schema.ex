@@ -48,9 +48,10 @@ defmodule Zoi.JSONSchema do
   | `Zoi.tuple/2` | `"array"` with `prefixItems` |
   | `Zoi.map/2` | `"object"` |
   | `Zoi.struct/3` | `"object"` (the Elixir module is not encoded) |
-  | `Zoi.union/2` | `oneOf` (decode also accepts `anyOf`) |
+  | `Zoi.union/2` | `anyOf` |
+  | `Zoi.exclusive_union/2` | `oneOf` |
   | `Zoi.intersection/2` | `allOf` |
-  | `Zoi.nullable/2` | nullable type via `oneOf` |
+  | `Zoi.nullable/2` | nullable type via `anyOf` |
   | `Zoi.date/1` and `Zoi.ISO.date/1` | `"string"` with `format: "date"` |
   | `Zoi.datetime/1` and `Zoi.ISO.datetime/1` | `"string"` with `format: "date-time"` |
   | `Zoi.naive_datetime/1` and `Zoi.ISO.naive_datetime/1` | `"string"` with `format: "date-time"` |

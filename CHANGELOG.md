@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `Zoi.exclusive_union/2` requires exactly one matching schema
 - `Zoi.none/1` rejects every input
 - `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support boolean schemas
 - `Zoi.contains/3` validates the number of array items matching a schema
@@ -22,6 +23,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- `Zoi.from_json_schema/1` now preserves sibling constraints alongside combinators, `enum` and `const`
+- `Zoi.from_json_schema/1` now enforces exactly one match for `oneOf` and accepts single-branch combinators
 - `Zoi.multiple_of/3` now handles fractional divisors without crashes or float rounding errors
 - `Zoi.enum/2` now accepts float, map and list values
 - `Zoi.to_json_schema/1` no longer emits `type: "string"` for non-string enums

@@ -68,6 +68,8 @@ defmodule Zoi.JSONSchemaTest do
          %{allOf: [%{type: :string}, %{const: "fixed"}]}},
         {Zoi.union([Zoi.string(), Zoi.integer()]),
          %{anyOf: [%{type: :string}, %{type: :integer}]}},
+        {Zoi.exclusive_union([Zoi.string(), Zoi.integer()]),
+         %{oneOf: [%{type: :string}, %{type: :integer}]}},
         {Zoi.nullable(Zoi.integer()), %{anyOf: [%{type: :null}, %{type: :integer}]}},
         {Zoi.lazy(fn -> Zoi.string() end), %{type: :string}},
         {Zoi.lazy({__MODULE__, :mfa_string_schema, []}), %{type: :string}},
@@ -779,7 +781,11 @@ defmodule Zoi.JSONSchemaTest do
         {%{"enum" => ["hello", true, nil, [], %{}, 1.5]}, 1.5, "other"},
         {%{"oneOf" => [%{"type" => "string"}, %{"type" => "integer"}]}, "x", true},
         {%{"anyOf" => [%{"type" => "string"}, %{"type" => "integer"}]}, 1, true},
-        {%{"allOf" => [%{"type" => "string"}, %{"const" => "fixed"}]}, "fixed", "other"}
+        {%{"allOf" => [%{"type" => "string"}, %{"const" => "fixed"}]}, "fixed", "other"},
+        {%{"anyOf" => [%{"type" => "integer"}]}, 1, "other"},
+        {%{"oneOf" => [%{"type" => "integer"}]}, 1, "other"},
+        {%{"allOf" => [%{"type" => "integer"}]}, 1, "other"},
+        {%{"type" => ["integer"]}, 1, "other"}
       ]
 
       Enum.each(cases, fn {json, valid, invalid} ->
@@ -787,6 +793,31 @@ defmodule Zoi.JSONSchemaTest do
         assert Zoi.parse(schema, valid) == {:ok, valid}
         assert {:error, _} = Zoi.parse(schema, invalid)
       end)
+    end
+
+    test "oneOf rejects overlapping matches" do
+      schema =
+        Zoi.from_json_schema(%{
+          "oneOf" => [%{"type" => "number"}, %{"type" => "integer"}]
+        })
+
+      assert {:ok, 1.5} == Zoi.parse(schema, 1.5)
+
+      for input <- [1, 1.0, "hello"] do
+        assert {:error, _} = Zoi.parse(schema, input)
+      end
+
+      assert %{oneOf: [%{type: :number}, %{type: :integer}]} = Zoi.to_json_schema(schema)
+    end
+
+    test "rejects conflicting const, enum and type constraints" do
+      for {json, input} <- [
+            {%{"type" => "string", "enum" => [1]}, 1},
+            {%{"type" => "string", "const" => nil}, nil},
+            {%{"const" => "a", "enum" => ["b"]}, "a"}
+          ] do
+        assert {:error, _} = Zoi.parse(Zoi.from_json_schema(json), input)
+      end
     end
 
     test "decodes string formats" do
@@ -808,6 +839,29 @@ defmodule Zoi.JSONSchemaTest do
     test "decodes constraints and rejects invalid values" do
       cases = [
         {%{"type" => "string", "minLength" => 2, "maxLength" => 5}, "abc", ["a", "abcdef"]},
+        {%{
+           "type" => "object",
+           "properties" => %{"name" => %{"type" => "string"}},
+           "required" => ["name"],
+           "anyOf" => [%{"type" => "object"}, %{"type" => "string"}]
+         }, %{"name" => "Alice"}, [%{}, "Alice", %{"name" => 1}]},
+        {%{
+           "type" => "string",
+           "minLength" => 2,
+           "oneOf" => [%{"const" => "a"}, %{"const" => "abc"}]
+         }, "abc", ["a", "other"]},
+        {%{"type" => "string", "maxLength" => 3, "allOf" => [%{"minLength" => 2}]}, "abc",
+         ["a", "abcd", 1]},
+        {%{"enum" => ["a", "abc", 1], "minLength" => 2}, "abc", ["a"]},
+        {%{"enum" => ["a", "abc", 1], "minLength" => 2}, 1, ["a"]},
+        {%{"const" => "abc", "minLength" => 2}, "abc", ["a", "other"]},
+        {%{
+           "type" => "number",
+           "enum" => [-1, 5, 15, 25, 35],
+           "anyOf" => [%{"minimum" => 0}, %{"multipleOf" => 2}],
+           "oneOf" => [%{"minimum" => 10}, %{"maximum" => 20}],
+           "allOf" => [%{"maximum" => 30}]
+         }, 5, [-1, 7, 15, 35]},
         {%{"type" => "array", "items" => true}, [1, nil], []},
         {%{"type" => "array", "items" => false}, [], [[nil], [1]]},
         {%{
