@@ -60,20 +60,28 @@ defmodule Zoi.SchemaTest do
     end
 
     test "applies transformation to arrays" do
+      array = %{Zoi.array(Zoi.integer()) | prefix_items: [Zoi.string()]}
+
       schema =
         Zoi.map(%{
           tags: Zoi.array(Zoi.string()),
-          counts: Zoi.array(Zoi.integer())
+          counts: array
         })
         |> Zoi.Schema.traverse(&Zoi.coerce/1)
 
       tags_field = schema.fields[:tags]
       counts_field = schema.fields[:counts]
+      [string_schema] = counts_field.prefix_items
 
       assert tags_field.coerce == true
       assert tags_field.inner.coerce == true
       assert counts_field.coerce == true
       assert counts_field.inner.coerce == true
+      assert string_schema.coerce == true
+
+      root = Zoi.Schema.traverse(array, &Zoi.coerce/1)
+      refute root.coerce
+      assert {:ok, ["12", 34]} == Zoi.parse(root, [12, "34"])
     end
 
     test "applies transformation to map_sets" do

@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `Zoi.none/1` rejects every input
+- `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support boolean schemas
 - `Zoi.contains/3` validates the number of array items matching a schema
 - `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support `contains`, `minContains` and `maxContains`
 - `Zoi.min/2` and `Zoi.max/2` now support map field counts
@@ -24,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - `Zoi.enum/2` now accepts float, map and list values
 - `Zoi.to_json_schema/1` no longer emits `type: "string"` for non-string enums
 - `Zoi.from_json_schema/1` now accepts floats for integer schemas
+- `Zoi.from_json_schema/1` now validates `prefixItems` as lists without requiring every position or forbidding extra items
 - `Zoi.from_json_schema/1` now preserves and validates additional properties
 - `Zoi.from_json_schema/1` now handles required keys not listed in `properties`
 - `Zoi.from_json_schema/1` now preserves date, time and date-time strings instead of converting them to structs

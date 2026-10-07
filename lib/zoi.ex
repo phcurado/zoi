@@ -549,14 +549,14 @@ defmodule Zoi do
   See `Zoi.JSONSchema`
   """
   @doc group: "Parsing"
-  @spec to_json_schema(schema :: schema()) :: map()
+  @spec to_json_schema(schema :: schema()) :: map() | boolean()
   defdelegate to_json_schema(schema), to: Zoi.JSONSchema, as: :encode
 
   @doc """
   See `Zoi.JSONSchema`
   """
   @doc group: "Parsing"
-  @spec from_json_schema(json_schema :: map()) :: schema()
+  @spec from_json_schema(json_schema :: map() | boolean()) :: schema()
   defdelegate from_json_schema(json_schema), to: Zoi.JSONSchema, as: :decode
 
   @doc """
@@ -870,6 +870,29 @@ defmodule Zoi do
     Zoi.Types.Any.opts()
     |> parse!(opts)
     |> Zoi.Types.Any.new()
+  end
+
+  @doc """
+  Defines a schema that rejects every input.
+
+  This corresponds to the `none()` typespec, which contains no values.
+
+  ## Example
+
+      iex> {:error, [%Zoi.Error{code: code}]} = Zoi.parse(Zoi.none(), nil)
+      iex> code
+      :invalid_type
+
+  ## Options
+
+  #{Zoi.Describe.generate(Zoi.Types.None.opts())}
+  """
+  @doc group: "Basic Types"
+  @spec none(opts :: options()) :: schema()
+  def none(opts \\ []) do
+    Zoi.Types.None.opts()
+    |> parse!(opts)
+    |> Zoi.Types.None.new()
   end
 
   @doc """

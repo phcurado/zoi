@@ -117,6 +117,10 @@ defmodule Zoi.Schema do
     Map.put(discriminated_union, :schemas, transformed_schemas)
   end
 
+  defp do_traverse_root(%Zoi.Types.Array{} = array, fun) do
+    traverse_array(array, [], fun)
+  end
+
   defp do_traverse_root(schema, _fun), do: schema
 
   defp do_traverse(%Zoi.Types.Map{fields: fields} = map, path, fun) when is_list(fields) do
@@ -161,9 +165,9 @@ defmodule Zoi.Schema do
     |> apply_fun(path, fun)
   end
 
-  defp do_traverse(%Zoi.Types.Array{inner: inner} = array, path, fun) do
+  defp do_traverse(%Zoi.Types.Array{} = array, path, fun) do
     array
-    |> Map.put(:inner, do_traverse(inner, path, fun))
+    |> traverse_array(path, fun)
     |> apply_fun(path, fun)
   end
 
@@ -228,6 +232,12 @@ defmodule Zoi.Schema do
 
   defp do_traverse(schema, path, fun) do
     apply_fun(schema, path, fun)
+  end
+
+  defp traverse_array(array, path, fun) do
+    array
+    |> Map.put(:inner, do_traverse(array.inner, path, fun))
+    |> Map.put(:prefix_items, Enum.map(array.prefix_items, &do_traverse(&1, path, fun)))
   end
 
   defp traverse_key_type(%{key_type: nil} = schema, _path, _fun) do

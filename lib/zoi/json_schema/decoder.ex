@@ -12,11 +12,21 @@ defmodule Zoi.JSONSchema.Decoder do
     {"contentMediaType", :content_media_type}
   ]
 
-  @spec decode(map()) :: Zoi.schema()
-  def decode(json_schema) when is_map(json_schema), do: decode_schema(json_schema)
+  @spec decode(map() | boolean()) :: Zoi.schema()
+  def decode(json_schema) when is_map(json_schema) or is_boolean(json_schema) do
+    decode_schema(json_schema)
+  end
 
   def decode(other) do
-    raise ArgumentError, "expected a JSON Schema map, got: #{inspect(other)}"
+    raise ArgumentError, "expected a JSON Schema map or boolean, got: #{inspect(other)}"
+  end
+
+  defp decode_schema(true) do
+    Zoi.any()
+  end
+
+  defp decode_schema(false) do
+    Zoi.none()
   end
 
   defp decode_schema(schema) do
@@ -110,17 +120,22 @@ defmodule Zoi.JSONSchema.Decoder do
     |> maybe_apply(json, "multipleOf", &Zoi.multiple_of/2)
   end
 
-  defp array_schema(%{"prefixItems" => items} = schema) when is_list(items) do
-    tuple_fields = items |> Enum.map(&decode_schema/1) |> List.to_tuple()
-    apply_array_constraints(Zoi.tuple(tuple_fields), schema)
-  end
-
-  defp array_schema(%{"items" => items} = schema) when is_map(items) do
-    apply_array_constraints(Zoi.array(decode_schema(items)), schema)
-  end
-
   defp array_schema(schema) do
-    apply_array_constraints(Zoi.array(), schema)
+    prefix_items = schema |> Map.get("prefixItems", []) |> Enum.map(&decode_schema/1)
+
+    schema
+    |> array_items_schema()
+    |> Zoi.array()
+    |> Map.put(:prefix_items, prefix_items)
+    |> apply_array_constraints(schema)
+  end
+
+  defp array_items_schema(%{"items" => items}) when is_map(items) or is_boolean(items) do
+    decode_schema(items)
+  end
+
+  defp array_items_schema(_) do
+    Zoi.any()
   end
 
   defp apply_array_constraints(schema, json) do
@@ -161,6 +176,10 @@ defmodule Zoi.JSONSchema.Decoder do
     |> maybe_apply(schema, "minProperties", &Zoi.min/2)
     |> maybe_apply(schema, "maxProperties", &Zoi.max/2)
     |> maybe_apply(schema, "propertyNames", &apply_property_names/2)
+  end
+
+  defp apply_property_names(schema, property_names) when is_boolean(property_names) do
+    %{schema | key_type: decode_schema(property_names)}
   end
 
   defp apply_property_names(schema, property_names) do
