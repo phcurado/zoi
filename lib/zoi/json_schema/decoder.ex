@@ -110,17 +110,22 @@ defmodule Zoi.JSONSchema.Decoder do
     |> maybe_apply(json, "multipleOf", &Zoi.multiple_of/2)
   end
 
-  defp array_schema(%{"prefixItems" => items} = schema) when is_list(items) do
-    tuple_fields = items |> Enum.map(&decode_schema/1) |> List.to_tuple()
-    apply_array_constraints(Zoi.tuple(tuple_fields), schema)
-  end
-
-  defp array_schema(%{"items" => items} = schema) when is_map(items) do
-    apply_array_constraints(Zoi.array(decode_schema(items)), schema)
-  end
-
   defp array_schema(schema) do
-    apply_array_constraints(Zoi.array(), schema)
+    prefix_items = schema |> Map.get("prefixItems", []) |> Enum.map(&decode_schema/1)
+
+    schema
+    |> array_items_schema()
+    |> Zoi.array()
+    |> Map.put(:prefix_items, prefix_items)
+    |> apply_array_constraints(schema)
+  end
+
+  defp array_items_schema(%{"items" => items}) when is_map(items) do
+    decode_schema(items)
+  end
+
+  defp array_items_schema(_) do
+    Zoi.any()
   end
 
   defp apply_array_constraints(schema, json) do

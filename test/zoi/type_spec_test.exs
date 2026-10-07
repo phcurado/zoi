@@ -27,6 +27,8 @@ defmodule Zoi.TypeSpecTest do
       types = [
         {Zoi.any(), quote(do: any())},
         {Zoi.array(Zoi.string()), quote(do: [binary()])},
+        {%{Zoi.array(Zoi.boolean()) | prefix_items: [Zoi.string()]},
+         quote(do: [binary() | boolean()])},
         {Zoi.atom(), quote(do: atom())},
         {Zoi.boolean(), quote(do: boolean())},
         {Zoi.date(), quote(do: Date.t())},

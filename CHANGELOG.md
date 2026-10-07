@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - `Zoi.enum/2` now accepts float, map and list values
 - `Zoi.to_json_schema/1` no longer emits `type: "string"` for non-string enums
 - `Zoi.from_json_schema/1` now accepts floats for integer schemas
+- `Zoi.from_json_schema/1` now validates `prefixItems` as lists without requiring every position or forbidding extra items
 - `Zoi.from_json_schema/1` now preserves and validates additional properties
 - `Zoi.from_json_schema/1` now handles required keys not listed in `properties`
 - `Zoi.from_json_schema/1` now preserves date, time and date-time strings instead of converting them to structs

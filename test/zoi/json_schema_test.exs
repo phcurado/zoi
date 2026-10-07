@@ -855,7 +855,15 @@ defmodule Zoi.JSONSchemaTest do
            "contains" => %{"minLength" => 3, "type" => "string"},
            "minContains" => 2
          }, ["a", "abc", "abc"], [["abc"], ["a", "ab"], ["abc", "def", 1]]},
-        {%{"type" => "array", "minContains" => 4, "maxContains" => 0}, [1, 2, 3], []}
+        {%{"type" => "array", "minContains" => 4, "maxContains" => 0}, [1, 2, 3], []},
+        {%{
+           "type" => "array",
+           "prefixItems" => [%{"type" => "string"}],
+           "items" => %{"type" => "number"},
+           "minItems" => 2,
+           "maxItems" => 3,
+           "contains" => %{"const" => 2}
+         }, ["a", 2], [[], ["a"], ["a", 1], ["a", 2, true], ["a", 2, 3, 4]]}
       ]
 
       Enum.each(cases, fn {json, valid, invalids} ->
@@ -880,7 +888,7 @@ defmodule Zoi.JSONSchemaTest do
       assert {:error, [%Zoi.Error{code: :not_unique}]} = Zoi.parse(schema, [1, 2, 1])
     end
 
-    test "decodes uniqueItems on prefixItems is ignored" do
+    test "decodes uniqueItems with prefixItems" do
       schema =
         Zoi.from_json_schema(%{
           "type" => "array",
@@ -888,17 +896,56 @@ defmodule Zoi.JSONSchemaTest do
           "uniqueItems" => true
         })
 
-      assert {:ok, {1, 1}} == Zoi.parse(schema, {1, 1})
+      assert {:ok, [1, 2]} == Zoi.parse(schema, [1, 2])
+      assert {:error, [%Zoi.Error{code: :not_unique}]} = Zoi.parse(schema, [1, 1])
+      assert {:error, [%Zoi.Error{code: :not_unique}]} = Zoi.parse(schema, [1, 2, 1])
     end
 
-    test "decodes tuple via prefixItems" do
+    test "decodes prefixItems without requiring positions or forbidding extra items" do
       schema =
         Zoi.from_json_schema(%{
           "type" => "array",
           "prefixItems" => [%{"type" => "string"}, %{"type" => "integer"}]
         })
 
-      assert Zoi.parse(schema, {"a", 1}) == {:ok, {"a", 1}}
+      for input <- [[], ["a"], ["a", 1], ["a", 1.0, true]] do
+        assert Zoi.parse(schema, input) == {:ok, input}
+      end
+
+      assert {:error, [%Zoi.Error{path: [0]}]} = Zoi.parse(schema, [1])
+      assert {:error, [%Zoi.Error{path: [1]}]} = Zoi.parse(schema, ["a", "wrong"])
+
+      assert %{type: :array, prefixItems: [%{type: :string}, %{type: :integer}]} =
+               Zoi.to_json_schema(schema)
+    end
+
+    test "decodes items as the schema for elements after prefixItems" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "array",
+          "prefixItems" => [%{"type" => "string"}, %{"type" => "integer"}],
+          "items" => %{"type" => "boolean"}
+        })
+
+      assert {:ok, ["a", 1, true, false]} == Zoi.parse(schema, ["a", 1, true, false])
+
+      ctx = Zoi.Context.new(schema, [false, "wrong", 1, false]) |> Zoi.Context.parse()
+      refute ctx.valid?
+      assert ctx.parsed == %{3 => false}
+
+      assert [%Zoi.Error{path: [0]}, %Zoi.Error{path: [1]}, %Zoi.Error{path: [2]}] =
+               ctx.errors
+
+      assert %{
+               type: :array,
+               prefixItems: [%{type: :string}, %{type: :integer}],
+               items: %{type: :boolean}
+             } = Zoi.to_json_schema(schema)
+
+      nested = Zoi.map(%{values: schema})
+
+      assert {:error, [%Zoi.Error{path: [:values, 2]}]} =
+               Zoi.parse(nested, %{values: ["a", 1, 2]})
     end
 
     test "decodes object with required, optional, and additionalProperties false" do

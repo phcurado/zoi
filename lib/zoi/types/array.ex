@@ -2,7 +2,15 @@ defmodule Zoi.Types.Array do
   @moduledoc false
 
   use Zoi.Type.Def,
-    fields: [:inner, :min_length, :max_length, :length, :unique_items, coerce: false]
+    fields: [
+      :inner,
+      :min_length,
+      :max_length,
+      :length,
+      :unique_items,
+      prefix_items: [],
+      coerce: false
+    ]
 
   alias Zoi.Validations
 
@@ -53,7 +61,7 @@ defmodule Zoi.Types.Array do
   defimpl Zoi.Type do
     def parse(%Zoi.Types.Array{inner: inner} = schema, inputs, opts) when is_list(inputs) do
       inputs
-      |> parse_items(inner, opts, 0, [], [])
+      |> parse_items(schema.prefix_items, inner, opts, 0, [], [])
       |> then(&finalize_result(&1, schema))
     end
 
@@ -84,10 +92,18 @@ defmodule Zoi.Types.Array do
       {:error, Zoi.Error.invalid_type(:array, error: schema.meta.error)}
     end
 
-    defp parse_items([], _inner, _opts, _index, parsed, errors), do: {parsed, errors}
+    defp parse_items([], _prefix_items, _inner, _opts, _index, parsed, errors) do
+      {parsed, errors}
+    end
 
-    defp parse_items([input | rest], inner, opts, index, parsed, errors) do
-      ctx = Zoi.Context.new(inner, input) |> Zoi.Context.add_path([index])
+    defp parse_items([input | rest], prefix_items, inner, opts, index, parsed, errors) do
+      {item_schema, remaining_prefix} =
+        case prefix_items do
+          [schema | remaining] -> {schema, remaining}
+          [] -> {inner, []}
+        end
+
+      ctx = Zoi.Context.new(item_schema, input) |> Zoi.Context.add_path([index])
       ctx = Zoi.Context.parse(ctx, opts)
 
       parsed =
@@ -101,7 +117,7 @@ defmodule Zoi.Types.Array do
           [Zoi.Error.prepend_path(error, [index]) | acc]
         end)
 
-      parse_items(rest, inner, opts, index + 1, parsed, errors)
+      parse_items(rest, remaining_prefix, inner, opts, index + 1, parsed, errors)
     end
 
     defp finalize_result({parsed, []}, schema) do
@@ -151,8 +167,16 @@ defmodule Zoi.Types.Array do
   end
 
   defimpl Zoi.TypeSpec do
-    def spec(%Zoi.Types.Array{inner: inner}, opts) do
+    def spec(%Zoi.Types.Array{inner: inner, prefix_items: []}, opts) do
       inner_spec = Zoi.type_spec(inner, opts)
+
+      quote do
+        [unquote(inner_spec)]
+      end
+    end
+
+    def spec(%Zoi.Types.Array{inner: inner, prefix_items: prefix_items}, opts) do
+      inner_spec = prefix_items |> Enum.concat([inner]) |> Zoi.union() |> Zoi.type_spec(opts)
 
       quote do
         [unquote(inner_spec)]
@@ -169,7 +193,8 @@ defmodule Zoi.Types.Array do
         min_length: Validations.unwrap_validation(type.min_length),
         max_length: Validations.unwrap_validation(type.max_length),
         length: Validations.unwrap_validation(type.length),
-        unique_items: Validations.unwrap_validation(type.unique_items)
+        unique_items: Validations.unwrap_validation(type.unique_items),
+        prefix_items: if(type.prefix_items == [], do: nil, else: type.prefix_items)
       ]
 
       Zoi.Inspect.build(type, opts, extra_fields)
@@ -193,6 +218,15 @@ defmodule Zoi.Types.Array do
       |> maybe_add(:maxItems, schema.max_length)
       |> maybe_add_length(schema.length)
       |> maybe_add_unique(schema.unique_items)
+      |> maybe_add_prefix_items(schema.prefix_items)
+    end
+
+    defp maybe_add_prefix_items(map, []) do
+      map
+    end
+
+    defp maybe_add_prefix_items(map, prefix_items) do
+      Map.put(map, :prefixItems, Enum.map(prefix_items, &Zoi.JSONSchema.encode_schema/1))
     end
 
     defp maybe_add(map, _key, nil), do: map
@@ -295,6 +329,11 @@ defmodule Zoi.Types.Array do
   end
 
   defimpl Zoi.Describe.Encoder do
+    def encode(%{inner: inner, prefix_items: [_ | _] = prefix_items}) do
+      prefix = Enum.map_join(prefix_items, ", ", &Zoi.Describe.Encoder.encode/1)
+      "list with prefix [#{prefix}] and remaining items of #{Zoi.Describe.Encoder.encode(inner)}"
+    end
+
     def encode(%{inner: inner}) do
       "list of #{Zoi.Describe.Encoder.encode(inner)}"
     end
