@@ -31,6 +31,24 @@ defmodule Zoi.SchemaTest do
       refute root.coerce
     end
 
+    test "applies transformation to pattern property schemas" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "object",
+          "patternProperties" => %{"^x-" => %{"type" => "string"}}
+        })
+
+      root = Zoi.Schema.traverse(schema, &Zoi.coerce/1)
+      nested = Zoi.map(%{user: schema}) |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+      [{_pattern, root_string}] = root.pattern_properties
+      [{_pattern, nested_string}] = nested.fields[:user].pattern_properties
+
+      assert root_string.coerce == true
+      assert nested_string.coerce == true
+      assert root.coerce == false
+    end
+
     test "applies transformation to deeply nested objects" do
       schema =
         Zoi.map(%{

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support `patternProperties`
 - `Zoi.exclusive_union/2` requires exactly one matching schema
 - `Zoi.none/1` rejects every input
 - `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support boolean schemas

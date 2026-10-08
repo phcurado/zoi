@@ -89,6 +89,16 @@ defmodule Zoi.TypeSpecTest do
       end)
     end
 
+    test "decoded pattern properties typespec" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "object",
+          "patternProperties" => %{"^x-" => %{"type" => "string"}}
+        })
+
+      assert Zoi.type_spec(schema) == quote(do: map())
+    end
+
     test "keyword typespec" do
       schema = Zoi.keyword(name: Zoi.string(), age: Zoi.integer())
       assert Zoi.type_spec(schema) == quote(do: [name: binary(), age: integer()])

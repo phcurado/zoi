@@ -102,6 +102,23 @@ defmodule Zoi.JSONSchemaTest do
       assert :age in required_properties
     end
 
+    test "encoding decoded pattern properties" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "object",
+          "patternProperties" => %{"^x-" => %{"type" => "string"}, "^private-" => false},
+          "additionalProperties" => false
+        })
+
+      assert %{
+               type: :object,
+               properties: %{},
+               required: [],
+               additionalProperties: false,
+               patternProperties: %{"^x-" => %{type: :string}, "^private-" => false}
+             } = Zoi.to_json_schema(schema)
+    end
+
     test "encoding strict object sets additionalProperties to false" do
       schema =
         Zoi.map(%{name: Zoi.string(), age: Zoi.integer()}, strict: true)
@@ -890,6 +907,59 @@ defmodule Zoi.JSONSchemaTest do
         {%{"type" => "number", "multipleOf" => 0.1}, 0.3, [0.35, 0.30000000000000004]},
         {%{"type" => "number", "multipleOf" => 0.01}, 4.02, [4.025]},
         {%{"type" => "number", "multipleOf" => 1.0e-7}, 3.0e-7, [3.5e-7]},
+        {%{"patternProperties" => %{"^x-" => %{"type" => "string"}}},
+         %{"x-name" => "Alice", "age" => 30}, [%{"x-name" => 123}]},
+        {%{"patternProperties" => %{"^x-" => false}}, 42, [%{"x-name" => "Alice"}]},
+        {%{"type" => "object", "patternProperties" => %{"name" => %{"type" => "string"}}},
+         %{"full-name" => "Alice"}, [%{"full-name" => 1}]},
+        {%{
+           "type" => "object",
+           "patternProperties" => %{
+             "^x-" => %{"type" => "string", "minLength" => 3},
+             "name$" => %{"type" => "string", "maxLength" => 5}
+           }
+         }, %{"x-name" => "Alice", "x-other" => "longer"},
+         [%{"x-name" => "ab"}, %{"x-name" => "longer"}]},
+        {%{
+           "type" => "object",
+           "properties" => %{"name" => %{"type" => "string"}},
+           "required" => ["name"],
+           "patternProperties" => %{"^name$" => %{"minLength" => 3, "type" => "string"}}
+         }, %{"name" => "Alice"}, [%{}, %{"name" => "Al"}, %{"name" => 1}]},
+        {%{
+           "type" => "object",
+           "patternProperties" => %{"^x-" => %{"type" => "string"}},
+           "required" => ["x-name"],
+           "additionalProperties" => false
+         }, %{"x-name" => "Alice"}, [%{}, %{"x-name" => 1}, %{"x-name" => "Alice", "age" => 1}]},
+        {%{
+           "type" => "object",
+           "properties" => %{"active" => %{"type" => "boolean"}},
+           "patternProperties" => %{"^x-" => %{"type" => "string"}},
+           "additionalProperties" => %{"type" => "integer"}
+         }, %{"active" => true, "x-name" => "Alice", "age" => 30},
+         [%{"active" => 1}, %{"x-name" => 1}, %{"age" => "thirty"}]},
+        {%{
+           "type" => "object",
+           "patternProperties" => %{"^x-" => %{"type" => "integer"}},
+           "required" => ["x-count", "other"],
+           "additionalProperties" => %{"type" => "string"}
+         }, %{"x-count" => 1, "other" => "ok"},
+         [%{}, %{"x-count" => "one", "other" => "ok"}, %{"x-count" => 1, "other" => 2}]},
+        {%{
+           "type" => "object",
+           "patternProperties" => %{"^x-" => false, "^y-" => true},
+           "additionalProperties" => false
+         }, %{"y-value" => [1]}, [%{"x-value" => nil}, %{"other" => 1}]},
+        {%{"type" => "object", "patternProperties" => %{"^x-" => false}}, %{},
+         [%{"x-value" => 1}]},
+        {%{
+           "type" => "object",
+           "patternProperties" => %{"^x-" => %{"type" => "string"}},
+           "propertyNames" => %{"minLength" => 3},
+           "minProperties" => 1,
+           "maxProperties" => 1
+         }, %{"x-a" => "ok"}, [%{}, %{"x-" => "ok"}, %{"x-a" => "ok", "x-b" => "ok"}]},
         {%{"type" => "object", "minProperties" => 1}, %{"a" => 1}, [%{}]},
         {%{"type" => "object", "maxProperties" => 0}, %{}, [%{"a" => 1}]},
         {%{"type" => "object", "propertyNames" => %{"pattern" => "^[a-z]+$"}},
@@ -968,6 +1038,65 @@ defmodule Zoi.JSONSchemaTest do
           assert {:error, _} = Zoi.parse(schema, invalid)
         end)
       end)
+    end
+
+    test "validates pattern fields when a declared field fails" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "object",
+          "properties" => %{"name" => %{"type" => "string"}},
+          "patternProperties" => %{"^x-" => %{"type" => "string"}},
+          "additionalProperties" => false
+        })
+
+      ctx =
+        schema
+        |> Zoi.Context.new(%{"name" => 1, "x-bad" => 2, "x-good" => "ok", "other" => 3})
+        |> Zoi.Context.parse()
+
+      assert ctx.valid? == false
+      assert ctx.parsed == %{"x-good" => "ok"}
+
+      assert [
+               %Zoi.Error{code: :invalid_type, path: ["name"]},
+               %Zoi.Error{code: :unrecognized_key},
+               %Zoi.Error{code: :invalid_type, path: ["x-bad"]}
+             ] = ctx.errors
+    end
+
+    test "preserves nested partial results for pattern fields" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "object",
+          "patternProperties" => %{
+            "^x-" => %{
+              "type" => "object",
+              "properties" => %{"name" => %{"type" => "string"}, "age" => %{"type" => "integer"}}
+            }
+          }
+        })
+
+      ctx =
+        Zoi.map(%{items: schema})
+        |> Zoi.Context.new(%{items: %{"x-user" => %{"name" => "Alice", "age" => "bad"}}})
+        |> Zoi.Context.parse()
+
+      assert ctx.valid? == false
+      assert ctx.parsed == %{items: %{"x-user" => %{"name" => "Alice"}}}
+      assert [%Zoi.Error{path: [:items, "x-user", "age"]}] = ctx.errors
+    end
+
+    test "rejects required properties not covered by properties or patterns" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "object",
+          "patternProperties" => %{"^x-" => true},
+          "required" => ["other"],
+          "additionalProperties" => false
+        })
+
+      assert {:error, _} = Zoi.parse(schema, %{})
+      assert {:error, _} = Zoi.parse(schema, %{"other" => 1})
     end
 
     test "decodes uniqueItems" do

@@ -80,6 +80,7 @@ defmodule Zoi.Schema do
     map
     |> Map.put(:fields, transformed_fields)
     |> traverse_key_type([], fun)
+    |> traverse_pattern_properties([], fun)
   end
 
   defp do_traverse_root(%Zoi.Types.Struct{fields: fields} = struct, fun) do
@@ -142,6 +143,7 @@ defmodule Zoi.Schema do
     map
     |> Map.put(:fields, transformed_fields)
     |> traverse_key_type(path, fun)
+    |> traverse_pattern_properties(path, fun)
     |> apply_fun(path, fun)
   end
 
@@ -264,6 +266,15 @@ defmodule Zoi.Schema do
 
   defp traverse_key_type(schema, path, fun) do
     Map.put(schema, :key_type, do_traverse(schema.key_type, path, fun))
+  end
+
+  defp traverse_pattern_properties(schema, path, fun) do
+    patterns =
+      Enum.map(schema.pattern_properties, fn {pattern, child} ->
+        {pattern, do_traverse(child, path, fun)}
+      end)
+
+    Map.put(schema, :pattern_properties, patterns)
   end
 
   # Apply function based on arity

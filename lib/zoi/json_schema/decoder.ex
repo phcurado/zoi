@@ -4,7 +4,7 @@ defmodule Zoi.JSONSchema.Decoder do
   @validation_keys ~w(
     minLength maxLength pattern format
     minimum maximum exclusiveMinimum exclusiveMaximum multipleOf
-    properties required additionalProperties minProperties maxProperties propertyNames
+    properties required additionalProperties minProperties maxProperties propertyNames patternProperties
     items prefixItems minItems maxItems uniqueItems contains
   )
 
@@ -204,11 +204,25 @@ defmodule Zoi.JSONSchema.Decoder do
     |> Map.new(fn {key, prop_schema} ->
       {key, prop_schema |> decode_schema() |> maybe_optional(key, required)}
     end)
-    |> add_required_fields(required, unrecognized_keys)
     |> Zoi.map(unrecognized_keys: unrecognized_keys)
+    |> apply_pattern_properties(schema)
+    |> add_required_fields(required)
     |> maybe_apply(schema, "minProperties", &Zoi.min/2)
     |> maybe_apply(schema, "maxProperties", &Zoi.max/2)
     |> maybe_apply(schema, "propertyNames", &apply_property_names/2)
+  end
+
+  defp apply_pattern_properties(schema, %{"patternProperties" => properties}) do
+    patterns =
+      Enum.map(properties, fn {pattern, value} ->
+        {Regex.compile!(pattern), decode_schema(value)}
+      end)
+
+    %{schema | pattern_properties: patterns}
+  end
+
+  defp apply_pattern_properties(schema, _json) do
+    schema
   end
 
   defp apply_property_names(schema, property_names) when is_boolean(property_names) do
@@ -232,16 +246,32 @@ defmodule Zoi.JSONSchema.Decoder do
     end
   end
 
-  defp add_required_fields(fields, required, unrecognized_keys) do
-    schema =
-      case unrecognized_keys do
-        {:preserve, {_, schema}} -> Zoi.required(schema)
-        _ -> Zoi.any()
-      end
+  defp add_required_fields(schema, required) do
+    Enum.reduce(required, schema, fn key, schema ->
+      if List.keymember?(schema.fields, key, 0) do
+        schema
+      else
+        field_schema =
+          case Zoi.Types.Map.pattern_schemas(schema.pattern_properties, key) do
+            [] -> required_property_schema(schema.unrecognized_keys)
+            _schemas -> Zoi.any()
+          end
 
-    Enum.reduce(required, fields, fn key, fields ->
-      Map.put_new(fields, key, schema)
+        %{schema | fields: [{key, Zoi.required(field_schema)} | schema.fields]}
+      end
     end)
+  end
+
+  defp required_property_schema({:preserve, {_, schema}}) do
+    schema
+  end
+
+  defp required_property_schema(:error) do
+    Zoi.none()
+  end
+
+  defp required_property_schema(_unrecognized_keys) do
+    Zoi.any()
   end
 
   defp unrecognized_keys(false) do
