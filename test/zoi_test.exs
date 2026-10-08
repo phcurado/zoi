@@ -1042,6 +1042,34 @@ defmodule ZoiTest do
       end
     end
 
+    test "partial results on error" do
+      branches = [Zoi.map(%{name: Zoi.string(), age: Zoi.integer()}), Zoi.any()]
+
+      for schemas <- [branches, Enum.reverse(branches)] do
+        ctx =
+          Zoi.intersection(schemas)
+          |> Zoi.Context.new(%{name: "Alice", age: "bad"})
+          |> Zoi.Context.parse()
+
+        assert ctx.valid? == false
+        assert ctx.parsed == %{name: "Alice"}
+        assert [%Zoi.Error{path: [:age]}] = ctx.errors
+      end
+    end
+
+    test "partial results with a custom error" do
+      ctx =
+        Zoi.intersection([Zoi.any(), Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})],
+          error: "invalid object"
+        )
+        |> Zoi.Context.new(%{name: "Alice", age: "bad"})
+        |> Zoi.Context.parse()
+
+      assert ctx.valid? == false
+      assert ctx.parsed == %{name: "Alice"}
+      assert [%Zoi.Error{message: "invalid object"}] = ctx.errors
+    end
+
     test "nested object results from multiple branches are merged recursively" do
       schema =
         Zoi.intersection([

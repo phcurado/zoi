@@ -26,12 +26,13 @@ defmodule Zoi.Types.Intersection do
         ctx = Zoi.Context.new(schema, value)
         opts = Keyword.put(opts, :ctx, ctx)
 
-        case Zoi.parse(schema, value, opts) do
-          {:ok, result} ->
-            {:cont, {:ok, [result | results]}}
+        ctx = Zoi.Context.parse(ctx, opts)
 
-          {:error, reason} ->
-            {:halt, error(intersection, reason)}
+        if ctx.valid? do
+          {:cont, {:ok, [ctx.parsed | results]}}
+        else
+          {:error, errors} = error(intersection, ctx.errors)
+          {:halt, {:error, errors, ctx.parsed}}
         end
       end)
       |> combine_results(intersection)
