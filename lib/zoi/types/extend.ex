@@ -14,7 +14,8 @@ defmodule Zoi.Types.Extend do
     Zoi.Types.Map.new(Map.new(fields),
       unrecognized_keys: schema1.unrecognized_keys,
       coerce: schema1.coerce,
-      empty_values: schema1.empty_values
+      empty_values: schema1.empty_values,
+      pattern_properties: schema1.pattern_properties
     )
   end
 
@@ -25,7 +26,8 @@ defmodule Zoi.Types.Extend do
     Zoi.Types.Map.new(Map.new(fields),
       unrecognized_keys: schema1.unrecognized_keys,
       coerce: schema1.coerce,
-      empty_values: schema1.empty_values
+      empty_values: schema1.empty_values,
+      pattern_properties: schema1.pattern_properties
     )
   end
 

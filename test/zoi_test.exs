@@ -2663,6 +2663,24 @@ defmodule ZoiTest do
       assert error.path == [:age]
     end
 
+    test "extend a map with pattern properties" do
+      schema =
+        Zoi.from_json_schema(%{
+          "type" => "object",
+          "patternProperties" => %{"^x-" => %{"type" => "string"}}
+        })
+
+      for fields <- [%{age: Zoi.integer()}, Zoi.map(%{age: Zoi.integer()})] do
+        extended = Zoi.extend(schema, fields)
+
+        assert {:ok, %{"x-name" => "Alice", age: 30}} =
+                 Zoi.parse(extended, %{"x-name" => "Alice", age: 30})
+
+        assert {:error, [%Zoi.Error{path: ["x-name"]}]} =
+                 Zoi.parse(extended, %{"x-name" => 1, age: 30})
+      end
+    end
+
     test "extend with non-object schema" do
       schema1 = Zoi.map(%{name: Zoi.string()})
       schema2 = Zoi.string()

@@ -64,6 +64,7 @@ defmodule Zoi.Types.KeyValue do
     normalize_key = normalize_key_fun(coerce?)
 
     input_lookup = Map.new(input_pairs, fn {k, v} -> {normalize_key.(k), v} end)
+    patterns = Map.get(type, :pattern_properties, [])
 
     unknown_pairs =
       reject_known_pairs(unrecognized_keys, input_pairs, schema_fields, normalize_key)
@@ -83,23 +84,26 @@ defmodule Zoi.Types.KeyValue do
             if raw_value in empty_values do
               handle_missing_field(field_schema, field_key, parsed, errors)
             else
-              case parse_child_value(field_schema, raw_value, opts, [field_key]) do
-                {:ok, parsed_value, child_errors} ->
-                  {[{field_key, parsed_value} | parsed], Enum.reverse(child_errors, errors)}
+              schemas = Zoi.Types.Map.pattern_schemas(patterns, normalized)
 
-                {:error, child_errors, partial_value} ->
-                  parsed =
-                    if is_nil(partial_value) do
-                      parsed
-                    else
-                      [{field_key, partial_value} | parsed]
-                    end
+              result =
+                field_schema
+                |> parse_child_value(raw_value, opts, [field_key])
+                |> validate_patterns(schemas, raw_value, opts, [field_key])
 
-                  {parsed, Enum.reverse(child_errors, errors)}
-              end
+              collect_field(field_key, result, parsed, errors)
             end
         end
       end)
+
+    {unknown_pairs, {parsed, collected_errors}} =
+      parse_pattern_pairs(
+        unknown_pairs,
+        patterns,
+        normalize_key,
+        opts,
+        {parsed, collected_errors}
+      )
 
     collected_errors = Enum.reverse(collected_errors)
 
@@ -111,7 +115,7 @@ defmodule Zoi.Types.KeyValue do
         :error ->
           errors =
             unknown_pairs
-            |> Enum.map(fn {k, _} -> normalize_key.(k) end)
+            |> Enum.map(fn {key, _value} -> normalize_key.(key) end)
             |> Enum.uniq()
             |> Enum.map(&Zoi.Error.unrecognized_key/1)
 
@@ -135,6 +139,49 @@ defmodule Zoi.Types.KeyValue do
       {[], parsed} -> {:ok, parsed}
       {errors, []} -> {:error, errors}
       {errors, parsed} -> {:error, errors, parsed}
+    end
+  end
+
+  defp parse_pattern_pairs(pairs, [], _normalize_key, _opts, acc), do: {pairs, acc}
+
+  defp parse_pattern_pairs(pairs, patterns, normalize_key, opts, acc) do
+    Enum.flat_map_reduce(pairs, acc, fn {key, value} = pair, {parsed, errors} ->
+      case Zoi.Types.Map.pattern_schemas(patterns, normalize_key.(key)) do
+        [] ->
+          {[pair], {parsed, errors}}
+
+        schemas ->
+          result = validate_patterns({:ok, value, []}, schemas, value, opts, [key])
+          {[], collect_field(key, result, parsed, errors)}
+      end
+    end)
+  end
+
+  defp validate_patterns({:ok, _value, _errors} = result, schemas, value, opts, path) do
+    Enum.find_value(schemas, result, fn schema ->
+      case parse_child_value(schema, value, opts, path) do
+        {:ok, _parsed, _errors} -> nil
+        error -> error
+      end
+    end)
+  end
+
+  defp validate_patterns(error, _schemas, _value, _opts, _path), do: error
+
+  defp collect_field(key, result, parsed, errors) do
+    case result do
+      {:ok, parsed_value, child_errors} ->
+        {[{key, parsed_value} | parsed], Enum.reverse(child_errors, errors)}
+
+      {:error, child_errors, partial_value} ->
+        parsed =
+          if is_nil(partial_value) do
+            parsed
+          else
+            [{key, partial_value} | parsed]
+          end
+
+        {parsed, Enum.reverse(child_errors, errors)}
     end
   end
 
@@ -206,14 +253,14 @@ defmodule Zoi.Types.KeyValue do
 
   defp validate_preserve_schema(unknown_pairs, key_schema, value_schema, parsed, errors, opts) do
     unknown_map = Map.new(unknown_pairs)
-    temp_schema = Zoi.map(key_schema, value_schema)
+    schema = Zoi.Types.Map.new(key_schema, value_schema, [])
 
-    case Zoi.Type.parse(temp_schema, unknown_map, opts) do
+    case Zoi.Type.parse(schema, unknown_map, opts) do
       {:ok, validated_map} ->
         {Map.to_list(validated_map) ++ parsed, errors}
 
-      {:error, new_errors, _partial} ->
-        {parsed, Zoi.Errors.merge(errors, new_errors)}
+      {:error, new_errors, partial} ->
+        {Map.to_list(partial) ++ parsed, Zoi.Errors.merge(errors, new_errors)}
     end
   end
 end

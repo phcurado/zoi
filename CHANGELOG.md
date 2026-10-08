@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support `patternProperties`
 - `Zoi.exclusive_union/2` requires exactly one matching schema
 - `Zoi.none/1` rejects every input
 - `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support boolean schemas
@@ -23,6 +24,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Maps now keep valid additional properties in partial results
+- `Zoi.to_json_schema/1` now exports `additionalProperties` schemas instead of `true`
 - `Zoi.url/1` now accepts non-HTTP URI schemes
 - `Zoi.from_json_schema/1` now accepts quoted email local parts
 - `Zoi.float/1` now coerces integer inputs when coercion is enabled
