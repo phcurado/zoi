@@ -79,6 +79,17 @@ defmodule Zoi.InspectTest do
     end)
   end
 
+  test "inspect decoded pattern properties" do
+    schema =
+      Zoi.from_json_schema(%{
+        "type" => "object",
+        "patternProperties" => %{"^x-" => %{"type" => "string"}}
+      })
+
+    assert inspect(schema) ==
+             "#Zoi.map<coerce: false, unrecognized_keys: :preserve, fields: %{}, pattern_properties: [{~r/^x-/, #Zoi.string<coerce: false>}]>"
+  end
+
   test "inspect discriminated_union" do
     type =
       Zoi.discriminated_union(:type, [

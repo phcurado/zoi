@@ -83,58 +83,117 @@ defmodule Zoi.Types.KeyValue do
             if raw_value in empty_values do
               handle_missing_field(field_schema, field_key, parsed, errors)
             else
-              case parse_child_value(field_schema, raw_value, opts, [field_key]) do
-                {:ok, parsed_value, child_errors} ->
-                  {[{field_key, parsed_value} | parsed], Enum.reverse(child_errors, errors)}
-
-                {:error, child_errors, partial_value} ->
-                  parsed =
-                    if is_nil(partial_value) do
-                      parsed
-                    else
-                      [{field_key, partial_value} | parsed]
-                    end
-
-                  {parsed, Enum.reverse(child_errors, errors)}
-              end
+              schema = field_schema(type, normalized, field_schema)
+              parse_field(field_key, raw_value, schema, opts, parsed, errors)
             end
         end
       end)
 
-    collected_errors = Enum.reverse(collected_errors)
-
     {parsed, errors} =
-      case unrecognized_keys do
-        :strip ->
-          {parsed, collected_errors}
-
-        :error ->
-          errors =
-            unknown_pairs
-            |> Enum.map(fn {k, _} -> normalize_key.(k) end)
-            |> Enum.uniq()
-            |> Enum.map(&Zoi.Error.unrecognized_key/1)
-
-          {parsed, Zoi.Errors.merge(collected_errors, errors)}
-
-        :preserve ->
-          {unknown_pairs ++ parsed, collected_errors}
-
-        {:preserve, {key_schema, value_schema}} ->
-          validate_preserve_schema(
-            unknown_pairs,
-            key_schema,
-            value_schema,
-            parsed,
-            collected_errors,
-            opts
-          )
-      end
+      parse_unknown_pairs(
+        type,
+        unknown_pairs,
+        normalize_key,
+        opts,
+        parsed,
+        Enum.reverse(collected_errors)
+      )
 
     case {errors, parsed} do
       {[], parsed} -> {:ok, parsed}
       {errors, []} -> {:error, errors}
       {errors, parsed} -> {:error, errors, parsed}
+    end
+  end
+
+  defp field_schema(%Zoi.Types.Map{pattern_properties: patterns}, key, schema) do
+    case Zoi.Types.Map.pattern_schemas(patterns, key) do
+      [] -> schema
+      matching -> Zoi.intersection([schema | matching])
+    end
+  end
+
+  defp field_schema(_type, _key, schema) do
+    schema
+  end
+
+  defp parse_unknown_pairs(
+         %Zoi.Types.Map{pattern_properties: [_ | _]} = type,
+         pairs,
+         normalize_key,
+         opts,
+         parsed,
+         errors
+       ) do
+    Enum.reduce(pairs, {parsed, errors}, fn {key, value} = pair, {parsed, errors} ->
+      case Zoi.Types.Map.pattern_schemas(type.pattern_properties, normalize_key.(key)) do
+        [] ->
+          parse_unrecognized_pairs(
+            [pair],
+            type.unrecognized_keys,
+            normalize_key,
+            opts,
+            parsed,
+            errors
+          )
+
+        schemas ->
+          {parsed, child_errors} =
+            parse_field(key, value, intersect_schemas(schemas), opts, parsed, [])
+
+          {parsed, Zoi.Errors.merge(errors, Enum.reverse(child_errors))}
+      end
+    end)
+  end
+
+  defp parse_unknown_pairs(type, pairs, normalize_key, opts, parsed, errors) do
+    parse_unrecognized_pairs(pairs, type.unrecognized_keys, normalize_key, opts, parsed, errors)
+  end
+
+  defp parse_unrecognized_pairs(pairs, mode, normalize_key, opts, parsed, errors) do
+    case mode do
+      :strip ->
+        {parsed, errors}
+
+      :error ->
+        key_errors =
+          pairs
+          |> Enum.map(fn {key, _value} -> normalize_key.(key) end)
+          |> Enum.uniq()
+          |> Enum.map(&Zoi.Error.unrecognized_key/1)
+
+        {parsed, Zoi.Errors.merge(errors, key_errors)}
+
+      :preserve ->
+        {pairs ++ parsed, errors}
+
+      {:preserve, {key_schema, value_schema}} ->
+        validate_preserve_schema(pairs, key_schema, value_schema, parsed, errors, opts)
+    end
+  end
+
+  defp intersect_schemas([schema]) do
+    schema
+  end
+
+  defp intersect_schemas(schemas) do
+    Zoi.intersection(schemas)
+  end
+
+  defp parse_field(key, value, schema, opts, parsed, errors) do
+    case parse_child_value(schema, value, opts, [key]) do
+      {:ok, parsed_value, child_errors} ->
+        {[{key, parsed_value} | parsed], Enum.reverse(child_errors, errors)}
+
+      {:error, child_errors, partial_value} ->
+        parsed =
+          if is_nil(partial_value) do
+            parsed
+          else
+            [{key, partial_value} | parsed]
+          end
+
+        {parsed, Enum.reverse(child_errors, errors)}
     end
   end
 

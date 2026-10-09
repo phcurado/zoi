@@ -2,7 +2,15 @@ defmodule Zoi.Types.Map do
   @moduledoc false
 
   use Zoi.Type.Def,
-    fields: [:key_type, :value_type, :fields, :unrecognized_keys, :coerce, empty_values: []]
+    fields: [
+      :key_type,
+      :value_type,
+      :fields,
+      :unrecognized_keys,
+      :coerce,
+      empty_values: [],
+      pattern_properties: []
+    ]
 
   alias Zoi.Types.Meta
 
@@ -43,6 +51,20 @@ defmodule Zoi.Types.Map do
 
   def new(_key_value, _value_type, _opts) do
     raise ArgumentError, "expected a map with valid key and type definitions"
+  end
+
+  def pattern_schemas(patterns, key) when is_binary(key) do
+    Enum.flat_map(patterns, fn {pattern, schema} ->
+      if Regex.match?(pattern, key) do
+        [schema]
+      else
+        []
+      end
+    end)
+  end
+
+  def pattern_schemas(_patterns, _key) do
+    []
   end
 
   defp resolve_unrecognized_keys(opts) do
@@ -129,6 +151,12 @@ defmodule Zoi.Types.Map do
   end
 
   defimpl Zoi.TypeSpec do
+    def spec(%Zoi.Types.Map{pattern_properties: [_ | _]}, _opts) do
+      quote do
+        map()
+      end
+    end
+
     # If the keys are strings, there isn't a good way to represent that in typespecs
     def spec(%Zoi.Types.Map{fields: [{key, _val} | _rest]}, _opts) when is_binary(key) do
       quote do: map()
@@ -174,8 +202,12 @@ defmodule Zoi.Types.Map do
         container_doc("%{", fields, "}", %Inspect.Opts{limit: 10}, fn
           {key, schema}, _opts -> concat("#{key}: ", Inspect.inspect(schema, opts))
         end)
+        |> group()
 
-      Zoi.Inspect.build(type, opts, fields: fields_doc)
+      Zoi.Inspect.build(type, opts,
+        fields: fields_doc,
+        pattern_properties: pattern_properties(type.pattern_properties)
+      )
     end
 
     # Key/value mode - simple format without coerce/strict
@@ -188,6 +220,14 @@ defmodule Zoi.Types.Map do
       container_doc("#Zoi.map<", list, ">", %Inspect.Opts{limit: 8}, fn
         {key, value}, _opts -> concat("#{key}: ", value)
       end)
+    end
+
+    defp pattern_properties([]) do
+      nil
+    end
+
+    defp pattern_properties(patterns) do
+      patterns
     end
   end
 
@@ -206,9 +246,23 @@ defmodule Zoi.Types.Map do
         additionalProperties: schema.unrecognized_keys != :error
       }
       |> encode_property_names(schema.key_type)
+      |> encode_pattern_properties(schema.pattern_properties)
     end
 
     def encode(_schema), do: %{type: :object}
+
+    defp encode_pattern_properties(json_schema, []) do
+      json_schema
+    end
+
+    defp encode_pattern_properties(json_schema, patterns) do
+      properties =
+        Map.new(patterns, fn {pattern, schema} ->
+          {Regex.source(pattern), Zoi.JSONSchema.encode_schema(schema)}
+        end)
+
+      Map.put(json_schema, :patternProperties, properties)
+    end
 
     defp encode_property_names(json_schema, nil) do
       json_schema
