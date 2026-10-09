@@ -126,6 +126,11 @@ defmodule Zoi.Schema do
     Map.put(union, :schemas, transformed_schemas)
   end
 
+  defp do_traverse_root(%Zoi.Types.Union{schemas: schemas} = union, fun) do
+    transformed_schemas = Enum.map(schemas, &do_traverse(&1, [], fun))
+    Map.put(union, :schemas, transformed_schemas)
+  end
+
   defp do_traverse_root(schema, _fun), do: schema
 
   defp do_traverse(%Zoi.Types.Map{fields: fields} = map, path, fun) when is_list(fields) do

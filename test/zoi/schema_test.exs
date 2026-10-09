@@ -127,6 +127,21 @@ defmodule Zoi.SchemaTest do
       end
     end
 
+    test "enables coercion on root union variants" do
+      manually_coerced_schema =
+        Zoi.union([Zoi.coerce(Zoi.integer()), Zoi.coerce(Zoi.boolean())])
+
+      assert {:ok, 42} = Zoi.parse(manually_coerced_schema, "42")
+      assert {:ok, true} = Zoi.parse(manually_coerced_schema, "true")
+
+      traverse_coerced_schema =
+        Zoi.union([Zoi.integer(), Zoi.boolean()])
+        |> Zoi.Schema.traverse(&Zoi.coerce/1)
+
+      assert {:ok, 42} = Zoi.parse(traverse_coerced_schema, "42")
+      assert {:ok, true} = Zoi.parse(traverse_coerced_schema, "true")
+    end
+
     test "applies transformation to root exclusive unions" do
       schema =
         Zoi.exclusive_union([Zoi.string(), Zoi.integer()])
