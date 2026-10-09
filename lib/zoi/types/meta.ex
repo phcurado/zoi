@@ -35,7 +35,7 @@ defmodule Zoi.Types.Meta do
   # When we propagate the meta schema fields to other schemas, these are the allowed keys
   # An example is when using nullable type, which is a union under the hood. We should be able
   # to propagate these fields to the union since nullable is a behavior
-  @propagate_keys [:required, :description, :example, :metadata, :typespec, :deprecated, :error]
+  @propagate_keys [:required, :description, :example, :metadata, :deprecated, :error]
 
   @spec put_default(Zoi.schema(), term()) :: Zoi.schema()
   def put_default(schema, value) do
