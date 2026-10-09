@@ -187,6 +187,24 @@ defmodule Zoi.TypeSpecTest do
       assert Zoi.type_spec(schema) == quote(do: non_neg_integer())
     end
 
+    test "nullable includes nil when the inner schema has a custom typespec" do
+      schema = Zoi.nullable(Zoi.integer(gte: 0, typespec: quote(do: non_neg_integer())))
+
+      assert {:ok, nil} = Zoi.parse(schema, nil)
+      assert {:ok, 42} = Zoi.parse(schema, 42)
+      assert {:error, _} = Zoi.parse(schema, -1)
+      assert Zoi.type_spec(schema) == quote(do: nil | non_neg_integer())
+    end
+
+    test "nullable respects an explicit outer typespec override" do
+      schema =
+        Zoi.nullable(Zoi.integer(typespec: quote(do: non_neg_integer())),
+          typespec: quote(do: term())
+        )
+
+      assert Zoi.type_spec(schema) == quote(do: term())
+    end
+
     test "custom typespec with function signature" do
       schema = Zoi.function(arity: 1, typespec: quote(do: (String.t() -> boolean())))
 
