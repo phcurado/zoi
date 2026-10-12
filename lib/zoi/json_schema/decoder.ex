@@ -117,7 +117,7 @@ defmodule Zoi.JSONSchema.Decoder do
         "date" -> Zoi.ISO.date()
         "time" -> Zoi.ISO.time()
         "date-time" -> Zoi.ISO.datetime()
-        "email" -> Zoi.email()
+        "email" -> Zoi.email(pattern: Zoi.Regexes.rfc5322_email())
         "uri" -> Zoi.url()
         "uuid" -> Zoi.uuid()
         _ -> Zoi.string()

@@ -3768,8 +3768,17 @@ defmodule ZoiTest do
   describe "url/0" do
     test "valid URL" do
       schema = Zoi.url()
-      assert {:ok, "https://example.com"} == Zoi.parse(schema, "https://example.com")
-      assert {:ok, "https://example.com"} == Zoi.parse(schema, "https://example.com")
+
+      for url <- [
+            "https://example.com",
+            "mailto:user@example.com",
+            "urn:isbn:0451450523",
+            "ftp://example.com/file",
+            "custom:resource"
+          ] do
+        assert {:ok, ^url} = Zoi.parse(schema, url)
+      end
+
       assert {:ok, "http://localhost"} == Zoi.parse(schema, "http://localhost")
 
       assert {:ok, "https://google.com/Foo%20Bar"} ==
@@ -3780,10 +3789,10 @@ defmodule ZoiTest do
       schema = Zoi.url()
 
       invalid_urls = [
-        "htp://invalid-protocol.com",
+        "",
         "://missing-protocol.com",
         "http//missing-colon.com",
-        "http:/one-slash.com",
+        "relative/path",
         "/?foo[bar]=baz"
       ]
 
@@ -3797,10 +3806,10 @@ defmodule ZoiTest do
 
     test "invalid url with custom eror" do
       schema = Zoi.url(error: "something went wrong with the url")
-      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "htt://google/com")
+      assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "://google/com")
       assert error.code == :custom
       assert Exception.message(error) == "something went wrong with the url"
-      assert {"something went wrong with the url", [value: "htt://google/com"]} = error.issue
+      assert {"something went wrong with the url", [value: "://google/com"]} = error.issue
     end
 
     test "url should only work on implemented protocols" do

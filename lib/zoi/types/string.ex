@@ -122,7 +122,7 @@ defmodule Zoi.Types.String do
     def validate(_schema, input, opts) do
       uri = URI.parse(input)
 
-      if uri.scheme in ["http", "https"] and uri.host != nil do
+      if uri.scheme != nil do
         :ok
       else
         {:error, Zoi.Error.invalid_url(input, opts)}
