@@ -836,6 +836,24 @@ defmodule Zoi.JSONSchemaTest do
       end)
     end
 
+    test "decodes URI and email formats without HTTP or unquoted-local-part restrictions" do
+      uri_schema = Zoi.from_json_schema(%{"type" => "string", "format" => "uri"})
+
+      for uri <- ["mailto:user@example.com", "urn:isbn:0451450523", "ftp://example.com/file"] do
+        assert {:ok, ^uri} = Zoi.parse(uri_schema, uri)
+      end
+
+      for invalid <- ["", "relative/path", "://example.com"] do
+        assert {:error, _} = Zoi.parse(uri_schema, invalid)
+      end
+
+      email_schema = Zoi.from_json_schema(%{"type" => "string", "format" => "email"})
+      email = ~s("John Doe"@example.com)
+      assert {:ok, ^email} = Zoi.parse(email_schema, email)
+      assert {:error, _} = Zoi.parse(email_schema, "invalid-email")
+      assert {:error, _} = Zoi.parse(Zoi.email(), email)
+    end
+
     test "decodes constraints and rejects invalid values" do
       cases = [
         {%{"type" => "string", "minLength" => 2, "maxLength" => 5}, "abc", ["a", "abcdef"]},
