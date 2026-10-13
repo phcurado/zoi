@@ -201,16 +201,22 @@ defmodule Zoi.Types.KeyValue do
   def lookup(input_pairs, false), do: {Map.new(input_pairs), MapSet.new()}
 
   def lookup(input_pairs, true) do
-    Enum.reduce(input_pairs, {%{}, MapSet.new()}, fn {key, value}, {lookup, collisions} ->
-      normalized = to_string(key)
+    {lookup, _originals, collisions} =
+      Enum.reduce(input_pairs, {%{}, %{}, MapSet.new()}, fn {key, value},
+                                                            {lookup, originals, collisions} ->
+        normalized = to_string(key)
 
-      collisions =
-        if Map.has_key?(lookup, normalized),
-          do: MapSet.put(collisions, normalized),
-          else: collisions
+        collisions =
+          case originals do
+            %{^normalized => ^key} -> collisions
+            %{^normalized => _other} -> MapSet.put(collisions, normalized)
+            _ -> collisions
+          end
 
-      {Map.put(lookup, normalized, value), collisions}
-    end)
+        {Map.put(lookup, normalized, value), Map.put_new(originals, normalized, key), collisions}
+      end)
+
+    {lookup, collisions}
   end
 
   defp normalize_key_fun(true), do: &to_string/1
