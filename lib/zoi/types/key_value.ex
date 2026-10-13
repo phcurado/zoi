@@ -39,7 +39,11 @@ defmodule Zoi.Types.KeyValue do
     do_parse_pairs(input, type, opts)
     |> case do
       {:ok, parsed} ->
-        {:ok, Enum.reverse(parsed)}
+        parsed = Enum.reverse(parsed)
+
+        if opts[:mode] == :validate and Enum.frequencies(parsed) === Enum.frequencies(input),
+          do: {:ok, input},
+          else: {:ok, parsed}
 
       {:error, errors} ->
         {:error, errors}
@@ -77,11 +81,11 @@ defmodule Zoi.Types.KeyValue do
 
         case Map.fetch(input_lookup, normalized) do
           :error ->
-            handle_missing_field(field_schema, field_key, parsed, errors)
+            handle_missing_field(field_schema, field_key, parsed, errors, opts)
 
           {:ok, raw_value} ->
             if raw_value in empty_values do
-              handle_missing_field(field_schema, field_key, parsed, errors)
+              handle_missing_field(field_schema, field_key, parsed, errors, opts)
             else
               case parse_child_value(field_schema, raw_value, opts, [field_key]) do
                 {:ok, parsed_value, child_errors} ->
@@ -169,13 +173,30 @@ defmodule Zoi.Types.KeyValue do
     []
   end
 
-  defp handle_missing_field(field_schema, field_key, parsed, errors) do
+  defp handle_missing_field(field_schema, field_key, parsed, errors, opts) do
     cond do
       field_schema.meta.required == false ->
         {parsed, errors}
 
+      Meta.default?(field_schema.meta) and opts[:mode] == :validate ->
+        required_error = Zoi.Error.required(field_key, path: [field_key])
+        {parsed, [required_error | errors]}
+
       Meta.default?(field_schema.meta) ->
-        {[{field_key, Meta.default(field_schema.meta)} | parsed], errors}
+        if Keyword.get(opts, :parse_defaults, false) do
+          case parse_child_value(field_schema, nil, opts, [field_key]) do
+            {:ok, value, child_errors} ->
+              {[{field_key, value} | parsed], Enum.reverse(child_errors, errors)}
+
+            {:error, child_errors, partial_value} ->
+              parsed =
+                if is_nil(partial_value), do: parsed, else: [{field_key, partial_value} | parsed]
+
+              {parsed, Enum.reverse(child_errors, errors)}
+          end
+        else
+          {[{field_key, Meta.default(field_schema.meta)} | parsed], errors}
+        end
 
       field_schema.meta.required == nil ->
         {parsed, errors}

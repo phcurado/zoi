@@ -63,10 +63,10 @@ defmodule Zoi.Types.Enum do
       coerce = Keyword.get(opts, :coerce, schema.coerce)
 
       Enum.find(schema.values, fn {key, value} ->
-        if coerce do
-          input == value or input == key
-        else
-          input == value
+        cond do
+          opts[:mode] == :validate -> input === key
+          coerce -> input == value or input == key
+          true -> input == value
         end
       end)
       |> case do

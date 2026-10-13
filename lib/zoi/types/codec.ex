@@ -52,6 +52,14 @@ defmodule Zoi.Types.Codec do
 
   defimpl Zoi.Type do
     def parse(schema, input, opts) do
+      if opts[:mode] == :validate do
+        Zoi.parse(schema.to, input, opts)
+      else
+        decode(schema, input, opts)
+      end
+    end
+
+    defp decode(schema, input, opts) do
       with {:ok, validated_input} <- Zoi.parse(schema.from, input, opts),
            {:ok, decoded} <- apply_decode(schema, validated_input) do
         Zoi.parse(schema.to, decoded, opts)

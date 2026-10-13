@@ -194,6 +194,15 @@ defmodule Zoi do
   @doc """
   Parse input data against a schema.
   Accepts optional `coerce: true` option to enable coercion.
+
+  Set `parse_defaults: true` to check defaults as input. Defaults then pass
+  through their inner types, refinements, and transforms in the same traversal.
+  This applies to explicit `nil`, missing fields, and configured empty values.
+  Optional missing fields stay absent. Without this option, defaults retain
+  their existing output behavior. Recursive default expansion returns an error.
+
+  Set `immutable_refinements: true` to reject a successful refinement that
+  changes its value. This does not disable transforms.
   ## Examples
 
       iex> schema = Zoi.string() |> Zoi.min(2) |> Zoi.max(100)
@@ -226,6 +235,76 @@ defmodule Zoi do
         {:error, errors}
     end
   end
+
+  @doc """
+  Checks an existing value without defaults, coercion, or transforms.
+  Input-only empty-value handling does not apply to stored values.
+
+  Returns `:ok` or `{:error, errors}`. Refinements still run. The check rejects
+  any type parser or refinement that changes the value. Defaulted fields must
+  be present unless optional. Explicit `nil` must satisfy the inner type.
+
+  Use a schema for the stored value. Refinements check the stored value;
+  transforms do not run. Input refinements that depend on a transform's
+  intermediate values can need a separate output schema. Mapped enums check
+  their declared output keys. Keyword validation retains the input pair order.
+
+  ## Examples
+
+      iex> schema = Zoi.integer() |> Zoi.default(1)
+      iex> Zoi.validate(schema, 2)
+      :ok
+      iex> {:error, _errors} = Zoi.validate(schema, nil)
+      iex> :ok
+      :ok
+  """
+  @doc group: "Parsing"
+  @spec validate(schema(), input(), options()) :: :ok | {:error, [Zoi.Error.t()]}
+  def validate(schema, value, opts \\ []) do
+    opts = opts |> Keyword.put(:mode, :validate) |> Keyword.put(:coerce, false)
+
+    case parse(schema, value, opts) do
+      {:ok, ^value} ->
+        :ok
+
+      {:ok, changed} ->
+        {:error,
+         [
+           Zoi.Error.new(
+             code: :custom,
+             message: "validation must not change the value",
+             path: changed_value_path(value, changed, [])
+           )
+         ]}
+
+      {:error, errors} ->
+        {:error, errors}
+    end
+  end
+
+  defp changed_value_path(left, right, path) when is_map(left) and is_map(right) do
+    left_keys = Enum.sort(Map.keys(left))
+
+    if left_keys === Enum.sort(Map.keys(right)) do
+      key = Enum.find(left_keys, &(Map.fetch!(left, &1) !== Map.fetch!(right, &1)))
+      changed_value_path(Map.fetch!(left, key), Map.fetch!(right, key), path ++ [key])
+    else
+      path
+    end
+  end
+
+  defp changed_value_path(left, right, path) when is_list(left) and is_list(right) do
+    if length(left) == length(right) do
+      {{a, b}, index} =
+        left |> Enum.zip(right) |> Enum.with_index() |> Enum.find(fn {{a, b}, _} -> a !== b end)
+
+      changed_value_path(a, b, path ++ [index])
+    else
+      path
+    end
+  end
+
+  defp changed_value_path(_left, _right, path), do: path
 
   @doc """
   Similar to `Zoi.parse/3`, but raises an error if parsing fails.
@@ -1267,7 +1346,9 @@ defmodule Zoi do
   Creates a default value for the schema.
 
   This allows you to specify a default value that will be used if the input is `nil` or not provided.
-  The default value is returned without validation or transformation.
+  By default, the value is returned without validation or transformation.
+  With `parse_defaults: true`, parsing checks the default as input through
+  its type and effects. A codec default must then use the codec's input form.
 
   ## Example
       iex> schema = Zoi.string() |> Zoi.default("default value")

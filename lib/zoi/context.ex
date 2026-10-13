@@ -46,16 +46,35 @@ defmodule Zoi.Context do
   end
 
   defp parse_default(ctx, opts) do
-    if Meta.default?(ctx.schema.meta) do
-      %{ctx | parsed: Meta.default(ctx.schema.meta), valid?: true}
+    cond do
+      opts[:mode] == :validate ->
+        parse_schema(ctx, opts)
+
+      Meta.default?(ctx.schema.meta) and Keyword.get(opts, :parse_defaults, false) ->
+        parse_checked_default(ctx, opts)
+
+      Meta.default?(ctx.schema.meta) ->
+        %{ctx | parsed: Meta.default(ctx.schema.meta), valid?: true}
+
+      true ->
+        parse_schema(ctx, opts)
+    end
+  end
+
+  defp parse_checked_default(ctx, opts) do
+    stack = Keyword.get(opts, :__zoi_default_stack__, [])
+
+    if Enum.any?(stack, &(&1 === ctx.schema)) do
+      add_error(ctx, Zoi.Error.custom_error(issue: {"default expansion is recursive", []}))
     else
-      parse_schema(ctx, opts)
+      opts = Keyword.put(opts, :__zoi_default_stack__, [ctx.schema | stack])
+      parse_schema(%{ctx | input: Meta.default(ctx.schema.meta)}, opts)
     end
   end
 
   defp parse_schema(ctx, opts) do
     with {:ok, ctx} <- parse_type(ctx, opts),
-         {:ok, ctx} <- Meta.run_effects(ctx) do
+         {:ok, ctx} <- Meta.run_effects(ctx, opts) do
       %{ctx | valid?: true}
     else
       {:error, ctx} -> ctx
@@ -77,7 +96,14 @@ defmodule Zoi.Context do
   defp format_path(path), do: inspect(List.last(path))
 
   defp parse_type(ctx, opts) do
-    case Zoi.Type.parse(ctx.schema, ctx.input, opts) do
+    schema =
+      if opts[:mode] == :validate do
+        ctx.schema |> Map.replace(:coerce, false) |> Map.replace(:empty_values, [])
+      else
+        ctx.schema
+      end
+
+    case Zoi.Type.parse(schema, ctx.input, opts) do
       {:ok, result} ->
         {:ok, add_parsed(ctx, result)}
 
