@@ -2171,6 +2171,13 @@ defmodule Zoi do
          }
        ]}
 
+  With `coerce: true`, a string can match a declared atom in an atom enum.
+  This does not create atoms from input or change mapped enum behavior:
+
+      iex> schema = Zoi.enum([:ready, :done], coerce: true)
+      iex> Zoi.parse(schema, "ready")
+      {:ok, :ready}
+
   You can also specify the `:coerce` option to allow coercion for both key and value of the enum:
       iex> schema = Zoi.enum([one: 1, two: 2, three: 3], coerce: true)
       iex> Zoi.parse(schema, 1)
