@@ -51,11 +51,49 @@ defmodule Zoi.AtomEnumCoercionTest do
     assert {:ok, 1} = Zoi.parse(Zoi.enum([1, 1.0], coerce: true), 1.0)
   end
 
-  test "boolean and nil atom names use the same declared-value rule" do
+  test "mixed enums match atom names in either declaration order" do
+    for values <- [[:ready, "done"], ["done", :ready], [:ready, 1], [1, :ready]] do
+      assert {:ok, :ready} = Zoi.parse(Zoi.enum(values, coerce: true), "ready")
+      assert {:error, _} = Zoi.parse(Zoi.enum(values), "ready")
+    end
+  end
+
+  test "mixed mapped enums match only symmetric atom entries" do
+    for values <- [[:b, a: "x"], [{:a, "x"}, :b]] do
+      schema = Zoi.enum(values, coerce: true)
+      assert {:ok, :b} = Zoi.parse(schema, "b")
+      assert {:ok, :a} = Zoi.parse(schema, "x")
+      assert {:error, _} = Zoi.parse(schema, "a")
+    end
+
+    schema = Zoi.enum([:z, a: :x], coerce: true)
+    assert {:ok, :z} = Zoi.parse(schema, "z")
+    assert {:error, _} = Zoi.parse(schema, "a")
+    assert {:error, _} = Zoi.parse(schema, "x")
+  end
+
+  test "coerce and form preparation enable declared atom-name matching" do
+    assert {:ok, :ready} = Zoi.parse(Zoi.coerce(Zoi.enum([:ready])), "ready")
+    schema = Zoi.Form.prepare(Zoi.object(%{state: Zoi.enum([:ready])}))
+    assert {:ok, %{state: :ready}} = Zoi.parse(schema, %{"state" => "ready"})
+  end
+
+  test "a coerced atom enum matches before a later union string branch" do
+    schema = Zoi.union([Zoi.enum([:ready]), Zoi.string()])
+    assert {:ok, "ready"} = Zoi.parse(schema, "ready")
+    assert {:ok, :ready} = Zoi.parse(schema, "ready", coerce: true)
+    assert {:ok, "unknown"} = Zoi.parse(schema, "unknown", coerce: true)
+  end
+
+  test "boolean, nil, and module atoms use their exact declared names" do
     schema = Zoi.enum([true, false, nil], coerce: true)
     assert {:ok, true} = Zoi.parse(schema, "true")
     assert {:ok, false} = Zoi.parse(schema, "false")
     assert {:ok, nil} = Zoi.parse(schema, "nil")
+
+    module_schema = Zoi.enum([__MODULE__], coerce: true)
+    assert {:ok, __MODULE__} = Zoi.parse(module_schema, Atom.to_string(__MODULE__))
+    assert {:error, _} = Zoi.parse(module_schema, "Zoi.AtomEnumCoercionTest")
   end
 
   test "literal coercion is unchanged and enum custom errors are retained" do

@@ -2178,6 +2178,14 @@ defmodule Zoi do
       iex> Zoi.parse(schema, "ready")
       {:ok, :ready}
 
+  Mixed enums also match declared atom names, regardless of their position.
+  Names use `Atom.to_string/1`: `nil` matches `"nil"`, and the module atom
+  `Foo.Bar` matches `"Elixir.Foo.Bar"`.
+
+  The same rule applies to global parse coercion, `Zoi.coerce/1`, and
+  `Zoi.Form.prepare/1`. In a union, a coerced atom enum can match a string
+  before a later string schema is tried.
+
   You can also specify the `:coerce` option to allow coercion for both key and value of the enum:
       iex> schema = Zoi.enum([one: 1, two: 2, three: 3], coerce: true)
       iex> Zoi.parse(schema, 1)

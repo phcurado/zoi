@@ -81,7 +81,7 @@ defmodule Zoi.Types.Enum do
       end
     end
 
-    defp find_atom_name(%{enum_type: :atom, values: values}, input, true)
+    defp find_atom_name(%{values: values}, input, true)
          when is_binary(input) do
       Enum.find(values, fn {key, value} ->
         is_atom(key) and key === value and Atom.to_string(key) == input
