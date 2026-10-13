@@ -63,7 +63,7 @@ defmodule Zoi.Types.KeyValue do
     coerce? = Keyword.get(opts, :coerce, coerce?)
     normalize_key = normalize_key_fun(coerce?)
 
-    input_lookup = Map.new(input_pairs, fn {k, v} -> {normalize_key.(k), v} end)
+    {input_lookup, collisions} = lookup(input_pairs, coerce?)
 
     unknown_pairs =
       reject_known_pairs(unrecognized_keys, input_pairs, schema_fields, normalize_key)
@@ -75,30 +75,8 @@ defmodule Zoi.Types.KeyValue do
                                                       {parsed, errors} ->
         normalized = normalize_key.(field_key)
 
-        case Map.fetch(input_lookup, normalized) do
-          :error ->
-            handle_missing_field(field_schema, field_key, parsed, errors)
-
-          {:ok, raw_value} ->
-            if raw_value in empty_values do
-              handle_missing_field(field_schema, field_key, parsed, errors)
-            else
-              case parse_child_value(field_schema, raw_value, opts, [field_key]) do
-                {:ok, parsed_value, child_errors} ->
-                  {[{field_key, parsed_value} | parsed], Enum.reverse(child_errors, errors)}
-
-                {:error, child_errors, partial_value} ->
-                  parsed =
-                    if is_nil(partial_value) do
-                      parsed
-                    else
-                      [{field_key, partial_value} | parsed]
-                    end
-
-                  {parsed, Enum.reverse(child_errors, errors)}
-              end
-            end
-        end
+        input = {MapSet.member?(collisions, normalized), Map.fetch(input_lookup, normalized)}
+        parse_field({field_key, field_schema}, input, empty_values, {parsed, errors}, opts)
       end)
 
     collected_errors = Enum.reverse(collected_errors)
@@ -135,6 +113,36 @@ defmodule Zoi.Types.KeyValue do
       {[], parsed} -> {:ok, parsed}
       {errors, []} -> {:error, errors}
       {errors, parsed} -> {:error, errors, parsed}
+    end
+  end
+
+  defp parse_field({field_key, field_schema}, input, empty_values, {parsed, errors}, opts) do
+    case input do
+      {true, _value} ->
+        {parsed, [Zoi.Error.key_collision(field_key) | errors]}
+
+      {false, :error} ->
+        handle_missing_field(field_schema, field_key, parsed, errors)
+
+      {false, {:ok, raw_value}} ->
+        if raw_value in empty_values do
+          handle_missing_field(field_schema, field_key, parsed, errors)
+        else
+          case parse_child_value(field_schema, raw_value, opts, [field_key]) do
+            {:ok, parsed_value, child_errors} ->
+              {[{field_key, parsed_value} | parsed], Enum.reverse(child_errors, errors)}
+
+            {:error, child_errors, partial_value} ->
+              parsed =
+                if is_nil(partial_value) do
+                  parsed
+                else
+                  [{field_key, partial_value} | parsed]
+                end
+
+              {parsed, Enum.reverse(child_errors, errors)}
+          end
+        end
     end
   end
 
@@ -187,6 +195,23 @@ defmodule Zoi.Types.KeyValue do
   end
 
   # Helpers
+
+  @doc false
+  @spec lookup([{term(), term()}], boolean()) :: {map(), MapSet.t()}
+  def lookup(input_pairs, false), do: {Map.new(input_pairs), MapSet.new()}
+
+  def lookup(input_pairs, true) do
+    Enum.reduce(input_pairs, {%{}, MapSet.new()}, fn {key, value}, {lookup, collisions} ->
+      normalized = to_string(key)
+
+      collisions =
+        if Map.has_key?(lookup, normalized),
+          do: MapSet.put(collisions, normalized),
+          else: collisions
+
+      {Map.put(lookup, normalized, value), collisions}
+    end)
+  end
 
   defp normalize_key_fun(true), do: &to_string/1
   defp normalize_key_fun(false), do: &Function.identity/1
