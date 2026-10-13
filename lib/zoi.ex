@@ -199,7 +199,7 @@ defmodule Zoi do
   through their inner types, refinements, and transforms in the same traversal.
   This applies to explicit `nil`, missing fields, and configured empty values.
   Optional missing fields stay absent. Without this option, defaults retain
-  their existing output behavior.
+  their existing output behavior. Recursive default expansion returns an error.
 
   Set `immutable_refinements: true` to reject a successful refinement that
   changes its value. This does not disable transforms.
@@ -244,8 +244,10 @@ defmodule Zoi do
   any type parser or refinement that changes the value. Defaulted fields must
   be present unless optional. Explicit `nil` must satisfy the inner type.
 
-  Use a schema for the stored value. A schema that accepts raw input before a
-  type-changing transform cannot check that transform's output.
+  Use a schema for the stored value. Refinements check the stored value;
+  transforms do not run. Input refinements that depend on a transform's
+  intermediate values can need a separate output schema. Mapped enums check
+  their declared output keys. Keyword validation retains the input pair order.
 
   ## Examples
 
@@ -1344,7 +1346,9 @@ defmodule Zoi do
   Creates a default value for the schema.
 
   This allows you to specify a default value that will be used if the input is `nil` or not provided.
-  The default value is returned without validation or transformation.
+  By default, the value is returned without validation or transformation.
+  With `parse_defaults: true`, parsing checks the default as input through
+  its type and effects. A codec default must then use the codec's input form.
 
   ## Example
       iex> schema = Zoi.string() |> Zoi.default("default value")

@@ -51,13 +51,24 @@ defmodule Zoi.Context do
         parse_schema(ctx, opts)
 
       Meta.default?(ctx.schema.meta) and Keyword.get(opts, :parse_defaults, false) ->
-        parse_schema(%{ctx | input: Meta.default(ctx.schema.meta)}, opts)
+        parse_checked_default(ctx, opts)
 
       Meta.default?(ctx.schema.meta) ->
         %{ctx | parsed: Meta.default(ctx.schema.meta), valid?: true}
 
       true ->
         parse_schema(ctx, opts)
+    end
+  end
+
+  defp parse_checked_default(ctx, opts) do
+    stack = Keyword.get(opts, :__zoi_default_stack__, [])
+
+    if Enum.any?(stack, &(&1 === ctx.schema)) do
+      add_error(ctx, Zoi.Error.custom_error(issue: {"default expansion is recursive", []}))
+    else
+      opts = Keyword.put(opts, :__zoi_default_stack__, [ctx.schema | stack])
+      parse_schema(%{ctx | input: Meta.default(ctx.schema.meta)}, opts)
     end
   end
 

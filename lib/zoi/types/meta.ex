@@ -83,22 +83,7 @@ defmodule Zoi.Types.Meta do
     {ctx, has_partial} =
       Enum.reduce(schema.meta.effects, {ctx, false}, fn
         {:refine, refinement}, {ctx, has_partial} ->
-          case run_refinement(refinement, ctx.parsed, ctx) do
-            {:ok, value} when immutable_refinements? and value !== ctx.parsed ->
-              error =
-                Zoi.Error.new(code: :custom, message: "refinement must not change the value")
-
-              {Zoi.Context.add_error(ctx, error), has_partial}
-
-            {:ok, value} ->
-              {Zoi.Context.add_parsed(ctx, value), has_partial}
-
-            {:error, errors} ->
-              {Zoi.Context.add_error(ctx, errors), has_partial}
-
-            {:error, errors, partial} ->
-              {ctx |> Zoi.Context.add_parsed(partial) |> Zoi.Context.add_error(errors), true}
-          end
+          apply_refinement(ctx, refinement, immutable_refinements?, has_partial)
 
         {:transform, _transform}, acc when validate? ->
           acc
@@ -121,6 +106,30 @@ defmodule Zoi.Types.Meta do
       has_partial -> {:error, ctx}
       true -> {:error, %{ctx | parsed: nil}}
     end
+  end
+
+  defp apply_refinement(ctx, refinement, immutable_refinements?, has_partial) do
+    case run_refinement(refinement, ctx.parsed, ctx) do
+      {:ok, value} when immutable_refinements? and value !== ctx.parsed ->
+        {immutable_refinement_error(ctx), has_partial}
+
+      {:ok, value} ->
+        {Zoi.Context.add_parsed(ctx, value), has_partial}
+
+      {:error, errors} ->
+        {Zoi.Context.add_error(ctx, errors), has_partial}
+
+      {:error, [], partial} when immutable_refinements? and partial !== ctx.parsed ->
+        {immutable_refinement_error(ctx), has_partial}
+
+      {:error, errors, partial} ->
+        {ctx |> Zoi.Context.add_parsed(partial) |> Zoi.Context.add_error(errors), true}
+    end
+  end
+
+  defp immutable_refinement_error(ctx) do
+    error = Zoi.Error.new(code: :custom, message: "refinement must not change the value")
+    Zoi.Context.add_error(ctx, error)
   end
 
   # Internal validation which uses Protocols in form of MFA: {ProtocolMod, :validate, [value, opts]}

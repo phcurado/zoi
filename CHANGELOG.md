@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `Zoi.validate/3` checks stored values without defaults, coercion or transforms, while preserving keyword order and checking mapped enum output keys.
+- Parsing supports checked defaults and immutable refinements through `parse_defaults: true` and `immutable_refinements: true`. Recursive default expansion returns an error.
 - `Zoi.exclusive_union/2` requires exactly one matching schema
 - `Zoi.none/1` rejects every input
 - `Zoi.from_json_schema/1` and `Zoi.to_json_schema/1` now support boolean schemas

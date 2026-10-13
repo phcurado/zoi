@@ -39,7 +39,11 @@ defmodule Zoi.Types.KeyValue do
     do_parse_pairs(input, type, opts)
     |> case do
       {:ok, parsed} ->
-        {:ok, Enum.reverse(parsed)}
+        parsed = Enum.reverse(parsed)
+
+        if opts[:mode] == :validate and Enum.frequencies(parsed) === Enum.frequencies(input),
+          do: {:ok, input},
+          else: {:ok, parsed}
 
       {:error, errors} ->
         {:error, errors}

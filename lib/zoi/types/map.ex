@@ -60,11 +60,24 @@ defmodule Zoi.Types.Map do
       Zoi.Types.KeyValue.parse(type, input, opts)
     end
 
-    def parse(%Zoi.Types.Map{} = schema, input, _opts)
+    def parse(%Zoi.Types.Map{} = schema, input, opts)
         when is_map(input) and not is_struct(input) do
+      child_opts =
+        Keyword.take(opts, [
+          :mode,
+          :parse_defaults,
+          :immutable_refinements,
+          :__zoi_default_stack__
+        ])
+
+      child_opts =
+        if opts[:mode] == :validate,
+          do: Keyword.put(child_opts, :coerce, false),
+          else: child_opts
+
       Enum.reduce(input, {%{}, []}, fn {key, value}, {input, errors} ->
-        with {:ok, key_parsed} <- Zoi.parse(schema.key_type, key),
-             {:ok, value_parsed} <- Zoi.parse(schema.value_type, value) do
+        with {:ok, key_parsed} <- Zoi.parse(schema.key_type, key, child_opts),
+             {:ok, value_parsed} <- Zoi.parse(schema.value_type, value, child_opts) do
           {Map.put(input, key_parsed, value_parsed), errors}
         else
           {:error, err} ->
