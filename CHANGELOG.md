@@ -18,11 +18,13 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Discriminated unions honor per-parse coercion options before branch selection.
 - Decimal is now a required dependency, supporting 2.2+ and 3.x
 - Improve schema construction and parsing performance
 
 ### Fixed
 
+- Object and discriminator coercion reject distinct input keys that match the same field with a `:key_collision` error. Repeated identical keyword keys retain the last value.
 - `Zoi.url/1` now accepts non-HTTP URI schemes
 - `Zoi.from_json_schema/1` now accepts quoted email local parts
 - `Zoi.float/1` now coerces integer inputs when coercion is enabled

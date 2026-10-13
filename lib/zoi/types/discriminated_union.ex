@@ -73,7 +73,7 @@ defmodule Zoi.Types.DiscriminatedUnion do
   defimpl Zoi.Type do
     def parse(%Zoi.Types.DiscriminatedUnion{} = discriminated_union, input, opts)
         when is_map(input) do
-      with {:ok, value} <- get_field_value(discriminated_union, input),
+      with {:ok, value} <- get_field_value(discriminated_union, input, opts),
            {:ok, schema} <- get_schema(discriminated_union, value) do
         case Zoi.parse(schema, input, opts) do
           {:ok, parsed} ->
@@ -89,24 +89,24 @@ defmodule Zoi.Types.DiscriminatedUnion do
       {:error, Zoi.Error.invalid_type(:map, error: schema.meta.error)}
     end
 
-    defp get_field_value(%{field: field, coerce: coerce?} = discriminated_union, input) do
+    defp get_field_value(%{field: field, coerce: coerce?} = discriminated_union, input, opts) do
+      coerce? = Keyword.get(opts, :coerce, coerce?)
       coerced_key = if coerce?, do: to_string(field), else: field
+      input = if coerce?, do: Map.delete(input, :__struct__), else: input
 
-      coerced_input =
-        if coerce? do
-          input
-          # Make sure input is a plain map (that implements Enumerable) and not a struct:
-          |> Map.delete(:__struct__)
-          |> Map.new(fn {k, v} -> {to_string(k), v} end)
-        else
-          input
-        end
+      {coerced_input, collisions} =
+        input
+        |> Map.to_list()
+        |> Zoi.Types.KeyValue.lookup(coerce?)
 
-      case Map.fetch(coerced_input, coerced_key) do
-        {:ok, value} ->
+      case {MapSet.member?(collisions, coerced_key), Map.fetch(coerced_input, coerced_key)} do
+        {true, _value} ->
+          {:error, Zoi.Error.key_collision(field)}
+
+        {false, {:ok, value}} ->
           {:ok, value}
 
-        :error ->
+        {false, :error} ->
           if error = discriminated_union.meta.error do
             {:error, Zoi.Error.custom_error(issue: {error, [field: field]})}
           else
