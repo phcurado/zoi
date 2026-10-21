@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Coerced enums accept strings matching declared atom names, including mixed enums, global parse coercion and prepared forms. A matching enum branch can now precede a string branch in a union. Mapped enum values remain unchanged.
 - Decimal is now a required dependency, supporting 2.2+ and 3.x
 - Improve schema construction and parsing performance
 
