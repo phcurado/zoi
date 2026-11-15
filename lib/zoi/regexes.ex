@@ -76,6 +76,20 @@ defmodule Zoi.Regexes do
     end
   end
 
+  @ulid ~r/^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/
+  @doc """
+  Regex pattern to match a valid ULID.
+
+  Enforces case-insensitive Crockford's Base32 characters (excludes I, L, O, U)
+  with a valid 48-bit timestamp prefix [0-7] (prevents timestamp overflow),
+  exactly 26 characters long.
+
+  from https://github.com/ulid/spec
+  """
+  def ulid() do
+    @ulid
+  end
+
   @ipv4 ~r/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/
 
   @doc """

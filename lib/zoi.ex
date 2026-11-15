@@ -2555,6 +2555,27 @@ defmodule Zoi do
     )
   end
 
+  @doc """
+  Validates that the string is a valid ULID format.
+
+  ## Example
+      iex> schema = Zoi.ulid()
+      iex> Zoi.parse(schema, "01M7FK5XENZSVMY3592GGAZ7RD")
+      {:ok, "01M7FK5XENZSVMY3592GGAZ7RD"}
+      iex> {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, "invalid-ulid")
+      iex> error.message
+      "invalid ULID format"
+  """
+  @doc group: "Formats"
+  @spec ulid(opts :: options()) :: schema()
+  def ulid(opts \\ []) do
+    Zoi.string(opts)
+    |> regex(Regexes.ulid(),
+      error: opts[:error],
+      internal_message: "invalid ULID format"
+    )
+  end
+
   @doc ~S"""
   Defines a URL format validation.
 

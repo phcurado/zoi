@@ -3783,6 +3783,38 @@ defmodule ZoiTest do
     end
   end
 
+  describe "ulid/1" do
+    test "valid ulid" do
+      schema = Zoi.ulid()
+
+      assert {:ok, "01M7FKAXC28M3FWYAYT793ND9V"} ==
+               Zoi.parse(schema, "01M7FKAXC28M3FWYAYT793ND9V")
+    end
+
+    test "is case insensitive" do
+      schema = Zoi.ulid()
+
+      assert {:ok, "01M7fkBE7DH9q10dNB95NGWfVM"} ==
+               Zoi.parse(schema, "01M7fkBE7DH9q10dNB95NGWfVM")
+    end
+
+    @invalid_ulids [
+      {"81M7fkBE7DH9q10dNB95NGWfVM", "timestamp overflow"},
+      {"01M7FKKKC8996KPDR3QEKVA09M1", "too long"},
+      {"01M7FKKZX4K3RK821Y87J3HD0", "too short"}
+    ]
+    for {invalid_ulid, reason} <- @invalid_ulids do
+      @invalid_ulid invalid_ulid
+      test "invalid ulid: #{reason}" do
+        schema = Zoi.ulid()
+
+        assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, @invalid_ulid)
+        assert error.code == :invalid_format
+        assert Exception.message(error) == "invalid ULID format"
+      end
+    end
+  end
+
   describe "url/0" do
     test "valid URL" do
       schema = Zoi.url()
