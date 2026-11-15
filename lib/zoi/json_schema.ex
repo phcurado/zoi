@@ -59,6 +59,7 @@ defmodule Zoi.JSONSchema do
   | `Zoi.email/1` | `"string"` with `format: "email"` |
   | `Zoi.url/1` | `"string"` with `format: "uri"` |
   | `Zoi.uuid/1` | `"string"` with `format: "uuid"` |
+  | `Zoi.ulid/1 | `"string"` with `format: "ulid"` |
 
   ## Metadata
 
