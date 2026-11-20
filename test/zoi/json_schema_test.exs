@@ -168,6 +168,7 @@ defmodule Zoi.JSONSchemaTest do
       schema =
         Zoi.map(%{
           uuid: Zoi.uuid(),
+          ulid: Zoi.ulid(),
           name: Zoi.string(),
           email: Zoi.email()
         })
@@ -175,6 +176,7 @@ defmodule Zoi.JSONSchemaTest do
       result = Zoi.to_json_schema(schema)
 
       uuid_pattern = Regexes.uuid().source
+      ulid_pattern = Regexes.ulid().source
       email_pattern = Regexes.email().source
 
       assert %{
@@ -182,6 +184,7 @@ defmodule Zoi.JSONSchemaTest do
                type: :object,
                properties: %{
                  uuid: %{type: :string, pattern: ^uuid_pattern},
+                 ulid: %{type: :string, pattern: ^ulid_pattern},
                  name: %{type: :string},
                  email: %{type: :string, format: :email, pattern: ^email_pattern}
                },
@@ -190,6 +193,7 @@ defmodule Zoi.JSONSchemaTest do
              } = result
 
       assert :uuid in required_properties
+      assert :ulid in required_properties
       assert :name in required_properties
       assert :email in required_properties
     end
@@ -290,6 +294,7 @@ defmodule Zoi.JSONSchemaTest do
          %{type: :string, minLength: 3, maxLength: 10}},
         {Zoi.string() |> Zoi.length(5), %{type: :string, minLength: 5, maxLength: 5}},
         {Zoi.uuid(), %{type: :string, pattern: Regexes.uuid().source}},
+        {Zoi.ulid(), %{type: :string, pattern: Regexes.ulid().source}},
         {Zoi.url(), %{type: :string, format: :uri}},
         {Zoi.base64(), %{type: :string, contentEncoding: :base64}},
         {Zoi.base64url(), %{type: :string, contentEncoding: :base64url}},
@@ -1455,6 +1460,15 @@ defmodule Zoi.JSONSchemaTest do
 
       assert {:ok, "550e8400-e29b-41d4-a716-446655440000"} =
                Zoi.parse(schema, "550e8400-e29b-41d4-a716-446655440000")
+
+      assert {:error, _} = Zoi.parse(schema, "not-a-uuid")
+    end
+
+    test "string format ulid decodes to Zoi.ulid" do
+      schema = Zoi.from_json_schema(%{"type" => "string", "format" => "ulid"})
+
+      assert {:ok, "01M7FM3JQN4VREKXP83B9MCTWZ"} =
+               Zoi.parse(schema, "01M7FM3JQN4VREKXP83B9MCTWZ")
 
       assert {:error, _} = Zoi.parse(schema, "not-a-uuid")
     end

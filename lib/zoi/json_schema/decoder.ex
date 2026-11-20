@@ -120,6 +120,7 @@ defmodule Zoi.JSONSchema.Decoder do
         "email" -> Zoi.email(pattern: Zoi.Regexes.rfc5322_email())
         "uri" -> Zoi.url()
         "uuid" -> Zoi.uuid()
+        "ulid" -> Zoi.ulid()
         _ -> Zoi.string()
       end
 
