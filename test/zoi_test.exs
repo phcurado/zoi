@@ -3398,6 +3398,29 @@ defmodule ZoiTest do
       assert {:ok, :cherry} == Zoi.parse(schema, :cherry)
     end
 
+    test "atom enum with coercion accepts matching strings" do
+      schema = Zoi.enum([:ready, :done], coerce: true)
+      assert {:ok, :ready} == Zoi.parse(schema, "ready")
+      assert {:ok, :done} == Zoi.parse(schema, :done)
+      assert {:error, [%Zoi.Error{code: :invalid_enum_value}]} = Zoi.parse(schema, "unknown")
+    end
+
+    test "enum coercion keeps results of declared keys and values" do
+      assert {:ok, :ready} ==
+               Zoi.parse(Zoi.enum([ready: "R", alias: :ready], coerce: true), :ready)
+
+      assert {:ok, nil} == Zoi.parse(Zoi.enum([one: 1, nil: 2], coerce: true), nil)
+
+      assert {:ok, :published} ==
+               Zoi.parse(Zoi.enum([draft: "D", published: "draft"], coerce: true), "draft")
+    end
+
+    test "atom enum without coercion rejects strings" do
+      schema = Zoi.enum([:ready, :done])
+      assert {:error, [%Zoi.Error{code: :invalid_enum_value}]} = Zoi.parse(schema, "ready")
+      assert {:ok, :ready} == Zoi.parse(schema, "ready", coerce: true)
+    end
+
     test "enum with incorrect value" do
       schema = Zoi.enum([:apple, :banana, :cherry])
       assert {:error, [%Zoi.Error{} = error]} = Zoi.parse(schema, :orange)

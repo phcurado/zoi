@@ -62,7 +62,15 @@ defmodule Zoi.Types.Enum do
     def parse(%Zoi.Types.Enum{} = schema, input, opts) do
       coerce = Keyword.get(opts, :coerce, schema.coerce)
 
-      Enum.find(schema.values, fn {key, value} ->
+      case find_entry(schema.values, input, coerce) do
+        nil -> error(schema)
+        {key, _value} -> {:ok, key}
+      end
+    end
+
+    defp find_entry(values, input, coerce) do
+      values
+      |> Enum.find(fn {key, value} ->
         if coerce do
           input == value or input == key
         else
@@ -70,12 +78,16 @@ defmodule Zoi.Types.Enum do
         end
       end)
       |> case do
-        nil ->
-          error(schema)
-
-        {key, _value} ->
-          {:ok, key}
+        nil when coerce and is_binary(input) -> find_key_name(values, input)
+        entry -> entry
       end
+    end
+
+    defp find_key_name(values, name) do
+      Enum.find(values, fn
+        {key, _value} when is_atom(key) -> Atom.to_string(key) == name
+        _entry -> false
+      end)
     end
 
     defp error(schema) do
