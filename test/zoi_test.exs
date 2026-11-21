@@ -1812,6 +1812,20 @@ defmodule ZoiTest do
                Zoi.parse(schema, %{"name" => "John", "age" => 30})
     end
 
+    test "map rejects colliding string and atom keys with coerce" do
+      schema = Zoi.map(%{query: Zoi.string()}, coerce: true)
+
+      assert {:error, [%Zoi.Error{code: :key_collision, path: [:query]}]} =
+               Zoi.parse(schema, %{"query" => "first", query: "second"})
+    end
+
+    test "nested map rejects colliding keys with coerce during parsing time" do
+      schema = Zoi.map(%{search: Zoi.map(%{"query" => Zoi.string()})})
+
+      assert {:error, [%Zoi.Error{code: :key_collision, path: [:search, "query"]}]} =
+               Zoi.parse(schema, %{search: %{"query" => "first", query: "second"}}, coerce: true)
+    end
+
     test "map with coerce on string and atom keys during parsing time" do
       schema = Zoi.map(%{name: Zoi.string(), age: Zoi.integer()})
 
@@ -2235,6 +2249,18 @@ defmodule ZoiTest do
       assert error.code == :invalid_type
       assert Exception.message(error) == "invalid type: expected keyword list"
       assert error.path == [:user]
+    end
+
+    test "keyword keeps last value for repeated keys" do
+      schema = Zoi.keyword(name: Zoi.string())
+
+      assert {:ok, [name: "second"]} == Zoi.parse(schema, name: "first", name: "second")
+    end
+
+    test "keyword ignores __struct__ key" do
+      schema = Zoi.keyword(name: Zoi.string())
+
+      assert {:ok, [name: "ok"]} == Zoi.parse(schema, __struct__: Date, name: "ok")
     end
 
     test "keyword with strict keys" do
