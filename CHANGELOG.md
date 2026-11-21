@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- Coercion now returns a `:key_collision` error when distinct keys, such as `:name` and `"name"`, match the same field
+
 ## 0.19.0 - 2026-10-23
 
 ### Added

@@ -63,7 +63,12 @@ defmodule Zoi.Types.KeyValue do
     coerce? = Keyword.get(opts, :coerce, coerce?)
     normalize_key = normalize_key_fun(coerce?)
 
-    input_lookup = Map.new(input_pairs, fn {k, v} -> {normalize_key.(k), v} end)
+    input_lookup =
+      input_pairs
+      |> Map.new()
+      |> Map.to_list()
+      |> Enum.group_by(fn {key, _} -> normalize_key.(key) end)
+
     patterns = Map.get(type, :pattern_properties, [])
 
     unknown_pairs =
@@ -76,11 +81,11 @@ defmodule Zoi.Types.KeyValue do
                                                       {parsed, errors} ->
         normalized = normalize_key.(field_key)
 
-        case Map.fetch(input_lookup, normalized) do
-          :error ->
+        case Map.get(input_lookup, normalized, []) do
+          [] ->
             handle_missing_field(field_schema, field_key, parsed, errors)
 
-          {:ok, raw_value} ->
+          [{_, raw_value}] ->
             if raw_value in empty_values do
               handle_missing_field(field_schema, field_key, parsed, errors)
             else
@@ -93,6 +98,9 @@ defmodule Zoi.Types.KeyValue do
 
               collect_field(field_key, result, parsed, errors)
             end
+
+          _multiple ->
+            {parsed, [Zoi.Error.key_collision(field_key) | errors]}
         end
       end)
 

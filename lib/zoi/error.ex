@@ -17,6 +17,7 @@ defmodule Zoi.Error do
     - `:invalid_literal`
     - `:invalid_tuple`
     - `:unrecognized_key`
+    - `:key_collision`
     - `:invalid_enum_value`
     - `:not_in_values`
     - `:required`
@@ -327,6 +328,27 @@ defmodule Zoi.Error do
     new(
       code: :unrecognized_key,
       issue: {"unrecognized key: %{key}", [key: key]}
+    )
+  end
+
+  @doc """
+  Creates an error when distinct input keys match the same declared field.
+
+  ## Example
+      iex> Zoi.Error.key_collision(:query)
+      %Zoi.Error{
+        code: :key_collision,
+        issue: {"multiple input keys match field %{key}", [key: :query]},
+        message: "multiple input keys match field query",
+        path: [:query]
+      }
+  """
+  @spec key_collision(atom() | binary() | integer()) :: t()
+  def key_collision(key) do
+    new(
+      code: :key_collision,
+      issue: {"multiple input keys match field %{key}", [key: key]},
+      path: [key]
     )
   end
 
