@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 0.20.0 - 2026-11-22
+
+### Added
+
+- `Zoi.ulid/1` to validate ULID strings
 
 ### Changed
 
