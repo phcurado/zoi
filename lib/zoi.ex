@@ -2171,7 +2171,7 @@ defmodule Zoi do
          }
        ]}
 
-  You can also specify the `:coerce` option to allow coercion for both key and value of the enum:
+  You can also specify the `:coerce` option to accept the key, as an atom or its string name:
       iex> schema = Zoi.enum([one: 1, two: 2, three: 3], coerce: true)
       iex> Zoi.parse(schema, 1)
       {:ok, :one}
@@ -2188,15 +2188,10 @@ defmodule Zoi do
          }
        ]}
       iex> Zoi.parse(schema, "one")
-      {:error,
-       [
-         %Zoi.Error{
-           code: :invalid_enum_value,
-           message: "invalid enum value: expected one of 1, 2, 3",
-           issue: {"invalid enum value: expected one of %{values}", [type: :enum, values: [1, 2, 3]]},
-           path: []
-         }
-       ]}
+      {:ok, :one}
+      iex> schema = Zoi.enum([:ready, :done], coerce: true)
+      iex> Zoi.parse(schema, "ready")
+      {:ok, :ready}
 
   ## Options
 

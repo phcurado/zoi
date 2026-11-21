@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- `Zoi.enum/2` with coercion now accepts the string name of atom keys
+
 ### Fixed
 
 - Coercion now returns a `:key_collision` error when distinct keys, such as `:name` and `"name"`, match the same field
