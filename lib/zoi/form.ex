@@ -77,10 +77,9 @@ defmodule Zoi.Form do
     # Normalize input to convert LiveView map arrays to lists
     normalized_input = normalize_input(obj, input)
 
-    ctx = Zoi.Context.new(obj, normalized_input)
-    opts = Keyword.put_new(opts, :ctx, ctx)
-
-    Zoi.Context.parse(ctx, opts)
+    obj
+    |> Zoi.Context.new(normalized_input)
+    |> Zoi.Context.parse(opts)
   end
 
   # Recursively normalize input based on schema structure

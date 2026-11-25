@@ -358,23 +358,23 @@ defmodule Zoi.JSONSchema do
   defp encode_regex_refinements(json_schema, []), do: json_schema
 
   defp encode_regex_refinements(%{type: :string} = json_schema, [
-         {Zoi.Validations.Regex, :validate, [regex, _regex_opts, opts]}
+         {Zoi.Validations.Regex, :validate, [%Regex{source: pattern}, opts]}
        ]) do
     Keyword.fetch(opts, :format)
     |> case do
       {:ok, format} ->
-        Map.merge(json_schema, %{format: format, pattern: regex})
+        Map.merge(json_schema, %{format: format, pattern: pattern})
 
       :error ->
-        Map.put(json_schema, :pattern, regex)
+        Map.put(json_schema, :pattern, pattern)
     end
   end
 
   defp encode_regex_refinements(json_schema, regex_refinements) do
     patterns =
       Enum.map(regex_refinements, fn {Zoi.Validations.Regex, :validate,
-                                      [regex, _regex_opts, _opts]} ->
-        regex
+                                      [%Regex{source: pattern}, _opts]} ->
+        pattern
       end)
 
     Map.put(json_schema, :allOf, Enum.map(patterns, fn pattern -> %{pattern: pattern} end))

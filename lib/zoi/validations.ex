@@ -8,22 +8,20 @@ defmodule Zoi.Validations do
   @spec run_validations(list({module(), {value(), opts()} | nil}), Zoi.Type.t(), input()) ::
           :ok | {:error, [Zoi.Error.t()]}
   def run_validations(validations, schema, input) do
-    validations
-    |> Enum.reduce([], fn {module, constraint_value}, acc ->
-      case constraint_value do
-        nil ->
-          acc
+    do_run_validations(validations, schema, input, [])
+  end
 
-        {value, opts} ->
-          case module.validate(schema, input, value, opts) do
-            :ok -> acc
-            {:error, error} -> [error | acc]
-          end
-      end
-    end)
-    |> case do
-      [] -> :ok
-      errors -> {:error, Enum.reverse(errors)}
+  defp do_run_validations([], _schema, _input, []), do: :ok
+  defp do_run_validations([], _schema, _input, errors), do: {:error, Enum.reverse(errors)}
+
+  defp do_run_validations([{_module, nil} | rest], schema, input, errors) do
+    do_run_validations(rest, schema, input, errors)
+  end
+
+  defp do_run_validations([{module, {value, opts}} | rest], schema, input, errors) do
+    case module.validate(schema, input, value, opts) do
+      :ok -> do_run_validations(rest, schema, input, errors)
+      {:error, error} -> do_run_validations(rest, schema, input, [error | errors])
     end
   end
 

@@ -22,16 +22,53 @@ defmodule Zoi.Context do
   defstruct [:schema, :input, :parsed, :path, valid?: false, errors: []]
 
   @doc false
-  @spec new(Zoi.schema(), Zoi.input()) :: t()
-  def new(schema, input) do
+  @spec new(Zoi.schema(), Zoi.input(), Zoi.Error.path()) :: t()
+  def new(schema, input, path \\ []) do
     %__MODULE__{
       schema: schema,
       input: input,
       parsed: nil,
       valid?: false,
-      path: [],
+      path: path,
       errors: []
     }
+  end
+
+  @doc false
+  @spec parse_value(Zoi.schema(), Zoi.input(), Zoi.options(), Zoi.Error.path()) ::
+          {:ok, Zoi.input()} | {:error, [Zoi.Error.t()], Zoi.input()}
+  def parse_value(schema, input, opts \\ [], path \\ [])
+
+  def parse_value(
+        %{meta: %Meta{deprecated: nil, default: {:value, default}}},
+        nil,
+        _opts,
+        _path
+      ) do
+    {:ok, default}
+  end
+
+  def parse_value(%{meta: %Meta{effects: [], deprecated: nil}} = schema, input, opts, _path) do
+    case Zoi.Type.parse(schema, input, opts) do
+      {:ok, result} ->
+        {:ok, result}
+
+      {:error, error, partial} ->
+        {:error, Zoi.Errors.add_error(error), partial}
+
+      {:error, error} ->
+        {:error, Zoi.Errors.add_error(error), nil}
+    end
+  end
+
+  def parse_value(schema, input, opts, path) do
+    ctx = schema |> new(input, path) |> parse(opts)
+
+    if ctx.valid? do
+      {:ok, ctx.parsed}
+    else
+      {:error, ctx.errors, ctx.parsed}
+    end
   end
 
   @doc false
@@ -62,15 +99,11 @@ defmodule Zoi.Context do
     end
   end
 
-  defp maybe_warn_deprecated(schema, path) do
-    case Meta.deprecated(schema.meta) do
-      nil ->
-        :ok
+  defp maybe_warn_deprecated(%{meta: %Meta{deprecated: nil}}, _path), do: :ok
 
-      message ->
-        field_name = format_path(path)
-        IO.warn("#{field_name} is deprecated: #{message}")
-    end
+  defp maybe_warn_deprecated(%{meta: %Meta{deprecated: message}}, path) do
+    field_name = format_path(path)
+    IO.warn("#{field_name} is deprecated: #{message}")
   end
 
   defp format_path([]), do: "schema"

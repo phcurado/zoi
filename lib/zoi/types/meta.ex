@@ -73,11 +73,18 @@ defmodule Zoi.Types.Meta do
   end
 
   @spec run_effects(Zoi.Context.t()) :: {:ok, Zoi.Context.t()} | {:error, Zoi.Context.t()}
+  def run_effects(%Zoi.Context{schema: %{meta: %__MODULE__{effects: []}}} = ctx) do
+    {:ok, ctx}
+  end
+
   def run_effects(%Zoi.Context{schema: schema} = ctx) do
     {ctx, has_partial} =
       Enum.reduce(schema.meta.effects, {ctx, false}, fn
         {:refine, refinement}, {ctx, has_partial} ->
           case run_refinement(refinement, ctx.parsed, ctx) do
+            {:ok, value} when value === ctx.parsed ->
+              {ctx, has_partial}
+
             {:ok, value} ->
               {Zoi.Context.add_parsed(ctx, value), has_partial}
 
@@ -90,6 +97,9 @@ defmodule Zoi.Types.Meta do
 
         {:transform, transform}, {ctx, has_partial} ->
           case run_transform(transform, ctx.parsed, ctx) do
+            {:ok, value} when value === ctx.parsed ->
+              {ctx, has_partial}
+
             {:ok, value} ->
               {Zoi.Context.add_parsed(ctx, value), has_partial}
 

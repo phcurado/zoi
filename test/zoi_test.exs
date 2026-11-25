@@ -148,6 +148,16 @@ defmodule ZoiTest do
       assert error.code == :invalid_length
     end
 
+    test "string length constraints count graphemes accurately for multi-byte UTF-8" do
+      assert {:ok, "é"} = Zoi.parse(Zoi.string() |> Zoi.min(1) |> Zoi.max(1), "é")
+      assert {:ok, "éé"} = Zoi.parse(Zoi.string() |> Zoi.min(2) |> Zoi.max(2), "éé")
+      assert {:error, _} = Zoi.parse(Zoi.string() |> Zoi.min(2) |> Zoi.max(4), "é")
+      assert {:ok, "🎉"} = Zoi.parse(Zoi.string() |> Zoi.max(1), "🎉")
+      assert {:error, _} = Zoi.parse(Zoi.string() |> Zoi.max(1), "🎉🎉")
+      assert {:ok, "é🎉"} = Zoi.parse(Zoi.string() |> Zoi.length(2), "é🎉")
+      assert {:error, _} = Zoi.parse(Zoi.string() |> Zoi.length(2), "é")
+    end
+
     test "string length/2 sets schema field when there are no effects" do
       schema = Zoi.string() |> Zoi.length(4)
       assert schema.length == {4, []}
@@ -1817,6 +1827,12 @@ defmodule ZoiTest do
 
       assert {:error, [%Zoi.Error{code: :key_collision, path: [:query]}]} =
                Zoi.parse(schema, %{"query" => "first", query: "second"})
+    end
+
+    test "map with coerce preserves :collision atom as a normal field value" do
+      schema = Zoi.map(%{status: Zoi.atom()}, coerce: true)
+
+      assert {:ok, %{status: :collision}} == Zoi.parse(schema, %{"status" => :collision})
     end
 
     test "nested map rejects colliding keys with coerce during parsing time" do

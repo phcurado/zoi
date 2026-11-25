@@ -103,19 +103,21 @@ defmodule Zoi.Types.Array do
           [] -> {inner, []}
         end
 
-      ctx = Zoi.Context.new(item_schema, input) |> Zoi.Context.add_path([index])
-      ctx = Zoi.Context.parse(ctx, opts)
+      {parsed, errors} =
+        case Zoi.Context.parse_value(item_schema, input, opts, [index]) do
+          {:ok, value} ->
+            {[{index, value} | parsed], errors}
 
-      parsed =
-        case {ctx.valid?, ctx.parsed} do
-          {false, nil} -> parsed
-          {_valid?, value} -> [{index, value} | parsed]
+          {:error, item_errors, partial} ->
+            parsed = if is_nil(partial), do: parsed, else: [{index, partial} | parsed]
+
+            errors =
+              Enum.reduce(item_errors, errors, fn error, acc ->
+                [Zoi.Error.prepend_path(error, [index]) | acc]
+              end)
+
+            {parsed, errors}
         end
-
-      errors =
-        Enum.reduce(ctx.errors, errors, fn error, acc ->
-          [Zoi.Error.prepend_path(error, [index]) | acc]
-        end)
 
       parse_items(rest, remaining_prefix, inner, opts, index + 1, parsed, errors)
     end

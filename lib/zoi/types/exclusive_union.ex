@@ -35,8 +35,9 @@ defmodule Zoi.Types.ExclusiveUnion do
     end
 
     defp parse_schema(schema, value, opts) do
-      ctx = Zoi.Context.new(schema, value)
-      Zoi.Context.parse(ctx, Keyword.put(opts, :ctx, ctx))
+      schema
+      |> Zoi.Context.new(value)
+      |> Zoi.Context.parse(opts)
     end
 
     defp error(schema, type_error) do
