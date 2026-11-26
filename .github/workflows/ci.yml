@@ -5,9 +5,12 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 
 jobs:
   ci:
+    runs-on: ubuntu-24.04
     env:
       MIX_ENV: test
     strategy:
@@ -15,63 +18,70 @@ jobs:
       matrix:
         include:
           - pair:
-              elixir: 1.14.5
+              elixir: 1.14.5-otp-24
               otp: 24.3.4
           - pair:
-              elixir: 1.15.7
+              elixir: 1.15.7-otp-24
               otp: 24.3.4
           - pair:
-              elixir: 1.16.1
+              elixir: 1.16.1-otp-24
               otp: 24.3.4
           - pair:
-              elixir: 1.14.5
+              elixir: 1.14.5-otp-25
               otp: 25.3.2
           - pair:
-              elixir: 1.15.7
+              elixir: 1.15.7-otp-25
               otp: 25.3.2
           - pair:
-              elixir: 1.16.1
+              elixir: 1.16.1-otp-25
               otp: 25.3.2
           - pair:
-              elixir: 1.14.5
+              elixir: 1.14.5-otp-26
               otp: 26.2.5
           - pair:
-              elixir: 1.15.7
+              elixir: 1.15.7-otp-26
               otp: 26.2.5
           - pair:
-              elixir: 1.16.2
+              elixir: 1.16.2-otp-26
               otp: 26.2.5
           - pair:
-              elixir: 1.17.2
+              elixir: 1.17.2-otp-26
               otp: 26.2.5
           - pair:
-              elixir: 1.17.2
+              elixir: 1.17.2-otp-27
               otp: 27.0.1
           - pair:
-              elixir: 1.18.3
+              elixir: 1.18.3-otp-27
               otp: 27.2.2
           - pair:
-              elixir: 1.18.4
+              elixir: 1.18.4-otp-28
               otp: 28.0.2
           - pair:
-              elixir: 1.18.4
+              elixir: 1.18.4-otp-28
               otp: 28.1
           - pair:
-              elixir: 1.19.4
+              elixir: 1.19.4-otp-28
               otp: 28.1
-          - pair:
-              elixir: 1.20.0-rc.6-otp-29
-              otp: 29.0
-            lint: lint
-
-    runs-on: ubuntu-24.04
+          - lint: true
 
     steps:
       - uses: actions/checkout@v4
-      - uses: erlef/setup-beam@v1
+
+      - uses: jdx/mise-action@v5
+        if: ${{ matrix.lint }}
+
+      - uses: jdx/mise-action@v5
+        if: ${{ !matrix.lint }}
         with:
-          otp-version: ${{matrix.pair.otp}}
-          elixir-version: ${{matrix.pair.elixir}}
+          mise_toml: |
+            [tools]
+            erlang = "${{ matrix.pair.otp }}"
+            elixir = "${{ matrix.pair.elixir }}"
+
+      - name: Install hex and rebar
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
 
       - uses: actions/cache@v4
         name: build and deps cache
@@ -79,53 +89,51 @@ jobs:
           path: |
             deps
             _build
-          key: |
-            ${{ runner.os }}-mix-${{matrix.pair.elixir}}-${{matrix.pair.otp}}-${{ hashFiles('**/mix.lock') }}
+          key: ${{ runner.os }}-mix-${{ matrix.lint && hashFiles('mise.toml') || format('{0}-{1}', matrix.pair.elixir, matrix.pair.otp) }}-${{ hashFiles('**/mix.lock') }}
           restore-keys: |
-            ${{ runner.os }}-mix-${{matrix.pair.elixir}}-${{matrix.pair.otp}}-
+            ${{ runner.os }}-mix-${{ matrix.lint && hashFiles('mise.toml') || format('{0}-{1}', matrix.pair.elixir, matrix.pair.otp) }}-
 
       - uses: actions/cache@v4
         name: PLT cache
+        if: ${{ matrix.lint }}
         with:
           path: |
             priv/plts
-          key: |
-            plt-${{ runner.os }}-mix-${{matrix.pair.elixir}}-${{matrix.pair.otp}}-${{ hashFiles('**/mix.lock') }}
+          key: plt-${{ runner.os }}-mix-${{ hashFiles('mise.toml') }}-${{ hashFiles('**/mix.lock') }}
           restore-keys: |
-            plt-${{ runner.os }}-mix-${{matrix.pair.elixir}}-${{matrix.pair.otp}}-
-        if: ${{ matrix.lint }}
+            plt-${{ runner.os }}-mix-${{ hashFiles('mise.toml') }}-
 
       - name: Run mix deps.get
         run: mix deps.get --only test
 
       - name: Run mix format
-        run: mix format --check-formatted
         if: ${{ matrix.lint }}
+        run: mix format --check-formatted
 
       - name: Run mix deps.compile
         run: mix deps.compile
 
       - name: Run mix compile
-        run: mix compile --warnings-as-errors
         if: ${{ matrix.lint }}
+        run: mix compile --warnings-as-errors
 
       - name: Run credo
-        run: mix credo --strict
         if: ${{ matrix.lint }}
+        run: mix credo --strict
 
       - name: Run mix test
         run: mix test
 
       - name: Create PLTs
-        run: mix dialyzer --plt
         if: ${{ matrix.lint }}
+        run: mix dialyzer --plt
 
       - name: Run dialyzer
-        run: mix dialyzer --format github --format dialyxir
         if: ${{ matrix.lint }}
+        run: mix dialyzer --format github --format dialyxir
 
       - name: Run Coveralls
-        run: mix coveralls.github
         if: ${{ matrix.lint }}
+        run: mix coveralls.github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

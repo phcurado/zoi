@@ -23,9 +23,6 @@ defmodule Zoi.Types.Intersection do
     def parse(%Zoi.Types.Intersection{schemas: schemas} = intersection, value, opts) do
       schemas
       |> Enum.reduce_while({:ok, []}, fn schema, {:ok, results} ->
-        ctx = Zoi.Context.new(schema, value)
-        opts = Keyword.put(opts, :ctx, ctx)
-
         case Zoi.parse(schema, value, opts) do
           {:ok, result} ->
             {:cont, {:ok, [result | results]}}

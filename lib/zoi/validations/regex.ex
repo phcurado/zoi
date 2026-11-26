@@ -3,11 +3,11 @@ defprotocol Zoi.Validations.Regex do
 
   @fallback_to_any true
 
-  @spec validate(Zoi.schema(), Zoi.input(), term(), keyword(), Zoi.options()) ::
+  @spec validate(Zoi.schema(), Zoi.input(), Regex.t(), Zoi.options()) ::
           :ok | {:error, Zoi.Error.t()}
-  def validate(schema, input, value, regex_opts, opts)
+  def validate(schema, input, regex, opts)
 end
 
 defimpl Zoi.Validations.Regex, for: Any do
-  def validate(_schema, _input, _value, _regex_opts, _opts), do: :ok
+  def validate(_schema, _input, _regex, _opts), do: :ok
 end

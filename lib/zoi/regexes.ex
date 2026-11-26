@@ -120,29 +120,4 @@ defmodule Zoi.Regexes do
   def hex() do
     @hex
   end
-
-  @doc """
-  Reuses a built-in pattern when its source and options match.
-  Compiles all other patterns with `Regex.compile!/2`.
-  """
-  def compile!(source, opts)
-
-  for {name, regex} <- [
-        email: @email,
-        html5_email: @html5_email,
-        rfc5322_email: @rfc5322_email,
-        simple_email: @simple_email,
-        upcase: @upcase,
-        downcase: @downcase,
-        uuid: @uuid,
-        ipv4: @ipv4,
-        ipv6: @ipv6,
-        hex: @hex
-      ] do
-    def compile!(unquote(regex.source), unquote(Macro.escape(regex.opts))) do
-      unquote(name)()
-    end
-  end
-
-  def compile!(source, opts), do: Regex.compile!(source, opts)
 end

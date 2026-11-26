@@ -215,15 +215,9 @@ defmodule Zoi do
   @doc group: "Parsing"
   @spec parse(schema :: schema(), input :: input(), opts :: options()) :: result()
   def parse(schema, input, opts \\ []) do
-    ctx = Zoi.Context.new(schema, input)
-    opts = Keyword.put_new(opts, :ctx, ctx)
-
-    case Zoi.Context.parse(ctx, opts) do
-      %Zoi.Context{valid?: true, parsed: parsed} ->
-        {:ok, parsed}
-
-      %Zoi.Context{valid?: false, errors: errors} ->
-        {:error, errors}
+    case Zoi.Context.parse_value(schema, input, opts) do
+      {:ok, parsed} -> {:ok, parsed}
+      {:error, errors, _partial} -> {:error, errors}
     end
   end
 
@@ -3047,9 +3041,9 @@ defmodule Zoi do
   """
   @doc group: "Refinements"
   @spec regex(schema :: schema(), regex :: Regex.t(), opts :: options()) :: schema()
-  def regex(schema, regex, opts \\ []) do
+  def regex(schema, %Regex{} = regex, opts \\ []) do
     schema
-    |> refine({Zoi.Validations.Regex, :validate, [regex.source, regex.opts, opts]})
+    |> refine({Zoi.Validations.Regex, :validate, [regex, opts]})
   end
 
   @doc """

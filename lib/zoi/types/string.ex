@@ -56,14 +56,38 @@ defmodule Zoi.Types.String do
       end
     end
 
-    defp validate_constraints(schema, input) do
-      [
-        {Validations.Length, schema.length},
-        {Validations.Gte, schema.min_length},
-        {Validations.Lte, schema.max_length}
-      ]
-      |> Validations.run_validations(schema, input)
+    defp validate_constraints(%{length: nil, min_length: nil, max_length: nil}, _input), do: :ok
+
+    defp validate_constraints(%{length: {exact, opts}}, input) do
+      if String.length(input) == exact do
+        :ok
+      else
+        {:error, [Zoi.Error.invalid_length(:string, exact, opts)]}
+      end
     end
+
+    defp validate_constraints(%{min_length: min, max_length: max}, input) do
+      len = String.length(input)
+
+      errors =
+        []
+        |> check_min(len, min)
+        |> check_max(len, max)
+
+      if errors == [], do: :ok, else: {:error, Enum.reverse(errors)}
+    end
+
+    defp check_min(errors, len, {min, opts}) when len < min do
+      [Zoi.Error.greater_than_or_equal_to(:string, min, opts) | errors]
+    end
+
+    defp check_min(errors, _len, _min), do: errors
+
+    defp check_max(errors, len, {max, opts}) when len > max do
+      [Zoi.Error.less_than_or_equal_to(:string, max, opts) | errors]
+    end
+
+    defp check_max(errors, _len, _max), do: errors
 
     defp error(schema) do
       {:error, Zoi.Error.invalid_type(:string, error: schema.meta.error)}
@@ -194,10 +218,7 @@ defmodule Zoi.Types.String do
   end
 
   defimpl Zoi.Validations.Regex do
-    def validate(_schema, input, regex, regex_opts, opts) do
-      # To allow both string and regex input for regex refinement
-      regex = Zoi.Regexes.compile!(regex, regex_opts)
-
+    def validate(_schema, input, %Regex{} = regex, opts) do
       if String.match?(input, regex) do
         :ok
       else
